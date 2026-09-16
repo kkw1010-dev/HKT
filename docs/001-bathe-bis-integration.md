@@ -57,11 +57,33 @@ SI's WaterUndress prompt still appears while dressed in water. Once the player
 undresses, it stops and the SI-Extensions prompt takes over, so the two never
 show together.
 
+## Test 1 findings (2026-09-16)
+
+- The startup notification appeared and SkyPrompt registration succeeded
+  (client 4). `OnInit` fires twice on a new game, which is harmless because
+  startup is idempotent.
+- No SI-Extensions prompt appeared, because `mzinAPI.GetModState()` was `0`. BiS
+  ships `mzinBathingInSkyrimEnabled` (`00000C`) with a default of 0 and is off
+  until its MCM turns it on. The tick did not log its gate, so the log showed
+  nothing. Every gate change is now logged, and the first water entry while BiS
+  is off shows a notification.
+- SI's own `목욕하기` still appeared. Opening SI's settings menu under the
+  Interactive preset (1) rewrote `settings.json` with that preset's switches:
+  Bathe, ItemUse potions and makelight on, KillMove and Observer off. The
+  override is now pinned to the Power User preset (2), on the assumption that
+  only Power User keeps per-module switches. This is unconfirmed, so the module
+  reads SI's file on each water entry and warns if Bathe is on again.
+- SI's Water Undress prompt kept appearing after the player undressed. SI
+  evidently counts something still worn as clothing. Each water entry now logs
+  every worn slot (30-61) to identify the item.
+- `SIX_Bathe.log` lands in `overwrite/SKSE/Plugins/SI-Extensions/`.
+
 ## Unverified until played
 
 - The prompt appears, and key `1` or `2` fires SkyPrompt event type 0.
 - The event types SkyPrompt sends for timeout and decline (the log records every
   type).
-- Where PapyrusUtil writes `SIX_Bathe.log` relative to the game folder.
+- Whether Power User keeps SI's Bathe switch off after the menu is opened.
+- Whether `JsonUtil.GetPathIntValue` reads a JSON boolean as 1/0 (a `-1` logs as unreadable).
 - Whether the Malignis `A5` set is selected by BiS's own animation settings (a BiS
   MCM choice, not SI-Extensions).

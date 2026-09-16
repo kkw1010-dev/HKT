@@ -5,6 +5,10 @@ wins over the original because SI-Extensions has higher MO2 priority. SI writes
 in-game setting changes back to that winning copy, so an existing override is
 kept and only the replaced modules are forced off. The first deploy seeds the
 override from SI's original file.
+
+SI's non-Power-User presets re-apply their own module switches when its menu is
+opened (observed: opening the menu under the Interactive preset turned Bathe back
+on), so the override is also pinned to the Power User preset.
 """
 import json
 import os
@@ -17,6 +21,8 @@ OVERRIDE = os.path.join(MODS, "SI-Extensions", REL)
 
 # SI module -> the switch SI-Extensions turns off because it replaces that module.
 REPLACED = {"Bathe": "enabled"}
+# SI presets: 0 Default, 1 Interactive, 2 PowerUser.
+POWER_USER_PRESET = 2
 
 
 def main():
@@ -29,6 +35,10 @@ def main():
         settings = json.load(f)
     modules = settings["MCP"]["modules"]
     changed = False
+    if settings["MCP"].get("preset") != POWER_USER_PRESET:
+        print("SI preset %s -> %s (Power User)" % (settings["MCP"].get("preset"), POWER_USER_PRESET))
+        settings["MCP"]["preset"] = POWER_USER_PRESET
+        changed = True
     for module, switch in REPLACED.items():
         if modules.get(module, {}).get(switch) is not False:
             modules.setdefault(module, {})[switch] = False

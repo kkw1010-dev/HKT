@@ -5,8 +5,8 @@
 
 .DESCRIPTION
   Fails on the first compile error, on any unpatched or missing text placeholder,
-  and (with -Deploy) on any failed deployment check. MO2 must be closed when
-  deploying, because the checks read the profile files MO2 rewrites on exit.
+  and (with -Deploy) on any failed deployment check. Skyrim must be closed when
+  deploying; MO2 may stay open (the profile files are only read).
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\Build.ps1 -Deploy
@@ -47,7 +47,10 @@ foreach ($module in Get-ChildItem (Join-Path $Repo 'modules') -Directory) {
     foreach ($psc in $sources) {
         $importArg = (@($srcDir) + $Imports) -join ';'
         Write-Host "compile $($module.Name)/$($psc.Name)"
+        # The compiler reports on stderr; judge by exit code, not by stderr output.
+        $ErrorActionPreference = 'Continue'
         $out = & $Compiler $psc.FullName "-i=$importArg" "-o=$BuildDir" "-f=$Flags" 2>&1
+        $ErrorActionPreference = 'Stop'
         if ($LASTEXITCODE -ne 0) {
             $out | Write-Host
             throw "Compile failed: $($psc.Name)"
@@ -77,8 +80,10 @@ if (-not $Deploy) {
     exit 0
 }
 
-if (Get-Process -Name ModOrganizer -ErrorAction SilentlyContinue) {
-    throw 'Close Mod Organizer before deploying: it rewrites the profile files on exit.'
+# Deploying only copies files into the mod folder; a running game would keep the old
+# scripts loaded and SI could overwrite settings.json on exit.
+if (Get-Process -Name SkyrimSE -ErrorAction SilentlyContinue) {
+    throw 'Close Skyrim before deploying.'
 }
 
 $deployScripts = Join-Path $ModFolder 'Scripts'

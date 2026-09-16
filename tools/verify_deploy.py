@@ -107,6 +107,7 @@ def main():
         with open(SI_SETTINGS, encoding="utf-8") as f:
             settings = json.load(f)
         check(settings["MCP"]["modules"]["Bathe"]["enabled"] is False, "SI Bathe module disabled")
+        check(settings["MCP"].get("preset") == 2, "SI preset is Power User (menu keeps module switches)")
 
     if failures:
         print("\n%d check(s) failed" % len(failures))

@@ -10,6 +10,8 @@ mounting re-arms it.}
 Actor Property PlayerRef Auto
 
 string Property LogPath = "Data/SKSE/Plugins/SI-Extensions/SIX_Bathe.log" AutoReadOnly
+; JsonUtil paths are relative to Data/SKSE/Plugins/StorageUtilData.
+string Property SISettingsFile = "../StreamlinedInteractions/settings.json" AutoReadOnly
 float Property TickSeconds = 1.0 AutoReadOnly
 float Property RetrySeconds = 10.0 AutoReadOnly
 int Property BodySlotMask = 0x00000004 AutoReadOnly
@@ -25,6 +27,10 @@ bool ready = false
 bool batheOffered = false
 bool showerOffered = false
 int startupFailures = 0
+string lastGate = ""
+bool wasInWater = false
+bool warnedBisOff = false
+bool warnedSIBathe = false
 
 Event OnInit()
     Startup("init")
@@ -36,6 +42,10 @@ Function Startup(string reason)
     ready = false
     batheOffered = false
     showerOffered = false
+    lastGate = ""
+    wasInWater = false
+    warnedBisOff = false
+    warnedSIBathe = false
     UnregisterForUpdate()
 
     bis = Quest.GetQuest("mzinBatheQuest") as mzinBatheQuest
@@ -52,7 +62,7 @@ Function Startup(string reason)
 
     ready = true
     startupFailures = 0
-    Log("READY (" + reason + ") client=" + clientID + " BiS=" + mzinAPI.GetModVersion() + " BiSEnabled=" + mzinAPI.GetModState())
+    Log("READY (" + reason + ") client=" + clientID + " BiS=" + mzinAPI.GetModVersion() + " BiSEnabled=" + mzinAPI.GetModState() + " SIBathe=" + SIBatheSetting())
     if reason == "init"
         Debug.Notification("@SIX:ready@")
     endif
@@ -86,16 +96,29 @@ Function Tick()
         return
     endif
 
-    bool canBathe = false
-    bool canShower = false
-    if mzinAPI.GetModState() > 0.0 && !PlayerRef.IsInCombat() && !PlayerRef.IsOnMount() && !PlayerRef.GetWornForm(BodySlotMask)
-        canBathe = PO3_SKSEFunctions.IsActorInWater(PlayerRef)
-        ; With BiS's water restriction off, IsUnderWaterfall() is true everywhere,
-        ; so only a real waterfall check is worth a separate prompt.
-        if bis.WaterRestrictionEnabled.GetValue() != 0.0
-            canShower = bis.IsUnderWaterfall(PlayerRef)
-        endif
+    bool inWater = PO3_SKSEFunctions.IsActorInWater(PlayerRef)
+    bool bisOn = mzinAPI.GetModState() > 0.0
+    bool dressed = PlayerRef.GetWornForm(BodySlotMask) as bool
+    bool busy = PlayerRef.IsInCombat() || PlayerRef.IsOnMount()
+    ; With BiS's water restriction off, IsUnderWaterfall() is true everywhere,
+    ; so only a real waterfall check is worth a separate prompt.
+    bool underFall = false
+    if !dressed && !busy && bis.WaterRestrictionEnabled.GetValue() != 0.0
+        underFall = bis.IsUnderWaterfall(PlayerRef)
     endif
+    bool canBathe = inWater && bisOn && !dressed && !busy
+    bool canShower = underFall && bisOn
+
+    ; Log every change of the gate inputs so a missing prompt is explained by the log.
+    string gate = "water=" + inWater + " waterfall=" + underFall + " bis=" + bisOn + " dressed=" + dressed + " busy=" + busy
+    if gate != lastGate
+        lastGate = gate
+        Log("gate " + gate)
+    endif
+    if (inWater || underFall) && !wasInWater
+        OnEnterWater(bisOn)
+    endif
+    wasInWater = inWater || underFall
 
     if canBathe && !batheOffered
         batheOffered = true
@@ -112,6 +135,52 @@ Function Tick()
         showerOffered = false
         SkyPrompt.RemovePrompt(clientID, EventShower, 0)
     endif
+EndFunction
+
+; Once per water entry: record what is worn (SI's Water Undress prompt keeps
+; showing while anything counts as clothing) and surface the two
+; configuration states that silently break this module.
+Function OnEnterWater(bool bisOn)
+    string worn = ""
+    int slot = 30
+    while slot < 62
+        Form item = PlayerRef.GetWornForm(Armor.GetMaskForSlot(slot))
+        if item
+            worn += " " + slot + ":" + item.GetName()
+        endif
+        slot += 1
+    endwhile
+    Log("entered water; worn:" + worn)
+
+    if !bisOn && !warnedBisOff
+        warnedBisOff = true
+        Log("WARN Bathing in Skyrim is disabled in its MCM; no prompt is offered")
+        Debug.Notification("@SIX:bisoff@")
+    endif
+
+    int siBathe = SIBatheSetting()
+    if siBathe == 1 && !warnedSIBathe
+        warnedSIBathe = true
+        Log("WARN Streamlined Interactions Bathe module is on; its prompt will duplicate this one")
+        Debug.Notification("@SIX:sibathe@")
+    elseif siBathe < 0
+        Log("WARN could not read Streamlined Interactions settings.json")
+    endif
+EndFunction
+
+; SI rewrites its settings.json from its menu (presets re-apply module switches),
+; so read the file as it is now. Returns 1 on, 0 off, -1 unreadable.
+int Function SIBatheSetting()
+    JsonUtil.Unload(SISettingsFile, false)
+    if !JsonUtil.JsonExists(SISettingsFile)
+        return -1
+    endif
+    int value = JsonUtil.GetPathIntValue(SISettingsFile, ".MCP.modules.Bathe.enabled", -1)
+    JsonUtil.Unload(SISettingsFile, false)
+    if value > 0
+        return 1
+    endif
+    return value
 EndFunction
 
 Function Offer(int eventID, int keyCode, string label)

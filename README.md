@@ -35,7 +35,7 @@ the plugin loads right after `Bathing in Skyrim.esp`.
 
 ## Build
 
-Close Mod Organizer first, then:
+Close Skyrim first (MO2 may stay open), then:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\SI-Extensions\tools\Build.ps1 -Deploy
