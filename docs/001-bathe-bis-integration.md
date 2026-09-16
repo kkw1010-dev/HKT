@@ -78,12 +78,38 @@ at the same time.
   every worn slot (30-61) to identify the item.
 - `SIX_Bathe.log` lands in `overwrite/SKSE/Plugins/SI-Extensions/`.
 
+## Test 2 result (2026-09-17): working
+
+With BiS enabled in its MCM, the log recorded:
+
+```text
+gate water=TRUE waterfall=False BiS=TRUE dressed=False busy=False
+entered water; worn: 60:HDTSMPObjectBase
+offer event=0 dirt=20 sent=TRUE
+prompt event type=5 event=0 action=0
+prompt event type=0 event=0 action=0
+wash shower=False result=TRUE
+...
+offer event=0 dirt=0 sent=TRUE      <- next water entry: BiS reset the dirt
+```
+
+- The prompt `목욕하기 (N%)` appears near the player's head (SkyPrompt anchors it
+  to `refForm = PlayerRef`). Key `1` accepts it, and BiS washes the player and
+  resets dirt from 20% to 0%. This worked twice in a row.
+- SkyPrompt event types observed: `5` when the prompt is shown, `0` on accept,
+  and `3` then `4` when the prompt went away without being accepted (most likely
+  timing out, then timed out). Only `0` triggers an action.
+- `SIBathe=0` read through `JsonUtil.GetPathIntValue` shows that JSON booleans
+  read as 0/1. SI's Bathe stayed off under the Power User preset.
+- Why SI's Water Undress prompt persists when naked: slot 60 holds
+  `HDTSMPObjectBase` (the SMP physics carrier), which SI counts as clothing.
+  This is a candidate for a follow-up module (an undress prompt that ignores
+  non-clothing slot-60 items, or excluding that item from SI's check).
+- The load path works: `READY (Load) client=5` after loading a save.
+
 ## Unverified until played
 
-- The prompt appears, and key `1` or `2` fires SkyPrompt event type 0.
-- The event types SkyPrompt sends for timeout and decline (the log records every
-  type).
-- Whether Power User keeps SI's Bathe switch off after the menu is opened.
-- Whether `JsonUtil.GetPathIntValue` reads a JSON boolean as 1/0 (a `-1` logs as unreadable).
+- The shower prompt (key `2`, under a waterfall) has not been exercised yet.
+- Whether Power User keeps SI's Bathe switch off after SI's menu is opened again.
 - Whether the Malignis `A5` set is selected by BiS's own animation settings (a BiS
   MCM choice, not SI-Extensions).

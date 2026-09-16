@@ -11,9 +11,10 @@ own SkyPrompt prompt that drives the target mod's real logic.
 
 | Module | Replaces SI module | Target mod | Status |
 |---|---|---|---|
-| `bathe` | `Bathe` (plays `mzinBatheA5_T1` only; BiS dirt state untouched) | Bathing in Skyrim - Renewed 2.7.8 | Built and deployed; awaiting in-game test |
+| `bathe` | `Bathe` (plays `mzinBatheA5_T1` only; BiS dirt state untouched) | Bathing in Skyrim - Renewed 2.7.8 | **Working in game (2026-09-17)**: prompt → BiS wash, dirt reset confirmed; shower path untested |
 
-See `docs/001-bathe-bis-integration.md` for the analysis behind `bathe`.
+See `docs/001-bathe-bis-integration.md` for the analysis and test results behind
+`bathe`, and `docs/000-adding-a-module.md` for the procedure to add the next one.
 
 ## Layout
 
