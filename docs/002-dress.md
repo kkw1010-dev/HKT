@@ -45,26 +45,41 @@ The module recognises three contexts:
 A bed or wardrobe context lasts while the player stays in the same cell and
 within 250 units of the last one aimed at.
 
-Undress is offered in any context when something strippable is worn. The items
-it removes are remembered in the SKSE co-save (record `CIGR`/`DRES`), with
-FormIDs re-resolved on load.
+The prompt follows the player's state, not a list of items CIGAR removed:
 
-Dress is offered whenever CIGAR's remembered items exist and nothing strippable
-is worn, except in water, where it waits until the player is out because that is
-when the bathe prompt shows. At a bed or wardrobe, undress and dress therefore
-alternate on the spot. Every change of context re-arms both prompts. If the
-player puts clothes on by hand outside water, the remembered set is dropped.
+| Context | Dressed (something strippable worn) | Naked |
+|---|---|---|
+| any bed or wardrobe/dresser | 탈의하기 | 착용하기, if the remembered outfit is in the inventory |
+| water | 탈의하기 | (bathing, from the `Bathe` module) |
+| none | — | 착용하기, only when CIGAR undressed the player and they have not dressed since |
 
-Test (DLL, 2026-09-17): the wardrobe and dresser undress worked, but dress only
-appeared after a later water exit. The first rule offered dress only after
-leaving the place, and the player stayed within 250 units of a dresser, so the
-rule was changed to the one above. The water flow and bed detection
-(`flags=88000003 sleep=true`; chairs and benches `sleep=false`) worked.
+- **Remembered outfit:** the strippable set worn at the last undress, or
+  whenever the player stands dressed at a bed, wardrobe or water. Dressing
+  re-equips the pieces still in the inventory, so undressing by hand from the
+  inventory still gets 착용하기 at a bed or wardrobe.
+- **Co-save:** record `CIGR`/`DRES`. Version 2 holds the outfit FormIDs,
+  re-resolved on load, plus the undressed-by-CIGAR flag. Version 1 saves (the
+  removed-item list) still load.
+- **Settle window:** unequips are queued, so the worn state is ignored for 3
+  ticks after an undress or dress, and prompts wait out that window too.
+- **Re-arming:** every change of context re-arms both prompts.
+
+History:
+
+- **DLL test 1** (2026-09-17): dress appeared only after a later water exit,
+  because the first rule offered it only after leaving the place.
+- **DLL test 2:** dress appeared on the spot, but not after moving elsewhere.
+  The log showed "player dressed without the prompt; forgetting 3 item(s)" in
+  the same second as the undress: the queued unequips had not applied yet, so
+  the remembered list was wiped. The user then asked for the state-based rule
+  above, which also removes that race.
+- The water flow and bed detection (`flags=88000003 sleep=true`; chairs and
+  benches `sleep=false`) worked throughout.
 
 ## Unverified until played
 
 - Bed detection on bedrolls and modded beds (vanilla bed confirmed). Every
   aimed furniture logs `furniture <name> flags=<hex> sleep=<bool>`.
-- Undress/dress alternating at a bed or wardrobe (the rule above).
+- The state-based rule above, including dressing after an inventory undress.
 - Wardrobe detection on modded containers such as the Snazzy wardrobes.
 - SI's Bed and Wardrobe Undress staying off under the Power User preset.

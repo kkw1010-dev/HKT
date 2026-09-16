@@ -29,7 +29,7 @@ their in-game tests are in git history and in `docs/001`.
 | Module | Needs | Replaces in SI | Status |
 |---|---|---|---|
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
-| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Water flow and bed/wardrobe undress confirmed 2026-09-17; on-the-spot dress at bed/wardrobe untested |
+| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Water flow and bed/wardrobe undress confirmed 2026-09-17; state-based dress (v2) untested |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -39,7 +39,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In water, nothing strippable worn, BiS on | 목욕하기 (dirt %) |
 | Under a waterfall (BiS water restriction on) | 샤워하기 (dirt %) |
 | Aimed at a bed or wardrobe/dresser and within 250 units, strippable items worn | 탈의하기 |
-| At a bed or wardrobe, or after leaving water, with items CIGAR removed and nothing strippable worn | 착용하기 |
+| At any bed or wardrobe while naked (remembered outfit in inventory), or after leaving water when CIGAR undressed the player | 착용하기 |
 
 Background: `docs/001-bathe-bis-integration.md` and `docs/002-dress.md`. To add
 a module, see `docs/000-adding-a-module.md`.
@@ -52,7 +52,7 @@ src/Module.h        module interface (OnGameLoaded / Tick / OnAccepted) and gate
 src/Prompt.*        SkyPrompt client and one sink per prompt (SkyPrompt 2.3.15 removes by sink)
 src/Util.*          strip rules, worn description, Papyrus script-property reader, SI settings reader
 src/Bathe.*         Bathing in Skyrim integration (properties read from its quest script at load)
-src/Dress.*         undress / dress, crosshair-based bed and wardrobe detection, co-save of removed items
+src/Dress.*         state-based undress / dress, crosshair-based bed and wardrobe detection, co-saved outfit
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
 lib/commonlibsse-ng alandtse/CommonLibVR branch ng (submodule)
 tools/Build.ps1     build (VS 2026 Build Tools, Ninja, vcpkg at C:\TAKEALOOK\TOOLS\vcpkg), deploy, verify

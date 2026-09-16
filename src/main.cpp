@@ -119,8 +119,8 @@ namespace
 		std::uint32_t version = 0;
 		std::uint32_t length = 0;
 		while (a_intfc->GetNextRecordInfo(type, version, length)) {
-			if (type == 'DRES' && version == 1) {
-				Dress::GetSingleton()->Load(a_intfc);
+			if (type == 'DRES' && (version == 1 || version == 2)) {
+				Dress::GetSingleton()->Load(a_intfc, version);
 			} else {
 				logs::warn("skipping unknown co-save record {:08X} v{}", type, version);
 			}
