@@ -137,10 +137,23 @@ The user chose to replace SI's Water Undress as well
   (`GetDressedAfterBathingEnabled`, default on). That restores only what BiS
   removed, so it does not conflict.
 
+## Test 3 result (2026-09-17): undress/dress working
+
+```text
+entered water; worn: 30:종자의 투구 31:종자의 투구(kept) 32:종자의 갑옷 ... 60:HDTSMPObjectBase(kept) | left= right=
+undress removed 종자의 투구 종자의 갑옷 종자의 장갑 종자의 장화 종자의 목도리 pendingDress=5
+wash shower=False result=TRUE
+dress equipped 종자의 투구 종자의 갑옷 종자의 장갑 종자의 장화 종자의 목도리
+```
+
+- Undress → bathe → dress worked twice, and the SMP carrier stayed on.
+- The Party Sheet sword icons did not change. Both hands hold unnamed objects
+  (`left= right=` rather than `-`), most likely the engine's unarmed "weapon".
+  The user asked to leave this alone.
+
 ## Unverified until played
 
 - The shower prompt (key `2`, under a waterfall) has not been exercised yet.
 - Whether Power User keeps SI's Bathe switch off after SI's menu is opened again.
-- Undress/dress prompts: what gets removed and restored, and whether the Party Sheet swords were the SMP item.
 - Whether the Malignis `A5` set is selected by BiS's own animation settings (a BiS
   MCM choice, not SI-Extensions).

@@ -11,7 +11,7 @@ own SkyPrompt prompt that drives the target mod's real logic.
 
 | Module | Replaces SI module | Target mod | Status |
 |---|---|---|---|
-| `bathe` | `Bathe` (plays `mzinBatheA5_T1` only; BiS dirt state untouched) and `DressActions.enabled_water` (strips the Softbody SMP carrier) | Bathing in Skyrim - Renewed 2.7.8 | **Working in game (2026-09-17)**: prompt → BiS wash, dirt reset confirmed. Undress/dress takeover deployed, untested; shower path untested |
+| `bathe` | `Bathe` (plays `mzinBatheA5_T1` only; BiS dirt state untouched) and `DressActions.enabled_water` (strips the Softbody SMP carrier) | Bathing in Skyrim - Renewed 2.7.8 | **Working in game (2026-09-17)**: prompt → BiS wash, dirt reset confirmed. undress → bathe → dress confirmed (2026-09-17); shower path untested |
 
 See `docs/001-bathe-bis-integration.md` for the analysis and test results behind
 `bathe`, and `docs/000-adding-a-module.md` for the procedure to add the next one.
