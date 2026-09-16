@@ -49,13 +49,22 @@ Undress is offered in any context when something strippable is worn. The items
 it removes are remembered in the SKSE co-save (record `CIGR`/`DRES`), with
 FormIDs re-resolved on load.
 
-Dress is offered once no context applies, CIGAR's remembered items exist, and
-nothing strippable is worn. If the player puts clothes on by hand after leaving,
-the remembered set is dropped.
+Dress is offered whenever CIGAR's remembered items exist and nothing strippable
+is worn, except in water, where it waits until the player is out because that is
+when the bathe prompt shows. At a bed or wardrobe, undress and dress therefore
+alternate on the spot. Every change of context re-arms both prompts. If the
+player puts clothes on by hand outside water, the remembered set is dropped.
+
+Test (DLL, 2026-09-17): the wardrobe and dresser undress worked, but dress only
+appeared after a later water exit. The first rule offered dress only after
+leaving the place, and the player stayed within 250 units of a dresser, so the
+rule was changed to the one above. The water flow and bed detection
+(`flags=88000003 sleep=true`; chairs and benches `sleep=false`) worked.
 
 ## Unverified until played
 
-- Bed detection by `kCanSleep`, including bedrolls and modded beds. Every
+- Bed detection on bedrolls and modded beds (vanilla bed confirmed). Every
   aimed furniture logs `furniture <name> flags=<hex> sleep=<bool>`.
+- Undress/dress alternating at a bed or wardrobe (the rule above).
 - Wardrobe detection on modded containers such as the Snazzy wardrobes.
 - SI's Bed and Wardrobe Undress staying off under the Power User preset.

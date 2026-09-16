@@ -28,8 +28,8 @@ their in-game tests are in git history and in `docs/001`.
 
 | Module | Needs | Replaces in SI | Status |
 |---|---|---|---|
-| `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL untested; Papyrus version confirmed in game |
-| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | DLL untested; Papyrus water flow confirmed in game |
+| `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
+| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Water flow and bed/wardrobe undress confirmed 2026-09-17; on-the-spot dress at bed/wardrobe untested |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -39,7 +39,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In water, nothing strippable worn, BiS on | 목욕하기 (dirt %) |
 | Under a waterfall (BiS water restriction on) | 샤워하기 (dirt %) |
 | Aimed at a bed or wardrobe/dresser and within 250 units, strippable items worn | 탈의하기 |
-| Away from water, beds and wardrobes, with items CIGAR removed and nothing strippable worn | 착용하기 |
+| At a bed or wardrobe, or after leaving water, with items CIGAR removed and nothing strippable worn | 착용하기 |
 
 Background: `docs/001-bathe-bis-integration.md` and `docs/002-dress.md`. To add
 a module, see `docs/000-adding-a-module.md`.

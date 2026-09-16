@@ -117,16 +117,21 @@ namespace CIGAR
 		auto* player = Util::Player();
 		const std::string context = CurrentContext(player);
 		const bool busy = Util::IsBusy(player);
-		const std::size_t strippable = (!context.empty() || !removed.empty()) && !busy ? Util::GetStrippable(player).size() : 0;
+		const bool counted = (!context.empty() || !removed.empty()) && !busy;
+		const std::size_t strippable = counted ? Util::GetStrippable(player).size() : 0;
 
-		// Dressed again by hand after leaving: the remembered set is stale.
-		if (context.empty() && !removed.empty() && strippable > 0) {
+		// Dressed again by hand outside water: the remembered set is stale.
+		if (context != "water" && !removed.empty() && strippable > 0) {
 			Log("player dressed without the prompt; forgetting {} item(s)", removed.size());
 			removed.clear();
 		}
 
-		LogGate(std::format("context={} strippable={} busy={} pendingDress={}", context.empty() ? "-" : context, strippable, busy, removed.size()));
+		LogGate(std::format("context={} strippable={} busy={} pendingDress={}", context.empty() ? "-" : context,
+			counted ? std::to_string(strippable) : "?"s, busy, removed.size()));
 		if (context != lastContext) {
+			// A new place re-arms both prompts.
+			undress.Update(false, {});
+			dress.Update(false, {});
 			if (!context.empty()) {
 				Log("entered {}; worn:{}", context, Util::DescribeWorn(player));
 				if (context == "water") {
@@ -141,7 +146,9 @@ namespace CIGAR
 		}
 
 		undress.Update(!context.empty() && !busy && strippable > 0, [] { return "탈의하기"s; });
-		dress.Update(context.empty() && !busy && !removed.empty() && strippable == 0, [] { return "착용하기"s; });
+		// At a bed or wardrobe, dressing is offered on the spot once undressed; from water it waits
+		// until the player is out, because bathing uses the same moment.
+		dress.Update(context != "water" && !busy && !removed.empty() && strippable == 0, [] { return "착용하기"s; });
 	}
 
 	void Dress::OnAccepted(std::uint16_t a_eventID)
