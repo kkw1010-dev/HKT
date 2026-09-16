@@ -1,68 +1,71 @@
 # 000 · Adding a module (playbook)
 
-This procedure produced the working `bathe` and `dress` modules. Follow it for
-the next CIGAR module, so their lessons do not have to be learned again.
+This is how the `Bathe` and `Dress` modules were built. Follow it for the next
+CIGAR module, so their lessons do not have to be learned again.
 
 ## 1. Find out what the target does (and whether SI already does it)
 
-1. Dump the DLL strings (Python regex over
-   `mods/[NoDelete] 0008 StreamlinedInteractions/SKSE/Plugins/StreamlinedInteractions.dll`).
-   Look for the module name, its `Modules/<Name>` MCM label, hard-coded asset
-   paths, and idle or event names.
-2. Absence of Papyrus dispatch, ModEvent names or plugin names means SI does not
-   call the target mod. It only plays animations or equips items itself.
-3. Decompile the target mod's `.pex` with `housecarl_decompile_script`, using a
-   temporary patch name. Copy the `.psc` files to the scratchpad, then delete the
-   temporary `mods/houseCARL - ...` folder (check that it is not in modlist.txt).
-4. Find the target's public entry points (an API script, `Try...` functions,
-   ModEvents) and note what each one checks. Record this as
-   `docs/NNN-<module>.md`.
+1. Dump the Streamlined Interactions DLL strings: run a Python regex over
+   `mods/[NoDelete] 0008 StreamlinedInteractions/SKSE/Plugins/StreamlinedInteractions.dll`.
+   Look for:
+   - the module name;
+   - its `Modules/<Name>` MCM label;
+   - hard-coded asset paths;
+   - idle and event names.
 
-## 2. Write the module
+   SI is only a source of ideas and of conflicts; CIGAR never calls it.
+2. Decompile the target mod's `.pex` with `housecarl_decompile_script`, using a
+   temporary patch name. Copy the `.psc` files to the scratchpad, then delete
+   the temporary `mods/houseCARL - ...` folder (check that it is not listed in
+   modlist.txt).
+3. Find the target's public entry points: an API script, `Try...` functions or
+   ModEvents. Note what each one checks.
+4. List the forms the module needs from the target. Read them from the
+   target's quest script properties at load (`Util::ScriptObject` +
+   `Util::ScriptProperty`), so no FormID is hard-coded. Use
+   `housecarl_records` on the quest's `VirtualMachineAdapter.Scripts[0].Properties`
+   to see the property names.
+5. Record all of this as `docs/NNN-<module>.md`.
 
-- Put sources in `modules/<name>/Source/Scripts/` with the `CIGAR_` prefix,
-  **ASCII only**. Write one quest script that extends `CIGAR_ModuleBase` and
-  overrides `ModuleName`, `ModuleStartup`, `ModuleStatus`, `ModuleReset`,
-  `Tick` and `OnPromptAccepted`. Build every prompt from
-  `UpdatePrompt`, `Withdraw` and `LogGate`.
-- Write player-facing text as `"@CIGAR:<key>@"` and add the Korean text to
-  the shared `strings.ko.json` in short administrative style. The build fails
-  if a placeholder is left or missing, including one inside a docstring.
-- Declare each third-party script you call as a stub in `stubs/`, with signatures
-  taken from the decompile. Stubs are never deployed, and `verify_deploy.py`
-  checks that.
-- Look up every signature with the `housecarl:papyrus-reference` skill.
-  Known traps:
-  - `state` is a reserved word.
-  - A `"\n"` literal breaks the CK compiler; use `StringUtil.AsChar(10)`.
-  - JsonUtil paths are relative to `Data/SKSE/Plugins/StorageUtilData`.
-  - A mod's "enabled" global may default to 0 (BiS does), so check it and log it.
-- For SkyPrompt, call `RegisterForSkyPromptEvent(self, 2, 0)` on init and again
-  on every load (a player alias `OnPlayerLoadGame`). Then use
-  `SendPrompt(client, text, eventID, 0, 0, PlayerRef, [0], [DIK], 0.0)`.
-  Handle only event type `0` (accept). Type `5` means shown, and `3`/`4` mean
-  expired.
+## 2. Write the module (C++)
+
+- Add `src/<Name>.h/.cpp` with a singleton class deriving from `CIGAR::Module`,
+  and add it to `Modules()` in `main.cpp`.
+  - `OnGameLoaded()` resolves the integration. If the target is missing, log
+    why, leave the module idle, and **return quietly**. Never make the target
+    a hard requirement.
+  - `Tick()` computes the gate, calls `LogGate(...)`, and drives each
+    `PromptSlot::Update(can, text)`.
+  - `OnAccepted(eventID)` performs the action. Every module method runs on the
+    game thread.
+- Give each on-screen prompt its own `PromptSlot`. SkyPrompt 2.3.15 has no
+  `RemovePromptByID`, so removal is per sink. Send no button list, so
+  SkyPrompt assigns the player's keyboard and gamepad defaults.
+- Handle only `kAccepted` (0). The other event types are `kDeclined` (1),
+  `kRemovedByMod` (2), `kTimingOut` (3), `kTimeout` (4), `kDown` (5),
+  `kUp` (6) and `kMove` (7). The Papyrus test logs showed 5 before 0 and
+  3 → 4 on expiry.
+- Call Papyrus from C++ with `DispatchMethodCall2` on the target quest's
+  handle. The result arrives on a VM thread, so only log there and marshal
+  anything else through `SKSE::GetTaskInterface()->AddTask`.
+- Event sinks (for example `SKSE::CrosshairRefEvent`) capture a handle and hand
+  the work to the game thread with `AddTask`.
+- If the module keeps state across saves, add a record to the `CIGR` co-save.
+  Resolve every FormID on load with `ResolveFormID`, bound counts, and check
+  every read length.
+- Player-facing text is UTF-8 in the source (`/utf-8`). Use short,
+  administrative Korean.
 - Self-reporting is required:
-  - log to `MiscUtil.WriteToFile` (it lands in
-    `overwrite/SKSE/Plugins/CIGAR/`); `CIGAR_ModuleBase.Log` does this for you;
-  - log each change of the prompt-gate inputs;
-  - notify once for every configuration state that silently blocks the module.
-- If the module replaces an SI module, add it to `REPLACED` in
-  `tools/sync_si_settings.py`. SI re-applies preset switches when its menu opens
-  unless the preset is Power User (2), and the tool pins that. Also read SI's
-  settings at runtime and warn when the switch is back on.
+  - log to `CIGAR.log` for the gate, offers, events and action results;
+  - notify once for every state that silently blocks the module (the target
+    disabled, a replaced SI switch on).
 
-## 3. Plugin records
+## 3. SI overlap
 
-- Add a quest to `plugin/CIGAR.records.json`, following the existing entries:
-  start-game-enabled, a `PlayerRef` property, and a player alias with
-  `CIGAR_PlayerAlias`. Then run `housecarl_create` with `records=@<that file>`
-  and `into="CIGAR.esp"`, starting from a fresh header-only ESL.
-- Copy `mods/CIGAR/CIGAR.esp` to `plugin/`, because the build deploys from there and the verifier
-  requires the two to be identical.
-- Run `housecarl_check plugins=["CIGAR.esp"] findings=["errors","scripts"]`.
-  The result must show 0 dangling references and 0 unbound properties.
-- Keep the ESL flag. `housecarl_create` preserves it; the verifier checks `0x200`.
+When the module replaces SI switches, add them to `REPLACED` in both
+`tools/sync_si_settings.py` and `tools/verify_deploy.py`, and warn at runtime
+with `Util::WarnIfSIModuleOn`. SI re-applies preset switches when its menu opens
+unless the preset is Power User (2), which the sync tool pins.
 
 ## 4. Build, deploy, verify
 
@@ -71,7 +74,8 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 ```
 
 - Skyrim must be closed; MO2 may stay open.
-- If the module replaces SI switches, add them to `REPLACED` in both
-  `tools/sync_si_settings.py` and `tools/verify_deploy.py`.
-- Test on a new game. Read `CIGAR.log` before asking the user anything: every
-  failure seen so far was explained by that log.
+- A clean build proves only that the code compiles. Test in game (a fresh
+  save is fine), then read `CIGAR.log` before asking the user anything: every
+  failure seen so far was explained by the log.
+- Check `skse64.log` for `CIGAR.dll` ... `loaded correctly` when the log file
+  is missing altogether.

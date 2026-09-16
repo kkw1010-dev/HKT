@@ -1,9 +1,13 @@
 # 001 · Bathe → Bathing in Skyrim - Renewed
 
-> The tests below ran on the pre-rename build (`SI-Extensions.esp`, scripts
-> `SIX_*`, log `SIX_Bathe.log`). Since 2026-09-17 the same logic is
-> `CIGAR_BatheQuestScript`. The undress and dress part moved to the `dress`
+> The tests below ran on the Papyrus builds (`SI-Extensions.esp`, scripts
+> `SIX_*`, log `SIX_Bathe.log`). Since 2026-09-17 the same logic lives in
+> `CIGAR.dll` (`src/Bathe.cpp`), and the undress/dress part is the `Dress`
 > module (`002-dress.md`).
+>
+> Correction: the observed event types were misread below. The SkyPromptAPI
+> header defines 5 = `kDown`, 3 = `kTimingOut` and 4 = `kTimeout`, not
+> "shown" and "expired".
 
 ## What SI's Bathe module does
 

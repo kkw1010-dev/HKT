@@ -1,21 +1,23 @@
 """Register CIGAR in the active MO2 profile. Safe to re-run.
 
-- modlist.txt: +CIGAR directly above Streamlined Interactions (so CIGAR's
-  settings.json override wins); the pre-rename SI-Extensions entry is removed.
-- plugins.txt / loadorder.txt: CIGAR.esp right after Bathing in Skyrim.esp;
-  SI-Extensions.esp is removed.
+- modlist.txt: +CIGAR directly above Streamlined Interactions, so CIGAR's settings.json
+  override wins. The pre-rename SI-Extensions entry is removed.
+- plugins.txt / loadorder.txt: CIGAR is an ESP-less SKSE DLL, so the plugin entries left by
+  the earlier Papyrus builds (CIGAR.esp, SI-Extensions.esp) are removed.
 
-Refuses to run while Mod Organizer is open, because MO2 rewrites these files
-from memory. Each changed file is backed up first.
+Refuses to run while Mod Organizer is open, because MO2 rewrites these files from memory.
+Each changed file is backed up first.
 """
 import datetime
 import os
 import subprocess
-import sys
 
 MO2 = r"C:\TAKEALOOK"
 SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
-BIS_PLUGIN = "Bathing in Skyrim.esp"
+STALE_PLUGIN_LINES = {
+    "*CIGAR.esp", "CIGAR.esp",
+    "*SI-Extensions.esp", "SI-Extensions.esp",
+}
 
 
 def active_profile():
@@ -54,16 +56,14 @@ def rewrite(path, edit, stamp):
     print("updated:", path)
 
 
-def place_after(rows, anchor, line, remove):
-    rows = [r for r in rows if r not in remove and r != line]
-    rows.insert(rows.index(anchor) + 1, line)
+def enable_mod(rows):
+    rows = [r for r in rows if r not in {"+SI-Extensions", "-SI-Extensions", "+CIGAR", "-CIGAR"}]
+    rows.insert(rows.index("+" + SI_MOD), "+CIGAR")
     return rows
 
 
-def place_before(rows, anchor, line, remove):
-    rows = [r for r in rows if r not in remove and r != line]
-    rows.insert(rows.index(anchor), line)
-    return rows
+def drop_stale_plugins(rows):
+    return [r for r in rows if r not in STALE_PLUGIN_LINES]
 
 
 def main():
@@ -71,18 +71,9 @@ def main():
         raise SystemExit("Mod Organizer is running; close it first.")
     profile = os.path.join(MO2, "profiles", active_profile())
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    rewrite(os.path.join(profile, "modlist.txt"),
-            lambda rows: place_before(rows, "+" + SI_MOD, "+CIGAR",
-                                      {"+SI-Extensions", "-SI-Extensions", "-CIGAR"}),
-            stamp)
-    rewrite(os.path.join(profile, "plugins.txt"),
-            lambda rows: place_after(rows, "*" + BIS_PLUGIN, "*CIGAR.esp",
-                                     {"*SI-Extensions.esp", "SI-Extensions.esp", "CIGAR.esp"}),
-            stamp)
-    rewrite(os.path.join(profile, "loadorder.txt"),
-            lambda rows: place_after(rows, BIS_PLUGIN, "CIGAR.esp", {"SI-Extensions.esp"}),
-            stamp)
+    rewrite(os.path.join(profile, "modlist.txt"), enable_mod, stamp)
+    rewrite(os.path.join(profile, "plugins.txt"), drop_stale_plugins, stamp)
+    rewrite(os.path.join(profile, "loadorder.txt"), drop_stale_plugins, stamp)
 
 
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 """Deployment checks for CIGAR. Exit 1 on any failure.
 
 Encodes the failure modes that are silent in game (no error, no prompt):
-the plugin or mod not enabled, a stale or unpatched .pex, a compile stub
-shipped by accident (it would replace the real BiS script), a replaced SI
-module still on (double prompts), the override losing to SI's original, or
-the pre-rename SI-Extensions build still loaded next to CIGAR.
+the mod not enabled, a stale DLL, leftovers of the earlier Papyrus/ESP builds
+(which would run alongside the DLL and double every prompt), a replaced SI
+module still on (double prompts), the override losing to SI's original, or a
+missing hard dependency. Optional integrations (Bathing in Skyrim) are reported,
+never required.
 """
-import glob
 import json
 import os
 import struct
@@ -18,10 +18,9 @@ MO2 = r"C:\TAKEALOOK"
 MODS = os.path.join(MO2, "mods")
 MOD_NAME = "CIGAR"
 MOD = os.path.join(MODS, MOD_NAME)
-LEGACY_MOD = "SI-Extensions"
 SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
-PLUGIN = "CIGAR.esp"
-BIS_PLUGIN = "Bathing in Skyrim.esp"
+DLL = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.dll")
+BUILT_DLL = os.path.join(REPO, "build", "release", "CIGAR.dll")
 SI_SETTINGS = os.path.join(MOD, "SKSE", "Plugins", "StreamlinedInteractions", "settings.json")
 REPLACED = [
     ("Bathe", "enabled"),
@@ -29,6 +28,7 @@ REPLACED = [
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
 ]
+REQUIRED_EXPORTS = {b"SKSEPlugin_Load", b"SKSEPlugin_Query", b"SKSEPlugin_Version"}
 
 failures = []
 
@@ -37,6 +37,10 @@ def check(ok, what):
     print(("PASS " if ok else "FAIL ") + what)
     if not ok:
         failures.append(what)
+
+
+def note(what):
+    print("INFO " + what)
 
 
 def active_profile():
@@ -55,68 +59,79 @@ def read_lines(path):
         return [line.rstrip("\r\n") for line in f]
 
 
+def dll_exports(path):
+    with open(path, "rb") as f:
+        d = f.read()
+    pe = struct.unpack_from("<I", d, 0x3C)[0]
+    nsec = struct.unpack_from("<H", d, pe + 6)[0]
+    optsz = struct.unpack_from("<H", d, pe + 20)[0]
+    opt = pe + 24
+    exp_rva = struct.unpack_from("<I", d, opt + 112)[0]
+    secs = []
+    for i in range(nsec):
+        o = opt + optsz + i * 40
+        vs, va, _, raw = struct.unpack_from("<IIII", d, o + 8)
+        secs.append((va, max(vs, 1), raw))
+
+    def off(rva):
+        for va, vs, raw in secs:
+            if va <= rva < va + vs:
+                return rva - va + raw
+        raise ValueError("rva outside sections")
+
+    e = off(exp_rva)
+    count = struct.unpack_from("<I", d, e + 24)[0]
+    names = off(struct.unpack_from("<I", d, e + 32)[0])
+    result = set()
+    for i in range(count):
+        p = off(struct.unpack_from("<I", d, names + 4 * i)[0])
+        result.add(d[p:d.index(b"\0", p)])
+    return result
+
+
 def main():
     profile = os.path.join(MO2, "profiles", active_profile())
     print("profile:", profile)
 
-    # Plugin file and header.
-    esp = os.path.join(MOD, PLUGIN)
-    check(os.path.isfile(esp), "plugin exists: " + esp)
-    if os.path.isfile(esp):
-        with open(esp, "rb") as f:
-            data = f.read()
-        flags = struct.unpack_from("<I", data, 8)[0]
-        check(data[:4] == b"TES4" and flags & 0x200, "plugin is ESL-flagged (flags=%#x)" % flags)
-        with open(os.path.join(REPO, "plugin", PLUGIN), "rb") as f:
-            check(data == f.read(), "deployed plugin matches plugin/" + PLUGIN)
+    # The DLL: present, identical to the build, exporting the SE+AE+VR entry triad.
+    check(os.path.isfile(DLL), "DLL deployed: " + DLL)
+    if os.path.isfile(DLL) and os.path.isfile(BUILT_DLL):
+        with open(DLL, "rb") as a, open(BUILT_DLL, "rb") as b:
+            check(a.read() == b.read(), "deployed DLL matches the build")
+        exports = dll_exports(DLL)
+        check(REQUIRED_EXPORTS <= exports, "DLL exports %s" % ", ".join(sorted(e.decode() for e in REQUIRED_EXPORTS)))
+
+    # No ESP and no Papyrus scripts from the earlier builds.
+    leftovers = []
+    for root, _, files in os.walk(MOD):
+        for name in files:
+            low = name.lower()
+            if low.endswith((".esp", ".esl", ".esm", ".pex", ".psc", ".seq")):
+                leftovers.append(os.path.relpath(os.path.join(root, name), MOD))
+    check(not leftovers, "no plugin or Papyrus leftovers in the mod folder%s" % (": " + ", ".join(leftovers) if leftovers else ""))
+    check(not os.path.exists(os.path.join(MODS, "SI-Extensions")), "pre-rename SI-Extensions mod folder is gone")
 
     # Profile registration and priority.
     modlist = read_lines(os.path.join(profile, "modlist.txt"))
-    enabled = "+" + MOD_NAME
-    check(enabled in modlist, "mod enabled in modlist.txt")
-    if enabled in modlist and ("+" + SI_MOD) in modlist:
+    check("+" + MOD_NAME in modlist, "mod enabled in modlist.txt")
+    if "+" + MOD_NAME in modlist and ("+" + SI_MOD) in modlist:
         # modlist.txt lists the highest priority first.
-        check(modlist.index(enabled) < modlist.index("+" + SI_MOD),
+        check(modlist.index("+" + MOD_NAME) < modlist.index("+" + SI_MOD),
               "CIGAR outranks Streamlined Interactions (settings override wins)")
-    check("+" + LEGACY_MOD not in modlist, "pre-rename SI-Extensions mod is not enabled")
     plugins = read_lines(os.path.join(profile, "plugins.txt"))
-    check("*" + PLUGIN in plugins, "plugin active in plugins.txt")
-    check("*SI-Extensions.esp" not in plugins, "pre-rename SI-Extensions.esp is not active")
-    check("*" + BIS_PLUGIN in plugins, "Bathing in Skyrim is active")
+    stale = [p for p in plugins if p.lstrip("*") in ("CIGAR.esp", "SI-Extensions.esp")]
+    check(not stale, "no CIGAR/SI-Extensions plugin listed in plugins.txt%s" % (": " + ", ".join(stale) if stale else ""))
 
-    # Compiled scripts: every built .pex deployed unchanged, nothing extra.
-    build = os.path.join(REPO, "build", "Scripts")
-    built = sorted(os.path.basename(p) for p in glob.glob(os.path.join(build, "*.pex")))
-    deployed = sorted(os.path.basename(p) for p in glob.glob(os.path.join(MOD, "Scripts", "*.pex")))
-    check(built and built == deployed, "deployed scripts are exactly the build: %s" % ", ".join(built))
-    all_pex = b""
-    for name in built:
-        path = os.path.join(MOD, "Scripts", name)
-        if not os.path.isfile(path):
-            continue
-        with open(path, "rb") as a, open(os.path.join(build, name), "rb") as b:
-            data = a.read()
-            check(data == b.read(), "deployed %s matches the build" % name)
-        check(b"@CIGAR:" not in data, "no text placeholder left in " + name)
-        all_pex += data
-    with open(os.path.join(REPO, "strings.ko.json"), encoding="utf-8") as f:
-        for text in json.load(f).values():
-            check(text.encode("utf-8") in all_pex, "Korean text present: " + text.strip())
-
-    for stub in os.listdir(os.path.join(REPO, "stubs")):
-        pex_name = os.path.splitext(stub)[0] + ".pex"
-        check(not os.path.exists(os.path.join(MOD, "Scripts", pex_name)),
-              "compile stub not deployed: " + pex_name)
-
-    # Dependencies the scripts call at runtime.
+    # Hard dependencies.
     for rel in (
-        os.path.join("Bathing in Skyrim - Renewed", "Scripts", "mzinBatheQuest.pex"),
-        os.path.join("Bathing in Skyrim - Renewed", "Scripts", "mzinAPI.pex"),
         os.path.join("[NoDelete] 0007 SkyPrompt NEW", "SKSE", "Plugins", "SkyPrompt.dll"),
-        os.path.join("[NoDelete] 0007 SkyPrompt NEW", "Scripts", "SkyPrompt.pex"),
-        os.path.join("powerofthree's Papyrus Extender", "SKSE", "Plugins", "po3_PapyrusExtender.dll"),
+        os.path.join("Address Library for SKSE Plugins", "SKSE", "Plugins"),
     ):
-        check(os.path.isfile(os.path.join(MODS, rel)), "dependency present: " + rel)
+        check(os.path.exists(os.path.join(MODS, rel)), "dependency present: " + rel)
+
+    # Optional integrations: reported, never required.
+    bis = os.path.isfile(os.path.join(MODS, "Bathing in Skyrim - Renewed", "Bathing in Skyrim.esp"))
+    note("Bathing in Skyrim - Renewed %s" % ("installed: bathe module active" if bis else "absent: bathe module idles"))
 
     # Replaced SI modules must be off, or both prompts appear.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")
