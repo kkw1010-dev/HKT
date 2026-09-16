@@ -1,0 +1,6 @@
+{
+  "@SIX:ready@": "SI-Extensions: 목욕 연동 활성화",
+  "@SIX:fail@": "SI-Extensions: 목욕 연동 실패 - ",
+  "@SIX:bathe@": "목욕하기",
+  "@SIX:shower@": "샤워하기"
+}
