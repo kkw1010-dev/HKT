@@ -101,12 +101,13 @@ def main():
     ):
         check(os.path.isfile(os.path.join(MODS, rel)), "dependency present: " + rel)
 
-    # SI's own Bathe module must be off, or both prompts appear in the water.
+    # SI's own Bathe and Water Undress must be off, or both prompts appear in the water.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")
     if os.path.isfile(SI_SETTINGS):
         with open(SI_SETTINGS, encoding="utf-8") as f:
             settings = json.load(f)
         check(settings["MCP"]["modules"]["Bathe"]["enabled"] is False, "SI Bathe module disabled")
+        check(settings["MCP"]["modules"]["DressActions"]["enabled_water"] is False, "SI Water Undress disabled")
         check(settings["MCP"].get("preset") == 2, "SI preset is Power User (menu keeps module switches)")
 
     if failures:

@@ -107,9 +107,40 @@ offer event=0 dirt=0 sent=TRUE      <- next water entry: BiS reset the dirt
   non-clothing slot-60 items, or excluding that item from SI's check).
 - The load path works: `READY (Load) client=5` after loading a save.
 
+## Water Undress takeover (2026-09-17)
+
+Reported in game: SI's `탈의하기` stayed up while naked. Pressing it made two
+sword icons in Skyrim Party Sheet vanish and come back. The only worn item was
+`HDTSMPObjectBase` (`000805:HDT SMP Object - Simple.esp`), which is:
+
+- slot 60, `ArmorType = Clothing`, **NonPlayable**;
+- tagged `SexLabNoStrip` and `OStimNoStrip`;
+- kept equipped by GT Softbody's `DynamicSmpCollision` quest and
+  `SMPCloakFFSelf` effect.
+
+SI counts it as clothing and removes it, and Softbody puts it straight back.
+The Party Sheet icons are most likely this item (the log showed no other
+armour); held weapons are now logged on water entry to confirm that.
+
+The user chose to replace SI's Water Undress as well
+(`DressActions.enabled_water = false`):
+
+- `탈의하기` (key `1`) is offered in water while any strippable item is worn.
+  Strippable excludes non-playable items, the `SexLabNoStrip`, `OStimNoStrip`,
+  `zad_Lockable` and `zad_QuestItem` keywords, and slots 31/40/41/43/50/51
+  (hair, tail, long hair, ears, decapitation).
+- Removed items are remembered (saved with the game). `착용하기` (key `1`) is
+  offered after leaving the water and re-equips them.
+- `목욕하기` now requires "nothing strippable worn" instead of "body slot
+  empty", so undress and bathe take turns on key `1`.
+- BiS itself also strips before its animation and redresses afterwards
+  (`GetDressedAfterBathingEnabled`, default on). That restores only what BiS
+  removed, so it does not conflict.
+
 ## Unverified until played
 
 - The shower prompt (key `2`, under a waterfall) has not been exercised yet.
 - Whether Power User keeps SI's Bathe switch off after SI's menu is opened again.
+- Undress/dress prompts: what gets removed and restored, and whether the Party Sheet swords were the SMP item.
 - Whether the Malignis `A5` set is selected by BiS's own animation settings (a BiS
   MCM choice, not SI-Extensions).

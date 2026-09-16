@@ -4,5 +4,7 @@
   "@SIX:bathe@": "목욕하기",
   "@SIX:shower@": "샤워하기",
   "@SIX:bisoff@": "SI-Extensions: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시",
-  "@SIX:sibathe@": "SI-Extensions: SI 목욕 모듈 켜짐. 프롬프트 중복 발생"
+  "@SIX:sion@": "SI-Extensions: SI 중복 모듈 켜짐 - ",
+  "@SIX:undress@": "탈의하기",
+  "@SIX:dress@": "착용하기"
 }

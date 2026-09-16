@@ -20,7 +20,7 @@ ORIGINAL = os.path.join(MODS, "[NoDelete] 0008 StreamlinedInteractions", REL)
 OVERRIDE = os.path.join(MODS, "SI-Extensions", REL)
 
 # SI module -> the switch SI-Extensions turns off because it replaces that module.
-REPLACED = {"Bathe": "enabled"}
+REPLACED = {"Bathe": "enabled", "DressActions": "enabled_water"}
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2
 
@@ -43,7 +43,7 @@ def main():
         if modules.get(module, {}).get(switch) is not False:
             modules.setdefault(module, {})[switch] = False
             changed = True
-            print("disabled SI module", module)
+            print("disabled SI %s.%s" % (module, switch))
     if changed:
         with open(OVERRIDE, "w", encoding="utf-8", newline="") as f:
             json.dump(settings, f, separators=(",", ":"))
