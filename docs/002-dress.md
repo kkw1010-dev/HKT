@@ -75,11 +75,13 @@ History:
   above, which also removes that race.
 - The water flow and bed detection (`flags=88000003 sleep=true`; chairs and
   benches `sleep=false`) worked throughout.
+- **DLL test 3** (state-based rule): confirmed. Dress appeared at another
+  wardrobe or bed after an undress elsewhere, and after an undress done by
+  hand in the inventory.
 
 ## Unverified until played
 
 - Bed detection on bedrolls and modded beds (vanilla bed confirmed). Every
   aimed furniture logs `furniture <name> flags=<hex> sleep=<bool>`.
-- The state-based rule above, including dressing after an inventory undress.
 - Wardrobe detection on modded containers such as the Snazzy wardrobes.
 - SI's Bed and Wardrobe Undress staying off under the Power User preset.

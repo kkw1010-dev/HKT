@@ -29,7 +29,7 @@ their in-game tests are in git history and in `docs/001`.
 | Module | Needs | Replaces in SI | Status |
 |---|---|---|---|
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
-| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Water flow and bed/wardrobe undress confirmed 2026-09-17; state-based dress (v2) untested |
+| `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Confirmed in game 2026-09-17 (water, beds, wardrobes, state-based dress) |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -41,8 +41,9 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | Aimed at a bed or wardrobe/dresser and within 250 units, strippable items worn | 탈의하기 |
 | At any bed or wardrobe while naked (remembered outfit in inventory), or after leaving water when CIGAR undressed the player | 착용하기 |
 
-Background: `docs/001-bathe-bis-integration.md` and `docs/002-dress.md`. To add
-a module, see `docs/000-adding-a-module.md`.
+Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
+`docs/003-immersive-interactions-analysis.md` (planned `Animals` module). To add
+a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
 ## Layout
 
