@@ -1,5 +1,10 @@
 # 001 · Bathe → Bathing in Skyrim - Renewed
 
+> The tests below ran on the pre-rename build (`SI-Extensions.esp`, scripts
+> `SIX_*`, log `SIX_Bathe.log`). Since 2026-09-17 the same logic is
+> `CIGAR_BatheQuestScript`. The undress and dress part moved to the `dress`
+> module (`002-dress.md`).
+
 ## What SI's Bathe module does
 
 Established from the DLL's string table (SI 1.0.6, 2025-06-21) and BiS scripts

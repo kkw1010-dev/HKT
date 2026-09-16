@@ -1,0 +1,228 @@
+[
+  {
+    "record_type": "Quest",
+    "editorid": "CIGAR_BatheQuest",
+    "ops": [
+      {
+        "field_path": "Name",
+        "value": "CIGAR Bathe"
+      },
+      {
+        "field_path": "Flags",
+        "value": "StartGameEnabled"
+      },
+      {
+        "field_path": "Priority",
+        "value": "0"
+      },
+      {
+        "field_path": "Aliases",
+        "op": "Add",
+        "compose": {
+          "type": "QuestAlias",
+          "fields": {
+            "ID": "0",
+            "Name": "PlayerAlias",
+            "Type": "Reference"
+          },
+          "sets": [
+            {
+              "path": "ForcedReference",
+              "value": "000014:Skyrim.esm"
+            }
+          ]
+        }
+      },
+      {
+        "field_path": "VirtualMachineAdapter",
+        "compose": {
+          "type": "QuestAdapter",
+          "fields": {
+            "Version": "5",
+            "ObjectFormat": "2"
+          },
+          "sets": [
+            {
+              "path": "Scripts",
+              "verb": "Add",
+              "compose": {
+                "type": "ScriptEntry",
+                "fields": {
+                  "Name": "CIGAR_BatheQuestScript",
+                  "Flags": "Local"
+                },
+                "sets": [
+                  {
+                    "path": "Properties",
+                    "verb": "Add",
+                    "compose": {
+                      "type": "ScriptObjectProperty",
+                      "fields": {
+                        "Name": "PlayerRef",
+                        "Flags": "Edited",
+                        "Object": "000014:Skyrim.esm",
+                        "Alias": "-1"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "path": "Aliases",
+              "verb": "Add",
+              "compose": {
+                "type": "QuestFragmentAlias",
+                "fields": {
+                  "Version": "5",
+                  "ObjectFormat": "2"
+                },
+                "sets": [
+                  {
+                    "path": "Property",
+                    "compose": {
+                      "type": "ScriptObjectProperty",
+                      "fields": {
+                        "Alias": "0"
+                      },
+                      "sets": [
+                        {
+                          "path": "Object",
+                          "value": "@CIGAR_BatheQuest"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "path": "Scripts",
+                    "verb": "Add",
+                    "compose": {
+                      "type": "ScriptEntry",
+                      "fields": {
+                        "Name": "CIGAR_PlayerAlias",
+                        "Flags": "Local"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "record_type": "Quest",
+    "editorid": "CIGAR_DressQuest",
+    "ops": [
+      {
+        "field_path": "Name",
+        "value": "CIGAR Dress"
+      },
+      {
+        "field_path": "Flags",
+        "value": "StartGameEnabled"
+      },
+      {
+        "field_path": "Priority",
+        "value": "0"
+      },
+      {
+        "field_path": "Aliases",
+        "op": "Add",
+        "compose": {
+          "type": "QuestAlias",
+          "fields": {
+            "ID": "0",
+            "Name": "PlayerAlias",
+            "Type": "Reference"
+          },
+          "sets": [
+            {
+              "path": "ForcedReference",
+              "value": "000014:Skyrim.esm"
+            }
+          ]
+        }
+      },
+      {
+        "field_path": "VirtualMachineAdapter",
+        "compose": {
+          "type": "QuestAdapter",
+          "fields": {
+            "Version": "5",
+            "ObjectFormat": "2"
+          },
+          "sets": [
+            {
+              "path": "Scripts",
+              "verb": "Add",
+              "compose": {
+                "type": "ScriptEntry",
+                "fields": {
+                  "Name": "CIGAR_DressQuestScript",
+                  "Flags": "Local"
+                },
+                "sets": [
+                  {
+                    "path": "Properties",
+                    "verb": "Add",
+                    "compose": {
+                      "type": "ScriptObjectProperty",
+                      "fields": {
+                        "Name": "PlayerRef",
+                        "Flags": "Edited",
+                        "Object": "000014:Skyrim.esm",
+                        "Alias": "-1"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "path": "Aliases",
+              "verb": "Add",
+              "compose": {
+                "type": "QuestFragmentAlias",
+                "fields": {
+                  "Version": "5",
+                  "ObjectFormat": "2"
+                },
+                "sets": [
+                  {
+                    "path": "Property",
+                    "compose": {
+                      "type": "ScriptObjectProperty",
+                      "fields": {
+                        "Alias": "0"
+                      },
+                      "sets": [
+                        {
+                          "path": "Object",
+                          "value": "@CIGAR_DressQuest"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "path": "Scripts",
+                    "verb": "Add",
+                    "compose": {
+                      "type": "ScriptEntry",
+                      "fields": {
+                        "Name": "CIGAR_PlayerAlias",
+                        "Flags": "Local"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

@@ -1,73 +1,116 @@
-# SI-Extensions
+# CIGAR
 
-Personal extensions to **Streamlined Interactions** (SI) for the TAKEALOOK Skyrim SE
-modlist (`C:\TAKEALOOK`, profile `TKL - MUNG ADDON`). Not distributed.
+**C**ontextual **I**nteraction, **G**ameplay **A**cceleration & **R**hythm.
 
-SI is a closed-source SKSE DLL. Extensions here never touch its files: each one
-turns the SI module it replaces off through a settings override and provides its
-own SkyPrompt prompt that drives the target mod's real logic.
+These are personal SkyPrompt interactions for the TAKEALOOK Skyrim SE modlist
+(`C:\TAKEALOOK`, profile `TKL - MUNG ADDON`). They are not distributed.
+
+CIGAR is its own mod. It does not depend on Streamlined Interactions (SI).
+When SI ships a module that CIGAR replaces, CIGAR switches that SI module off
+through a `settings.json` override in its own mod folder, so disabling CIGAR
+brings SI's version back. SI keeps every module CIGAR does not replace.
+
+This repository was called `SI-Extensions` until 2026-09-17. The scripts used
+the `SIX_` prefix and the plugin was `SI-Extensions.esp`.
 
 ## Modules
 
-| Module | Replaces SI module | Target mod | Status |
+| Module | Quest | Replaces in SI | Status |
 |---|---|---|---|
-| `bathe` | `Bathe` (plays `mzinBatheA5_T1` only; BiS dirt state untouched) and `DressActions.enabled_water` (strips the Softbody SMP carrier) | Bathing in Skyrim - Renewed 2.7.8 | **Working in game (2026-09-17)**: prompt → BiS wash, dirt reset confirmed. undress → bathe → dress confirmed (2026-09-17); shower path untested |
+| `bathe` | `CIGAR_BatheQuest` | `Bathe` (animation only; BiS dirt untouched) | Bathe confirmed in game 2026-09-17; shower untested |
+| `dress` | `CIGAR_DressQuest` | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Water undress→dress confirmed 2026-09-17; bed and wardrobe untested |
 
-See `docs/001-bathe-bis-integration.md` for the analysis and test results behind
-`bathe`, and `docs/000-adding-a-module.md` for the procedure to add the next one.
+Prompts (keyboard):
+
+| Where | Prompt | Key |
+|---|---|---|
+| In water, strippable items worn | 탈의하기 | 1 |
+| In water, nothing strippable worn, BiS on | 목욕하기 (dirt %) | 1 |
+| Under a waterfall | 샤워하기 (dirt %) | 2 |
+| Aimed at a bed or wardrobe/dresser and within 250 units, strippable items worn | 탈의하기 | 1 |
+| Away from water/bed/wardrobe with items CIGAR removed | 착용하기 | 1 |
+
+Background: `docs/001-bathe-bis-integration.md` (bathe, test history, the
+water-undress findings) and `docs/002-dress.md`. To add a module, see
+`docs/000-adding-a-module.md`.
 
 ## Layout
 
 ```text
-modules/<name>/Source/Scripts/   Papyrus sources (ASCII only)
-modules/<name>/strings.ko.json   Korean player-facing text, patched into the .pex after compiling
-stubs/                           compile-time declarations of third-party scripts; never deployed
-plugin/SI-Extensions.records.json  houseCARL manifest the plugin was generated from
-plugin/SI-Extensions.esp         the generated ESL-flagged plugin (deployed copy must match)
-tools/Build.ps1                  compile, patch text, deploy, verify
-tools/patch_pex_strings.py       placeholder -> UTF-8 rewrite of a .pex string table
-tools/sync_si_settings.py        keeps replaced SI modules switched off in the override
-tools/verify_deploy.py           deployment assertions (exit 1 on any failure)
+modules/core/     CIGAR_ModuleBase (SkyPrompt client, tick, prompts, log, SI checks),
+                  CIGAR_Util (strip rules, worn description), CIGAR_PlayerAlias (reload)
+modules/<name>/   one quest script per module, extending CIGAR_ModuleBase
+strings.ko.json   Korean player-facing text, patched into the .pex after compiling
+stubs/            compile-time declarations of third-party scripts; never deployed
+plugin/CIGAR.records.json  houseCARL manifest the plugin was generated from
+plugin/CIGAR.esp  the generated ESL-flagged plugin (deployed from here)
+tools/Build.ps1   compile, patch text, deploy, sync SI settings, verify
+tools/register_profile.py  enable CIGAR in the active MO2 profile (MO2 closed)
+tools/sync_si_settings.py  keep replaced SI modules off and SI on the Power User preset
+tools/verify_deploy.py     deployment assertions (exit 1 on any failure)
+tools/patch_pex_strings.py placeholder -> UTF-8 rewrite of .pex string tables
 ```
 
-Deployed to the MO2 mod `C:\TAKEALOOK\mods\SI-Extensions`, placed directly above
-`[NoDelete] 0008 StreamlinedInteractions` so its `settings.json` override wins;
-the plugin loads right after `Bathing in Skyrim.esp`.
+The mod is deployed to `C:\TAKEALOOK\mods\CIGAR`, directly above
+`[NoDelete] 0008 StreamlinedInteractions`. `CIGAR.esp` loads right after
+`Bathing in Skyrim.esp`.
 
 ## Build
 
 Close Skyrim first (MO2 may stay open), then:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\SI-Extensions\tools\Build.ps1 -Deploy
+powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Build.ps1 -Deploy
 ```
 
-Without `-Deploy` it only compiles and patches into `build/`.
+Without `-Deploy`, the script only compiles and patches into `build/`. On a
+fresh profile, run `python tools\register_profile.py` once with MO2 closed.
 
 ### Why the Korean text is patched in
 
-The Creation Kit's `PapyrusCompiler.exe` decodes sources in the system ANSI code
-page (949 here). UTF-8 Korean literals get mangled and the parse fails
-(`mismatched character '\n' expecting '"'`). Sources therefore use placeholders
-like `@SIX:bathe@`; `patch_pex_strings.py` swaps them for UTF-8 in the compiled
-string table, which SkyPrompt renders correctly (Camping Plus Plus KR ships UTF-8
-the same way). The build fails if a placeholder is missing or left behind,
-including inside a docstring.
+The Creation Kit's `PapyrusCompiler.exe` decodes sources in the system ANSI
+code page (949 here). UTF-8 Korean literals get mangled, and the parse fails
+with `mismatched character '\n' expecting '"'`.
+
+To work around this, sources use placeholders such as `@CIGAR:bathe@`.
+`patch_pex_strings.py` then swaps them for UTF-8 in the compiled string tables,
+and SkyPrompt renders that correctly. The build fails when a placeholder is
+unmapped, unused, or left behind (including inside a docstring).
 
 ### Plugin changes
 
-The plugin was generated with houseCARL (`housecarl_create_plugin` with ESL, then
-`housecarl_create` with `records=@plugin/SI-Extensions.records.json` and
-`into=SI-Extensions.esp`). After changing the manifest, regenerate the plugin, copy it
-to `plugin/`, and rebuild. Changing quest scripts or properties needs a new game,
-which is how this modlist is tested anyway.
+To change the plugin, edit `plugin/CIGAR.records.json` and regenerate the
+plugin with houseCARL:
+
+1. `housecarl_create_plugin` with `patch=CIGAR` and `esl=true`, into a fresh folder.
+2. `housecarl_create` with `records=@plugin/CIGAR.records.json` and `into=CIGAR.esp`.
+3. Copy the result to `plugin/`.
+
+Then check it with
+`housecarl_check plugins=["CIGAR.esp"] findings=["errors","scripts"]`.
+
+Changing quests or script variables needs a new game, which is how this
+modlist is tested anyway.
 
 ## Runtime diagnostics
 
-Every module writes a line on startup, on each prompt it offers, on every
-SkyPrompt event, and on each action result:
+Every module writes to `CIGAR.log`, which MO2 routes to
+`overwrite\SKSE\Plugins\CIGAR\`. Lines carry a timestamp and a `[Bathe]` or
+`[Dress]` tag. Each module logs:
 
-- PapyrusUtil log `SIX_Bathe.log` (MO2 routes it to `overwrite`; search there for
-  `SI-Extensions`), with timestamps.
-- `Papyrus.0.log` lines prefixed `[SI-Extensions]` when Papyrus logging is on.
-- A notification when startup fails; the reason is also in the log.
+- its startup;
+- every change of its prompt-gate inputs;
+- each prompt it offers and each SkyPrompt event;
+- each action result.
+
+On entering water, a bed or a wardrobe, the log also records every worn slot
+(`(kept)` marks items undress leaves on) and what each hand holds.
+
+A notification appears when:
+
+- a module fails to start;
+- BiS is disabled in its MCM;
+- a replaced SI module has been switched on again.
+
+`Papyrus.0.log` carries the same lines prefixed `[CIGAR]` when Papyrus logging
+is on.

@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-  Compile every SI-Extensions module, patch its Korean text into the .pex files,
-  and optionally deploy to the MO2 mod folder and run the deployment checks.
+  Compile every CIGAR module, patch the Korean text into the .pex files, and
+  optionally deploy to the MO2 mod folder and run the deployment checks.
 
 .DESCRIPTION
-  Fails on the first compile error, on any unpatched or missing text placeholder,
-  and (with -Deploy) on any failed deployment check. Skyrim must be closed when
-  deploying; MO2 may stay open (the profile files are only read).
+  Fails on the first compile error, on any unmapped, unused or leftover text
+  placeholder, and (with -Deploy) on any failed deployment check. Skyrim must be
+  closed when deploying; MO2 may stay open (the profile files are only read).
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\Build.ps1 -Deploy
@@ -21,11 +21,15 @@ $Mods      = 'C:\TAKEALOOK\mods'
 $Compiler  = Join-Path $Mods 'Creation Kit\Root\Papyrus Compiler\PapyrusCompiler.exe'
 $Vanilla   = Join-Path $Mods 'Papyrus Compiler\source\scripts'
 $Flags     = Join-Path $Vanilla 'TESV_Papyrus_Flags.flg'
-$ModFolder = Join-Path $Mods 'SI-Extensions'
+$ModFolder = Join-Path $Mods 'CIGAR'
 $BuildDir  = Join-Path $Repo 'build\Scripts'
+$Strings   = Join-Path $Repo 'strings.ko.json'
 
-# Precedence: stubs, then SKSE (extends vanilla classes), then framework APIs, then vanilla.
-$Imports = @(
+$ModuleSources = Get-ChildItem (Join-Path $Repo 'modules') -Directory |
+    ForEach-Object { Join-Path $_.FullName 'Source\Scripts' }
+
+# Precedence: CIGAR sources, stubs, SKSE (extends vanilla classes), framework APIs, vanilla.
+$Imports = @($ModuleSources) + @(
     (Join-Path $Repo 'stubs'),
     (Join-Path $Mods 'Skyrim Script Extender (SKSE64)\Scripts\Source'),
     (Join-Path $Mods '[NoDelete] 0007 SkyPrompt NEW\Scripts\Source'),
@@ -34,19 +38,18 @@ $Imports = @(
     $Vanilla
 )
 
-foreach ($p in @($Compiler, $Flags) + $Imports) {
+foreach ($p in @($Compiler, $Flags, $Strings) + $Imports) {
     if (-not (Test-Path -LiteralPath $p)) { throw "Missing build input: $p" }
 }
 
 New-Item -ItemType Directory -Force $BuildDir | Out-Null
 Get-ChildItem $BuildDir -Filter *.pex | Remove-Item -Force
 
-foreach ($module in Get-ChildItem (Join-Path $Repo 'modules') -Directory) {
-    $srcDir = Join-Path $module.FullName 'Source\Scripts'
-    $sources = Get-ChildItem $srcDir -Filter *.psc
-    foreach ($psc in $sources) {
-        $importArg = (@($srcDir) + $Imports) -join ';'
-        Write-Host "compile $($module.Name)/$($psc.Name)"
+$importArg = $Imports -join ';'
+$built = @()
+foreach ($srcDir in $ModuleSources) {
+    foreach ($psc in Get-ChildItem $srcDir -Filter *.psc) {
+        Write-Host "compile $($psc.Name)"
         # The compiler reports on stderr; judge by exit code, not by stderr output.
         $ErrorActionPreference = 'Continue'
         $out = & $Compiler $psc.FullName "-i=$importArg" "-o=$BuildDir" "-f=$Flags" 2>&1
@@ -55,25 +58,15 @@ foreach ($module in Get-ChildItem (Join-Path $Repo 'modules') -Directory) {
             $out | Write-Host
             throw "Compile failed: $($psc.Name)"
         }
-    }
-
-    $strings = Join-Path $module.FullName 'strings.ko.json'
-    if (Test-Path $strings) {
-        $patched = 0
-        foreach ($psc in $sources) {
-            $pex = Join-Path $BuildDir ($psc.BaseName + '.pex')
-            $bytes = [IO.File]::ReadAllBytes($pex)
-            if ([Text.Encoding]::ASCII.GetString($bytes).Contains('@SIX:')) {
-                & python (Join-Path $PSScriptRoot 'patch_pex_strings.py') $pex $strings
-                if ($LASTEXITCODE -ne 0) { throw "Text patch failed: $pex" }
-                & python (Join-Path $PSScriptRoot 'patch_pex_strings.py') --verify $pex $strings
-                if ($LASTEXITCODE -ne 0) { throw "Text verify failed: $pex" }
-                $patched++
-            }
-        }
-        if ($patched -eq 0) { throw "$strings exists but no compiled script of $($module.Name) uses a placeholder" }
+        $built += Join-Path $BuildDir ($psc.BaseName + '.pex')
     }
 }
+
+$patcher = Join-Path $PSScriptRoot 'patch_pex_strings.py'
+& python $patcher $Strings @built
+if ($LASTEXITCODE -ne 0) { throw 'Text patch failed.' }
+& python $patcher --verify $Strings @built
+if ($LASTEXITCODE -ne 0) { throw 'Text verify failed.' }
 
 if (-not $Deploy) {
     Write-Host "build OK (not deployed): $BuildDir"
@@ -89,11 +82,13 @@ if (Get-Process -Name SkyrimSE -ErrorAction SilentlyContinue) {
 $deployScripts = Join-Path $ModFolder 'Scripts'
 $deploySource  = Join-Path $ModFolder 'Source\Scripts'
 New-Item -ItemType Directory -Force $deployScripts, $deploySource | Out-Null
-Get-ChildItem $deployScripts -Filter 'SIX_*.pex' | Remove-Item -Force
-Copy-Item (Join-Path $BuildDir 'SIX_*.pex') $deployScripts
-foreach ($module in Get-ChildItem (Join-Path $Repo 'modules') -Directory) {
-    Copy-Item (Join-Path $module.FullName 'Source\Scripts\*.psc') $deploySource
+Get-ChildItem $deployScripts -Filter 'CIGAR_*.pex' | Remove-Item -Force
+Get-ChildItem $deploySource -Filter 'CIGAR_*.psc' | Remove-Item -Force
+Copy-Item $built $deployScripts
+foreach ($srcDir in $ModuleSources) {
+    Copy-Item (Join-Path $srcDir '*.psc') $deploySource
 }
+Copy-Item (Join-Path $Repo 'plugin\CIGAR.esp') $ModFolder
 
 & python (Join-Path $PSScriptRoot 'sync_si_settings.py')
 if ($LASTEXITCODE -ne 0) { throw 'SI settings override failed.' }

@@ -1,9 +1,9 @@
 # 000 · Adding a module (playbook)
 
-This procedure produced the working `bathe` module. Follow it for the next SI
-replacement, so the lessons from `bathe` do not have to be learned again.
+This procedure produced the working `bathe` and `dress` modules. Follow it for
+the next CIGAR module, so their lessons do not have to be learned again.
 
-## 1. Find out what the SI module really does
+## 1. Find out what the target does (and whether SI already does it)
 
 1. Dump the DLL strings (Python regex over
    `mods/[NoDelete] 0008 StreamlinedInteractions/SKSE/Plugins/StreamlinedInteractions.dll`).
@@ -20,10 +20,13 @@ replacement, so the lessons from `bathe` do not have to be learned again.
 
 ## 2. Write the module
 
-- Put sources in `modules/<name>/Source/Scripts/` with the `SIX_` prefix,
-  **ASCII only**.
-- Write player-facing text as `"@SIX:<key>@"` and add the Korean text to
-  `modules/<name>/strings.ko.json` in short administrative style. The build fails
+- Put sources in `modules/<name>/Source/Scripts/` with the `CIGAR_` prefix,
+  **ASCII only**. Write one quest script that extends `CIGAR_ModuleBase` and
+  overrides `ModuleName`, `ModuleStartup`, `ModuleStatus`, `ModuleReset`,
+  `Tick` and `OnPromptAccepted`. Build every prompt from
+  `UpdatePrompt`, `Withdraw` and `LogGate`.
+- Write player-facing text as `"@CIGAR:<key>@"` and add the Korean text to
+  the shared `strings.ko.json` in short administrative style. The build fails
   if a placeholder is left or missing, including one inside a docstring.
 - Declare each third-party script you call as a stub in `stubs/`, with signatures
   taken from the decompile. Stubs are never deployed, and `verify_deploy.py`
@@ -41,7 +44,7 @@ replacement, so the lessons from `bathe` do not have to be learned again.
   expired.
 - Self-reporting is required:
   - log to `MiscUtil.WriteToFile` (it lands in
-    `overwrite/SKSE/Plugins/SI-Extensions/`);
+    `overwrite/SKSE/Plugins/CIGAR/`); `CIGAR_ModuleBase.Log` does this for you;
   - log each change of the prompt-gate inputs;
   - notify once for every configuration state that silently blocks the module.
 - If the module replaces an SI module, add it to `REPLACED` in
@@ -51,21 +54,24 @@ replacement, so the lessons from `bathe` do not have to be learned again.
 
 ## 3. Plugin records
 
-- Add records to `plugin/SI-Extensions.records.json`, then run `housecarl_create`
-  with `records=@<that file>` and `into="SI-Extensions.esp"`.
-- Copy `mods/SI-Extensions/SI-Extensions.esp` to `plugin/`, because the verifier
+- Add a quest to `plugin/CIGAR.records.json`, following the existing entries:
+  start-game-enabled, a `PlayerRef` property, and a player alias with
+  `CIGAR_PlayerAlias`. Then run `housecarl_create` with `records=@<that file>`
+  and `into="CIGAR.esp"`, starting from a fresh header-only ESL.
+- Copy `mods/CIGAR/CIGAR.esp` to `plugin/`, because the build deploys from there and the verifier
   requires the two to be identical.
-- Run `housecarl_check plugins=["SI-Extensions.esp"] findings=["errors","scripts"]`.
+- Run `housecarl_check plugins=["CIGAR.esp"] findings=["errors","scripts"]`.
   The result must show 0 dangling references and 0 unbound properties.
 - Keep the ESL flag. `housecarl_create` preserves it; the verifier checks `0x200`.
 
 ## 4. Build, deploy, verify
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\SI-Extensions\tools\Build.ps1 -Deploy
+powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Build.ps1 -Deploy
 ```
 
 - Skyrim must be closed; MO2 may stay open.
-- Add the new `.pex` names to the list in `tools/verify_deploy.py`.
-- Test on a new game. Read `SIX_*.log` before asking the user anything: every
+- If the module replaces SI switches, add them to `REPLACED` in both
+  `tools/sync_si_settings.py` and `tools/verify_deploy.py`.
+- Test on a new game. Read `CIGAR.log` before asking the user anything: every
   failure seen so far was explained by that log.

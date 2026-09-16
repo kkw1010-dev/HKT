@@ -2,21 +2,22 @@
 
 The Creation Kit's PapyrusCompiler.exe decodes .psc files in the system ANSI code
 page (949 on this machine), which corrupts UTF-8 Korean literals and breaks the
-parse. Sources therefore carry placeholders like "@SIX:bathe@", and this tool
-rewrites them in the .pex string table after compiling. Every other section of a
+parse. Sources therefore carry placeholders like "@CIGAR:bathe@", and this tool
+rewrites them in the .pex string tables after compiling. Every other section of a
 .pex refers to strings by index, so changing a string's length is safe.
 
-Fails (exit 1) when a mapped placeholder is missing from the string table, or
-when any "@SIX:" placeholder is left unmapped.
+Fails (exit 1) when any "@CIGAR:" placeholder is unmapped, or when a mapped
+placeholder is used by none of the given files.
 
-usage: patch_pex_strings.py <file.pex> <strings.json>
+usage: patch_pex_strings.py <strings.json> <file.pex>...
+       patch_pex_strings.py --verify <strings.json> <file.pex>...
 """
 import json
 import struct
 import sys
 
 MAGIC = 0xFA57C0DE
-PLACEHOLDER_PREFIX = b"@SIX:"
+PLACEHOLDER_PREFIX = b"@CIGAR:"
 
 
 def read_wstring(data, pos):
@@ -62,42 +63,54 @@ def patch(pex_path, mapping_path):
             raise SystemExit("string too long after patching: %r" % s[:40])
         out.append(struct.pack(">H", len(s)) + s)
 
-    missing = [k.decode() for k, n in hits.items() if n == 0]
-    if missing:
-        raise SystemExit("placeholders not found in %s: %s" % (pex_path, ", ".join(missing)))
+    if not any(hits.values()):
+        return hits
 
     patched = data[:table_pos] + struct.pack(">H", count) + b"".join(out) + rest
     with open(pex_path, "wb") as f:
         f.write(patched)
-    for k, n in hits.items():
-        print("patched %s -> %s" % (k.decode(), mapping[k].decode("utf-8")))
+    used = [k.decode() for k, n in hits.items() if n]
+    print("patched %s: %s" % (pex_path, ", ".join(used)))
+    return hits
 
 
-def verify(pex_path, mapping_path):
-    """Re-read a patched .pex and confirm every mapped value is present."""
-    with open(pex_path, "rb") as f:
-        data = f.read()
+def verify(mapping_path, pex_paths):
+    """Re-read patched files: no placeholder left, every mapped text present somewhere."""
     with open(mapping_path, encoding="utf-8") as f:
         values = [v.encode("utf-8") for v in json.load(f).values()]
-    pos = locate_string_table(data)
-    (count,) = struct.unpack_from(">H", data, pos)
-    pos += 2
     strings = set()
-    for _ in range(count):
-        s, pos = read_wstring(data, pos)
-        if PLACEHOLDER_PREFIX in s:
-            raise SystemExit("placeholder left in %s: %r" % (pex_path, s))
-        strings.add(s)
+    for pex_path in pex_paths:
+        with open(pex_path, "rb") as f:
+            data = f.read()
+        pos = locate_string_table(data)
+        (count,) = struct.unpack_from(">H", data, pos)
+        pos += 2
+        for _ in range(count):
+            s, pos = read_wstring(data, pos)
+            if PLACEHOLDER_PREFIX in s:
+                raise SystemExit("placeholder left in %s: %r" % (pex_path, s))
+            strings.add(s)
     absent = [v.decode("utf-8") for v in values if v not in strings]
     if absent:
-        raise SystemExit("patched text missing from %s: %s" % (pex_path, absent))
-    print("verified %s: %d string(s) present" % (pex_path, len(values)))
+        raise SystemExit("patched text missing: %s" % absent)
+    print("verified %d text(s) across %d file(s)" % (len(values), len(pex_paths)))
+
+
+def main(argv):
+    if len(argv) >= 3 and argv[0] == "--verify":
+        verify(argv[1], argv[2:])
+        return
+    if len(argv) < 2 or argv[0].startswith("--"):
+        raise SystemExit(__doc__)
+    mapping_path, pex_paths = argv[0], argv[1:]
+    total = {}
+    for pex_path in pex_paths:
+        for k, n in patch(pex_path, mapping_path).items():
+            total[k] = total.get(k, 0) + n
+    unused = [k.decode() for k, n in total.items() if n == 0]
+    if unused:
+        raise SystemExit("mapped placeholders used by no script: " + ", ".join(unused))
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4 and sys.argv[1] == "--verify":
-        verify(sys.argv[2], sys.argv[3])
-    elif len(sys.argv) == 3:
-        patch(sys.argv[1], sys.argv[2])
-    else:
-        raise SystemExit(__doc__)
+    main(sys.argv[1:])

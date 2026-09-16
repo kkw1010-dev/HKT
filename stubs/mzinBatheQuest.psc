@@ -1,6 +1,6 @@
 ScriptName mzinBatheQuest extends Quest
 {COMPILE-TIME STUB. Declares only the Bathing in Skyrim - Renewed 2.7.8 members
-SI-Extensions calls; the real script ships with BiS. Never deploy this file.
+CIGAR calls; the real script ships with BiS. Never deploy this file.
 Signatures were read from the decompiled mzinBatheQuest.pex.}
 
 GlobalVariable Property WaterRestrictionEnabled Auto

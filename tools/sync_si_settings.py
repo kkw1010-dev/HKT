@@ -1,7 +1,7 @@
-"""Keep Streamlined Interactions' own modules from duplicating SI-Extensions ones.
+"""Keep Streamlined Interactions' own modules from duplicating CIGAR ones.
 
-SI-Extensions ships an override of SI's settings.json in its own mod folder, which
-wins over the original because SI-Extensions has higher MO2 priority. SI writes
+CIGAR ships an override of SI's settings.json in its own mod folder, which
+wins over the original because CIGAR has higher MO2 priority. SI writes
 in-game setting changes back to that winning copy, so an existing override is
 kept and only the replaced modules are forced off. The first deploy seeds the
 override from SI's original file.
@@ -17,10 +17,15 @@ import shutil
 MODS = r"C:\TAKEALOOK\mods"
 REL = os.path.join("SKSE", "Plugins", "StreamlinedInteractions", "settings.json")
 ORIGINAL = os.path.join(MODS, "[NoDelete] 0008 StreamlinedInteractions", REL)
-OVERRIDE = os.path.join(MODS, "SI-Extensions", REL)
+OVERRIDE = os.path.join(MODS, "CIGAR", REL)
 
-# SI module -> the switch SI-Extensions turns off because it replaces that module.
-REPLACED = {"Bathe": "enabled", "DressActions": "enabled_water"}
+# (SI module, switch) pairs CIGAR turns off because it replaces them.
+REPLACED = [
+    ("Bathe", "enabled"),
+    ("DressActions", "enabled_water"),
+    ("DressActions", "enabled_bed"),
+    ("DressActions", "enabled_wardrobe"),
+]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2
 
@@ -39,7 +44,7 @@ def main():
         print("SI preset %s -> %s (Power User)" % (settings["MCP"].get("preset"), POWER_USER_PRESET))
         settings["MCP"]["preset"] = POWER_USER_PRESET
         changed = True
-    for module, switch in REPLACED.items():
+    for module, switch in REPLACED:
         if modules.get(module, {}).get(switch) is not False:
             modules.setdefault(module, {})[switch] = False
             changed = True
