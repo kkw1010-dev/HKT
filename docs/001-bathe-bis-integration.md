@@ -53,9 +53,9 @@ Keys are explicit keyboard DIK codes (as Camping Plus Plus does). SkyPrompt's
 default slot keys are the same `1-4`. Gamepad buttons are not sent, because
 SkyPrompt's device and key encoding for pads is not confirmed.
 
-SI's WaterUndress prompt still appears while dressed in water. Once the player
-undresses, it stops and the SI-Extensions prompt takes over, so the two never
-show together.
+SI's WaterUndress prompt stays SI's. It was expected to stop once the body slot
+is empty, but test 1 showed it can persist (see below), so both prompts can show
+at the same time.
 
 ## Test 1 findings (2026-09-16)
 
