@@ -22,7 +22,7 @@ namespace CIGAR
 
 		// Offered below this health fraction. Acheron's knockdown threshold (fKdHealthThresh) is also
 		// 0.2 on this modlist, so the prompt marks the window before the next hit can defeat the player.
-		constexpr float kLowHealth = 0.20f;
+		constexpr float kLowHealth = 0.40f;
 		// Slow motion on the moment the prompt appears; Streamlined Interactions' low-health potion
 		// prompt uses 3 s on this modlist.
 		constexpr float kSlowMultiplier = 0.3f;
