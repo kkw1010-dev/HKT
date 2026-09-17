@@ -139,5 +139,11 @@ keyboard sends, and presses that key itself when the prompt is accepted:
 - The key the mod had before is kept in `CIGAR.json`
   (`promptOnly.<mod>.manualKey`) and restored when the switch is turned off.
 - While the switch is on, a key set in the mod's MCM is moved back to the
-  hidden key (Grapple: within a second; Acheron: at the next load).
+  hidden key within a second (after the menu closes). That key becomes the
+  remembered one.
+- While the switch is off, a key set in the MCM during play is used by the
+  prompt within a second. Grapple's key is re-read from its MCM script.
+  Acheron's is read back with `AcheronMCM.GetSettingInt`, because Acheron
+  writes `Settings.yaml` only on a save. The surrender gate reads `no-key`
+  while the key is unbound.
 - TDM's lock key (middle mouse) is unchanged.

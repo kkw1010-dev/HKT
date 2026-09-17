@@ -270,8 +270,9 @@ def check_surrender(modlist):
         with open(dll, "rb") as f:
             data = f.read()
         check(b"iSurrenderKey" in data and b"iHunterPrideKeyMod" in data, "Acheron DLL still reads iSurrenderKey / iHunterPrideKeyMod")
-        # Prompt-only mode changes the surrender key through AcheronMCM.SetSettingInt.
-        check(b"SetSettingInt" in data and b"AcheronMCM" in data, "Acheron DLL still registers AcheronMCM.SetSettingInt")
+        # Surrender sets and reads back the surrender key through these AcheronMCM natives.
+        check(all(n in data for n in (b"SetSettingInt", b"GetSettingInt", b"AcheronMCM")),
+              "Acheron DLL still registers AcheronMCM.SetSettingInt / GetSettingInt")
     if not os.path.isfile(ACHERON_SETTINGS):
         check(False, "Acheron settings present: " + ACHERON_SETTINGS)
         return
