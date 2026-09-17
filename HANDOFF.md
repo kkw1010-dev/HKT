@@ -10,7 +10,7 @@ status.
    - **Grapple after a new game.** 그래플 must show in melee combat without
      touching Grapple's MCM. `CIGAR.log` must show `Grapple INI kbKey=34 at
      startup` and, in a new game, `Grapple Hotkey is unset; restoring 34`.
-   - **Prompt keys.** CIGAR / 설정 / 프롬프트 키 shows 1–4. Prompts show
+   - **Prompt keys.** CIGAR / 2. 단축키 / 프롬프트 키 shows 1–4. Prompts show
      those keys, and a changed key applies at once. `offer` lines show
      `slot=` and `key=`.
    - **Surrender and the Babo Acheron patch.** `CIGAR.log` must show

@@ -72,7 +72,7 @@ src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarde
 src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
 src/Eat.*           Survival Mode hunger: eats the cheapest suitable food by equipping it (SMI lowers hunger)
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
-src/Panel.*         SKSE Menu Framework page (CIGAR / 설정): switches, live gate and last log line per module
+src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정): switches and live status, keys, module options
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
 lib/commonlibsse-ng alandtse/CommonLibVR branch ng (submodule)
