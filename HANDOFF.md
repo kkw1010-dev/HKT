@@ -21,6 +21,26 @@ Read this first, then `README.md`. The design rationale and test history are in
     outfit from the inventory). In water it offers 탈의하기; after leaving
     water it offers 착용하기 only if CIGAR undressed the player. It keeps the
     Softbody SMP carrier (`HDTSMPObjectBase`) and no-strip/locked items on.
+  - **BaboKey** (`src/BaboKey.*`, `docs/004-babo-key.md`) offers 행동 선택
+    during a BaboDialogue kidnap only while the hotkey acts: the quest is at
+    stage 8–249, in one of four script states, and the player is in the kidnap
+    room's cell. Accepting it calls `BaboDiaMonitorScript.OnKeyDown`.
+    **Built and deployed but not yet tested in game.**
+  - **LockOn** (`src/LockOn.*`, `docs/005-lockon.md`) offers 록온 in combat
+    while TDM is not locked on and 그래플 while it is. Each accept presses
+    that mod's key through `BSInputDeviceManager`, and at load CIGAR syncs
+    Grapple's TDM lock key to TDM's. **Built and deployed but not yet tested
+    in game.**
+  - **Deflate** (`src/Deflate.*`, `docs/006-deflate.md`) is a hold prompt
+    shown while Fill Her Up tracks an amount. SkyPrompt's key down/up events
+    are forwarded to FHU's `OnKeyDown`/`OnKeyUp`, so holding expels until
+    release, as the original key does. **Built and deployed but not yet
+    tested in game.**
+  - **Surrender** (`src/Surrender.*`, `docs/008-surrender.md`) is a hold
+    prompt in combat below 20% health (3 s of x0.3 slow motion, gold pulse)
+    that presses Acheron's surrender key (K). Yamete Kudasai
+    2.2.3 registers its own surrender key but never handles it; Acheron does.
+    **Built and deployed but not yet tested in game.**
 - SI overlap is handled by `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`:
   - SI Bathe and DressActions water/bed/wardrobe are off;
   - SI's preset is pinned to Power User (2), because other presets re-enable
@@ -66,12 +86,16 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 - SkyPrompt 2.3.15 exports only `RequestClientID`/`SendPrompt`/`RemovePrompt`/`RequestTheme`.
   Removal is per sink, so each prompt is its own `PromptSlot`. The API header
   needs `UNICODE`.
+- Hold prompts (`PromptSlot::SetHoldMode`) use 5 down / 6 up instead of
+  accepted; SkyPrompt sends them for any prompt type.
 - Event types: 0 accepted, 1 declined, 2 removed by mod, 3 timing out,
   4 timeout, 5 down, 6 up, 7 move. Act on 0 only.
 - Unequip/equip is queued. Ignore the worn state for a few ticks after
   changing it (`kSettleTicks`), or the logic misreads it; this bug happened
   once.
 - `RE::UI::GameIsPaused()` is non-const.
+- Modules have `Tick()` (1 s) and `FastTick()` (100 ms); both run only while
+  unpaused.
 - CommonLibSSE-NG is GPL-3.0-or-later; mind this before any distribution.
 
 ## Backlog (the user's plan, in the order discussed)
@@ -88,12 +112,12 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 
    **Waiting on the user's decision** to install II (the archive is in
    `C:\TAKEALOOK\downloads`; not installed).
-2. **Babo dialogue hotkey** ("D"). Reuse `C:\TAKEALOOK\TKL-Agent\BDSM_Dev`
-   (`HANDOFF.md`): the interaction key is
-   `BaboDialogueConfigMenu.NotificationKey` on quest `0x2FEA1B`, and
-   `bSurrenderKey` is a bool, not a key. A prompt can simulate that key.
-3. **Submit/Surrender** ("C"). BaboDialogue has surrender logic; investigate
-   its entry points together with item 2.
+2. **Babo dialogue hotkey** ("D"). The kidnap-event part is done as
+   `BaboKey`, pending an in-game test. The key's other branches (merchant
+   enthrall, Riekling Thirsk) are not covered; see `docs/004-babo-key.md`.
+3. **Submit/Surrender** ("C"). The Acheron / Yamete Kudasai surrender is done
+   (`Surrender`). BaboDialogue's own `bSurrenderKey` branch
+   (`BaboSexControllerManager.Surrender(crosshairRef)`) is not covered.
 4. **Simply Knock** ("B"). Not installed. II bundles a
    `simplyknockmainscript.pex` override, so check that interaction first.
 5. **Private Needs** ("E"). Not installed. Prefer wrapping an existing needs

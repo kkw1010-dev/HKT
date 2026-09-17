@@ -1,14 +1,21 @@
+#include "BaboKey.h"
 #include "Bathe.h"
+#include "Deflate.h"
 #include "Dress.h"
+#include "LockOn.h"
 #include "Module.h"
 #include "Prompt.h"
+#include "Surrender.h"
 #include "Util.h"
 
 namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 2> modules{ Bathe::GetSingleton(), Dress::GetSingleton() };
+		static const std::array<Module*, 6> modules{
+			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
+			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton()
+		};
 		return modules;
 	}
 }
@@ -18,10 +25,12 @@ namespace
 	using namespace CIGAR;
 
 	constexpr std::uint32_t kSerializationID = 'CIGR';
-	constexpr auto kTickInterval = 1000ms;
+	constexpr auto kFastInterval = 100ms;
+	constexpr int kFastPerTick = 10;
 
 	std::atomic_bool gameReady{ false };
 	std::atomic_bool tickQueued{ false };
+	std::atomic_bool fullTickDue{ false };
 
 	void InitializeLog()
 	{
@@ -41,6 +50,7 @@ namespace
 	void RunTick()
 	{
 		tickQueued = false;
+		const bool full = fullTickDue.exchange(false);
 		if (!gameReady) {
 			return;
 		}
@@ -50,18 +60,24 @@ namespace
 			return;
 		}
 		for (auto* module : Modules()) {
-			module->Tick();
+			module->FastTick();
+			if (full) {
+				module->Tick();
+			}
 		}
 	}
 
-	// Paces the tick from its own thread and posts one task per interval; a task that re-queues
-	// itself would run the whole loop inside a single frame.
+	// Paces the ticks from its own thread and posts one task per 100 ms, running Tick() on every
+	// tenth; a task that re-queues itself would run the whole loop inside a single frame.
 	void StartTicker()
 	{
 		static std::once_flag started;
 		std::call_once(started, [] { std::thread([] {
-			for (;;) {
-				std::this_thread::sleep_for(kTickInterval);
+			for (int n = 1;; ++n) {
+				std::this_thread::sleep_for(kFastInterval);
+				if (n % kFastPerTick == 0) {
+					fullTickDue = true;
+				}
 				if (gameReady && !tickQueued.exchange(true)) {
 					SKSE::GetTaskInterface()->AddTask(RunTick);
 				}

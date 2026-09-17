@@ -24,10 +24,15 @@ namespace CIGAR::Util
 
 	std::int32_t ItemCount(RE::Actor* a_actor, RE::TESBoundObject* a_item);
 
+	bool EqualsNoCase(std::string_view a_left, std::string_view a_right);
 	bool ContainsNoCase(std::string_view a_haystack, std::string_view a_needle);
 
 	// The script object of class a_class bound to a_form, or null.
 	RE::BSTSmartPointer<RE::BSScript::Object> ScriptObject(RE::TESForm* a_form, const char* a_class);
+	RE::BSTSmartPointer<RE::BSScript::Object> ScriptObject(RE::BGSRefAlias* a_alias, const char* a_class);
+	// The VM handle of a form or alias, or the empty handle.
+	RE::VMHandle Handle(RE::TESForm* a_form);
+	RE::VMHandle Handle(RE::BGSRefAlias* a_alias);
 
 	// A form-typed Auto property of a bound script object, or null.
 	template <class T>
@@ -42,6 +47,18 @@ namespace CIGAR::Util
 		}
 		return var->Unpack<T*>();
 	}
+
+	// An int property of a bound script object, or a_default.
+	std::int32_t ScriptInt(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, std::int32_t a_default = -1);
+	bool ScriptBool(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name);
+
+	// An integer from a Data-relative INI file (read through MO2's VFS), or nullopt.
+	std::optional<std::int64_t> IniInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key);
+
+	// Presses and releases a key through the game's input event source, as SKSE-style key codes:
+	// 0-255 keyboard scan codes, 256-263 mouse buttons. Input sinks such as True Directional
+	// Movement see it like a real press. Returns false for other codes (gamepad is not supported).
+	bool PressKey(std::int64_t a_code);
 
 	// Streamlined Interactions switches CIGAR replaces. SI rewrites its settings.json from its menu,
 	// so the file is read as it is now. Returns 1 on, 0 off, -1 unreadable or SI absent.

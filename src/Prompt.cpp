@@ -72,9 +72,22 @@ namespace CIGAR
 		// SkyPrompt reads the prompt later through GetPrompts(), so the text must outlive this call.
 		text = std::move(a_text);
 		// No button list: SkyPrompt assigns the user's default keys for keyboard and gamepad.
-		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, SkyPromptAPI::kSinglePress, kPlayerRef);
+		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, kPlayerRef, {}, color);
 		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
 		owner->Log("offer event={} '{}' sent={}", id, text, sent);
+	}
+
+	void PromptSlot::SetColor(std::uint32_t a_color)
+	{
+		if (color == a_color) {
+			return;
+		}
+		color = a_color;
+		if (offered && Prompts::Available()) {
+			// SkyPrompt refreshes text, colour and progress of a prompt that is already queued.
+			prompts[0].text_color = color;
+			static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
+		}
 	}
 
 	void PromptSlot::Withdraw()
@@ -96,10 +109,19 @@ namespace CIGAR
 		const auto eventID = a_event.prompt.eventID;
 		const auto module = owner;
 		logs::info("[{}] prompt event {} ({}) event={}", module->Name(), EventName(type), static_cast<int>(type), eventID);
+		auto* self = const_cast<PromptSlot*>(this);
+		if (hold) {
+			const bool down = type == SkyPromptAPI::kDown;
+			const bool ends = type == SkyPromptAPI::kUp || type == SkyPromptAPI::kRemovedByMod ||
+			                  type == SkyPromptAPI::kTimeout || type == SkyPromptAPI::kDeclined;
+			if (down || ends) {
+				SKSE::GetTaskInterface()->AddTask([module, eventID, down]() { module->OnHold(eventID, down); });
+			}
+			return;
+		}
 		if (type != SkyPromptAPI::kAccepted) {
 			return;
 		}
-		auto* self = const_cast<PromptSlot*>(this);
 		SKSE::GetTaskInterface()->AddTask([self, module, eventID]() {
 			self->Withdraw();
 			module->OnAccepted(eventID);

@@ -27,6 +27,13 @@ namespace CIGAR
 		void Update(bool a_can, const std::function<std::string()>& a_text);
 		void Withdraw();
 		void Reset() { offered = false; }
+		// A hold prompt reports key down/up to OnHold and stays on screen when accepted.
+		void SetHoldMode(bool a_hold) { hold = a_hold; }
+		bool Offered() const { return offered; }
+		// Changes the text colour (ImGui ABGR); an offered prompt is updated in place.
+		void SetColor(std::uint32_t a_color);
+		// kHold shows SkyPrompt's progress ring and accepts only after a full hold.
+		void SetPromptType(SkyPromptAPI::PromptType a_type) { promptType = a_type; }
 
 		std::span<const SkyPromptAPI::Prompt> GetPrompts() const override;
 		void ProcessEvent(SkyPromptAPI::PromptEvent a_event) const override;
@@ -39,5 +46,8 @@ namespace CIGAR
 		std::string text;
 		std::array<SkyPromptAPI::Prompt, 1> prompts;
 		bool offered{ false };
+		bool hold{ false };
+		std::uint32_t color{ 0xFFFFFFFF };
+		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
 	};
 }

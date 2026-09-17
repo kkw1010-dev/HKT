@@ -83,6 +83,13 @@ namespace CIGAR::Util
 		return it != inventory.end() ? it->second.first : 0;
 	}
 
+	bool EqualsNoCase(std::string_view a_left, std::string_view a_right)
+	{
+		return a_left.size() == a_right.size() && std::ranges::equal(a_left, a_right, [](char a, char b) {
+			return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b));
+		});
+	}
+
 	bool ContainsNoCase(std::string_view a_haystack, std::string_view a_needle)
 	{
 		const auto it = std::ranges::search(a_haystack, a_needle, [](char a, char b) {
@@ -91,20 +98,134 @@ namespace CIGAR::Util
 		return !it.empty();
 	}
 
+	namespace
+	{
+		RE::VMHandle HandleOf(RE::VMTypeID a_type, const void* a_object)
+		{
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!vm) {
+				return 0;
+			}
+			auto* policy = vm->GetObjectHandlePolicy();
+			return a_object ? policy->GetHandleForObject(a_type, a_object) : policy->EmptyHandle();
+		}
+
+		RE::BSTSmartPointer<RE::BSScript::Object> BoundObject(RE::VMHandle a_handle, const char* a_class)
+		{
+			RE::BSTSmartPointer<RE::BSScript::Object> object;
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (vm && a_handle != vm->GetObjectHandlePolicy()->EmptyHandle()) {
+				vm->FindBoundObject(a_handle, a_class, object);
+			}
+			return object;
+		}
+	}
+
+	RE::VMHandle Handle(RE::TESForm* a_form)
+	{
+		return HandleOf(a_form ? static_cast<RE::VMTypeID>(a_form->GetFormType()) : 0, a_form);
+	}
+
+	RE::VMHandle Handle(RE::BGSRefAlias* a_alias)
+	{
+		return HandleOf(RE::BGSRefAlias::VMTYPEID, a_alias);
+	}
+
 	RE::BSTSmartPointer<RE::BSScript::Object> ScriptObject(RE::TESForm* a_form, const char* a_class)
 	{
-		RE::BSTSmartPointer<RE::BSScript::Object> object;
-		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-		if (!vm || !a_form) {
-			return object;
+		return a_form ? BoundObject(Handle(a_form), a_class) : nullptr;
+	}
+
+	RE::BSTSmartPointer<RE::BSScript::Object> ScriptObject(RE::BGSRefAlias* a_alias, const char* a_class)
+	{
+		return a_alias ? BoundObject(Handle(a_alias), a_class) : nullptr;
+	}
+
+	std::int32_t ScriptInt(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, std::int32_t a_default)
+	{
+		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		return var && var->IsInt() ? var->GetSInt() : a_default;
+	}
+
+	bool ScriptBool(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name)
+	{
+		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		return var && var->IsBool() && var->GetBool();
+	}
+
+	std::optional<std::int64_t> IniInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key)
+	{
+		std::ifstream file{ a_path };
+		if (!file) {
+			return std::nullopt;
 		}
-		auto* policy = vm->GetObjectHandlePolicy();
-		const auto handle = policy->GetHandleForObject(a_form->GetFormType(), a_form);
-		if (handle == policy->EmptyHandle()) {
-			return object;
+		const auto trim = [](std::string_view s) {
+			const auto first = s.find_first_not_of(" \t\r");
+			if (first == std::string_view::npos) {
+				return std::string_view{};
+			}
+			return s.substr(first, s.find_last_not_of(" \t\r") - first + 1);
+		};
+		std::string line;
+		bool inSection = false;
+		while (std::getline(file, line)) {
+			const auto text = trim(line);
+			if (text.empty() || text.front() == ';' || text.front() == '#') {
+				continue;
+			}
+			if (text.front() == '[') {
+				inSection = text.size() > 2 && EqualsNoCase(text.substr(1, text.size() - 2), a_section);
+				continue;
+			}
+			const auto eq = text.find('=');
+			if (!inSection || eq == std::string_view::npos || !EqualsNoCase(trim(text.substr(0, eq)), a_key)) {
+				continue;
+			}
+			const auto value = trim(text.substr(eq + 1));
+			std::int64_t result = 0;
+			const auto [end, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
+			if (ec == std::errc{}) {
+				return result;
+			}
+			return std::nullopt;
 		}
-		vm->FindBoundObject(handle, a_class, object);
-		return object;
+		return std::nullopt;
+	}
+
+	bool PressKey(std::int64_t a_code)
+	{
+		RE::INPUT_DEVICE device;
+		std::uint32_t id;
+		if (a_code >= 0 && a_code < 256) {
+			device = RE::INPUT_DEVICE::kKeyboard;
+			id = static_cast<std::uint32_t>(a_code);
+		} else if (a_code >= 256 && a_code < 264) {
+			device = RE::INPUT_DEVICE::kMouse;
+			id = static_cast<std::uint32_t>(a_code - 256);
+		} else {
+			return false;
+		}
+		auto* manager = RE::BSInputDeviceManager::GetSingleton();
+		if (!manager) {
+			return false;
+		}
+		// No user event: the game's own controls ignore it, key-code listeners do not.
+		const RE::BSFixedString none{ "" };
+		auto* down = RE::ButtonEvent::Create(device, none, id, 1.0f, 0.0f);
+		auto* up = RE::ButtonEvent::Create(device, none, id, 0.0f, 0.1f);
+		if (!down || !up) {
+			RE::free(down);
+			RE::free(up);
+			return false;
+		}
+		auto* source = static_cast<RE::BSTEventSource<RE::InputEvent*>*>(manager);
+		RE::InputEvent* event = down;
+		source->SendEvent(&event);
+		event = up;
+		source->SendEvent(&event);
+		RE::free(down);
+		RE::free(up);
+		return true;
 	}
 
 	int SISetting(std::string_view a_jsonPointer)

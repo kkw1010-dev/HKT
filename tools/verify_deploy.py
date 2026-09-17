@@ -28,6 +28,33 @@ REPLACED = [
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
 ]
+# Names src/BaboKey.cpp reads from BaboDialogue.
+BABO_SCRIPTS = {
+    "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
+    "BaboDialogueConfigMenu": ["NotificationKey"],
+    "BaboKidnapEvenScript": ["KeyPress", "bCaptured", "BaboKidnapTiedUp", "BaboKidnapScenarioe",
+                             "CenterMarkerPlayer", "BaboKidnapCabin", "BaboKidnapBanditCave",
+                             "BaboSlaverCabin", "baboslaverinterval"],
+}
+# TDM and Grapple, read by src/LockOn.cpp.
+TDM_MOD = "True Directional Movement - Modernized Third Person Gameplay"
+TDM_SETTINGS = [
+    os.path.join(MODS, "TAKEALOOK - MCM and INI", "MCM", "Settings", "TrueDirectionalMovement.ini"),
+    os.path.join(MODS, TDM_MOD, "MCM", "Config", "TrueDirectionalMovement", "settings.ini"),
+]
+GRAPPLE_MOD = "Grapple"
+GRAPPLE_NEEDLES = ["Hotkey", "ModifierEnabled", "TargetLockKey", "UpdateGlobals"]
+# Fill Her Up names read by src/Deflate.cpp.
+FHU_MOD = "Fill Her Up Baka Edition"
+FHU_SCRIPTS = {
+    "sr_infDeflateAbility": ["OnKeyDown", "OnKeyUp", "inflater", "config", "keydown"],
+    "sr_inflateQuest": ["GetMostRecentInflationType", "inflateFaction", "SR_InflateOralFaction",
+                        "inflaterAnimatingFaction", "slAnimatingFaction"],
+    "sr_inflateConfig": ["defKey"],
+}
+# Acheron (surrender), read by src/Surrender.cpp.
+ACHERON_MOD = "Acheron - Death Alternative"
+ACHERON_SETTINGS = os.path.join(MODS, "TAKEALOOK - MCM and INI", "SKSE", "Acheron", "Settings.yaml")
 REQUIRED_EXPORTS = {b"SKSEPlugin_Load", b"SKSEPlugin_Query", b"SKSEPlugin_Version"}
 
 failures = []
@@ -89,6 +116,135 @@ def dll_exports(path):
     return result
 
 
+def check_babo(modlist):
+    """The BaboKey module reads BaboDialogue's scripts by name. A BaboDialogue update that renames
+    any of these makes the prompt vanish without an error, so check the compiled scripts here."""
+    folders = [line[1:] for line in modlist if line.startswith("+")
+               and os.path.isfile(os.path.join(MODS, line[1:], "BaboInteractiveDia.esp"))]
+    if not folders:
+        note("BaboDialogue absent: BaboKey module idles")
+        return
+    # modlist.txt lists the highest priority first, so the first hit wins the VFS.
+    scripts = {}
+    for name in BABO_SCRIPTS:
+        for folder in folders:
+            path = os.path.join(MODS, folder, "scripts", name + ".pex")
+            if os.path.isfile(path):
+                with open(path, "rb") as f:
+                    scripts[name] = (folder, f.read())
+                break
+        check(name in scripts, "BaboDialogue script present: %s.pex" % name)
+    for name, needles in BABO_SCRIPTS.items():
+        if name not in scripts:
+            continue
+        folder, data = scripts[name]
+        missing = [n for n in needles if n.encode() not in data]
+        check(not missing, "%s.pex (%s) still has %s%s" % (
+            name, folder, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+
+
+def ini_int(path, section, key):
+    current = None
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            text = line.strip()
+            if text.startswith("["):
+                current = text[1:-1].strip().lower()
+            elif current == section.lower() and "=" in text and not text.startswith(";"):
+                name, value = text.split("=", 1)
+                if name.strip().lower() == key.lower():
+                    return int(value.strip())
+    return None
+
+
+def check_lockon(modlist):
+    """LockOn presses TDM's lock key and Grapple's hotkey; a key it cannot press, or a missing API
+    export, leaves the prompt absent without an error."""
+    if "+" + TDM_MOD not in modlist:
+        note("True Directional Movement absent: LockOn module idles")
+        return
+    dll = os.path.join(MODS, TDM_MOD, "SKSE", "Plugins", "TrueDirectionalMovement.dll")
+    check(os.path.isfile(dll) and b"RequestPluginAPI" in dll_exports(dll), "TDM DLL exports RequestPluginAPI")
+    tdm_key = None
+    for path in TDM_SETTINGS:
+        if os.path.isfile(path):
+            tdm_key = ini_int(path, "Keys", "uTargetLockKey")
+            if tdm_key is not None:
+                note("TDM lock key %d (%s)" % (tdm_key, path))
+                break
+    check(tdm_key is not None and 0 <= tdm_key < 264, "TDM lock key is a keyboard or mouse key: %s" % tdm_key)
+
+    if "+" + GRAPPLE_MOD not in modlist:
+        note("Grapple absent: grapple prompt idles")
+        return
+    base = os.path.join(MODS, GRAPPLE_MOD)
+    check(os.path.isfile(os.path.join(base, "SKSE", "Plugins", "FH_Grapple_Plugin.dll")), "Grapple DLL present")
+    pex = os.path.join(base, "Scripts", "FH_Grapple.pex")
+    if os.path.isfile(pex):
+        with open(pex, "rb") as f:
+            data = f.read()
+        missing = [n for n in GRAPPLE_NEEDLES if n.encode() not in data]
+        check(not missing, "FH_Grapple.pex still has %s%s" % (", ".join(GRAPPLE_NEEDLES), " - missing: " + ", ".join(missing) if missing else ""))
+    else:
+        check(False, "FH_Grapple.pex present")
+    grapple_ini = os.path.join(base, "SKSE", "Plugins", "FH_Grapple_Plugin.ini")
+    if os.path.isfile(grapple_ini):
+        lock = ini_int(grapple_ini, "Keys", "targetLockKey")
+        kb = ini_int(grapple_ini, "Keys", "kbKey")
+        mod = ini_int(grapple_ini, "Keys", "kbModifier")
+        note("Grapple keys: hotkey=%s modifier=%s lock=%s (CIGAR syncs lock to TDM's at load)" % (kb, mod, lock))
+
+
+def check_fhu(modlist):
+    """Deflate forwards the prompt key to FHU's own key events; renamed scripts or properties
+    leave the prompt absent without an error."""
+    if "+" + FHU_MOD not in modlist:
+        note("Fill Her Up absent: Deflate module idles")
+        return
+    for name, needles in FHU_SCRIPTS.items():
+        path = os.path.join(MODS, FHU_MOD, "Scripts", name + ".pex")
+        if not os.path.isfile(path):
+            check(False, "FHU script present: %s.pex" % name)
+            continue
+        with open(path, "rb") as f:
+            data = f.read()
+        missing = [n for n in needles if n.encode() not in data]
+        check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+
+
+def yaml_scalar(path, key):
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line.startswith(key + ":"):
+                return line.split(":", 1)[1].strip().strip('"')
+    return None
+
+
+def check_surrender(modlist):
+    """Surrender presses Acheron's surrender key; Acheron ignores it when unset, behind a modifier,
+    or with processing off, and nothing on screen says why."""
+    if "+" + ACHERON_MOD not in modlist:
+        note("Acheron absent: Surrender module idles")
+        return
+    dll = os.path.join(MODS, ACHERON_MOD, "SKSE", "Plugins", "Acheron.dll")
+    check(os.path.isfile(dll), "Acheron DLL present")
+    if os.path.isfile(dll):
+        with open(dll, "rb") as f:
+            data = f.read()
+        check(b"iSurrenderKey" in data and b"iHunterPrideKeyMod" in data, "Acheron DLL still reads iSurrenderKey / iHunterPrideKeyMod")
+    if not os.path.isfile(ACHERON_SETTINGS):
+        check(False, "Acheron settings present: " + ACHERON_SETTINGS)
+        return
+    key = yaml_scalar(ACHERON_SETTINGS, "iSurrenderKey")
+    mod = yaml_scalar(ACHERON_SETTINGS, "iHunterPrideKeyMod")
+    proc = yaml_scalar(ACHERON_SETTINGS, "ProcessingEnabled")
+    check(key is not None and 0 <= int(key) < 264, "Acheron surrender key is a keyboard or mouse key: %s" % key)
+    check(mod is None or int(mod) == -1, "Acheron modifier key unset: %s" % mod)
+    check(proc in (None, "true"), "Acheron processing enabled: %s" % proc)
+    note("Yamete Kudasai %s" % ("enabled: its surrender consequences apply" if any(
+        l.startswith("+YameteKudasai") for l in modlist) else "absent: Acheron's own consequences apply"))
+
+
 def main():
     profile = os.path.join(MO2, "profiles", active_profile())
     print("profile:", profile)
@@ -132,6 +288,10 @@ def main():
     # Optional integrations: reported, never required.
     bis = os.path.isfile(os.path.join(MODS, "Bathing in Skyrim - Renewed", "Bathing in Skyrim.esp"))
     note("Bathing in Skyrim - Renewed %s" % ("installed: bathe module active" if bis else "absent: bathe module idles"))
+    check_babo(modlist)
+    check_lockon(modlist)
+    check_fhu(modlist)
+    check_surrender(modlist)
 
     # Replaced SI modules must be off, or both prompts appear.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")

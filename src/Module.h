@@ -14,6 +14,12 @@ namespace CIGAR
 		// Runs about once a second while a game is loaded and not paused.
 		virtual void Tick() = 0;
 		virtual void OnAccepted(std::uint16_t a_eventID) = 0;
+		// Runs about ten times a second under the same conditions as Tick(), for gates that must
+		// react faster than once a second.
+		virtual void FastTick() {}
+		// Hold prompts only: the prompt key went down (true) or up (false). A removed prompt
+		// reports up, so a hold always ends.
+		virtual void OnHold(std::uint16_t, bool) {}
 
 		// Logs a line tagged with the module name.
 		template <class... Args>

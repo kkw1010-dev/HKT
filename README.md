@@ -30,6 +30,10 @@ their in-game tests are in git history and in `docs/001`.
 |---|---|---|---|
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
 | `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Confirmed in game 2026-09-17 (water, beds, wardrobes, state-based dress) |
+| `BaboKey` | BaboDialogue (optional) | — | Built 2026-09-17; untested in game |
+| `LockOn` | True Directional Movement, Grapple (both optional) | — | Built 2026-09-17; untested in game |
+| `Deflate` | Fill Her Up (optional) | — | Built 2026-09-17; untested in game |
+| `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Built 2026-09-17; untested in game |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -40,20 +44,31 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | Under a waterfall (BiS water restriction on) | 샤워하기 (dirt %) |
 | Aimed at a bed or wardrobe/dresser and within 250 units, strippable items worn | 탈의하기 |
 | At any bed or wardrobe while naked (remembered outfit in inventory), or after leaving water when CIGAR undressed the player | 착용하기 |
+| Kidnapped by BaboDialogue, in the kidnap room, at a point where its hotkey acts | 행동 선택 |
+| In combat, TDM not locked on | 록온 |
+| In combat, TDM locked on, Grapple installed | 그래플 |
+| Fill Her Up tracks an amount, not animating (hold the key) | 배출 (길게 누르기) |
+| In combat below 20% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
-`docs/003-immersive-interactions-analysis.md` (planned `Animals` module). To add
+`docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, and `docs/008-surrender.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
 ## Layout
 
 ```text
-src/main.cpp        SKSE entry, lifecycle messages, co-save, 1 s ticker (posts one game-thread task per tick)
+src/main.cpp        SKSE entry, lifecycle messages, co-save, ticker (one game-thread task per 100 ms: FastTick every time, Tick once a second)
 src/Module.h        module interface (OnGameLoaded / Tick / OnAccepted) and gated logging
 src/Prompt.*        SkyPrompt client and one sink per prompt (SkyPrompt 2.3.15 removes by sink)
 src/Util.*          strip rules, worn description, Papyrus script-property reader, SI settings reader
 src/Bathe.*         Bathing in Skyrim integration (properties read from its quest script at load)
 src/Dress.*         state-based undress / dress, crosshair-based bed and wardrobe detection, co-saved outfit
+src/BaboKey.*       BaboDialogue hotkey during kidnap events (quest stage, script state, kidnap-room cell)
+src/LockOn.*        TDM target lock and Grapple in combat (synthetic key press through the input event source)
+src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarded to FHU's own handlers)
+src/Surrender.*     Acheron surrender key below 20% health as a hold prompt, with slow motion and a text pulse
+include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
 lib/commonlibsse-ng alandtse/CommonLibVR branch ng (submodule)
 tools/Build.ps1     build (VS 2026 Build Tools, Ninja, vcpkg at C:\TAKEALOOK\TOOLS\vcpkg), deploy, verify
