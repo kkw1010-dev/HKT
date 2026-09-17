@@ -102,6 +102,8 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - Hidden (`yk-timeout`) while every hostile within 3000 units has
     `Kudasai_SurrenderTimeoutEFF`: YK's 3-minute rule, under which its
     surrender quest cannot fill.
+  - Hidden (`babo-acheron-off`) while the BaboDialogue 6.2 Acheron patch has
+    Acheron suspended (`AcheronSuspendedByUs`).
   - Yamete Kudasai 2.2.3 registers its own surrender key but never handles it.
 
 ### Shared machinery

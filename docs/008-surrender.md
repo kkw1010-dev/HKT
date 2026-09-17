@@ -56,6 +56,14 @@ after a full hold, because surrender cannot be undone. It is shown when:
   (`0x801|Acheron.esm`);
 - the player is not in `SexLabAnimatingFaction`;
 - movement controls are enabled;
+- when the BaboDialogue 6.2 Acheron patch (`BaboDialogue - Acheron Patch`) is
+  installed, its `BaboSexControllerManager.AcheronSuspendedByUs` is false.
+  The patch calls `Acheron.DisableProcessing(true)` while BaboDialogue holds
+  the player (`LosingControl`, `StuckControl`), and Acheron ignores the
+  surrender key until `RecoverControl`. `StuckControl` leaves movement
+  controls on, so the controls check alone does not cover it. Acheron has no
+  native API for the flag, so the patch's variable is read (gate
+  `babo-acheron-off`);
 - at least 5 s have passed since the last surrender press;
 - when Yamete Kudasai is loaded, at least one hostile within 3000 units lacks
   `Kudasai_SurrenderTimeoutEFF` (`000808|YameteKudasai.esp`).

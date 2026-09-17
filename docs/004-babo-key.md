@@ -13,6 +13,18 @@ Status (2026-09-17): tested in game.
   - The prompt is kept alive.
   - The prompt is no longer limited to the four key states.
 
+- **BaboDialogue 6.2 Acheron patch (2026-09-17).** The mod
+  `BaboDialogue - Acheron Patch` overrides `BaboDiaMonitorScript.pex`. It
+  adds one call in `OnUpdateGameTime` and leaves `OnKeyDown`, its properties
+  and states unchanged (its own gate, `tools/verify.py` in
+  `TKL-Agent\BaboDialogue 6.2 Acheron Patch`, passes). `verify_deploy.py`
+  now checks the winning `.pex` across all enabled mods, not only
+  BaboDialogue's own folder.
+- **`NotificationKey` = -1** on this modlist (no key bound in BaboDialogue's
+  MCM). BaboDialogue then registers no key, so only CIGAR's prompt reaches
+  `OnKeyDown`. CIGAR passes -1, which equals `NotificationKey`, so the
+  handler proceeds.
+
 ## What the key does in BaboDialogue
 
 `BaboDiaMonitorScript` (quest `BaboMonitorScript`,

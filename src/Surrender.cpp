@@ -20,6 +20,16 @@ namespace CIGAR
 
 		constexpr auto kQuietAfterPress = 5s;
 
+		// The BaboDialogue 6.2 Acheron patch calls Acheron.DisableProcessing(true) while BaboDialogue
+		// holds the player (LosingControl, StuckControl) and records that in this script variable.
+		// Acheron ignores the surrender key meanwhile, so the prompt would do nothing. Acheron has no
+		// native API for its processing flag, so the patch's own variable is read instead.
+		constexpr auto kBaboPlugin = "BaboInteractiveDia.esp"sv;
+		constexpr RE::FormID kBaboMonitorQuestID = 0x7E22B8;  // BaboMonitorScript
+		constexpr auto kBaboMonitorScript = "BaboDiaMonitorScript";
+		constexpr auto kBaboControllerScript = "BaboSexControllerManager";
+		constexpr auto kBaboSuspendedVar = "AcheronSuspendedByUs";
+
 		// Offered below this health fraction. The value is the user's choice (first 20%, then 40%); it is
 		// not derived from Acheron's knockdown threshold (fKdHealthThresh).
 		constexpr float kLowHealth = 0.40f;
@@ -109,6 +119,18 @@ namespace CIGAR
 		ykTimeout = handler->LookupModByName(kYKPlugin) ? handler->LookupForm<RE::EffectSetting>(kYKTimeoutEffectID, kYKPlugin) : nullptr;
 		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
+		baboController = nullptr;
+		if (handler->LookupModByName(kBaboPlugin)) {
+			const auto monitor = Util::ScriptObject(handler->LookupForm<RE::TESQuest>(kBaboMonitorQuestID, kBaboPlugin), kBaboMonitorScript);
+			const auto controllerQuest = Util::ScriptProperty<RE::TESQuest>(monitor, "BaboSexController");
+			baboController = Util::ScriptObject(controllerQuest, kBaboControllerScript);
+			const bool patched = baboController && baboController->GetVariable(kBaboSuspendedVar);
+			Log("BaboDialogue controller={} acheronPatch={}", static_cast<bool>(baboController), patched);
+			if (!patched) {
+				baboController = nullptr;
+			}
+		}
+
 		// Acheron reads these once at startup; the MCM writes them back to the same file.
 		const auto processing = YamlScalar("ProcessingEnabled");
 		const auto key = YamlInt("iSurrenderKey");
@@ -159,6 +181,9 @@ namespace CIGAR
 			a_why = "sexlab";
 		} else if (!controls || !controls->IsMovementControlsEnabled()) {
 			a_why = "no-movement";
+		} else if (BaboSuspendedAcheron()) {
+			// Acheron ignores the key until BaboDialogue releases the player.
+			a_why = "babo-acheron-off";
 		} else if (Clock::now() < quietUntil) {
 			a_why = "quiet";
 		} else if (AllEnemiesTimedOut(a_player)) {
@@ -169,6 +194,12 @@ namespace CIGAR
 			return false;
 		}
 		return true;
+	}
+
+	bool Surrender::BaboSuspendedAcheron() const
+	{
+		const auto* var = baboController ? baboController->GetVariable(kBaboSuspendedVar) : nullptr;
+		return var && var->IsBool() && var->GetBool();
 	}
 
 	bool Surrender::AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const

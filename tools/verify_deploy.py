@@ -35,6 +35,9 @@ BABO_SCRIPTS = {
     "BaboKidnapEvenScript": ["KeyPress", "bCaptured", "BaboKidnapTiedUp", "BaboKidnapScenarioe",
                              "CenterMarkerPlayer"],
 }
+# Read by src/Surrender.cpp when the BaboDialogue 6.2 Acheron patch is installed.
+BABO_CONTROLLER = "BaboSexControllerManager"
+BABO_SUSPENDED_VAR = "AcheronSuspendedByUs"
 # TDM and Grapple, read by src/LockOn.cpp.
 TDM_MOD = "True Directional Movement - Modernized Third Person Gameplay"
 TDM_SETTINGS = [
@@ -118,21 +121,24 @@ def dll_exports(path):
 def check_babo(modlist):
     """The BaboKey module reads BaboDialogue's scripts by name. A BaboDialogue update that renames
     any of these makes the prompt vanish without an error, so check the compiled scripts here."""
-    folders = [line[1:] for line in modlist if line.startswith("+")
-               and os.path.isfile(os.path.join(MODS, line[1:], "BaboInteractiveDia.esp"))]
-    if not folders:
+    enabled = [line[1:] for line in modlist if line.startswith("+")]
+    if not any(os.path.isfile(os.path.join(MODS, folder, "BaboInteractiveDia.esp")) for folder in enabled):
         note("BaboDialogue absent: BaboKey module idles")
         return
+    # Every enabled mod is searched, not only BaboDialogue: a script patch such as the
+    # BaboDialogue 6.2 Acheron patch overrides the .pex the game actually runs.
     # modlist.txt lists the highest priority first, so the first hit wins the VFS.
     scripts = {}
-    for name in BABO_SCRIPTS:
-        for folder in folders:
+    for name in list(BABO_SCRIPTS) + [BABO_CONTROLLER]:
+        for folder in enabled:
             path = os.path.join(MODS, folder, "scripts", name + ".pex")
             if os.path.isfile(path):
                 with open(path, "rb") as f:
                     scripts[name] = (folder, f.read())
                 break
-        check(name in scripts, "BaboDialogue script present: %s.pex" % name)
+        if name in BABO_SCRIPTS:
+            check(name in scripts, "BaboDialogue script present: %s.pex (%s)" % (
+                name, scripts[name][0] if name in scripts else "-"))
     for name, needles in BABO_SCRIPTS.items():
         if name not in scripts:
             continue
@@ -140,6 +146,14 @@ def check_babo(modlist):
         missing = [n for n in needles if n.encode() not in data]
         check(not missing, "%s.pex (%s) still has %s%s" % (
             name, folder, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+    # Surrender hides its prompt while the Acheron patch has Acheron suspended. Without the patch
+    # BaboDialogue never suspends Acheron, so the variable's absence is only a note.
+    if BABO_CONTROLLER in scripts:
+        folder, data = scripts[BABO_CONTROLLER]
+        if BABO_SUSPENDED_VAR.encode() in data:
+            note("BaboDialogue Acheron patch active (%s): Surrender reads %s" % (folder, BABO_SUSPENDED_VAR))
+        else:
+            note("BaboDialogue Acheron patch absent (%s): BaboDialogue never suspends Acheron" % folder)
 
 
 def ini_int(path, section, key):
