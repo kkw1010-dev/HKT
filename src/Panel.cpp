@@ -7,6 +7,8 @@
 #include "Settings.h"
 #include "Surrender.h"
 
+#include <set>
+
 // The vendored header mixes struct/class and enum types; its warnings are upstream's.
 #pragma warning(push)
 #pragma warning(disable: 4099 5054)
@@ -18,7 +20,6 @@ namespace CIGAR::Panel
 	namespace
 	{
 		constexpr auto kSection = "CIGAR";
-		constexpr auto kPage = "설정";
 
 		struct Label
 		{
@@ -226,22 +227,49 @@ namespace CIGAR::Panel
 			ImGui::Spacing();
 		}
 
-		void __stdcall Render()
+		void LogFirstDraw(const char* a_page)
 		{
-			static std::once_flag opened;
-			std::call_once(opened, [] { logs::info("control panel drawn for the first time"); });
+			static std::mutex lock;
+			static std::set<std::string, std::less<>> drawn;
+			std::scoped_lock guard(lock);
+			if (drawn.emplace(a_page).second) {
+				logs::info("control panel: page {} drawn for the first time", a_page);
+			}
+		}
 
+		// The framework lists a section's items by their names, so the numbers fix the order.
+		constexpr auto kPageModules = "1. 모듈";
+		constexpr auto kPageKeys = "2. 단축키";
+		constexpr auto kPageOptions = "3. 세부 설정";
+
+		void __stdcall RenderModules()
+		{
+			LogFirstDraw(kPageModules);
 			ImGui::SeparatorText("모듈");
 			for (const auto* module : Modules()) {
 				RenderModule(module);
 			}
 
+			ImGui::SeparatorText("상태");
+			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? "연결됨" : "없음 (프롬프트 비활성)");
+			const auto source = Settings::SourceDescription();
+			ImGui::TextColored(kDim, "설정 파일: %s", source.c_str());
+			ImGui::TextColored(kDim, "상세 기록: SKSE\\CIGAR.log");
+		}
+
+		void __stdcall RenderKeyPage()
+		{
+			LogFirstDraw(kPageKeys);
 			ImGui::SeparatorText("프롬프트 키");
 			RenderKeys();
 
 			ImGui::SeparatorText("모드 단축키");
 			RenderPromptOnly();
+		}
 
+		void __stdcall RenderOptions()
+		{
+			LogFirstDraw(kPageOptions);
 			ImGui::SeparatorText("먹기");
 			int stage = Settings::EatMinStage();
 			if (ImGui::SliderInt("표시 시작 허기 단계", &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
@@ -261,12 +289,6 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::TextColored(kDim, "기본 250. 조준한 가구에서 이 거리를 벗어나면 프롬프트 해제");
-
-			ImGui::SeparatorText("상태");
-			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? "연결됨" : "없음 (프롬프트 비활성)");
-			const auto source = Settings::SourceDescription();
-			ImGui::TextColored(kDim, "설정 파일: %s", source.c_str());
-			ImGui::TextColored(kDim, "상세 기록: SKSE\\CIGAR.log");
 		}
 	}
 
@@ -283,7 +305,9 @@ namespace CIGAR::Panel
 			return;
 		}
 		SKSEMenuFramework::SetSection(kSection);
-		SKSEMenuFramework::AddSectionItem(kPage, Render);
-		logs::info("control panel: registered as {}/{} in SKSE Menu Framework", kSection, kPage);
+		SKSEMenuFramework::AddSectionItem(kPageModules, RenderModules);
+		SKSEMenuFramework::AddSectionItem(kPageKeys, RenderKeyPage);
+		SKSEMenuFramework::AddSectionItem(kPageOptions, RenderOptions);
+		logs::info("control panel: registered {}/{{{}, {}, {}}} in SKSE Menu Framework", kSection, kPageModules, kPageKeys, kPageOptions);
 	}
 }

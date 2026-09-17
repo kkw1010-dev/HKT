@@ -29,7 +29,18 @@ sorts after `SKSEMenuFramework`. The vendored copy replaces the static with
 `SKSEMenuFramework_Module()`, which is looked up when first used.
 `CIGAR::Panel::Register()` runs at `kPostLoad`, after every plugin has loaded.
 
-## What the page shows (`CIGAR/설정`)
+## What the pages show
+
+Since 2026-09-18 the section `CIGAR` has three pages. The framework lists
+items by name, so the numbers fix their order:
+
+| Page | Contents |
+|---|---|
+| `1. 모듈` | 모듈 (switches, gate, last line) and 상태 |
+| `2. 단축키` | 프롬프트 키 and 모드 단축키 |
+| `3. 세부 설정` | 먹기 (start stage) and 탈의·착용 (reach) |
+
+Each page logs `control panel: page … drawn for the first time` once.
 
 - **모듈**: one switch per module in `Modules()`. Modules the panel has no
   label for still get a switch under their own name. Under each switch the
@@ -116,7 +127,7 @@ mod folder only when none is there. That keeps the panel's saves in
     `TAKEALOOK - Font Edit`; the framework's own ini has
     `EnableKorean = false`.
 - `CIGAR.log` records one of these:
-  - `control panel: registered as CIGAR/설정 …`
+  - `control panel: registered CIGAR/{1. 모듈, 2. 단축키, 3. 세부 설정} …`
   - `… SKSE Menu Framework is not loaded; no panel`
   - `… lacks AddSectionItem/igCheckbox`
 

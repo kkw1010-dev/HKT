@@ -16,11 +16,7 @@ status.
    - **Surrender and the Babo Acheron patch.** `CIGAR.log` must show
      `[Surrender] BaboDialogue controller=true acheronPatch=true`. While
      BaboDialogue holds the player, the gate reads `babo-acheron-off`.
-   - **Eat.** With Survival Mode on and hunger at stage 3 or higher, out of
-     combat, 먹기: <cheapest food> shows. Accepting eats it (the item count
-     drops, the Taberu animation plays), and `CIGAR.log` shows `ate …` and
-     then `hunger after eating: …` lower than before. Raw meat, meads and
-     BaboDialogue's suspicious sweet rolls are never picked.
+   - **Panel pages.** CIGAR shows 1. 모듈, 2. 단축키 and 3. 세부 설정.
    - **Unique prompt IDs** (`eeaa8c5`). In a BaboDialogue kidnap room with
      Fill Her Up data present, 행동 선택 and 배출 show on different keys.
    - **Prompt-only keys.** With both switches on (default): Grapple's MCM
@@ -58,8 +54,8 @@ own deflate problem was fixed by the user in FHU.
 
 ### Modules
 
-All modules are confirmed in game (2026-09-17) unless noted. `Eat` (2026-09-18) is
-not tested yet.
+All modules are confirmed in game (2026-09-17; `Eat` on 2026-09-18: hunger 80 → 0
+after 감자 수프).
 
 | Module | Prompt(s) | Target mods | Doc |
 |---|---|---|---|
@@ -130,7 +126,8 @@ not tested yet.
     whose keys are set in the control panel (default 1–4).
 - **Ticks** (`src/main.cpp`): `Tick()` runs every 1 s and `FastTick()` every
   100 ms. Both run only while unpaused, and only for modules switched on.
-- **Control panel.** An optional SKSE Menu Framework page (CIGAR / 설정;
+- **Control panel.** Optional SKSE Menu Framework pages (CIGAR / 1. 모듈,
+  2. 단축키, 3. 세부 설정;
   `src/Panel.*`, `src/Settings.*`, `docs/007-control-panel.md`):
   - per-module on/off switches;
   - each module's live gate and last log line;
