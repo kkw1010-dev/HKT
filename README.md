@@ -48,7 +48,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In combat, TDM not locked on | 록온 |
 | In combat, TDM locked on or a hostile within 350 units, Grapple installed | 그래플 |
 | Fill Her Up tracks an amount, not animating (hold the key) | 배출 (길게 누르기) |
-| In combat below 20% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
+| In combat below 40% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
@@ -68,7 +68,7 @@ src/Dress.*         state-based undress / dress, crosshair-based bed and wardrob
 src/BaboKey.*       BaboDialogue hotkey during kidnap events (quest stage, script state, kidnap-room cell)
 src/LockOn.*        TDM target lock and Grapple in combat (synthetic key press through the input event source)
 src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarded to FHU's own handlers)
-src/Surrender.*     Acheron surrender key below 20% health as a hold prompt, with slow motion and a text pulse
+src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
 src/Settings.*      per-module switches and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework page (CIGAR / 설정): switches, live gate and last log line per module
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)

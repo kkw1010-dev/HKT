@@ -95,7 +95,7 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - Shown while FHU's `GetMostRecentInflationType(player) > 0`, once FHU's and
     SexLab's animating factions have been clear for 3 s.
 - **Surrender.**
-  - A `kHold` prompt in combat below 20% health, with 3 s of x0.3 slow motion
+  - A `kHold` prompt in combat below 40% health, with 3 s of x0.3 slow motion
     (`BSTimer::SetGlobalTimeMultiplier`) and a white↔gold text pulse.
   - Accepting presses Acheron's surrender key (K, from
     `Data/SKSE/Acheron/Settings.yaml`).

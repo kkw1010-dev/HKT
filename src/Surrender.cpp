@@ -20,8 +20,8 @@ namespace CIGAR
 
 		constexpr auto kQuietAfterPress = 5s;
 
-		// Offered below this health fraction. Acheron's knockdown threshold (fKdHealthThresh) is also
-		// 0.2 on this modlist, so the prompt marks the window before the next hit can defeat the player.
+		// Offered below this health fraction. The value is the user's choice (first 20%, then 40%); it is
+		// not derived from Acheron's knockdown threshold (fKdHealthThresh).
 		constexpr float kLowHealth = 0.40f;
 		// Slow motion on the moment the prompt appears; Streamlined Interactions' low-health potion
 		// prompt uses 3 s on this modlist.
@@ -234,7 +234,7 @@ namespace CIGAR
 		LogGate(why);
 
 		if (why == "no-combat" || why == "health") {
-			slowedThisEpisode = false;  // the next drop below 20% is a new moment
+			slowedThisEpisode = false;  // the next drop below the threshold is a new moment
 		}
 		if (offer && !wasOffered) {
 			pulseStart = Clock::now();

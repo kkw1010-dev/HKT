@@ -51,7 +51,7 @@ Surrender belongs to Acheron 1.9.3:
 The 항복 (길게 누르기) prompt is a SkyPrompt `kHold` prompt, so it accepts only
 after a full hold, because surrender cannot be undone. It is shown when:
 
-- the player is in combat, below 20% health, alive, and not bleeding out;
+- the player is in combat, below 40% health, alive, and not bleeding out;
 - the player does not carry Acheron's `Defeated` keyword
   (`0x801|Acheron.esm`);
 - the player is not in `SexLabAnimatingFaction`;
@@ -60,15 +60,15 @@ after a full hold, because surrender cannot be undone. It is shown when:
 - when Yamete Kudasai is loaded, at least one hostile within 3000 units lacks
   `Kudasai_SurrenderTimeoutEFF` (`000808|YameteKudasai.esp`).
 
-Acheron's knockdown threshold (`fKdHealthThresh`) is also 0.2 on this
-modlist. The prompt therefore marks the window before the next hit can defeat
-the player.
+The 40% threshold is the user's choice. It was 20% by the user's instruction
+until 2026-09-17 and was raised to 40% then (`35eb997`). It is not tied to
+Acheron's knockdown threshold (`fKdHealthThresh`).
 
 When the prompt appears, the moment is marked, following Streamlined
 Interactions' low-health potion prompt (`slow_time_hp_pot`, 3 s):
 
 - **Slow motion.** `BSTimer::SetGlobalTimeMultiplier(0.3)` (what `sgtm` does)
-  is applied once per drop below 20%. The multiplier returns to 1.0 after 3 s
+  is applied once per drop below 40%. The multiplier returns to 1.0 after 3 s
   of real time, or earlier when the prompt goes away, is accepted, or a game
   loads. CIGAR restores it only if the multiplier is still its own 0.3, so it
   never overrides a change made by another mod in between. SI's health-potion

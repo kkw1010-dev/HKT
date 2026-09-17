@@ -5,7 +5,7 @@
 
 namespace CIGAR
 {
-	// Acheron's surrender key as a hold prompt when the player drops below 20% health in combat
+	// Acheron's surrender key as a hold prompt when the player drops below 40% health in combat
 	// (optional; idle when Acheron is absent). Like Streamlined Interactions' low-health prompts,
 	// the moment is marked with a short slow motion, and the prompt text pulses while it is up.
 	// Acheron picks the consequence quest, so Yamete Kudasai's surrender consequences apply when
