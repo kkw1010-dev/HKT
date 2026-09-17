@@ -115,8 +115,8 @@ namespace CIGAR
 		quietUntil = {};
 		active = false;
 		acheronPresent = false;
-		polledKey = -2;
-		ignorePollUntil = {};
+		// A key check queued before the load may never answer.
+		checkPending = false;
 		wasOffered = false;
 		slowedThisEpisode = false;
 
@@ -222,20 +222,23 @@ namespace CIGAR
 		public:
 			void operator()(RE::BSScript::Variable a_result) override
 			{
-				if (a_result.IsInt()) {
-					Surrender::GetSingleton()->OnKeyPolled(a_result.GetSInt());
-				}
+				Surrender::GetSingleton()->OnKeyChecked(
+					a_result.IsInt() ? std::optional<std::int64_t>{ a_result.GetSInt() } : std::nullopt);
 			}
 
 			void SetObject(const RE::BSTSmartPointer<RE::BSScript::Object>&) override {}
 		};
 	}
 
-	void Surrender::PollAcheronKey()
+	void Surrender::CheckKey()
 	{
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		auto* quest = handler ? handler->LookupForm<RE::TESQuest>(kAcheronMCMQuestID, kAcheronPlugin) : nullptr;
-		if (!quest) {
+		if (!acheronPresent || !quest) {
+			Log("key check: Acheron not loaded");
+			return;
+		}
+		if (checkPending.exchange(true)) {
 			return;
 		}
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
@@ -243,27 +246,27 @@ namespace CIGAR
 		const auto handle = policy->GetHandleForObject(quest->GetFormType(), quest);
 		auto* args = RE::MakeFunctionArguments(RE::BSFixedString("iSurrenderKey"));
 		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback{ new KeyPoll() };
-		static_cast<void>(vm->DispatchMethodCall2(handle, kAcheronMCMScript, "GetSettingInt", args, callback));
+		if (!vm->DispatchMethodCall2(handle, kAcheronMCMScript, "GetSettingInt", args, callback)) {
+			checkPending = false;
+			Log("WARN key check: AcheronMCM.GetSettingInt could not be queued");
+		}
 	}
 
-	void Surrender::Tick()
+	void Surrender::OnKeyChecked(std::optional<std::int64_t> a_key)
 	{
-		// Acheron's MCM changes the key in memory at once and writes Settings.yaml only on a save, so
-		// the key is read back from Acheron every second rather than from the file.
-		if (!acheronPresent) {
-			return;
-		}
-		const auto polled = polledKey.exchange(-2);
-		if (polled != -2 && Clock::now() >= ignorePollUntil && polled != surrenderKey.load()) {
-			const bool promptOnly = Settings::PromptOnly(kPromptOnlyTarget);
-			Log("Acheron surrender key changed in game: {} -> {} (prompt-only={})", surrenderKey.load(), polled, promptOnly);
-			surrenderKey = polled;
-			if (promptOnly) {
-				// The MCM moved the key off the hidden one; remember it and move it back.
-				ApplyKeyMode();
+		// VM thread: hand the answer to the game thread.
+		SKSE::GetTaskInterface()->AddTask([this, a_key] {
+			checkPending = false;
+			if (!a_key) {
+				Log("WARN key check: Acheron returned no key");
+				return;
 			}
-		}
-		PollAcheronKey();
+			const bool promptOnly = Settings::PromptOnly(kPromptOnlyTarget);
+			Log("key check: Acheron surrender key {} (was {}, prompt-only={})", *a_key, surrenderKey.load(), promptOnly);
+			surrenderKey = *a_key;
+			// With prompt-only on, a key set in the MCM is remembered and moved back to the hidden key.
+			ApplyKeyMode();
+		});
 	}
 
 	void Surrender::SetAcheronKey(std::int64_t a_key)
@@ -281,9 +284,6 @@ namespace CIGAR
 		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
 		const bool queued = vm->DispatchMethodCall2(handle, kAcheronMCMScript, "SetSettingInt", args, callback);
 		surrenderKey = a_key;
-		// A read-back already under way still reports the old key.
-		ignorePollUntil = Clock::now() + 2s;
-		polledKey = -2;
 		Log("Acheron iSurrenderKey -> {} requested queued={}", a_key, queued);
 	}
 

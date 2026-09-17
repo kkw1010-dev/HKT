@@ -22,6 +22,9 @@ status.
      shows F13 and Acheron's shows F14. G pressed by hand does nothing, and
      the 그래플 and 항복 prompts still work. `CIGAR.log` shows
      `prompt-only: ... -> hidden key`.
+   - **Key check button.** With a switch off, change that mod's key in its
+     MCM, then press 모드 키 다시 확인. The panel shows the new key, and
+     `CIGAR.log` shows `key check: ...`.
 2. Backlog below.
 
 Closed on 2026-09-18: the "FHU during SexLab scenes" question. The user traced
@@ -87,8 +90,8 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - At load, Grapple's `TargetLockKey` is synced to TDM's key (258).
   - Prompt-only mode (default on) moves Grapple's `Hotkey` to F13, so G is
     free. When it is off, an unset `Hotkey` (every new game) is restored from
-    the remembered key or `FH_Grapple_Plugin.ini`. The key is re-read every
-    second.
+    the remembered key or `FH_Grapple_Plugin.ini`. Keys are read only at load
+    and on the panel's key check button; nothing polls.
 - **Deflate.**
   - A hold prompt. SkyPrompt's key down (5) and up (6) are forwarded to FHU's
     `sr_infDeflateAbility.OnKeyDown` / `OnKeyUp`.

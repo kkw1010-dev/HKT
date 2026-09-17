@@ -120,10 +120,22 @@ namespace CIGAR::Panel
 		void RenderPromptOnly()
 		{
 			RenderPromptOnlyItem("grapple", "그래플: 프롬프트 전용##po-grapple", "F13",
-				[] { LockOn::GetSingleton()->ApplyKeyMode(); });
+				[] { LockOn::GetSingleton()->CheckKeys(); });
 			RenderPromptOnlyItem("surrender", "Acheron 항복: 프롬프트 전용##po-surrender", "F14",
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
-			ImGui::TextColored(kDim, "켜져 있는 동안 MCM에서 키를 바꿔도 숨김 키로 되돌림");
+			if (ImGui::Button("모드 키 다시 확인")) {
+				SKSE::GetTaskInterface()->AddTask([] {
+					LockOn::GetSingleton()->CheckKeys();
+					Surrender::GetSingleton()->CheckKey();
+				});
+			}
+			const auto grapple = LockOn::GetSingleton()->GrappleKey();
+			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
+			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s",
+				grapple >= 0 ? NameOf(grapple).c_str() : "없음", surrender >= 0 ? NameOf(surrender).c_str() : "없음");
+			ImGui::PushTextWrapPos(0.0f);
+			ImGui::TextColored(kDim, "키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림");
+			ImGui::PopTextWrapPos();
 		}
 
 		void RenderKeys()

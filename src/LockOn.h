@@ -21,7 +21,7 @@ namespace CIGAR
 
 		const char* Name() const override { return "LockOn"; }
 		void OnGameLoaded() override;
-		void Tick() override;
+		void Tick() override {}
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override { relockPending = false; }
@@ -29,12 +29,9 @@ namespace CIGAR
 		// starts: a new game's MCM init pushes its empty key to the DLL, which may save it there.
 		void ReadGrappleIni();
 		// The key the grapple prompt presses, or -1 (control panel conflict check).
-		// Applies the control panel's prompt-only switch to Grapple's hotkey (game thread).
-		void ApplyKeyMode()
-		{
-			SyncGrappleKeys();
-			RefreshGrappleKey();
-		}
+		// Reads Grapple's hotkey and applies the prompt-only switch; runs at load, on the control
+		// panel's key check and when the switch changes (game thread).
+		void CheckKeys();
 		std::int32_t GrappleKey() const { return grappleOk.load() ? grappleKeyShown.load() : -1; }
 
 	private:

@@ -151,7 +151,7 @@ namespace CIGAR
 
 	void LockOn::RefreshGrappleKey()
 	{
-		// The MCM can change the key at any time; read it every tick so a change applies at once.
+		// Runs at load and on the control panel's key check; an MCM change in between is not seen.
 		const auto script = grappleQuest ? Util::ScriptObject(grappleQuest, kGrappleScript) : nullptr;
 		const auto key = script ? Util::ScriptInt(script, "Hotkey") : -1;
 		const bool modifier = script && Util::ScriptBool(script, "ModifierEnabled");
@@ -171,15 +171,17 @@ namespace CIGAR
 		grappleKeyShown = grappleKey;
 	}
 
-	void LockOn::Tick()
+	void LockOn::CheckKeys()
 	{
 		if (!grappleQuest) {
+			Log("key check: Grapple not loaded");
 			return;
 		}
-		// Also applies a prompt-only switch from the control panel, and undoes an MCM rebinding
-		// while prompt-only is on.
+		// Applies the prompt-only switch, and moves a key set in the MCM back to the hidden key
+		// while prompt-only is on (that key is remembered).
 		SyncGrappleKeys();
 		RefreshGrappleKey();
+		Log("key check: Grapple key {} (usable={})", grappleKey, grappleOk.load());
 		if (!grappleOk.load() && !warnedGrappleKey) {
 			warnedGrappleKey = true;
 			Log("WARN Grapple has no usable hotkey (key={} modifier={}); the grapple prompt is off", grappleKey, grappleModifier);
@@ -226,8 +228,7 @@ namespace CIGAR
 		}
 
 		ResolveGrapple();
-		SyncGrappleKeys();
-		RefreshGrappleKey();
+		CheckKeys();
 	}
 
 	bool LockOn::InGrapple(RE::PlayerCharacter* a_player, bool a_movable)

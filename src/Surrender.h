@@ -17,7 +17,7 @@ namespace CIGAR
 
 		const char* Name() const override { return "Surrender"; }
 		void OnGameLoaded() override;
-		void Tick() override;
+		void Tick() override {}
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
@@ -25,8 +25,11 @@ namespace CIGAR
 		std::int64_t SurrenderKey() const { return surrenderKey.load(); }
 		// Applies the control panel's prompt-only switch to Acheron's key (game thread).
 		void ApplyKeyMode();
-		// Called by the key read-back (VM thread).
-		void OnKeyPolled(std::int64_t a_key) { polledKey = a_key; }
+		// The control panel's key check: asks Acheron for its current key, which its MCM changes in
+		// memory at once but writes to Settings.yaml only on a save (game thread; the answer arrives
+		// later through OnKeyChecked).
+		void CheckKey();
+		void OnKeyChecked(std::optional<std::int64_t> a_key);
 
 	private:
 		enum : std::uint16_t
@@ -41,7 +44,6 @@ namespace CIGAR
 		bool Blocked(RE::PlayerCharacter* a_player, std::string& a_why) const;
 		bool BaboSuspendedAcheron() const;
 		void SetAcheronKey(std::int64_t a_key);
-		void PollAcheronKey();
 		bool AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const;
 		void StartSlow();
 		void EndSlow(const char* a_reason);
@@ -51,9 +53,8 @@ namespace CIGAR
 
 		bool active{ false };
 		bool acheronPresent{ false };
-		// Acheron's in-memory surrender key, read back asynchronously (-2 = no answer yet).
-		std::atomic<std::int64_t> polledKey{ -2 };
-		Clock::time_point ignorePollUntil{};
+		// One key check at a time, so repeated clicks never queue several.
+		std::atomic<bool> checkPending{ false };
 		std::atomic<std::int64_t> surrenderKey{ -1 };
 		RE::BGSKeyword* defeated{ nullptr };
 		RE::EffectSetting* ykTimeout{ nullptr };

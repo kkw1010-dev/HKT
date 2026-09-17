@@ -44,7 +44,8 @@ sorts after `SKSEMenuFramework`. The vendored copy replaces the static with
   two slots share a key, or when a slot equals Grapple's or Acheron's
   surrender key.
 - **모드 단축키**: prompt-only switches for Grapple and Acheron's surrender
-  (default on). See "Prompt-only mode" in `docs/005-lockon.md`.
+  (default on), the current keys, and a 모드 키 다시 확인 button that re-reads
+  both mods' keys. See "Prompt-only mode" in `docs/005-lockon.md`.
 - **탈의·착용**: the bed/wardrobe reach (100–600, default 250) that used to be
   `kPlaceRange` in `Dress.cpp`. It is saved when the slider is released.
 - **상태**: whether SkyPrompt is connected, and where the settings came from.
