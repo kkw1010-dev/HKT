@@ -1,5 +1,6 @@
 #include "LockOn.h"
 
+#include "Settings.h"
 #include "Util.h"
 
 #include "TDM/TrueDirectionalMovementAPI.h"
@@ -19,6 +20,11 @@ namespace CIGAR
 		// FH_Grapple_Plugin.dll restores its keys from here at startup and saves them on every
 		// FH_Grapple_UpdateKeys call.
 		constexpr auto kGrappleIni = "Data/SKSE/Plugins/FH_Grapple_Plugin.ini"sv;
+		// Prompt-only mode moves Grapple's hotkey here: F13, which ordinary keyboards never send.
+		// Grapple's input sink compares the keyboard scan code with its key and nothing else, and its
+		// own QTE prompts do not use the hotkey (FH_Grapple_Plugin.dll 1.2.0, disassembled).
+		constexpr std::int32_t kHiddenGrappleKey = 0x64;
+		constexpr auto kPromptOnlyTarget = "grapple"sv;
 
 		// After a press, give the target mod time to act before offering again, so a lock that
 		// finds no target does not re-offer at once.
@@ -53,7 +59,7 @@ namespace CIGAR
 	void LockOn::ReadGrappleIni()
 	{
 		const auto key = Util::IniInt(std::filesystem::path{ kGrappleIni }, "Keys", "kbKey");
-		if (key && *key >= 0 && *key < 264) {
+		if (key && *key >= 0 && *key < 264 && *key != kHiddenGrappleKey) {
 			knownGrappleKey = static_cast<std::int32_t>(*key);
 		}
 		Log("Grapple INI kbKey={} at startup", key ? std::to_string(*key) : "-"s);
@@ -98,13 +104,31 @@ namespace CIGAR
 			return;
 		}
 		bool changed = false;
-		// A new game starts Grapple's MCM with no key (-1) and pushes that to its DLL, so the grapple
-		// key set in an earlier game is lost. Restore the last usable key CIGAR has seen.
-		if (hotkey->GetSInt() < 0 && knownGrappleKey >= 0) {
-			Log("Grapple Hotkey is unset; restoring {} (from the DLL's INI or an earlier game)", knownGrappleKey);
-			hotkey->SetSInt(knownGrappleKey);
-			grappleKey = knownGrappleKey;
-			changed = true;
+		const auto current = hotkey->GetSInt();
+		if (Settings::PromptOnly(kPromptOnlyTarget)) {
+			if (current != kHiddenGrappleKey) {
+				// Remember the player's key so switching prompt-only off gives it back.
+				if (current >= 0 && current < 264) {
+					Settings::SetManualKey(kPromptOnlyTarget, current);
+				}
+				Log("prompt-only: Grapple Hotkey {} -> hidden key {}", current, kHiddenGrappleKey);
+				hotkey->SetSInt(kHiddenGrappleKey);
+				changed = true;
+			}
+		} else if (current < 0 || current == kHiddenGrappleKey) {
+			// A new game starts Grapple's MCM with no key (-1) and pushes that to its DLL, and prompt-only
+			// mode leaves the hidden key behind. Restore the player's own key.
+			const auto manual = Settings::ManualKey(kPromptOnlyTarget);
+			const auto restore = manual >= 0 ? manual : knownGrappleKey;
+			if (restore >= 0) {
+				Log("Grapple Hotkey {}; restoring the player's key {}", current, restore);
+				hotkey->SetSInt(restore);
+				changed = true;
+			} else if (current == kHiddenGrappleKey) {
+				Log("WARN Grapple Hotkey is the hidden key and no earlier key is known; set one in Grapple's MCM");
+				hotkey->SetSInt(-1);
+				changed = true;
+			}
 		}
 		// Grapple presses this key to release TDM's lock during a grapple; it must be TDM's key.
 		if (tdm && tdmLockKey >= 0 && lockKey->GetSInt() != tdmLockKey) {
@@ -136,7 +160,7 @@ namespace CIGAR
 			grappleKey = key;
 			grappleModifier = modifier;
 		}
-		if (grappleKey >= 0 && grappleKey < 264) {
+		if (grappleKey >= 0 && grappleKey < 264 && grappleKey != kHiddenGrappleKey) {
 			knownGrappleKey = grappleKey;
 		}
 		const bool ok = grappleQuest && !grappleModifier && grappleKey >= 0 && grappleKey < 264;
@@ -152,6 +176,9 @@ namespace CIGAR
 		if (!grappleQuest) {
 			return;
 		}
+		// Also applies a prompt-only switch from the control panel, and undoes an MCM rebinding
+		// while prompt-only is on.
+		SyncGrappleKeys();
 		RefreshGrappleKey();
 		if (!grappleOk.load() && !warnedGrappleKey) {
 			warnedGrappleKey = true;

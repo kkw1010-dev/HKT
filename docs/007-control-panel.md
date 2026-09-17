@@ -43,6 +43,8 @@ sorts after `SKSEMenuFramework`. The vendored copy replaces the static with
   codes, with a reset button. See "Prompt keys" below. The panel warns when
   two slots share a key, or when a slot equals Grapple's or Acheron's
   surrender key.
+- **모드 단축키**: prompt-only switches for Grapple and Acheron's surrender
+  (default on). See "Prompt-only mode" in `docs/005-lockon.md`.
 - **탈의·착용**: the bed/wardrobe reach (100–600, default 250) that used to be
   `kPlaceRange` in `Dress.cpp`. It is saved when the slider is released.
 - **상태**: whether SkyPrompt is connected, and where the settings came from.
@@ -90,7 +92,8 @@ CIGAR therefore lists a keyboard key for every prompt it sends
 
 ```json
 { "dress": { "placeRange": 250.0 }, "modules": { "Dress": { "enabled": true } },
-  "prompt": { "keys": [2, 3, 4, 5] } }
+  "prompt": { "keys": [2, 3, 4, 5] },
+  "promptOnly": { "grapple": { "enabled": true, "manualKey": 34 } } }
 ```
 
 A missing or broken file means the defaults (everything on, keys 1–4).

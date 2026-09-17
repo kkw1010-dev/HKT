@@ -10,5 +10,15 @@
       4,
       5
     ]
+  },
+  "promptOnly": {
+    "grapple": {
+      "enabled": true,
+      "manualKey": -1
+    },
+    "surrender": {
+      "enabled": true,
+      "manualKey": -1
+    }
   }
 }

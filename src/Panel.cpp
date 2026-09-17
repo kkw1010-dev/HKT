@@ -83,7 +83,47 @@ namespace CIGAR::Panel
 					return key.name;
 				}
 			}
+			switch (a_code) {
+			case 0x64:
+				return "F13";
+			case 0x65:
+				return "F14";
+			case 0x9C:
+				return "Num Enter";
+			default:
+				break;
+			}
+			if (a_code >= 256 && a_code < 264) {
+				return std::format("마우스 {}", a_code - 255);
+			}
 			return std::format("#{}", a_code);
+		}
+
+		void RenderPromptOnlyItem(std::string_view a_target, const char* a_label, const char* a_hidden, void (*a_apply)())
+		{
+			bool on = Settings::PromptOnly(a_target);
+			if (ImGui::Checkbox(a_label, &on)) {
+				Settings::SetPromptOnly(a_target, on);
+				SKSE::GetTaskInterface()->AddTask(a_apply);
+			}
+			ImGui::Indent();
+			const auto manual = Settings::ManualKey(a_target);
+			const auto manualName = manual >= 0 ? NameOf(manual) : std::string("기록 없음");
+			if (on) {
+				ImGui::TextColored(kDim, "모드 키를 %s(숨김 키)로 옮김. 원래 키 %s는 비어 있음", a_hidden, manualName.c_str());
+			} else {
+				ImGui::TextColored(kDim, "모드 자체 키 사용. 끌 때 복원한 키: %s", manualName.c_str());
+			}
+			ImGui::Unindent();
+		}
+
+		void RenderPromptOnly()
+		{
+			RenderPromptOnlyItem("grapple", "그래플: 프롬프트 전용##po-grapple", "F13",
+				[] { LockOn::GetSingleton()->ApplyKeyMode(); });
+			RenderPromptOnlyItem("surrender", "Acheron 항복: 프롬프트 전용##po-surrender", "F14",
+				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
+			ImGui::TextColored(kDim, "켜져 있는 동안 MCM에서 키를 바꿔도 숨김 키로 되돌림");
 		}
 
 		void RenderKeys()
@@ -184,6 +224,9 @@ namespace CIGAR::Panel
 
 			ImGui::SeparatorText("프롬프트 키");
 			RenderKeys();
+
+			ImGui::SeparatorText("모드 단축키");
+			RenderPromptOnly();
 
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();

@@ -110,3 +110,8 @@ event ID its own key slot (`Manager::Add2Q`), so 항복 never shares a key with
   every slow-motion start and end, with its reason.
 - `tools/verify_deploy.py` checks Acheron's DLL, its surrender key, the
   modifier and the processing switch.
+
+## Prompt-only mode (2026-09-18)
+
+Acheron's surrender key is moved to F14 while 프롬프트 전용 is on. The
+details, shared with Grapple, are in `docs/005-lockon.md`.

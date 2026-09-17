@@ -121,3 +121,23 @@ saves them to `FH_Grapple_Plugin.ini`.
   - TDM's `RequestPluginAPI` export;
   - that TDM's lock key is pressable;
   - Grapple's DLL and the script names read above.
+
+## Prompt-only mode (2026-09-18)
+
+Shared with `Surrender`; see also `docs/008-surrender.md`.
+
+The user wants no manual hotkeys for Grapple and Acheron's surrender, so that
+G is free for CIGAR's prompts. With 프롬프트 전용 on (the default, one switch per
+mod in the control panel), CIGAR moves that mod's key to a key no ordinary
+keyboard sends, and presses that key itself when the prompt is accepted:
+
+| Mod | Hidden key | How CIGAR sets it | Why it is safe |
+|---|---|---|---|
+| Grapple | F13 (`0x64`) | `FH_Grapple.Hotkey` property + `ApplySettings()` | the DLL's input sink compares the keyboard scan code only (disassembly of `FH_Grapple_Plugin.dll` 1.2.0 at `0x2a70`–`0x2b89`); the key global is read nowhere else, so its SkyPrompt QTE does not use it |
+| Acheron | F14 (`0x65`) | `AcheronMCM.SetSettingInt("iSurrenderKey")` on `AcheronMain` (`0x800`) | `EventHandler::ProcessEvent` compares the scan code only (`Scrabx3/Acheron`, `EventSink.cpp`); the setting is in memory at once and written to `Settings.yaml` on the next game save |
+
+- The key the mod had before is kept in `CIGAR.json`
+  (`promptOnly.<mod>.manualKey`) and restored when the switch is turned off.
+- While the switch is on, a key set in the mod's MCM is moved back to the
+  hidden key (Grapple: within a second; Acheron: at the next load).
+- TDM's lock key (middle mouse) is unchanged.

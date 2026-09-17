@@ -18,10 +18,15 @@ status.
      BaboDialogue holds the player, the gate reads `babo-acheron-off`.
    - **Unique prompt IDs** (`eeaa8c5`). In a BaboDialogue kidnap room with
      Fill Her Up data present, 행동 선택 and 배출 show on different keys.
-2. **Pending user decision: "pause FHU during SexLab scenes"**, option (a)
-   or (b); (c), hiding 배출 during scenes, is done. The user has since fixed
-   FHU's own deflate problem in FHU itself (2026-09-18), outside this repo.
-3. Backlog below.
+   - **Prompt-only keys.** With both switches on (default): Grapple's MCM
+     shows F13 and Acheron's shows F14. G pressed by hand does nothing, and
+     the 그래플 and 항복 prompts still work. `CIGAR.log` shows
+     `prompt-only: ... -> hidden key`.
+2. Backlog below.
+
+Closed on 2026-09-18: the "FHU during SexLab scenes" question. The user traced
+it to a temporary BaboDialogue fault; CIGAR's earlier work was correct. FHU's
+own deflate problem was fixed by the user in FHU.
 
 ## Where things stand
 
@@ -79,9 +84,11 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - Both work by pressing that mod's key through `BSInputDeviceManager`
     (`Util::PressKey`), because TDM has no API to set the lock.
   - A grapple started while locked is followed by an automatic re-lock.
-  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258), and an
-    unset `Hotkey` (every new game) is restored from
-    `FH_Grapple_Plugin.ini`. The key is re-read every second.
+  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258).
+  - Prompt-only mode (default on) moves Grapple's `Hotkey` to F13, so G is
+    free. When it is off, an unset `Hotkey` (every new game) is restored from
+    the remembered key or `FH_Grapple_Plugin.ini`. The key is re-read every
+    second.
 - **Deflate.**
   - A hold prompt. SkyPrompt's key down (5) and up (6) are forwarded to FHU's
     `sr_infDeflateAbility.OnKeyDown` / `OnKeyUp`.
@@ -90,8 +97,9 @@ All modules are confirmed in game (2026-09-17) unless noted.
 - **Surrender.**
   - A `kHold` prompt in combat below 40% health, with 3 s of x0.3 slow motion
     (`BSTimer::SetGlobalTimeMultiplier`) and a white↔gold text pulse.
-  - Accepting presses Acheron's surrender key (K, from
-    `Data/SKSE/Acheron/Settings.yaml`).
+  - Accepting presses Acheron's surrender key, read from
+    `Data/SKSE/Acheron/Settings.yaml`. Prompt-only mode (default on) moves
+    that key from K to F14 through `AcheronMCM.SetSettingInt`.
   - Hidden (`yk-timeout`) while every hostile within 3000 units has
     `Kudasai_SurrenderTimeoutEFF`: YK's 3-minute rule, under which its
     surrender quest cannot fill.
@@ -117,6 +125,7 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - per-module on/off switches;
   - each module's live gate and last log line;
   - the prompt keys;
+  - the prompt-only switches for Grapple and Acheron;
   - the Dress reach.
 
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a

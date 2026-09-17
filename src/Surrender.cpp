@@ -1,5 +1,6 @@
 #include "Surrender.h"
 
+#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR
@@ -9,6 +10,14 @@ namespace CIGAR
 		constexpr auto kAcheronPlugin = "Acheron.esm"sv;
 		constexpr RE::FormID kDefeatedKeywordID = 0x801;  // Acheron_Defeated
 		constexpr auto kAcheronSettings = "Data/SKSE/Acheron/Settings.yaml"sv;
+		// AcheronMain carries the AcheronMCM script, whose native SetSettingInt changes Acheron's
+		// in-memory setting at once; Acheron writes Settings.yaml when the game is saved.
+		constexpr RE::FormID kAcheronMCMQuestID = 0x800;
+		constexpr auto kAcheronMCMScript = "AcheronMCM";
+		// Prompt-only mode moves the surrender key here: F14, which ordinary keyboards never send.
+		// Acheron compares the scan code with its key and nothing else (EventSink.cpp).
+		constexpr std::int64_t kHiddenSurrenderKey = 0x65;
+		constexpr auto kPromptOnlyTarget = "surrender"sv;
 		constexpr auto kYKPlugin = "YameteKudasai.esp"sv;
 		// Kudasai_SurrenderTimeoutEFF: YK marks the enemies of a surrender for 3 minutes, and its
 		// surrender quest (Kudasai_Surrender, Enemy01) will not fill with a marked actor.
@@ -105,6 +114,7 @@ namespace CIGAR
 		lastGate.clear();
 		quietUntil = {};
 		active = false;
+		acheronPresent = false;
 		wasOffered = false;
 		slowedThisEpisode = false;
 
@@ -115,6 +125,7 @@ namespace CIGAR
 			Log("Acheron not found (esm={} dll={}); the surrender prompt is off", esm, dll);
 			return;
 		}
+		acheronPresent = true;
 		defeated = handler->LookupForm<RE::BGSKeyword>(kDefeatedKeywordID, kAcheronPlugin);
 		ykTimeout = handler->LookupModByName(kYKPlugin) ? handler->LookupForm<RE::EffectSetting>(kYKTimeoutEffectID, kYKPlugin) : nullptr;
 		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
@@ -136,6 +147,9 @@ namespace CIGAR
 		const auto key = YamlInt("iSurrenderKey");
 		const auto modifier = YamlInt("iHunterPrideKeyMod");
 		surrenderKey = key.value_or(-1);
+		if (key) {
+			ApplyKeyMode();
+		}
 		const bool yk = handler->LookupModByName(kYKPlugin) != nullptr;
 		Log("Acheron settings: processing={} surrenderKey={} modifier={} defeatedKeyword={} yk={} ykTimeout={}",
 			processing.value_or("?"), surrenderKey.load(), modifier.value_or(-1), defeated != nullptr, yk, ykTimeout != nullptr);
@@ -194,6 +208,51 @@ namespace CIGAR
 			return false;
 		}
 		return true;
+	}
+
+	void Surrender::SetAcheronKey(std::int64_t a_key)
+	{
+		auto* handler = RE::TESDataHandler::GetSingleton();
+		auto* quest = handler ? handler->LookupForm<RE::TESQuest>(kAcheronMCMQuestID, kAcheronPlugin) : nullptr;
+		if (!quest || !Util::ScriptObject(quest, kAcheronMCMScript)) {
+			Log("WARN AcheronMCM script not found; surrender key not changed");
+			return;
+		}
+		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+		auto* policy = vm->GetObjectHandlePolicy();
+		const auto handle = policy->GetHandleForObject(quest->GetFormType(), quest);
+		auto* args = RE::MakeFunctionArguments(RE::BSFixedString("iSurrenderKey"), static_cast<std::int32_t>(a_key));
+		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
+		const bool queued = vm->DispatchMethodCall2(handle, kAcheronMCMScript, "SetSettingInt", args, callback);
+		surrenderKey = a_key;
+		Log("Acheron iSurrenderKey -> {} requested queued={}", a_key, queued);
+	}
+
+	void Surrender::ApplyKeyMode()
+	{
+		const auto current = surrenderKey.load();
+		if (!acheronPresent || current < 0) {
+			return;
+		}
+		if (Settings::PromptOnly(kPromptOnlyTarget)) {
+			if (current == kHiddenSurrenderKey) {
+				return;
+			}
+			// Remember the player's key so switching prompt-only off gives it back.
+			if (current >= 0 && current < 264) {
+				Settings::SetManualKey(kPromptOnlyTarget, static_cast<std::int32_t>(current));
+			}
+			Log("prompt-only: Acheron surrender key {} -> hidden key {}", current, kHiddenSurrenderKey);
+			SetAcheronKey(kHiddenSurrenderKey);
+		} else if (current == kHiddenSurrenderKey) {
+			const auto manual = Settings::ManualKey(kPromptOnlyTarget);
+			if (manual >= 0) {
+				Log("restoring the player's surrender key {}", manual);
+				SetAcheronKey(manual);
+			} else {
+				Log("WARN surrender key is the hidden key and no earlier key is known; set one in Acheron's MCM");
+			}
+		}
 	}
 
 	bool Surrender::BaboSuspendedAcheron() const

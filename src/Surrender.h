@@ -23,6 +23,8 @@ namespace CIGAR
 		void OnDisabled() override;
 		// Acheron's surrender key, or -1 (control panel conflict check; any thread).
 		std::int64_t SurrenderKey() const { return surrenderKey.load(); }
+		// Applies the control panel's prompt-only switch to Acheron's key (game thread).
+		void ApplyKeyMode();
 
 	private:
 		enum : std::uint16_t
@@ -36,6 +38,7 @@ namespace CIGAR
 
 		bool Blocked(RE::PlayerCharacter* a_player, std::string& a_why) const;
 		bool BaboSuspendedAcheron() const;
+		void SetAcheronKey(std::int64_t a_key);
 		bool AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const;
 		void StartSlow();
 		void EndSlow(const char* a_reason);
@@ -44,6 +47,7 @@ namespace CIGAR
 		PromptSlot surrender{ this, kSurrender };
 
 		bool active{ false };
+		bool acheronPresent{ false };
 		std::atomic<std::int64_t> surrenderKey{ -1 };
 		RE::BGSKeyword* defeated{ nullptr };
 		RE::EffectSetting* ykTimeout{ nullptr };

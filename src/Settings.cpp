@@ -20,6 +20,22 @@ namespace CIGAR::Settings
 		std::map<std::string, bool, std::less<>> enabled;
 		float placeRange = kPlaceRangeDefault;
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
+
+		struct PromptOnlyState
+		{
+			bool on{ true };
+			std::int32_t manualKey{ -1 };
+		};
+		constexpr std::array kPromptOnlyTargets{ "grapple"sv, "surrender"sv };
+		std::map<std::string, PromptOnlyState, std::less<>> promptOnly;
+
+		void ResetPromptOnly()
+		{
+			promptOnly.clear();
+			for (const auto target : kPromptOnlyTargets) {
+				promptOnly.emplace(std::string(target), PromptOnlyState{});
+			}
+		}
 		std::string source = "not loaded";
 
 		void SaveLocked()
@@ -30,6 +46,10 @@ namespace CIGAR::Settings
 			}
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
+			for (const auto& [target, state] : promptOnly) {
+				j["promptOnly"][target]["enabled"] = state.on;
+				j["promptOnly"][target]["manualKey"] = state.manualKey;
+			}
 			std::error_code ec;
 			std::filesystem::create_directories(kPath.parent_path(), ec);
 			std::ofstream out(kPath, std::ios::binary | std::ios::trunc);
@@ -52,6 +72,7 @@ namespace CIGAR::Settings
 		}
 		placeRange = kPlaceRangeDefault;
 		promptKeys = kDefaultPromptKeys;
+		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
 		if (!in) {
@@ -84,6 +105,14 @@ namespace CIGAR::Settings
 					}
 				}
 			}
+			if (const auto it = j.find("promptOnly"); it != j.end() && it->is_object()) {
+				for (auto& [target, state] : promptOnly) {
+					if (const auto t = it->find(target); t != it->end() && t->is_object()) {
+						state.on = t->value("enabled", true);
+						state.manualKey = t->value("manualKey", -1);
+					}
+				}
+			}
 			source = "CIGAR.json";
 		} catch (const std::exception& e) {
 			source = "defaults (CIGAR.json unreadable)";
@@ -95,6 +124,9 @@ namespace CIGAR::Settings
 		}
 		logs::info("settings: dress place range {:.0f}", placeRange);
 		logs::info("settings: prompt keys {} {} {} {}", promptKeys[0], promptKeys[1], promptKeys[2], promptKeys[3]);
+		for (const auto& [target, state] : promptOnly) {
+			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
+		}
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -156,6 +188,40 @@ namespace CIGAR::Settings
 		logs::info("control panel: prompt key {} set to {}", a_slot + 1, a_key);
 		// SkyPrompt keeps a queued prompt's key, so take every prompt down; each is offered again.
 		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
+	}
+
+	bool PromptOnly(std::string_view a_target)
+	{
+		std::scoped_lock guard(lock);
+		const auto it = promptOnly.find(a_target);
+		return it == promptOnly.end() || it->second.on;
+	}
+
+	void SetPromptOnly(std::string_view a_target, bool a_on)
+	{
+		std::scoped_lock guard(lock);
+		promptOnly[std::string(a_target)].on = a_on;
+		SaveLocked();
+		logs::info("control panel: {} prompt-only {}", a_target, a_on ? "on" : "off");
+	}
+
+	std::int32_t ManualKey(std::string_view a_target)
+	{
+		std::scoped_lock guard(lock);
+		const auto it = promptOnly.find(a_target);
+		return it == promptOnly.end() ? -1 : it->second.manualKey;
+	}
+
+	void SetManualKey(std::string_view a_target, std::int32_t a_key)
+	{
+		std::scoped_lock guard(lock);
+		auto& state = promptOnly[std::string(a_target)];
+		if (state.manualKey == a_key) {
+			return;
+		}
+		state.manualKey = a_key;
+		SaveLocked();
+		logs::info("settings: {} manual key remembered as {}", a_target, a_key);
 	}
 
 	void Save()

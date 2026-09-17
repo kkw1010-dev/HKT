@@ -29,6 +29,12 @@ namespace CIGAR
 		// starts: a new game's MCM init pushes its empty key to the DLL, which may save it there.
 		void ReadGrappleIni();
 		// The key the grapple prompt presses, or -1 (control panel conflict check).
+		// Applies the control panel's prompt-only switch to Grapple's hotkey (game thread).
+		void ApplyKeyMode()
+		{
+			SyncGrappleKeys();
+			RefreshGrappleKey();
+		}
 		std::int32_t GrappleKey() const { return grappleOk.load() ? grappleKeyShown.load() : -1; }
 
 	private:
