@@ -13,6 +13,8 @@ namespace CIGAR
 		bool Init();
 		bool Available();
 		SkyPromptAPI::ClientID Client();
+		// Takes every prompt of a_owner off the screen (game thread).
+		void WithdrawAll(const Module* a_owner);
 	}
 
 	// One on-screen prompt. Each prompt is its own sink, because the installed SkyPrompt

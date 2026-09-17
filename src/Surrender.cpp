@@ -232,6 +232,13 @@ namespace CIGAR
 		}
 	}
 
+	void Surrender::OnDisabled()
+	{
+		EndSlow("module switched off");
+		wasOffered = false;
+		slowedThisEpisode = false;
+	}
+
 	void Surrender::OnAccepted(std::uint16_t a_eventID)
 	{
 		if (!active || a_eventID != kSurrender) {

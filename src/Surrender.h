@@ -20,6 +20,7 @@ namespace CIGAR
 		void Tick() override {}
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
+		void OnDisabled() override;
 
 	private:
 		// An event ID no other module uses: SkyPrompt gives each event ID its own key slot, so

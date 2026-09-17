@@ -47,6 +47,9 @@ $pdb = Join-Path $Output 'CIGAR.pdb'
 if (-not (Test-Path $dll)) { throw "Build reported success but $dll is missing." }
 Write-Host "built: $dll"
 
+& python (Join-Path $PSScriptRoot 'check_menu_framework.py')
+if ($LASTEXITCODE -ne 0) { throw 'Control-panel checks failed.' }
+
 if (-not $Deploy) { exit 0 }
 
 if (Get-Process -Name SkyrimSE -ErrorAction SilentlyContinue) {
@@ -57,6 +60,10 @@ $plugins = Join-Path $ModFolder 'SKSE\Plugins'
 New-Item -ItemType Directory -Force $plugins | Out-Null
 Copy-Item $dll $plugins -Force
 if (Test-Path $pdb) { Copy-Item $pdb $plugins -Force }
+# The panel saves to CIGAR.json; shipping one keeps those writes in this mod folder instead of
+# MO2's overwrite. An existing file holds the player's choices and is left alone.
+$settings = Join-Path $plugins 'CIGAR.json'
+if (-not (Test-Path $settings)) { Copy-Item (Join-Path $Repo 'dist\CIGAR.json') $settings }
 
 & python (Join-Path $PSScriptRoot 'sync_si_settings.py')
 if ($LASTEXITCODE -ne 0) { throw 'SI settings override failed.' }

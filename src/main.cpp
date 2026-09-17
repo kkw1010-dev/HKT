@@ -4,7 +4,9 @@
 #include "Dress.h"
 #include "LockOn.h"
 #include "Module.h"
+#include "Panel.h"
 #include "Prompt.h"
+#include "Settings.h"
 #include "Surrender.h"
 #include "Util.h"
 
@@ -60,6 +62,9 @@ namespace
 			return;
 		}
 		for (auto* module : Modules()) {
+			if (!Settings::Enabled(module->Name())) {
+				continue;
+			}
 			module->FastTick();
 			if (full) {
 				module->Tick();
@@ -103,6 +108,10 @@ namespace
 	void OnMessage(SKSE::MessagingInterface::Message* a_msg)
 	{
 		switch (a_msg->type) {
+		case SKSE::MessagingInterface::kPostLoad:
+			Settings::Load();
+			Panel::Register();
+			break;
 		case SKSE::MessagingInterface::kDataLoaded:
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();

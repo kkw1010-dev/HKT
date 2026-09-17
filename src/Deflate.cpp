@@ -177,6 +177,12 @@ namespace CIGAR
 		Log("{}({}) requested queued={}", a_event, key, queued);
 	}
 
+	void Deflate::OnDisabled()
+	{
+		// A switch-off mid-hold must still release FHU's key, or its push loop keeps running.
+		OnHold(kDeflate, false);
+	}
+
 	void Deflate::OnHold(std::uint16_t a_eventID, bool a_down)
 	{
 		if (!inflater || a_eventID != kDeflate) {

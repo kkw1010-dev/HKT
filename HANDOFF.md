@@ -41,6 +41,12 @@ Read this first, then `README.md`. The design rationale and test history are in
     that presses Acheron's surrender key (K). Yamete Kudasai
     2.2.3 registers its own surrender key but never handles it; Acheron does.
     **Built and deployed but not yet tested in game.**
+- An optional SKSE Menu Framework page (CIGAR / 설정; `src/Panel.*`,
+  `docs/007-control-panel.md`) switches modules on and off, shows each
+  module's live gate and last log line, and sets the Dress reach. Choices are
+  saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. A module switched off gets
+  `OnDisabled()`: Surrender ends its slow motion, and Deflate releases a held
+  key.
 - SI overlap is handled by `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`:
   - SI Bathe and DressActions water/bed/wardrobe are off;
   - SI's preset is pinned to Power User (2), because other presets re-enable

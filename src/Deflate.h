@@ -18,6 +18,7 @@ namespace CIGAR
 		void Tick() override;
 		void OnAccepted(std::uint16_t) override {}
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
+		void OnDisabled() override;
 
 		// Result of FHU's GetMostRecentInflationType(player), from a VM thread.
 		void SetInflationType(std::int32_t a_type);

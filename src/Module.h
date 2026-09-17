@@ -17,6 +17,9 @@ namespace CIGAR
 		// Runs about ten times a second under the same conditions as Tick(), for gates that must
 		// react faster than once a second.
 		virtual void FastTick() {}
+		// The control panel switched the module off (game thread, after its prompts were withdrawn).
+		// Undo anything that outlives a prompt, such as slow motion or a held key.
+		virtual void OnDisabled() {}
 		// Hold prompts only: the prompt key went down (true) or up (false). A removed prompt
 		// reports up, so a hold always ends.
 		virtual void OnHold(std::uint16_t, bool) {}
@@ -25,7 +28,10 @@ namespace CIGAR
 		template <class... Args>
 		void Log(std::format_string<Args...> a_fmt, Args&&... a_args) const
 		{
-			logs::info("[{}] {}", Name(), std::format(a_fmt, std::forward<Args>(a_args)...));
+			auto line = std::format(a_fmt, std::forward<Args>(a_args)...);
+			logs::info("[{}] {}", Name(), line);
+			std::scoped_lock lock(shownLock);
+			shownLine = std::move(line);
 		}
 
 		// Logs the prompt-gate inputs only when they change, so a missing prompt is explained by the log.
@@ -33,12 +39,33 @@ namespace CIGAR
 		{
 			if (a_gate != lastGate) {
 				Log("gate {}", a_gate);
+				{
+					std::scoped_lock lock(shownLock);
+					shownGate = a_gate;
+				}
 				lastGate = std::move(a_gate);
 			}
 		}
 
+		// The last gate and the last log line, copied for the control panel (render thread).
+		std::string ShownGate() const
+		{
+			std::scoped_lock lock(shownLock);
+			return shownGate;
+		}
+		std::string ShownLine() const
+		{
+			std::scoped_lock lock(shownLock);
+			return shownLine;
+		}
+
 	protected:
 		std::string lastGate;
+
+	private:
+		mutable std::mutex shownLock;
+		mutable std::string shownLine;
+		std::string shownGate;
 	};
 
 	std::span<Module* const> Modules();

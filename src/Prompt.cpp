@@ -48,10 +48,32 @@ namespace CIGAR
 
 	SkyPromptAPI::ClientID Prompts::Client() { return clientID; }
 
+	namespace
+	{
+		// Every slot, so a module switched off in the control panel can be cleared from outside.
+		std::vector<std::pair<const Module*, PromptSlot*>>& Slots()
+		{
+			static std::vector<std::pair<const Module*, PromptSlot*>> slots;
+			return slots;
+		}
+	}
+
+	void Prompts::WithdrawAll(const Module* a_owner)
+	{
+		for (auto [owner, slot] : Slots()) {
+			if (owner == a_owner) {
+				slot->Reset();
+				slot->Withdraw();
+			}
+		}
+	}
+
 	PromptSlot::PromptSlot(Module* a_owner, SkyPromptAPI::EventID a_id) :
 		owner(a_owner),
 		id(a_id)
-	{}
+	{
+		Slots().emplace_back(a_owner, this);
+	}
 
 	void PromptSlot::Update(bool a_can, const std::function<std::string()>& a_text)
 	{

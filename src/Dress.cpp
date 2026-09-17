@@ -1,13 +1,12 @@
 #include "Dress.h"
 
+#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR
 {
 	namespace
 	{
-		// How close the player must stay to the bed or wardrobe last aimed at.
-		constexpr float kPlaceRange = 250.0f;
 		constexpr std::uint32_t kRecordDress = 'DRES';
 		// v1: removed-item list only. v2: outfit list + undressed-by-CIGAR flag.
 		constexpr std::uint32_t kRecordVersion = 2;
@@ -107,7 +106,7 @@ namespace CIGAR
 		}
 		if (const auto ref = place.get()) {
 			if (ref->GetParentCell() == a_player->GetParentCell() &&
-				a_player->GetPosition().GetDistance(ref->GetPosition()) <= kPlaceRange) {
+				a_player->GetPosition().GetDistance(ref->GetPosition()) <= Settings::PlaceRange()) {
 				return placeKind;
 			}
 		}
