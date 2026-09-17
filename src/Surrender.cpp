@@ -138,13 +138,13 @@ namespace CIGAR
 		surrenderKey = key.value_or(-1);
 		const bool yk = handler->LookupModByName(kYKPlugin) != nullptr;
 		Log("Acheron settings: processing={} surrenderKey={} modifier={} defeatedKeyword={} yk={} ykTimeout={}",
-			processing.value_or("?"), surrenderKey, modifier.value_or(-1), defeated != nullptr, yk, ykTimeout != nullptr);
+			processing.value_or("?"), surrenderKey.load(), modifier.value_or(-1), defeated != nullptr, yk, ykTimeout != nullptr);
 
 		std::string problem;
 		if (!key) {
 			problem = "iSurrenderKey not readable from " + std::string{ kAcheronSettings };
-		} else if (surrenderKey < 0 || surrenderKey >= 264) {
-			problem = std::format("surrender key {} is unset or not a keyboard/mouse key", surrenderKey);
+		} else if (surrenderKey.load() < 0 || surrenderKey.load() >= 264) {
+			problem = std::format("surrender key {} is unset or not a keyboard/mouse key", surrenderKey.load());
 		} else if (modifier.value_or(-1) > -1) {
 			// Acheron requires its Hunter's Pride modifier for the surrender key as well.
 			problem = "Acheron's modifier key is set, which a single press cannot hold";
@@ -306,8 +306,8 @@ namespace CIGAR
 		}
 		// Acheron finds the aggressor and consequence itself and shows its own message on failure.
 		EndSlow("accepted");
-		const bool pressed = Util::PressKey(surrenderKey);
-		Log("surrender key {} pressed={}", surrenderKey, pressed);
+		const bool pressed = Util::PressKey(surrenderKey.load());
+		Log("surrender key {} pressed={}", surrenderKey.load(), pressed);
 		quietUntil = Clock::now() + kQuietAfterPress;
 		// Offer again after the quiet period if the fight goes on.
 		surrender.Reset();

@@ -19,6 +19,7 @@ namespace CIGAR::Settings
 		std::mutex lock;
 		std::map<std::string, bool, std::less<>> enabled;
 		float placeRange = kPlaceRangeDefault;
+		PromptKeyArray promptKeys = kDefaultPromptKeys;
 		std::string source = "not loaded";
 
 		void SaveLocked()
@@ -28,6 +29,7 @@ namespace CIGAR::Settings
 				j["modules"][name]["enabled"] = on;
 			}
 			j["dress"]["placeRange"] = placeRange;
+			j["prompt"]["keys"] = promptKeys;
 			std::error_code ec;
 			std::filesystem::create_directories(kPath.parent_path(), ec);
 			std::ofstream out(kPath, std::ios::binary | std::ios::trunc);
@@ -49,6 +51,7 @@ namespace CIGAR::Settings
 			enabled.emplace(module->Name(), true);
 		}
 		placeRange = kPlaceRangeDefault;
+		promptKeys = kDefaultPromptKeys;
 
 		std::ifstream in(kPath, std::ios::binary);
 		if (!in) {
@@ -68,6 +71,19 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("dress"); it != j.end() && it->is_object()) {
 				placeRange = std::clamp(it->value("placeRange", kPlaceRangeDefault), kPlaceRangeMin, kPlaceRangeMax);
 			}
+			if (const auto it = j.find("prompt"); it != j.end() && it->is_object()) {
+				if (const auto keys = it->find("keys"); keys != it->end() && keys->is_array()) {
+					for (std::size_t i = 0; i < kPromptKeyCount && i < keys->size(); ++i) {
+						const auto& v = (*keys)[i];
+						// Keyboard scan codes only; anything else keeps that slot's default.
+						if (v.is_number_unsigned() && v.get<std::uint32_t>() > 0 && v.get<std::uint32_t>() < 256) {
+							promptKeys[i] = v.get<std::uint32_t>();
+						} else {
+							logs::warn("settings: prompt key {} is not a keyboard key ({}); using {}", i + 1, v.dump(), promptKeys[i]);
+						}
+					}
+				}
+			}
 			source = "CIGAR.json";
 		} catch (const std::exception& e) {
 			source = "defaults (CIGAR.json unreadable)";
@@ -78,6 +94,7 @@ namespace CIGAR::Settings
 			logs::info("settings: {} {}", name, on ? "on" : "off");
 		}
 		logs::info("settings: dress place range {:.0f}", placeRange);
+		logs::info("settings: prompt keys {} {} {} {}", promptKeys[0], promptKeys[1], promptKeys[2], promptKeys[3]);
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -118,6 +135,27 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		placeRange = std::clamp(a_range, kPlaceRangeMin, kPlaceRangeMax);
+	}
+
+	PromptKeyArray PromptKeys()
+	{
+		std::scoped_lock guard(lock);
+		return promptKeys;
+	}
+
+	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key)
+	{
+		if (a_slot >= kPromptKeyCount || a_key == 0 || a_key >= 256) {
+			return;
+		}
+		{
+			std::scoped_lock guard(lock);
+			promptKeys[a_slot] = a_key;
+			SaveLocked();
+		}
+		logs::info("control panel: prompt key {} set to {}", a_slot + 1, a_key);
+		// SkyPrompt keeps a queued prompt's key, so take every prompt down; each is offered again.
+		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
 	}
 
 	void Save()

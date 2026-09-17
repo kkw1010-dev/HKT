@@ -9,6 +9,23 @@ Status (2026-09-17): tested in game.
 - **Fixes.** An automatic re-lock (below) was added, and 그래플 is now also
   offered without a lock.
 
+- **Test 2 (2026-09-18, new game).** 그래플 never appeared. `CIGAR.log`
+  showed `Grapple ... key=-1 ... lockKey=-1` and "Grapple has no keyboard
+  hotkey; the grapple prompt is off". The cause is in Grapple:
+  - a new game starts `FH_Grapple`'s MCM properties at `Hotkey = -1`;
+  - its `OnConfigInit` pushes that to the DLL
+    (`[UpdateKeys] kbKey=-1` in `FH_Grapple_Plugin.log`), so the key from
+    `FH_Grapple_Plugin.ini` (34) was dropped;
+  - CIGAR read the key only at load, so rebinding G in the MCM two minutes
+    later did not bring the prompt back.
+- **Fix.**
+  - CIGAR reads the INI's `kbKey` at `kDataLoaded`, before any game starts.
+  - At load, an unset `Hotkey` is restored from that value (or from the last
+    key seen in this session), then `ApplySettings()` pushes it to the DLL.
+  - The key is re-read every second, so an MCM change applies at once.
+  - A notification appears once when no usable key exists.
+  - `verify_deploy.py` fails when the INI has no usable `kbKey`.
+
 ## Behaviour
 
 | Condition | Prompt | Accept |
@@ -86,9 +103,11 @@ MCM quest `FHGrapple_Quest` (`000800`, script `FH_Grapple`):
   grapple (`[GrappleTurn] Injected TDM lock-on key`). It must equal TDM's
   lock key.
 
-On every load, CIGAR compares `TargetLockKey` with TDM's key. If they differ,
-it sets the property and calls `UpdateGlobals()`, which pushes the key to the
-DLL through `FH_Grapple_UpdateKeys`. On this modlist both are already 258.
+On every load, CIGAR compares `TargetLockKey` with TDM's key, and restores
+an unset `Hotkey` (see test 2). If either changed, it sets the properties and
+calls `ApplySettings()`. That registers the hotkey and calls `UpdateGlobals()`,
+which pushes the keys to the DLL through `FH_Grapple_UpdateKeys`; the DLL
+saves them to `FH_Grapple_Plugin.ini`.
 
 ## Self-reporting
 

@@ -45,7 +45,7 @@ TDM_SETTINGS = [
     os.path.join(MODS, TDM_MOD, "MCM", "Config", "TrueDirectionalMovement", "settings.ini"),
 ]
 GRAPPLE_MOD = "Grapple"
-GRAPPLE_NEEDLES = ["Hotkey", "ModifierEnabled", "TargetLockKey", "UpdateGlobals"]
+GRAPPLE_NEEDLES = ["Hotkey", "ModifierEnabled", "TargetLockKey", "UpdateGlobals", "ApplySettings"]
 # Fill Her Up names read by src/Deflate.cpp.
 FHU_MOD = "Fill Her Up Baka Edition"
 FHU_SCRIPTS = {
@@ -116,6 +116,25 @@ def dll_exports(path):
         p = off(struct.unpack_from("<I", d, names + 4 * i)[0])
         result.add(d[p:d.index(b"\0", p)])
     return result
+
+
+def check_prompt_keys():
+    """The control panel's prompt keys. A key outside 1-255 is ignored by the DLL, and two equal keys
+    make one press fire two prompts."""
+    path = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.json")
+    try:
+        with open(path, encoding="utf-8") as f:
+            keys = json.load(f).get("prompt", {}).get("keys")
+    except (OSError, ValueError) as e:
+        check(False, "CIGAR.json readable: %s" % e)
+        return
+    if keys is None:
+        note("CIGAR.json has no prompt keys: the defaults 1-4 apply")
+        return
+    valid = isinstance(keys, list) and len(keys) == 4 and all(isinstance(k, int) and 0 < k < 256 for k in keys)
+    check(valid, "CIGAR.json prompt keys are four keyboard scan codes: %s" % keys)
+    if valid:
+        check(len(set(keys)) == 4, "CIGAR.json prompt keys are distinct: %s" % keys)
 
 
 def check_babo(modlist):
@@ -206,6 +225,12 @@ def check_lockon(modlist):
         kb = ini_int(grapple_ini, "Keys", "kbKey")
         mod = ini_int(grapple_ini, "Keys", "kbModifier")
         note("Grapple keys: hotkey=%s modifier=%s lock=%s (CIGAR syncs lock to TDM's at load)" % (kb, mod, lock))
+        # A new game starts Grapple's MCM with no hotkey; CIGAR restores the key from this INI, so
+        # an unset key here leaves the grapple prompt off in every new game.
+        check(kb is not None and 0 <= kb < 264,
+              "Grapple INI kbKey is a keyboard/mouse key CIGAR can restore on a new game: %s" % kb)
+    else:
+        check(False, "Grapple INI present: %s" % grapple_ini)
 
 
 def check_fhu(modlist):
@@ -301,6 +326,7 @@ def main():
     # Optional integrations: reported, never required.
     bis = os.path.isfile(os.path.join(MODS, "Bathing in Skyrim - Renewed", "Bathing in Skyrim.esp"))
     note("Bathing in Skyrim - Renewed %s" % ("installed: bathe module active" if bis else "absent: bathe module idles"))
+    check_prompt_keys()
     check_babo(modlist)
     check_lockon(modlist)
     check_fhu(modlist)

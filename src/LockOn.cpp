@@ -16,6 +16,9 @@ namespace CIGAR
 		constexpr auto kGrapplePlugin = "FH_Grapple.esp"sv;
 		constexpr auto kGrappleScript = "FH_Grapple";
 		constexpr RE::FormID kGrappleQuestID = 0x800;  // FHGrapple_Quest (MCM)
+		// FH_Grapple_Plugin.dll restores its keys from here at startup and saves them on every
+		// FH_Grapple_UpdateKeys call.
+		constexpr auto kGrappleIni = "Data/SKSE/Plugins/FH_Grapple_Plugin.ini"sv;
 
 		// After a press, give the target mod time to act before offering again, so a lock that
 		// finds no target does not re-offer at once.
@@ -34,7 +37,7 @@ namespace CIGAR
 		public:
 			void operator()(RE::BSScript::Variable) override
 			{
-				LockOn::GetSingleton()->Log("Grapple UpdateGlobals returned");
+				LockOn::GetSingleton()->Log("Grapple ApplySettings returned");
 			}
 
 			void SetObject(const RE::BSTSmartPointer<RE::BSScript::Object>&) override {}
@@ -45,6 +48,15 @@ namespace CIGAR
 	{
 		static LockOn singleton;
 		return &singleton;
+	}
+
+	void LockOn::ReadGrappleIni()
+	{
+		const auto key = Util::IniInt(std::filesystem::path{ kGrappleIni }, "Keys", "kbKey");
+		if (key && *key >= 0 && *key < 264) {
+			knownGrappleKey = static_cast<std::int32_t>(*key);
+		}
+		Log("Grapple INI kbKey={} at startup", key ? std::to_string(*key) : "-"s);
 	}
 
 	void LockOn::ResolveGrapple()
@@ -63,45 +75,89 @@ namespace CIGAR
 		const auto script = Util::ScriptObject(quest, kGrappleScript);
 		grappleKey = Util::ScriptInt(script, "Hotkey");
 		grappleModifier = Util::ScriptBool(script, "ModifierEnabled");
-		Log("Grapple quest={} script={} dll={} key={} modifier={} lockKey={}",
+		Log("Grapple quest={} script={} dll={} key={} modifier={} lockKey={} knownKey={}",
 			quest ? std::format("{:08X}", quest->GetFormID()) : "-", static_cast<bool>(script), native,
-			grappleKey, grappleModifier, Util::ScriptInt(script, "TargetLockKey"));
+			grappleKey, grappleModifier, Util::ScriptInt(script, "TargetLockKey"), knownGrappleKey);
 		if (!script || !native) {
 			Log("WARN Grapple is installed but its MCM script or DLL is missing; the grapple prompt is off");
 			return;
 		}
 		grappleQuest = quest;
-		if (grappleModifier) {
-			Log("Grapple uses a modifier key, which a single press cannot hold; the grapple prompt is off");
-		} else if (grappleKey < 0) {
-			Log("Grapple has no keyboard hotkey; the grapple prompt is off");
-		}
 	}
 
-	void LockOn::SyncGrappleLockKey()
+	void LockOn::SyncGrappleKeys()
 	{
-		// Grapple presses this key to release TDM's lock during a grapple; it must be TDM's key.
-		if (!tdm || !grappleQuest || tdmLockKey < 0) {
+		if (!grappleQuest) {
 			return;
 		}
 		const auto script = Util::ScriptObject(grappleQuest, kGrappleScript);
-		auto* var = script ? script->GetProperty("TargetLockKey") : nullptr;
-		if (!var || !var->IsInt()) {
-			Log("WARN Grapple TargetLockKey property not readable; lock key not synced");
+		auto* hotkey = script ? script->GetProperty("Hotkey") : nullptr;
+		auto* lockKey = script ? script->GetProperty("TargetLockKey") : nullptr;
+		if (!hotkey || !hotkey->IsInt() || !lockKey || !lockKey->IsInt()) {
+			Log("WARN Grapple Hotkey/TargetLockKey properties not readable; keys not synced");
 			return;
 		}
-		if (var->GetSInt() == tdmLockKey) {
+		bool changed = false;
+		// A new game starts Grapple's MCM with no key (-1) and pushes that to its DLL, so the grapple
+		// key set in an earlier game is lost. Restore the last usable key CIGAR has seen.
+		if (hotkey->GetSInt() < 0 && knownGrappleKey >= 0) {
+			Log("Grapple Hotkey is unset; restoring {} (from the DLL's INI or an earlier game)", knownGrappleKey);
+			hotkey->SetSInt(knownGrappleKey);
+			grappleKey = knownGrappleKey;
+			changed = true;
+		}
+		// Grapple presses this key to release TDM's lock during a grapple; it must be TDM's key.
+		if (tdm && tdmLockKey >= 0 && lockKey->GetSInt() != tdmLockKey) {
+			Log("Grapple TargetLockKey {} differs from TDM's {}; syncing", lockKey->GetSInt(), tdmLockKey);
+			lockKey->SetSInt(static_cast<std::int32_t>(tdmLockKey));
+			changed = true;
+		}
+		if (!changed) {
 			return;
 		}
-		Log("Grapple TargetLockKey {} differs from TDM's {}; syncing", var->GetSInt(), tdmLockKey);
-		var->SetSInt(static_cast<std::int32_t>(tdmLockKey));
+		// ApplySettings registers the hotkey and calls UpdateGlobals, which pushes the keys to the DLL.
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		auto* policy = vm->GetObjectHandlePolicy();
 		const auto handle = policy->GetHandleForObject(grappleQuest->GetFormType(), grappleQuest);
 		auto* args = RE::MakeFunctionArguments();
 		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback{ new UpdateResult() };
-		const bool queued = vm->DispatchMethodCall2(handle, kGrappleScript, "UpdateGlobals", args, callback);
-		Log("Grapple UpdateGlobals requested queued={}", queued);
+		const bool queued = vm->DispatchMethodCall2(handle, kGrappleScript, "ApplySettings", args, callback);
+		Log("Grapple ApplySettings requested queued={}", queued);
+	}
+
+	void LockOn::RefreshGrappleKey()
+	{
+		// The MCM can change the key at any time; read it every tick so a change applies at once.
+		const auto script = grappleQuest ? Util::ScriptObject(grappleQuest, kGrappleScript) : nullptr;
+		const auto key = script ? Util::ScriptInt(script, "Hotkey") : -1;
+		const bool modifier = script && Util::ScriptBool(script, "ModifierEnabled");
+		if (key != grappleKey || modifier != grappleModifier) {
+			Log("Grapple key changed: {} -> {}, modifier {} -> {}", grappleKey, key, grappleModifier, modifier);
+			grappleKey = key;
+			grappleModifier = modifier;
+		}
+		if (grappleKey >= 0 && grappleKey < 264) {
+			knownGrappleKey = grappleKey;
+		}
+		const bool ok = grappleQuest && !grappleModifier && grappleKey >= 0 && grappleKey < 264;
+		if (grappleQuest && !ok && grappleOk.load()) {
+			Log("grapple prompt off: {}", grappleModifier ? "a modifier key is enabled, which a single press cannot hold" : "no keyboard hotkey");
+		}
+		grappleOk = ok;
+		grappleKeyShown = grappleKey;
+	}
+
+	void LockOn::Tick()
+	{
+		if (!grappleQuest) {
+			return;
+		}
+		RefreshGrappleKey();
+		if (!grappleOk.load() && !warnedGrappleKey) {
+			warnedGrappleKey = true;
+			Log("WARN Grapple has no usable hotkey (key={} modifier={}); the grapple prompt is off", grappleKey, grappleModifier);
+			Util::Notify("CIGAR: 그래플 키 미지정 또는 조합키. 그래플 프롬프트 비활성");
+		}
 	}
 
 	void LockOn::OnGameLoaded()
@@ -112,6 +168,8 @@ namespace CIGAR
 		quietUntil = {};
 		checkWhat = nullptr;
 		relockPending = false;
+		grappleQuest = nullptr;
+		grappleOk = false;
 
 		if (!tdm) {
 			tdm = TDM_API::RequestPluginAPI();
@@ -141,7 +199,8 @@ namespace CIGAR
 		}
 
 		ResolveGrapple();
-		SyncGrappleLockKey();
+		SyncGrappleKeys();
+		RefreshGrappleKey();
 	}
 
 	bool LockOn::InGrapple(RE::PlayerCharacter* a_player, bool a_movable)
@@ -211,15 +270,15 @@ namespace CIGAR
 		}
 
 		const bool lockKeyOk = tdmLockKey >= 0 && tdmLockKey < 264;
-		const bool grappleOk = grappleQuest && !grappleModifier && grappleKey >= 0 && grappleKey < 264;
+		const bool grappleUsable = grappleOk.load();
 		// Grapple picks its own target in front of the player; a lock is not required.
-		const bool hostileNear = combat && grappleOk && !Util::NearbyHostiles(player, kGrappleReach).empty();
+		const bool hostileNear = combat && grappleUsable && !Util::NearbyHostiles(player, kGrappleReach).empty();
 		LogGate(std::format("combat={} locked={} movable={} quiet={} relock={} grapple={} near={}",
-			combat, locked, movable, quiet, relockPending, grappleOk, hostileNear));
+			combat, locked, movable, quiet, relockPending, grappleUsable, hostileNear));
 
 		const bool ready = combat && movable && !quiet && !relockPending;
 		lock.Update(ready && !locked && lockKeyOk, [] { return "록온"s; });
-		grapple.Update(ready && grappleOk && (locked || hostileNear), [] { return "그래플"s; });
+		grapple.Update(ready && grappleUsable && (locked || hostileNear), [] { return "그래플"s; });
 	}
 
 	void LockOn::OnAccepted(std::uint16_t a_eventID)

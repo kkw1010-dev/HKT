@@ -3,6 +3,7 @@
 #include <map>
 
 #include "Module.h"
+#include "Settings.h"
 
 namespace CIGAR
 {
@@ -50,6 +51,35 @@ namespace CIGAR
 		}
 
 		bool duplicateIDs = false;
+
+		// Which event ID holds each key slot (0 = free; event IDs start at 1). Game thread only.
+		std::array<SkyPromptAPI::EventID, Settings::kPromptKeyCount> keySlots{};
+
+		// The slot this event already holds, or the lowest free one; -1 when all are taken.
+		int AcquireKeySlot(SkyPromptAPI::EventID a_id)
+		{
+			for (std::size_t i = 0; i < keySlots.size(); ++i) {
+				if (keySlots[i] == a_id) {
+					return static_cast<int>(i);
+				}
+			}
+			for (std::size_t i = 0; i < keySlots.size(); ++i) {
+				if (keySlots[i] == 0) {
+					keySlots[i] = a_id;
+					return static_cast<int>(i);
+				}
+			}
+			return -1;
+		}
+
+		void ReleaseKeySlot(SkyPromptAPI::EventID a_id)
+		{
+			for (auto& holder : keySlots) {
+				if (holder == a_id) {
+					holder = 0;
+				}
+			}
+		}
 	}
 
 	bool Prompts::Init()
@@ -86,6 +116,15 @@ namespace CIGAR
 		}
 	}
 
+	void Prompts::WithdrawEverything()
+	{
+		for (auto [owner, slot] : Slots()) {
+			slot->Reset();
+			slot->Withdraw();
+		}
+		keySlots.fill(0);
+	}
+
 	PromptSlot::PromptSlot(Module* a_owner, SkyPromptAPI::EventID a_id) :
 		owner(a_owner),
 		id(a_id)
@@ -113,11 +152,21 @@ namespace CIGAR
 		}
 		// SkyPrompt reads the prompt later through GetPrompts(), so the text must outlive this call.
 		text = std::move(a_text);
-		// No button list: SkyPrompt assigns the user's default keys for keyboard and gamepad.
-		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, kPlayerRef, {}, color);
+		// The keyboard key comes from CIGAR's settings; a device without a listed key (the gamepad)
+		// gets SkyPrompt's default for the slot SkyPrompt picks. SkyPrompt keeps a queued prompt's key,
+		// so the slot is held until the prompt is withdrawn.
+		const int slot = AcquireKeySlot(id);
+		std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>> keys;
+		std::uint32_t key = 0;
+		if (slot >= 0) {
+			key = Settings::PromptKeys()[slot];
+			buttons[0] = { RE::INPUT_DEVICE::kKeyboard, key };
+			keys = buttons;
+		}
+		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, kPlayerRef, keys, color);
 		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
 		lastSent = std::chrono::steady_clock::now();
-		owner->Log("offer event={} '{}' sent={}", id, text, sent);
+		owner->Log("offer event={} '{}' slot={} key={} sent={}", id, text, slot + 1, key, sent);
 	}
 
 	void PromptSlot::KeepAlive()
@@ -150,6 +199,7 @@ namespace CIGAR
 		if (Prompts::Available()) {
 			SkyPromptAPI::RemovePrompt(this, clientID);
 		}
+		ReleaseKeySlot(id);
 	}
 
 	std::span<const SkyPromptAPI::Prompt> PromptSlot::GetPrompts() const
@@ -170,7 +220,10 @@ namespace CIGAR
 		auto* self = const_cast<PromptSlot*>(this);
 		if (type == SkyPromptAPI::kTimeout) {
 			// Faded out despite the keep-alive (e.g. while paused): offer again on the next tick.
-			SKSE::GetTaskInterface()->AddTask([self]() { self->Reset(); });
+			SKSE::GetTaskInterface()->AddTask([self]() {
+				self->Reset();
+				ReleaseKeySlot(self->ID());
+			});
 		}
 		if (hold) {
 			const bool down = type == SkyPromptAPI::kDown;

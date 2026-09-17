@@ -38,6 +38,11 @@ sorts after `SKSEMenuFramework`. The vendored copy replaces the static with
   - the last gate (`조건`);
   - the last log line (`최근`), which also explains an idle module, for
     example "Bathing in Skyrim - Renewed not found".
+- **프롬프트 키**: the keyboard keys of CIGAR's four prompt key slots
+  (default 1, 2, 3, 4, SkyPrompt's own default), chosen from a list of scan
+  codes, with a reset button. See "Prompt keys" below. The panel warns when
+  two slots share a key, or when a slot equals Grapple's or Acheron's
+  surrender key.
 - **탈의·착용**: the bed/wardrobe reach (100–600, default 250) that used to be
   `kPlaceRange` in `Dress.cpp`. It is saved when the slider is released.
 - **상태**: whether SkyPrompt is connected, and where the settings came from.
@@ -49,16 +54,48 @@ its slow motion, and `Deflate` releases a held key. `OnGameLoaded()` still runs,
 switching it back on works without a reload. The switches are not in the
 co-save, so no new game is needed.
 
+## Prompt keys
+
+SkyPrompt 2.3.15 (source: `QTR-Modding/SkyPrompt` @ `9ac377a`, 2026-03-04)
+takes an optional per-prompt key list, `Prompt::button_key`, as pairs of
+device and key:
+
+- `InteractionButton::GetKey()` uses the key listed for the current device.
+  Otherwise it falls back to `settings.json` `keys[device][index]`, where
+  `index` is the position of the prompt's sub-manager (one per event ID, at
+  most `n_max_buttons` = 4 per client).
+- The keys are fixed when a prompt is queued. Re-sending a queued prompt
+  updates only its text, colour and progress.
+- `settings.json` holds one key list for every SkyPrompt client, so changing
+  it there would also move SI's and Grapple's keys.
+
+CIGAR therefore lists a keyboard key for every prompt it sends
+(`PromptSlot::Offer`):
+
+- **Slots.** A prompt takes the key slot its event ID already holds, or the
+  lowest free one, and keeps it until the prompt is withdrawn or times out.
+  So the prompts on screen always have distinct keys, and the first one to
+  appear gets slot 1.
+- **Gamepad.** No gamepad key is listed, so gamepads keep SkyPrompt's
+  defaults.
+- **Changing a key.** `Settings::SetPromptKey` saves the file and takes every
+  CIGAR prompt off the screen (`Prompts::WithdrawEverything`). Each prompt is
+  offered again on its next tick with the new key.
+- **Log.** Every `offer` line in `CIGAR.log` shows `slot=` and `key=` (the
+  scan code).
+
 ## Settings file
 
 `Data/SKSE/Plugins/CIGAR.json`, read through MO2's VFS:
 
 ```json
-{ "dress": { "placeRange": 250.0 }, "modules": { "Dress": { "enabled": true } } }
+{ "dress": { "placeRange": 250.0 }, "modules": { "Dress": { "enabled": true } },
+  "prompt": { "keys": [2, 3, 4, 5] } }
 ```
 
-A missing or broken file means the defaults (everything on), and the log says
-which one applied. `tools/Build.ps1 -Deploy` copies `dist/CIGAR.json` into the
+A missing or broken file means the defaults (everything on, keys 1–4).
+A prompt key outside 1–255 keeps that slot's default, and the log says
+which one applied. `verify_deploy.py` fails on invalid or repeated prompt keys. `tools/Build.ps1 -Deploy` copies `dist/CIGAR.json` into the
 mod folder only when none is there. That keeps the panel's saves in
 `mods\CIGAR` instead of MO2's overwrite, and never resets the player's choices.
 

@@ -21,6 +21,8 @@ namespace CIGAR
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
+		// Acheron's surrender key, or -1 (control panel conflict check; any thread).
+		std::int64_t SurrenderKey() const { return surrenderKey.load(); }
 
 	private:
 		enum : std::uint16_t
@@ -42,7 +44,7 @@ namespace CIGAR
 		PromptSlot surrender{ this, kSurrender };
 
 		bool active{ false };
-		std::int64_t surrenderKey{ -1 };
+		std::atomic<std::int64_t> surrenderKey{ -1 };
 		RE::BGSKeyword* defeated{ nullptr };
 		RE::EffectSetting* ykTimeout{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };

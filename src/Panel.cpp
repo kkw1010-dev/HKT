@@ -1,8 +1,10 @@
 #include "Panel.h"
 
+#include "LockOn.h"
 #include "Module.h"
 #include "Prompt.h"
 #include "Settings.h"
+#include "Surrender.h"
 
 // The vendored header mixes struct/class and enum types; its warnings are upstream's.
 #pragma warning(push)
@@ -45,6 +47,102 @@ namespace CIGAR::Panel
 		}
 
 		const ImVec4 kDim{ 0.62f, 0.62f, 0.62f, 1.0f };
+		const ImVec4 kWarn{ 1.0f, 0.72f, 0.28f, 1.0f };
+
+		struct KeyName
+		{
+			std::uint32_t code;  // DirectInput scan code
+			const char* name;
+		};
+
+		// The keys offered for prompt slots: the ones SkyPrompt has icons for and a player can reach
+		// without leaving the movement keys for long.
+		constexpr std::array kKeys{
+			KeyName{ 0x02, "1" }, KeyName{ 0x03, "2" }, KeyName{ 0x04, "3" }, KeyName{ 0x05, "4" },
+			KeyName{ 0x06, "5" }, KeyName{ 0x07, "6" }, KeyName{ 0x08, "7" }, KeyName{ 0x09, "8" },
+			KeyName{ 0x0A, "9" }, KeyName{ 0x0B, "0" }, KeyName{ 0x0C, "-" }, KeyName{ 0x0D, "=" },
+			KeyName{ 0x10, "Q" }, KeyName{ 0x11, "W" }, KeyName{ 0x12, "E" }, KeyName{ 0x13, "R" },
+			KeyName{ 0x14, "T" }, KeyName{ 0x15, "Y" }, KeyName{ 0x16, "U" }, KeyName{ 0x17, "I" },
+			KeyName{ 0x18, "O" }, KeyName{ 0x19, "P" }, KeyName{ 0x1E, "A" }, KeyName{ 0x1F, "S" },
+			KeyName{ 0x20, "D" }, KeyName{ 0x21, "F" }, KeyName{ 0x22, "G" }, KeyName{ 0x23, "H" },
+			KeyName{ 0x24, "J" }, KeyName{ 0x25, "K" }, KeyName{ 0x26, "L" }, KeyName{ 0x2C, "Z" },
+			KeyName{ 0x2D, "X" }, KeyName{ 0x2E, "C" }, KeyName{ 0x2F, "V" }, KeyName{ 0x30, "B" },
+			KeyName{ 0x31, "N" }, KeyName{ 0x32, "M" }, KeyName{ 0x29, "`" }, KeyName{ 0x0F, "Tab" },
+			KeyName{ 0x3A, "Caps Lock" }, KeyName{ 0x3B, "F1" }, KeyName{ 0x3C, "F2" }, KeyName{ 0x3D, "F3" },
+			KeyName{ 0x3E, "F4" }, KeyName{ 0x3F, "F5" }, KeyName{ 0x40, "F6" }, KeyName{ 0x41, "F7" },
+			KeyName{ 0x42, "F8" }, KeyName{ 0x43, "F9" }, KeyName{ 0x44, "F10" }, KeyName{ 0x57, "F11" },
+			KeyName{ 0x58, "F12" }, KeyName{ 0x52, "Num 0" }, KeyName{ 0x4F, "Num 1" }, KeyName{ 0x50, "Num 2" },
+			KeyName{ 0x51, "Num 3" }, KeyName{ 0x4B, "Num 4" }, KeyName{ 0x4C, "Num 5" }, KeyName{ 0x4D, "Num 6" },
+			KeyName{ 0x47, "Num 7" }, KeyName{ 0x48, "Num 8" }, KeyName{ 0x49, "Num 9" },
+		};
+
+		std::string NameOf(std::int64_t a_code)
+		{
+			for (const auto& key : kKeys) {
+				if (key.code == a_code) {
+					return key.name;
+				}
+			}
+			return std::format("#{}", a_code);
+		}
+
+		void RenderKeys()
+		{
+			static const auto names = [] {
+				std::array<const char*, kKeys.size()> result{};
+				for (std::size_t i = 0; i < kKeys.size(); ++i) {
+					result[i] = kKeys[i].name;
+				}
+				return result;
+			}();
+
+			const auto keys = Settings::PromptKeys();
+			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
+				int current = -1;
+				for (std::size_t i = 0; i < kKeys.size(); ++i) {
+					if (kKeys[i].code == keys[slot]) {
+						current = static_cast<int>(i);
+					}
+				}
+				const auto label = std::format("{}번째 프롬프트 키##key{}", slot + 1, slot);
+				ImGui::SetNextItemWidth(160.0f);
+				if (ImGui::Combo(label.c_str(), &current, names.data(), static_cast<int>(names.size()), 12) && current >= 0) {
+					Settings::SetPromptKey(slot, kKeys[current].code);
+				}
+				if (current < 0) {
+					ImGui::SameLine();
+					ImGui::TextColored(kDim, "(설정 파일 값 %s)", NameOf(keys[slot]).c_str());
+				}
+			}
+			if (ImGui::Button("기본값 (1, 2, 3, 4)")) {
+				for (std::size_t slot = 0; slot < keys.size(); ++slot) {
+					if (keys[slot] != Settings::kDefaultPromptKeys[slot]) {
+						Settings::SetPromptKey(slot, Settings::kDefaultPromptKeys[slot]);
+					}
+				}
+			}
+			ImGui::TextColored(kDim, "화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값");
+
+			// A key shared by two slots fires both prompts; a key another mod listens to fires that mod too.
+			for (std::size_t a = 0; a < keys.size(); ++a) {
+				for (std::size_t b = a + 1; b < keys.size(); ++b) {
+					if (keys[a] == keys[b]) {
+						ImGui::TextColored(kWarn, "경고: %zu번째와 %zu번째 키가 같음 (%s)", a + 1, b + 1, NameOf(keys[a]).c_str());
+					}
+				}
+			}
+			const std::array<std::pair<const char*, std::int64_t>, 2> others{ {
+				{ "그래플", LockOn::GetSingleton()->GrappleKey() },
+				{ "Acheron 항복", Surrender::GetSingleton()->SurrenderKey() },
+			} };
+			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
+				for (const auto& [who, code] : others) {
+					if (code == keys[slot]) {
+						ImGui::TextColored(kWarn, "경고: %zu번째 키(%s)가 %s 키와 같음", slot + 1, NameOf(code).c_str(), who);
+					}
+				}
+			}
+		}
 
 		void RenderModule(const Module* a_module)
 		{
@@ -83,6 +181,9 @@ namespace CIGAR::Panel
 			for (const auto* module : Modules()) {
 				RenderModule(module);
 			}
+
+			ImGui::SeparatorText("프롬프트 키");
+			RenderKeys();
 
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();

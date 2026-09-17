@@ -21,10 +21,15 @@ namespace CIGAR
 
 		const char* Name() const override { return "LockOn"; }
 		void OnGameLoaded() override;
-		void Tick() override {}
+		void Tick() override;
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override { relockPending = false; }
+		// Reads the grapple key Grapple's DLL saved in its INI. Call at kDataLoaded, before any game
+		// starts: a new game's MCM init pushes its empty key to the DLL, which may save it there.
+		void ReadGrappleIni();
+		// The key the grapple prompt presses, or -1 (control panel conflict check).
+		std::int32_t GrappleKey() const { return grappleOk.load() ? grappleKeyShown.load() : -1; }
 
 	private:
 		enum : std::uint16_t
@@ -38,7 +43,8 @@ namespace CIGAR
 		LockOn() = default;
 
 		void ResolveGrapple();
-		void SyncGrappleLockKey();
+		void SyncGrappleKeys();
+		void RefreshGrappleKey();
 		static bool InGrapple(RE::PlayerCharacter* a_player, bool a_movable);
 		void UpdateRelock(RE::PlayerCharacter* a_player, bool a_combat, bool a_locked, bool a_movable);
 
@@ -51,6 +57,11 @@ namespace CIGAR
 		RE::TESQuest* grappleQuest{ nullptr };
 		std::int32_t grappleKey{ -1 };
 		bool grappleModifier{ false };
+		// The last usable grapple key seen: the DLL's INI at startup, then the MCM property.
+		std::int32_t knownGrappleKey{ -1 };
+		bool warnedGrappleKey{ false };
+		std::atomic<bool> grappleOk{ false };
+		std::atomic<std::int32_t> grappleKeyShown{ -1 };
 
 		Clock::time_point quietUntil{};
 		Clock::time_point checkAt{};

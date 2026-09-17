@@ -6,31 +6,22 @@ status.
 
 ## Open items, in priority order
 
-1. **Retest the unique prompt IDs** (commit `eeaa8c5`, deployed, not tested).
-   - **Test.** In a BaboDialogue kidnap room with Fill Her Up data present,
-     행동 선택 and 배출 must show on **different keys**, and each key must fire
-     only its own action.
-   - **What to read.** `CIGAR.log` must show no
-     `prompt event id ... is used by both` line.
-2. **Pending user decision: "pause FHU during SexLab scenes".** The user asked
-   whether FHU's amounts can be paused during a SexLab scene. They were asked
-   which meaning they want:
-   - (a) FHU stops adding cum and inflating per orgasm during the scene, and
-     applies it after the scene;
-   - (b) FHU's time-based absorb and leak stop during the scene;
-   - (c) CIGAR's 배출 prompt is hidden during the scene. This is already done:
-     it shows 3 s after the scene.
-
-   (a) and (b) change FHU's own scripts and belong with item 3.
-3. **Fill Her Up itself (separate session, by the user's choice).** FHU's own
-   deflate key fails to strip armour, place puddles or play sound, so CIGAR is
-   not the cause. Details:
-   - The Papyrus log shows FHU's path running: `doPush`,
-     `StartLeakage animate:1`, `FHUmoanSoundEffect`. See
-     `docs/006-deflate.md`.
-   - FHU's `defKey` is unbound (-1) on this modlist.
-   - Its drain speed is FHU's MCM `$FHU_ANIM_MULT`.
-4. Backlog below.
+1. **Test build of 2026-09-18** (deployed, not tested in game).
+   - **Grapple after a new game.** 그래플 must show in melee combat without
+     touching Grapple's MCM. `CIGAR.log` must show `Grapple INI kbKey=34 at
+     startup` and, in a new game, `Grapple Hotkey is unset; restoring 34`.
+   - **Prompt keys.** CIGAR / 설정 / 프롬프트 키 shows 1–4. Prompts show
+     those keys, and a changed key applies at once. `offer` lines show
+     `slot=` and `key=`.
+   - **Surrender and the Babo Acheron patch.** `CIGAR.log` must show
+     `[Surrender] BaboDialogue controller=true acheronPatch=true`. While
+     BaboDialogue holds the player, the gate reads `babo-acheron-off`.
+   - **Unique prompt IDs** (`eeaa8c5`). In a BaboDialogue kidnap room with
+     Fill Her Up data present, 행동 선택 and 배출 show on different keys.
+2. **Pending user decision: "pause FHU during SexLab scenes"**, option (a)
+   or (b); (c), hiding 배출 during scenes, is done. The user has since fixed
+   FHU's own deflate problem in FHU itself (2026-09-18), outside this repo.
+3. Backlog below.
 
 ## Where things stand
 
@@ -88,7 +79,9 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - Both work by pressing that mod's key through `BSInputDeviceManager`
     (`Util::PressKey`), because TDM has no API to set the lock.
   - A grapple started while locked is followed by an automatic re-lock.
-  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258).
+  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258), and an
+    unset `Hotkey` (every new game) is restored from
+    `FH_Grapple_Plugin.ini`. The key is re-read every second.
 - **Deflate.**
   - A hold prompt. SkyPrompt's key down (5) and up (6) are forwarded to FHU's
     `sr_infDeflateAbility.OnKeyDown` / `OnKeyUp`.
@@ -114,13 +107,16 @@ All modules are confirmed in game (2026-09-17) unless noted.
   - offers it again after `kTimeout`;
   - optional repeat after an accept, hold mode (down/up), prompt type (e.g.
     `kHold`), and colour updates;
-  - every prompt has a unique ID from `PromptID`.
+  - every prompt has a unique ID from `PromptID`;
+  - every prompt lists its keyboard key: the lowest free of four key slots,
+    whose keys are set in the control panel (default 1–4).
 - **Ticks** (`src/main.cpp`): `Tick()` runs every 1 s and `FastTick()` every
   100 ms. Both run only while unpaused, and only for modules switched on.
 - **Control panel.** An optional SKSE Menu Framework page (CIGAR / 설정;
   `src/Panel.*`, `src/Settings.*`, `docs/007-control-panel.md`):
   - per-module on/off switches;
   - each module's live gate and last log line;
+  - the prompt keys;
   - the Dress reach.
 
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a

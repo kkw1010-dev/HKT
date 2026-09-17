@@ -1,6 +1,7 @@
 # 006 · Deflate: Fill Her Up's deflation key as a hold prompt
 
-Status (2026-09-17): tested in game.
+Status (2026-09-17): tested in game. Report 1 below was a problem in FHU
+itself, and the user fixed it in FHU on 2026-09-18 (outside this repo).
 
 - **Results.** The prompt showed only while FHU tracked an amount. A hold ran
   FHU's push loop.

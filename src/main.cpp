@@ -118,6 +118,7 @@ namespace
 		case SKSE::MessagingInterface::kDataLoaded:
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();
+			LockOn::GetSingleton()->ReadGrappleIni();
 			StartTicker();
 			break;
 		case SKSE::MessagingInterface::kPreLoadGame:

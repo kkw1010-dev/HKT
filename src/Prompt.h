@@ -17,12 +17,14 @@ namespace CIGAR
 		bool HasDuplicateIDs();
 		// Takes every prompt of a_owner off the screen (game thread).
 		void WithdrawAll(const Module* a_owner);
+		// Takes every CIGAR prompt off the screen; each is offered again on its next tick (game thread).
+		void WithdrawEverything();
 	}
 
 	// Every prompt's SkyPrompt event ID, unique across modules. SkyPrompt treats prompts with the
-	// same (event, action) as one interaction, so a shared ID fires every owner at once, and it
-	// gives each event ID its own key slot (at most four per client), so distinct IDs also get
-	// distinct keys when they are up together.
+	// same (event, action) as one interaction, so a shared ID fires every owner at once. SkyPrompt
+	// shows at most four event IDs per client at once; CIGAR gives each one on screen its own key
+	// slot (Settings::PromptKeys), so distinct IDs also get distinct keys when they are up together.
 	namespace PromptID
 	{
 		inline constexpr std::uint16_t kBathe = 1;
@@ -86,6 +88,7 @@ namespace CIGAR
 		SkyPromptAPI::EventID id;
 		std::string text;
 		std::array<SkyPromptAPI::Prompt, 1> prompts;
+		std::array<std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>, 1> buttons{};
 		bool offered{ false };
 		bool hold{ false };
 		bool repeat{ false };
