@@ -33,8 +33,7 @@ BABO_SCRIPTS = {
     "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
     "BaboDialogueConfigMenu": ["NotificationKey"],
     "BaboKidnapEvenScript": ["KeyPress", "bCaptured", "BaboKidnapTiedUp", "BaboKidnapScenarioe",
-                             "CenterMarkerPlayer", "BaboKidnapCabin", "BaboKidnapBanditCave",
-                             "BaboSlaverCabin", "baboslaverinterval"],
+                             "CenterMarkerPlayer"],
 }
 # TDM and Grapple, read by src/LockOn.cpp.
 TDM_MOD = "True Directional Movement - Modernized Third Person Gameplay"

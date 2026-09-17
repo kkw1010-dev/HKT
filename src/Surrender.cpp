@@ -10,6 +10,10 @@ namespace CIGAR
 		constexpr RE::FormID kDefeatedKeywordID = 0x801;  // Acheron_Defeated
 		constexpr auto kAcheronSettings = "Data/SKSE/Acheron/Settings.yaml"sv;
 		constexpr auto kYKPlugin = "YameteKudasai.esp"sv;
+		// Kudasai_SurrenderTimeoutEFF: YK marks the enemies of a surrender for 3 minutes, and its
+		// surrender quest (Kudasai_Surrender, Enemy01) will not fill with a marked actor.
+		constexpr RE::FormID kYKTimeoutEffectID = 0x808;
+		constexpr float kEnemyRadius = 3000.0f;
 
 		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
 		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
@@ -102,6 +106,7 @@ namespace CIGAR
 			return;
 		}
 		defeated = handler->LookupForm<RE::BGSKeyword>(kDefeatedKeywordID, kAcheronPlugin);
+		ykTimeout = handler->LookupModByName(kYKPlugin) ? handler->LookupForm<RE::EffectSetting>(kYKTimeoutEffectID, kYKPlugin) : nullptr;
 		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
 		// Acheron reads these once at startup; the MCM writes them back to the same file.
@@ -110,8 +115,8 @@ namespace CIGAR
 		const auto modifier = YamlInt("iHunterPrideKeyMod");
 		surrenderKey = key.value_or(-1);
 		const bool yk = handler->LookupModByName(kYKPlugin) != nullptr;
-		Log("Acheron settings: processing={} surrenderKey={} modifier={} defeatedKeyword={} yk={}",
-			processing.value_or("?"), surrenderKey, modifier.value_or(-1), defeated != nullptr, yk);
+		Log("Acheron settings: processing={} surrenderKey={} modifier={} defeatedKeyword={} yk={} ykTimeout={}",
+			processing.value_or("?"), surrenderKey, modifier.value_or(-1), defeated != nullptr, yk, ykTimeout != nullptr);
 
 		std::string problem;
 		if (!key) {
@@ -156,11 +161,29 @@ namespace CIGAR
 			a_why = "no-movement";
 		} else if (Clock::now() < quietUntil) {
 			a_why = "quiet";
+		} else if (AllEnemiesTimedOut(a_player)) {
+			// Acheron would only report that no surrender event was found.
+			a_why = "yk-timeout";
 		} else {
 			a_why = "ok";
 			return false;
 		}
 		return true;
+	}
+
+	bool Surrender::AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const
+	{
+		if (!ykTimeout) {
+			return false;
+		}
+		const auto enemies = Util::NearbyHostiles(a_player, kEnemyRadius);
+		if (enemies.empty()) {
+			return false;
+		}
+		return std::ranges::all_of(enemies, [this](RE::Actor* a_enemy) {
+			auto* target = a_enemy->AsMagicTarget();
+			return target && target->HasMagicEffect(ykTimeout);
+		});
 	}
 
 	void Surrender::StartSlow()

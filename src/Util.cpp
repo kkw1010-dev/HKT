@@ -30,6 +30,34 @@ namespace CIGAR::Util
 		return a_actor->IsInCombat() || a_actor->IsOnMount();
 	}
 
+	std::vector<RE::Actor*> NearbyHostiles(RE::Actor* a_actor, float a_radius)
+	{
+		std::vector<std::pair<float, RE::Actor*>> found;
+		auto* lists = RE::ProcessLists::GetSingleton();
+		if (!lists || !a_actor) {
+			return {};
+		}
+		const auto origin = a_actor->GetPosition();
+		for (auto& handle : lists->highActorHandles) {
+			const auto ptr = handle.get();
+			auto* other = ptr.get();
+			if (!other || other == a_actor || other->IsDead() || !other->Is3DLoaded()) {
+				continue;
+			}
+			const float distance = origin.GetDistance(other->GetPosition());
+			if (distance > a_radius || !other->IsHostileToActor(a_actor)) {
+				continue;
+			}
+			found.emplace_back(distance, other);
+		}
+		std::ranges::sort(found, {}, &std::pair<float, RE::Actor*>::first);
+		std::vector<RE::Actor*> result;
+		for (auto& [distance, other] : found) {
+			result.push_back(other);
+		}
+		return result;
+	}
+
 	bool IsStrippable(const RE::TESObjectARMO* a_armor, std::uint32_t a_slot)
 	{
 		if (std::ranges::find(kKeptSlots, a_slot) != kKeptSlots.end()) {

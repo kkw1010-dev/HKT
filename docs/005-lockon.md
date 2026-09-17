@@ -1,17 +1,57 @@
 # 005 · LockOn: TDM target lock and Grapple prompts in combat
 
-Status (2026-09-17): built and deployed. Not yet tested in game.
+Status (2026-09-17): tested in game.
+
+- **Results.** Lock-on worked. Grapple worked while locked. The prompts left
+  when combat ended.
+- **No re-lock.** After a grapple the lock was not taken again, because
+  Grapple releases it for the wind-up.
+- **Fixes.** An automatic re-lock (below) was added, and 그래플 is now also
+  offered without a lock.
 
 ## Behaviour
 
 | Condition | Prompt | Accept |
 |---|---|---|
 | In combat, movement controls enabled, TDM not locked | 록온 | press TDM's lock key |
-| In combat, movement controls enabled, TDM locked, Grapple usable | 그래플 | press Grapple's hotkey |
+| In combat, movement controls enabled, Grapple usable, and TDM locked or a hostile within 350 units | 그래플 | press Grapple's hotkey |
 
-After a press, both prompts stay quiet for 3 s, so a lock that finds no target
-is not offered again at once. The next tick logs `after lock press:
-locked=...`.
+Both prompts can be up at once. They use different event IDs, so SkyPrompt
+gives them different keys.
+
+- **After a press.** Both prompts stay quiet for 3 s, so a lock that finds no
+  target is not offered again at once. One second later the log records
+  `after lock press: locked=...`.
+- **Timing.** The module runs in `FastTick()` (100 ms).
+
+**Grapple does not need a lock.** Grapple (`FH_Grapple_Plugin.dll` 1.2.0,
+with its own SkyPrompt client) picks its target on the hit (`[GrappleHit]`).
+It uses TDM only to turn toward the target (`[GrappleTurn] Injected TDM
+lock-on key`) and releases the lock for the wind-up (`TDM lock released early
+(wind-up phase)`). Grapple's reach is not published, so 350 units is a close
+melee distance chosen here.
+
+**Re-lock after a grapple.** When 그래플 is accepted while locked, CIGAR waits
+for the grapple to start: `bIsSynced` becomes true, or the controls go off. It
+then waits for the grapple to end. When the player is unlocked, still in
+combat, and has had controls for 0.5 s, CIGAR presses the lock key once.
+
+- **Grapple never starts** (a miss, or on cooldown). After 3 s CIGAR restores
+  the lock that the wind-up released.
+- **Timeout.** The wait gives up after 20 s.
+- **Prompt.** 록온 is not offered while the re-lock is pending.
+
+**Why a lock drops by itself.** TDM releases the lock in these cases:
+
+- the target leaves `fTargetLockDistance` (2000 on this modlist; ×2 or ×4 for
+  large targets);
+- line of sight is lost (`bTargetLockTestLOS = 1`);
+- the target dies or bleeds out, where TDM switches to another target or
+  unlocks;
+- Grapple's wind-up (above).
+
+CIGAR changes none of these; while in combat, 록온 is offered again after a
+drop.
 
 ## Why a key press
 

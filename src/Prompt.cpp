@@ -9,6 +9,9 @@ namespace CIGAR
 		SkyPromptAPI::ClientID clientID = 0;
 
 		constexpr RE::FormID kPlayerRef = 0x14;
+		// SkyPrompt fades a prompt out after its lifetime setting; re-sending well within it keeps
+		// the prompt up.
+		constexpr auto kKeepAliveInterval = 2s;
 
 		const char* EventName(SkyPromptAPI::PromptEventType a_type)
 		{
@@ -80,7 +83,9 @@ namespace CIGAR
 		if (a_can && !offered) {
 			offered = true;
 			Offer(a_text());
-		} else if (!a_can && offered) {
+		} else if (a_can) {
+			KeepAlive();
+		} else if (offered) {
 			offered = false;
 			Withdraw();
 		}
@@ -96,7 +101,19 @@ namespace CIGAR
 		// No button list: SkyPrompt assigns the user's default keys for keyboard and gamepad.
 		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, kPlayerRef, {}, color);
 		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
+		lastSent = std::chrono::steady_clock::now();
 		owner->Log("offer event={} '{}' sent={}", id, text, sent);
+	}
+
+	void PromptSlot::KeepAlive()
+	{
+		// Re-sending a queued prompt makes SkyPrompt reset its lifetime (IsInQueue -> WakeUpQueue).
+		const auto now = std::chrono::steady_clock::now();
+		if (!Prompts::Available() || now - lastSent < kKeepAliveInterval) {
+			return;
+		}
+		lastSent = now;
+		static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
 	}
 
 	void PromptSlot::SetColor(std::uint32_t a_color)
@@ -108,6 +125,7 @@ namespace CIGAR
 		if (offered && Prompts::Available()) {
 			// SkyPrompt refreshes text, colour and progress of a prompt that is already queued.
 			prompts[0].text_color = color;
+			lastSent = std::chrono::steady_clock::now();
 			static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
 		}
 	}
@@ -130,8 +148,15 @@ namespace CIGAR
 		const auto type = a_event.type;
 		const auto eventID = a_event.prompt.eventID;
 		const auto module = owner;
-		logs::info("[{}] prompt event {} ({}) event={}", module->Name(), EventName(type), static_cast<int>(type), eventID);
+		// Timing-out and move arrive once per frame; logging them buried everything else.
+		if (type != SkyPromptAPI::kTimingOut && type != SkyPromptAPI::kMove) {
+			logs::info("[{}] prompt event {} ({}) event={}", module->Name(), EventName(type), static_cast<int>(type), eventID);
+		}
 		auto* self = const_cast<PromptSlot*>(this);
+		if (type == SkyPromptAPI::kTimeout) {
+			// Faded out despite the keep-alive (e.g. while paused): offer again on the next tick.
+			SKSE::GetTaskInterface()->AddTask([self]() { self->Reset(); });
+		}
 		if (hold) {
 			const bool down = type == SkyPromptAPI::kDown;
 			const bool ends = type == SkyPromptAPI::kUp || type == SkyPromptAPI::kRemovedByMod ||
@@ -146,6 +171,9 @@ namespace CIGAR
 		}
 		SKSE::GetTaskInterface()->AddTask([self, module, eventID]() {
 			self->Withdraw();
+			if (self->repeat) {
+				self->Reset();
+			}
 			module->OnAccepted(eventID);
 		});
 	}

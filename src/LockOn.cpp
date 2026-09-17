@@ -20,6 +20,14 @@ namespace CIGAR
 		// After a press, give the target mod time to act before offering again, so a lock that
 		// finds no target does not re-offer at once.
 		constexpr auto kQuietAfterPress = 3s;
+		constexpr auto kCheckDelay = 1s;
+
+		// Grapple's reach is not published; this is a close melee distance.
+		constexpr float kGrappleReach = 350.0f;
+		// Re-lock after a grapple that was started while locked.
+		constexpr auto kGrappleStartWindow = 3s;
+		constexpr auto kRelockSettle = 500ms;
+		constexpr auto kRelockTimeout = 20s;
 
 		class UpdateResult final : public RE::BSScript::IStackCallbackFunctor
 		{
@@ -102,7 +110,8 @@ namespace CIGAR
 		grapple.Reset();
 		lastGate.clear();
 		quietUntil = {};
-		checkResult.reset();
+		checkWhat = nullptr;
+		relockPending = false;
 
 		if (!tdm) {
 			tdm = TDM_API::RequestPluginAPI();
@@ -135,7 +144,52 @@ namespace CIGAR
 		SyncGrappleLockKey();
 	}
 
-	void LockOn::Tick()
+	bool LockOn::InGrapple(RE::PlayerCharacter* a_player, bool a_movable)
+	{
+		// Grapple plays synchronized (paired) animations and takes the controls meanwhile.
+		bool synced = false;
+		a_player->GetGraphVariableBool("bIsSynced", synced);
+		return synced || !a_movable;
+	}
+
+	void LockOn::UpdateRelock(RE::PlayerCharacter* a_player, bool a_combat, bool a_locked, bool a_movable)
+	{
+		// Grapple releases TDM's lock for its wind-up and does not lock again afterwards.
+		const auto now = Clock::now();
+		if (now >= relockDeadline) {
+			relockPending = false;
+			Log("re-lock given up: grapple did not end in time");
+			return;
+		}
+		const bool busy = InGrapple(a_player, a_movable);
+		if (busy) {
+			sawGrapple = true;
+			relockStable = {};
+			return;
+		}
+		// No grapple animation within a few seconds: it missed or was on cooldown.
+		if (!sawGrapple && now - relockStart < kGrappleStartWindow) {
+			return;
+		}
+		if (a_locked || !a_combat) {
+			relockPending = false;
+			Log("re-lock not needed (locked={} combat={})", a_locked, a_combat);
+			return;
+		}
+		if (relockStable == Clock::time_point{}) {
+			relockStable = now;
+		}
+		if (now - relockStable < kRelockSettle) {
+			return;
+		}
+		relockPending = false;
+		const bool pressed = Util::PressKey(tdmLockKey);
+		Log("re-lock after grapple (grapple seen={}) key {} pressed={}", sawGrapple, tdmLockKey, pressed);
+		checkAt = now + kCheckDelay;
+		checkWhat = "re-lock";
+	}
+
+	void LockOn::FastTick()
 	{
 		if (!tdm) {
 			return;
@@ -145,20 +199,27 @@ namespace CIGAR
 		const bool locked = tdm->GetTargetLockState();
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
-		const bool quiet = Clock::now() < quietUntil;
+		const auto now = Clock::now();
+		const bool quiet = now < quietUntil;
 
-		if (checkResult) {
-			Log("after {} press: locked={}", *checkResult == kLock ? "lock" : "grapple", locked);
-			checkResult.reset();
+		if (checkWhat && now >= checkAt) {
+			Log("after {} press: locked={}", checkWhat, locked);
+			checkWhat = nullptr;
+		}
+		if (relockPending) {
+			UpdateRelock(player, combat, locked, movable);
 		}
 
 		const bool lockKeyOk = tdmLockKey >= 0 && tdmLockKey < 264;
 		const bool grappleOk = grappleQuest && !grappleModifier && grappleKey >= 0 && grappleKey < 264;
-		LogGate(std::format("combat={} locked={} movable={} quiet={} grapple={}", combat, locked, movable, quiet, grappleOk));
+		// Grapple picks its own target in front of the player; a lock is not required.
+		const bool hostileNear = combat && grappleOk && !Util::NearbyHostiles(player, kGrappleReach).empty();
+		LogGate(std::format("combat={} locked={} movable={} quiet={} relock={} grapple={} near={}",
+			combat, locked, movable, quiet, relockPending, grappleOk, hostileNear));
 
-		const bool ready = combat && movable && !quiet;
+		const bool ready = combat && movable && !quiet && !relockPending;
 		lock.Update(ready && !locked && lockKeyOk, [] { return "록온"s; });
-		grapple.Update(ready && locked && grappleOk, [] { return "그래플"s; });
+		grapple.Update(ready && grappleOk && (locked || hostileNear), [] { return "그래플"s; });
 	}
 
 	void LockOn::OnAccepted(std::uint16_t a_eventID)
@@ -169,14 +230,23 @@ namespace CIGAR
 		const bool isLock = a_eventID == kLock;
 		const bool locked = tdm->GetTargetLockState();
 		// Re-check: pressing TDM's key while locked would unlock instead.
-		if (isLock == locked) {
-			Log("accept ignored: {} requested with locked={}", isLock ? "lock" : "grapple", locked);
+		if (isLock && locked) {
+			Log("accept ignored: lock requested while already locked");
 			return;
 		}
 		const auto key = isLock ? tdmLockKey : static_cast<std::int64_t>(grappleKey);
 		const bool pressed = Util::PressKey(key);
-		Log("{} key {} pressed={}", isLock ? "lock" : "grapple", key, pressed);
-		quietUntil = Clock::now() + kQuietAfterPress;
-		checkResult = a_eventID;
+		Log("{} key {} pressed={} (locked={})", isLock ? "lock" : "grapple", key, pressed, locked);
+		const auto now = Clock::now();
+		quietUntil = now + kQuietAfterPress;
+		checkAt = now + kCheckDelay;
+		checkWhat = isLock ? "lock" : "grapple";
+		if (!isLock && locked && pressed) {
+			relockPending = true;
+			sawGrapple = false;
+			relockStart = now;
+			relockStable = {};
+			relockDeadline = now + kRelockTimeout;
+		}
 	}
 }

@@ -30,10 +30,10 @@ their in-game tests are in git history and in `docs/001`.
 |---|---|---|---|
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
 | `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Confirmed in game 2026-09-17 (water, beds, wardrobes, state-based dress) |
-| `BaboKey` | BaboDialogue (optional) | — | Built 2026-09-17; untested in game |
-| `LockOn` | True Directional Movement, Grapple (both optional) | — | Built 2026-09-17; untested in game |
-| `Deflate` | Fill Her Up (optional) | — | Built 2026-09-17; untested in game |
-| `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Built 2026-09-17; untested in game |
+| `BaboKey` | BaboDialogue (optional) | — | Confirmed in game 2026-09-17; repeat/persistence fix untested |
+| `LockOn` | True Directional Movement, Grapple (both optional) | — | Confirmed in game 2026-09-17; re-lock and lock-free grapple untested |
+| `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17; settle delay and keep-alive untested |
+| `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17; `yk-timeout` gate untested |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -46,7 +46,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | At any bed or wardrobe while naked (remembered outfit in inventory), or after leaving water when CIGAR undressed the player | 착용하기 |
 | Kidnapped by BaboDialogue, in the kidnap room, at a point where its hotkey acts | 행동 선택 |
 | In combat, TDM not locked on | 록온 |
-| In combat, TDM locked on, Grapple installed | 그래플 |
+| In combat, TDM locked on or a hostile within 350 units, Grapple installed | 그래플 |
 | Fill Her Up tracks an amount, not animating (hold the key) | 배출 (길게 누르기) |
 | In combat below 20% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
 

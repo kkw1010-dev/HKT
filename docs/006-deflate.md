@@ -1,6 +1,29 @@
 # 006 · Deflate: Fill Her Up's deflation key as a hold prompt
 
-Status (2026-09-17): built and deployed. Not yet tested in game.
+Status (2026-09-17): tested in game.
+
+- **Results.** The prompt showed only while FHU tracked an amount. A hold ran
+  FHU's push loop.
+- **Report 1: "too fast, no sound, no strip or puddle".** The Papyrus log shows
+  FHU's own path ran in full:
+  - `doPush`;
+  - `StartLeakage animate:1`;
+  - `FHUmoanSoundEffect Vaginal 1`;
+  - SexLab cum FX.
+
+  The pools held only 0.3 and 1.0. FHU drains `0.05 / animMult` every 0.3 s,
+  so they emptied in about 2 s and 8 s; the speed is FHU's MCM slider
+  `$FHU_ANIM_MULT` (1.0 here). Both presses came the moment a SexLab scene
+  ended, while SexLab was still re-dressing the player and resetting the
+  face. The prompt now waits until FHU's and SexLab's animating factions have
+  been clear for 3 s.
+- **Report 2: the prompt faded after a while and never came back.** SkyPrompt
+  ends a prompt after its lifetime (`kTimeout`). `PromptSlot` now re-sends an
+  offered prompt every 2 s, which resets that lifetime, and offers it again
+  after a timeout.
+
+FHU's own key (`defKey`) is unbound (-1) on this modlist; CIGAR passes the
+same value, so the call still matches.
 
 ## What the original key does
 
@@ -40,8 +63,8 @@ The prompt 배출 (길게 누르기) is shown only when:
 - FHU's `GetMostRecentInflationType(player)` > 0, the same test the original
   key uses (async, refreshed each tick while in a faction; the oral faction
   can stay at rank 0 after emptying);
-- the player is in neither `inflaterAnimatingFaction` nor
-  `slAnimatingFaction`.
+- neither `inflaterAnimatingFaction` nor `slAnimatingFaction` has held the
+  player in the last 3 s.
 
 While the key is held, the prompt stays up even though FHU puts the player in
 its animating faction, so the release still reaches CIGAR.
@@ -50,7 +73,7 @@ its animating faction, so the release still reaches CIGAR.
 
 - On load: `FHU quest=... alias=... ability=... key=...`. When FHU is
   installed but its scripts do not resolve, a HUD message appears once.
-- Changes to tracked, type, animating, sexlab and holding are logged as
+- Changes to tracked, type, animating, sexlab, settling and holding are logged as
   `gate` lines. Each forwarded key event is logged, and so is its return.
 - `tools/verify_deploy.py` checks that the FHU scripts still contain the names
   read above.

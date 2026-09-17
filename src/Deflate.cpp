@@ -12,6 +12,9 @@ namespace CIGAR
 		constexpr auto kQuestScript = "sr_inflateQuest";
 		constexpr auto kConfigScript = "sr_inflateConfig";
 		constexpr auto kAbilityScript = "sr_infDeflateAbility";
+		// A SexLab scene's end still re-dresses the player and resets the face for a moment; starting
+		// FHU's strip and deflate idle inside that window lets SexLab undo them.
+		constexpr auto kSettle = 3s;
 
 		class TypeResult final : public RE::BSScript::IStackCallbackFunctor
 		{
@@ -108,6 +111,7 @@ namespace CIGAR
 		deflate.Reset();
 		lastGate.clear();
 		holding = false;
+		busyUntil = {};
 		inflationType = -1;
 		queryPending = false;
 
@@ -153,10 +157,15 @@ namespace CIGAR
 		const auto type = inflationType.load();
 		const bool animating = player->IsInFaction(animatingFaction);
 		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);
+		const auto now = std::chrono::steady_clock::now();
+		if (animating || sexlab) {
+			busyUntil = now + kSettle;
+		}
+		const bool settling = now < busyUntil;
 
-		LogGate(std::format("tracked={} type={} animating={} sexlab={} holding={}", tracked, type, animating, sexlab, holding));
+		LogGate(std::format("tracked={} type={} animating={} sexlab={} settling={} holding={}", tracked, type, animating, sexlab, settling, holding));
 		// While held, FHU itself is animating; keep the prompt so the release still arrives.
-		const bool can = holding || (tracked && type > 0 && !animating && !sexlab);
+		const bool can = holding || (tracked && type > 0 && !settling);
 		deflate.Update(can, [] { return "배출 (길게 누르기)"s; });
 	}
 

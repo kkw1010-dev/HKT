@@ -1,6 +1,22 @@
 # 008 · Surrender: Acheron / Yamete Kudasai surrender key
 
-Status (2026-09-17): built and deployed. Not yet tested in game.
+Status (2026-09-17): tested in game.
+
+- **Results.** Slow motion, the pulse, the hold, Yamete Kudasai's surrender
+  scene, the timer end, and the panel switch-off all worked.
+- **Report: "no surrender event" after escaping.** After a surrender and a
+  successful escape minigame, Acheron only answered that no surrender event
+  could be found. This is Yamete Kudasai's design:
+  - `Kudasai_Surrender` (`0008D0`) fills `Enemy01` only with an actor for
+    which `HasMagicEffect(Kudasai_SurrenderTimeoutEFF) == 0`;
+  - `KudasaiSurrender.TimeoutSpell` puts that effect on the enemies of a
+    surrender, and its own comment says this is so the player cannot
+    surrender to the same actor again within 3 minutes;
+  - the quest therefore cannot start, and Acheron's `SelectQuestImpl` logs
+    "No event quest found".
+
+  CIGAR now hides the prompt (`yk-timeout`) while every hostile within 3000
+  units carries that effect.
 
 ## Where surrender actually happens
 
@@ -40,7 +56,9 @@ after a full hold, because surrender cannot be undone. It is shown when:
   (`0x801|Acheron.esm`);
 - the player is not in `SexLabAnimatingFaction`;
 - movement controls are enabled;
-- at least 5 s have passed since the last surrender press.
+- at least 5 s have passed since the last surrender press;
+- when Yamete Kudasai is loaded, at least one hostile within 3000 units lacks
+  `Kudasai_SurrenderTimeoutEFF` (`000808|YameteKudasai.esp`).
 
 Acheron's knockdown threshold (`fKdHealthThresh`) is also 0.2 on this
 modlist. The prompt therefore marks the window before the next hit can defeat
@@ -80,7 +98,7 @@ event ID its own key slot (`Manager::Add2Q`), so 항복 never shares a key with
   pressed (unset, gamepad, modifier set, processing off), a HUD message
   appears once.
 - The gate reason (`no-combat`, `health`, `down`, `defeated`, `sexlab`, `no-movement`,
-  `quiet`, `ok`) is logged when it changes. Every press is logged, and so is
+  `quiet`, `yk-timeout`, `ok`) is logged when it changes. Every press is logged, and so is
   every slow-motion start and end, with its reason.
 - `tools/verify_deploy.py` checks Acheron's DLL, its surrender key, the
   modifier and the processing switch.

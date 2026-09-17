@@ -24,11 +24,15 @@ namespace CIGAR
 	public:
 		PromptSlot(Module* a_owner, SkyPromptAPI::EventID a_id);
 
-		// Offers the prompt when a_can starts holding and withdraws it when it stops.
+		// Offers the prompt when a_can starts holding and withdraws it when it stops. While it holds,
+		// the prompt is kept on screen (SkyPrompt would otherwise fade it out after its lifetime).
 		// a_text is only called when the prompt is offered.
 		void Update(bool a_can, const std::function<std::string()>& a_text);
 		void Withdraw();
 		void Reset() { offered = false; }
+		// Offer the prompt again after it was accepted, as long as a_can still holds. Without this an
+		// accepted prompt stays gone until a_can has been false once.
+		void SetRepeat(bool a_repeat) { repeat = a_repeat; }
 		// A hold prompt reports key down/up to OnHold and stays on screen when accepted.
 		void SetHoldMode(bool a_hold) { hold = a_hold; }
 		bool Offered() const { return offered; }
@@ -42,6 +46,7 @@ namespace CIGAR
 
 	private:
 		void Offer(std::string a_text);
+		void KeepAlive();
 
 		Module* owner;
 		SkyPromptAPI::EventID id;
@@ -49,6 +54,8 @@ namespace CIGAR
 		std::array<SkyPromptAPI::Prompt, 1> prompts;
 		bool offered{ false };
 		bool hold{ false };
+		bool repeat{ false };
+		std::chrono::steady_clock::time_point lastSent{};
 		std::uint32_t color{ 0xFFFFFFFF };
 		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
 	};

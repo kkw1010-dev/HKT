@@ -12,7 +12,8 @@ Read this first, then `README.md`. The design rationale and test history are in
 - The git repo `C:\TAKEALOOK\TKL-Agent\CIGAR` is **local only** (no remote).
   "Push" has meant "commit" so far.
 - Modules, all confirmed in game by the user:
-  - **Bathe** (`src/Bathe.*`) uses Bathing in Skyrim - Renewed when present:
+  - **Bathe** (`src/Bathe.*`) uses Bathing in Skyrim - Renewed when present
+    (the shower was confirmed on 2026-09-17):
     목욕하기 in water once nothing strippable is worn, and BiS's own
     `TryWashActor`. The dirt reset was confirmed. The **shower** path
     (waterfall) is untested.
@@ -22,25 +23,35 @@ Read this first, then `README.md`. The design rationale and test history are in
     water it offers 착용하기 only if CIGAR undressed the player. It keeps the
     Softbody SMP carrier (`HDTSMPObjectBase`) and no-strip/locked items on.
   - **BaboKey** (`src/BaboKey.*`, `docs/004-babo-key.md`) offers 행동 선택
-    during a BaboDialogue kidnap only while the hotkey acts: the quest is at
-    stage 8–249, in one of four script states, and the player is in the kidnap
-    room's cell. Accepting it calls `BaboDiaMonitorScript.OnKeyDown`.
-    **Built and deployed but not yet tested in game.**
-  - **LockOn** (`src/LockOn.*`, `docs/005-lockon.md`) offers 록온 in combat
-    while TDM is not locked on and 그래플 while it is. Each accept presses
-    that mod's key through `BSInputDeviceManager`, and at load CIGAR syncs
-    Grapple's TDM lock key to TDM's. **Built and deployed but not yet tested
-    in game.**
+    in the BaboDialogue kidnap room while the kidnap quest is at stage 8–249.
+    It is offered again after each accept. Accepting it calls
+    `BaboDiaMonitorScript.OnKeyDown`.
+  - **LockOn** (`src/LockOn.*`, `docs/005-lockon.md`) offers two prompts in
+    combat:
+    - 록온 while TDM is not locked on;
+    - 그래플 while locked on or with a hostile within 350 units.
+
+    Each accept presses that mod's key through `BSInputDeviceManager`. A
+    grapple started while locked is followed by an automatic re-lock. At load,
+    CIGAR syncs Grapple's TDM lock key to TDM's.
   - **Deflate** (`src/Deflate.*`, `docs/006-deflate.md`) is a hold prompt
-    shown while Fill Her Up tracks an amount. SkyPrompt's key down/up events
-    are forwarded to FHU's `OnKeyDown`/`OnKeyUp`, so holding expels until
-    release, as the original key does. **Built and deployed but not yet
-    tested in game.**
+    shown while Fill Her Up tracks an amount, once FHU's and SexLab's
+    animations have been clear for 3 s. SkyPrompt's key down/up events are
+    forwarded to FHU's `OnKeyDown`/`OnKeyUp`.
   - **Surrender** (`src/Surrender.*`, `docs/008-surrender.md`) is a hold
-    prompt in combat below 20% health (3 s of x0.3 slow motion, gold pulse)
-    that presses Acheron's surrender key (K). Yamete Kudasai
-    2.2.3 registers its own surrender key but never handles it; Acheron does.
-    **Built and deployed but not yet tested in game.**
+    prompt in combat below 20% health that presses Acheron's surrender key
+    (K), with 3 s of x0.3 slow motion and a gold pulse.
+    - Yamete Kudasai 2.2.3 registers its own surrender key but never handles
+      it; Acheron does.
+    - The prompt is hidden while every nearby enemy still has YK's 3-minute
+      surrender timeout.
+  - **In-game test 2026-09-17.** All four worked. Every Bathe, Dress and panel
+    check passed, as did the shower check and the SI switches after SI's menu
+    was opened. The follow-up fixes (see each doc's Status) are built and
+    deployed but not yet retested.
+  - **Prompts are kept on screen** while their gate holds: `PromptSlot`
+    re-sends them every 2 s, which resets SkyPrompt's lifetime, and offers
+    them again after a `kTimeout`.
 - An optional SKSE Menu Framework page (CIGAR / 설정; `src/Panel.*`,
   `docs/007-control-panel.md`) switches modules on and off, shows each
   module's live gate and last log line, and sets the Dress reach. Choices are
@@ -53,8 +64,8 @@ Read this first, then `README.md`. The design rationale and test history are in
     modules when SI's menu opens.
   - `tools/sync_si_settings.py` enforces this on every deploy, and CIGAR
     warns in game if a switch comes back.
-- Untested: gamepad buttons (the user has no plans to use a pad), and whether
-  SI keeps the switches off after its menu is opened under Power User.
+- Untested: gamepad buttons (the user has no plans to use a pad). SI keeps the
+  switches off after its menu is opened (confirmed 2026-09-17).
 
 ## The user's standing expectations (also in Claude memory)
 

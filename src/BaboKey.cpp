@@ -21,15 +21,10 @@ namespace CIGAR
 		constexpr std::uint16_t kFirstKeyStage = 8;
 		constexpr std::uint16_t kReleaseStage = 250;
 
-		// The only KeyPress() states that do something; every other state returns false at once.
-		// BaboKidnapBanditCave also needs bCaptured, or the key only plays a comment line.
-		constexpr std::array kKeyStates{
-			"BaboKidnapCabin"sv,       // escape / struggle / shout / talk options
-			"BaboKidnapBanditCave"sv,  // the same options in a bandit cave
-			"BaboSlaverCabin"sv,       // cage options
-			"baboslaverinterval"sv,    // ends the wait and returns to the cage
-		};
-		constexpr auto kBanditCave = "BaboKidnapBanditCave"sv;
+		// KeyPress() acts in BaboKidnapCabin, BaboKidnapBanditCave (while bCaptured),
+		// BaboSlaverCabin and baboslaverinterval, and returns false at once in every other state.
+		// The prompt stays up in the kidnap room regardless: the state changes during rests and
+		// scenes, and a press in a quiet state is harmless. The state is still logged.
 
 		std::string CellName(const RE::TESObjectCELL* a_cell)
 		{
@@ -138,6 +133,11 @@ namespace CIGAR
 
 		auto* player = Util::Player();
 		const auto stage = kidnap->GetCurrentStageID();
+		// The quest idles at stage 0 between kidnaps; only the stage matters then.
+		if (stage < kFirstKeyStage || stage >= kReleaseStage) {
+			a_gate = std::format("kidnap=idle stage={}", stage);
+			return false;
+		}
 		const auto script = Util::ScriptObject(kidnap, kKidnapScript);
 		const std::string_view state = script ? script->currentState.c_str() : "";
 		const auto* captured = script ? script->GetVariable("bCaptured") : nullptr;
@@ -155,13 +155,8 @@ namespace CIGAR
 			stage, state, isCaptured, tiedUp ? tiedUp->value : -1.0f, scenario ? scenario->value : -1.0f,
 			CellName(playerCell), CellName(roomCell), babo, sexlab);
 
-		if (stage < kFirstKeyStage || stage >= kReleaseStage) {
-			return false;
-		}
-		const bool keyState = std::ranges::any_of(kKeyStates, [&](std::string_view s) { return Util::EqualsNoCase(s, state); });
-		if (!keyState || (Util::EqualsNoCase(state, kBanditCave) && !isCaptured)) {
-			return false;
-		}
+		// Player controls are not checked: BaboDialogue's StuckControl() keeps a tied player's
+		// controls off, and the key must still work then.
 		return inRoom && !babo && !sexlab;
 	}
 

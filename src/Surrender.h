@@ -35,6 +35,7 @@ namespace CIGAR
 		Surrender();
 
 		bool Blocked(RE::PlayerCharacter* a_player, std::string& a_why) const;
+		bool AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const;
 		void StartSlow();
 		void EndSlow(const char* a_reason);
 		void Pulse();
@@ -44,6 +45,7 @@ namespace CIGAR
 		bool active{ false };
 		std::int64_t surrenderKey{ -1 };
 		RE::BGSKeyword* defeated{ nullptr };
+		RE::EffectSetting* ykTimeout{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };
 		Clock::time_point quietUntil{};
 		bool warned{ false };

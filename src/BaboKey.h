@@ -24,7 +24,7 @@ namespace CIGAR
 			kAct = 0
 		};
 
-		BaboKey() = default;
+		BaboKey() { act.SetRepeat(true); }
 
 		bool Resolve();
 		std::int32_t NotificationKey() const;

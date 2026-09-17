@@ -9,6 +9,9 @@ namespace CIGAR::Util
 
 	bool IsBusy(RE::Actor* a_actor);
 
+	// Living, loaded actors hostile to a_actor within a_radius (high process only), nearest first.
+	std::vector<RE::Actor*> NearbyHostiles(RE::Actor* a_actor, float a_radius);
+
 	// Hair, tail, ears and decapitation slots belong to the body. Non-playable items (such as
 	// the Softbody SMP collision carrier HDTSMPObjectBase in slot 60), no-strip items and
 	// locked devices stay on.

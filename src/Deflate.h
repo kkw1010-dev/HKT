@@ -51,5 +51,6 @@ namespace CIGAR
 		std::atomic_bool queryPending{ false };
 		bool holding{ false };
 		std::chrono::steady_clock::time_point holdStart{};
+		std::chrono::steady_clock::time_point busyUntil{};
 	};
 }
