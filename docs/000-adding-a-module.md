@@ -41,8 +41,9 @@ CIGAR module, so their lessons do not have to be learned again.
 - Give each on-screen prompt its own `PromptSlot` and a new ID in `PromptID`
   (`src/Prompt.h`). SkyPrompt merges prompts that share an (event, action)
   pair, so one press would fire both owners. SkyPrompt 2.3.15 has no
-  `RemovePromptByID`, so removal is per sink. Send no button list, so
-  SkyPrompt assigns the player's keyboard and gamepad defaults.
+  `RemovePromptByID`, so removal is per sink. `PromptSlot` lists the keyboard
+  key from CIGAR's key slots itself (`docs/007-control-panel.md`); a module
+  never sets keys.
 - Handle only `kAccepted` (0). The other event types are `kDeclined` (1),
   `kRemovedByMod` (2), `kTimingOut` (3), `kTimeout` (4), `kDown` (5),
   `kUp` (6) and `kMove` (7). The Papyrus test logs showed 5 before 0 and

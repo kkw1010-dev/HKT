@@ -1,5 +1,6 @@
 #include "Settings.h"
 
+#include "Eat.h"
 #include "Module.h"
 #include "Prompt.h"
 
@@ -20,6 +21,7 @@ namespace CIGAR::Settings
 		std::map<std::string, bool, std::less<>> enabled;
 		float placeRange = kPlaceRangeDefault;
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
+		int eatMinStage = Eat::kMinStageDefault;
 
 		struct PromptOnlyState
 		{
@@ -46,6 +48,7 @@ namespace CIGAR::Settings
 			}
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
+			j["eat"]["minStage"] = eatMinStage;
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -72,6 +75,7 @@ namespace CIGAR::Settings
 		}
 		placeRange = kPlaceRangeDefault;
 		promptKeys = kDefaultPromptKeys;
+		eatMinStage = Eat::kMinStageDefault;
 		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
@@ -105,6 +109,9 @@ namespace CIGAR::Settings
 					}
 				}
 			}
+			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
+				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
+			}
 			if (const auto it = j.find("promptOnly"); it != j.end() && it->is_object()) {
 				for (auto& [target, state] : promptOnly) {
 					if (const auto t = it->find(target); t != it->end() && t->is_object()) {
@@ -127,6 +134,7 @@ namespace CIGAR::Settings
 		for (const auto& [target, state] : promptOnly) {
 			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
 		}
+		logs::info("settings: eat from hunger stage {}", eatMinStage);
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -190,6 +198,18 @@ namespace CIGAR::Settings
 		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
 	}
 
+	int EatMinStage()
+	{
+		std::scoped_lock guard(lock);
+		return eatMinStage;
+	}
+
+	void SetEatMinStage(int a_stage)
+	{
+		std::scoped_lock guard(lock);
+		eatMinStage = std::clamp(a_stage, Eat::kMinStageLow, Eat::kMinStageHigh);
+	}
+
 	bool PromptOnly(std::string_view a_target)
 	{
 		std::scoped_lock guard(lock);
@@ -228,7 +248,7 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		SaveLocked();
-		logs::info("control panel: dress place range {:.0f}", placeRange);
+		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}", placeRange, eatMinStage);
 	}
 
 	std::string SourceDescription()

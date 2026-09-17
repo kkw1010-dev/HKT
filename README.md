@@ -49,10 +49,11 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In combat, TDM locked on or a hostile within 350 units, Grapple installed | 그래플 |
 | Fill Her Up tracks an amount, not animating (hold the key) | 배출 (길게 누르기) |
 | In combat below 40% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
+| Survival Mode hunger at or above the panel's stage (default 3), out of combat, suitable food carried | 먹기: <음식 이름> |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
-`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, and `docs/008-surrender.md`. The in-game control panel
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, and `docs/009-eat.md`. The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
@@ -69,7 +70,8 @@ src/BaboKey.*       BaboDialogue hotkey during kidnap events (quest stage, scrip
 src/LockOn.*        TDM target lock and Grapple in combat (synthetic key press through the input event source)
 src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarded to FHU's own handlers)
 src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
-src/Settings.*      per-module switches and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
+src/Eat.*           Survival Mode hunger: eats the cheapest suitable food by equipping it (SMI lowers hunger)
+src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework page (CIGAR / 설정): switches, live gate and last log line per module
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)

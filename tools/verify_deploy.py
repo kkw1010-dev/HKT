@@ -137,6 +137,88 @@ def check_prompt_keys():
         check(len(set(keys)) == 4, "CIGAR.json prompt keys are distinct: %s" % keys)
 
 
+GAME_DATA = os.path.join(MO2, "Stock Game", "Data")
+# FormIDs src/Eat.cpp hard-codes, with the EditorID each must carry. A mismatch leaves the eat
+# prompt off (runtime warning) or excludes the wrong food, so it is checked against the plugins.
+EAT_FORMS = [
+    ("ccqdrsse001-survivalmode.esl", {
+        0x826: "Survival_ModeEnabled", 0x81A: "Survival_HungerNeedValue",
+        0x806: "Survival_HungerStage1Value", 0x802: "Survival_HungerStage2Value",
+        0x803: "Survival_HungerStage3Value", 0x804: "Survival_HungerStage4Value",
+        0x805: "Survival_HungerStage5Value", 0x8B0: "Survival_FoodRawMeat"}),
+    ("Update.esm", {
+        0x2EE1: "Survival_FoodRestoreHungerVerySmall", 0x2EE2: "Survival_FoodRestoreHungerSmall",
+        0x2EE3: "Survival_FoodRestoreHungerMedium", 0x2EE4: "Survival_FoodRestoreHungerLarge"}),
+    ("Skyrim.esm", {0xA0E56: "VendorItemFoodRaw"}),
+    ("SurvivalModeImproved.esp", {0xF27: "SMI_HungerShouldBeEnabled"}),
+    ("Gourmet.esp", {
+        0x808: "MAG_FoodItemRaw", 0xA6A: "MAG_FoodTypePoisoned", 0x969: "MAG_FoodItemDrugs",
+        0xA4D: "MAG_FoodTypeDrugs", 0xA4B: "MAG_FoodTypeAle", 0xA4C: "MAG_FoodTypeWine"}),
+]
+
+
+def plugin_editor_ids(path, wanted):
+    """EditorIDs of the records in a plugin whose object index (low 24 bits) is in wanted."""
+    import zlib
+    with open(path, "rb") as f:
+        d = f.read()
+    found = {}
+    pos = 0
+    end = len(d)
+
+    def scan(buf, start, stop):
+        i = start
+        while i + 24 <= stop:
+            sig = buf[i:i + 4]
+            size = struct.unpack_from("<I", buf, i + 4)[0]
+            if sig == b"GRUP":
+                scan(buf, i + 24, i + size)
+                i += size
+                continue
+            flags, fid = struct.unpack_from("<II", buf, i + 8)
+            body = buf[i + 24:i + 24 + size]
+            i += 24 + size
+            if (fid & 0xFFFFFF) not in wanted:
+                continue
+            if flags & 0x00040000:
+                body = zlib.decompress(body[4:])
+            j = 0
+            while j + 6 <= len(body):
+                ftype = body[j:j + 4]
+                fsize = struct.unpack_from("<H", body, j + 4)[0]
+                if ftype == b"EDID":
+                    found[fid & 0xFFFFFF] = body[j + 6:j + 6 + fsize].rstrip(b"\x00").decode("ascii", "replace")
+                    break
+                j += 6 + fsize
+
+    # Skip the TES4 header record.
+    size = struct.unpack_from("<I", d, 4)[0]
+    scan(d, 24 + size, end)
+    return found
+
+
+def find_plugin(modlist, name):
+    for folder in [line[1:] for line in modlist if line.startswith("+")]:
+        path = os.path.join(MODS, folder, name)
+        if os.path.isfile(path):
+            return path
+    path = os.path.join(GAME_DATA, name)
+    return path if os.path.isfile(path) else None
+
+
+def check_eat(modlist):
+    """The Eat module reads Survival Mode, SMI and Gourmet forms by FormID."""
+    for plugin, forms in EAT_FORMS:
+        path = find_plugin(modlist, plugin)
+        if not path:
+            note("%s absent: the Eat module skips its forms" % plugin)
+            continue
+        ids = plugin_editor_ids(path, set(forms))
+        wrong = ["%06X=%s (expected %s)" % (fid, ids.get(fid, "missing"), edid)
+                 for fid, edid in forms.items() if ids.get(fid) != edid]
+        check(not wrong, "Eat forms in %s%s" % (plugin, ": " + ", ".join(wrong) if wrong else ""))
+
+
 def check_babo(modlist):
     """The BaboKey module reads BaboDialogue's scripts by name. A BaboDialogue update that renames
     any of these makes the prompt vanish without an error, so check the compiled scripts here."""
@@ -332,6 +414,7 @@ def main():
     check_prompt_keys()
     check_babo(modlist)
     check_lockon(modlist)
+    check_eat(modlist)
     check_fhu(modlist)
     check_surrender(modlist)
 

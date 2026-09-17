@@ -16,6 +16,11 @@ status.
    - **Surrender and the Babo Acheron patch.** `CIGAR.log` must show
      `[Surrender] BaboDialogue controller=true acheronPatch=true`. While
      BaboDialogue holds the player, the gate reads `babo-acheron-off`.
+   - **Eat.** With Survival Mode on and hunger at stage 3 or higher, out of
+     combat, 먹기: <cheapest food> shows. Accepting eats it (the item count
+     drops, the Taberu animation plays), and `CIGAR.log` shows `ate …` and
+     then `hunger after eating: …` lower than before. Raw meat, meads and
+     BaboDialogue's suspicious sweet rolls are never picked.
    - **Unique prompt IDs** (`eeaa8c5`). In a BaboDialogue kidnap room with
      Fill Her Up data present, 행동 선택 and 배출 show on different keys.
    - **Prompt-only keys.** With both switches on (default): Grapple's MCM
@@ -53,7 +58,8 @@ own deflate problem was fixed by the user in FHU.
 
 ### Modules
 
-All modules are confirmed in game (2026-09-17) unless noted.
+All modules are confirmed in game (2026-09-17) unless noted. `Eat` (2026-09-18) is
+not tested yet.
 
 | Module | Prompt(s) | Target mods | Doc |
 |---|---|---|---|
@@ -63,6 +69,7 @@ All modules are confirmed in game (2026-09-17) unless noted.
 | `LockOn` | 록온, 그래플 | True Directional Movement, Grapple | `005` |
 | `Deflate` | 배출 (길게 누르기) | Fill Her Up Baka Edition | `006` |
 | `Surrender` | 항복 (길게 누르기) | Acheron (+ Yamete Kudasai consequences) | `008` |
+| `Eat` | 먹기: <음식 이름> | Survival Mode + SMI (Starfrost, Gourmet) | `009` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

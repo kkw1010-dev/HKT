@@ -35,6 +35,10 @@ namespace CIGAR::Settings
 	std::int32_t ManualKey(std::string_view a_target);
 	void SetManualKey(std::string_view a_target, std::int32_t a_key);
 
+	// The Survival Mode hunger stage (1-5) the eat prompt starts at; default 3.
+	int EatMinStage();
+	void SetEatMinStage(int a_stage);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 

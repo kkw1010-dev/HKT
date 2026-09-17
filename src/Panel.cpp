@@ -1,5 +1,6 @@
 #include "Panel.h"
 
+#include "Eat.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Prompt.h"
@@ -34,6 +35,7 @@ namespace CIGAR::Panel
 			Label{ "LockOn", "록온·그래플", "True Directional Movement, Grapple" },
 			Label{ "Deflate", "배출", "Fill Her Up" },
 			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)" },
+			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -239,6 +241,16 @@ namespace CIGAR::Panel
 
 			ImGui::SeparatorText("모드 단축키");
 			RenderPromptOnly();
+
+			ImGui::SeparatorText("먹기");
+			int stage = Settings::EatMinStage();
+			if (ImGui::SliderInt("표시 시작 허기 단계", &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
+				Settings::SetEatMinStage(stage);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+			ImGui::TextColored(kDim, "기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시");
 
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();

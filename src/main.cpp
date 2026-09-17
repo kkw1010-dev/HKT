@@ -2,6 +2,7 @@
 #include "Bathe.h"
 #include "Deflate.h"
 #include "Dress.h"
+#include "Eat.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Panel.h"
@@ -14,9 +15,10 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 6> modules{
+		static const std::array<Module*, 7> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
-			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton()
+			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
+			Eat::GetSingleton()
 		};
 		return modules;
 	}

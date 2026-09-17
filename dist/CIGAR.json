@@ -20,5 +20,8 @@
       "enabled": true,
       "manualKey": -1
     }
+  },
+  "eat": {
+    "minStage": 3
   }
 }
