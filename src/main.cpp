@@ -1,7 +1,9 @@
 #include "Bathe.h"
 #include "Dress.h"
 #include "Module.h"
+#include "Panel.h"
 #include "Prompt.h"
+#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR
@@ -50,7 +52,9 @@ namespace
 			return;
 		}
 		for (auto* module : Modules()) {
-			module->Tick();
+			if (Settings::Enabled(module->Name())) {
+				module->Tick();
+			}
 		}
 	}
 
@@ -87,6 +91,10 @@ namespace
 	void OnMessage(SKSE::MessagingInterface::Message* a_msg)
 	{
 		switch (a_msg->type) {
+		case SKSE::MessagingInterface::kPostLoad:
+			Settings::Load();
+			Panel::Register();
+			break;
 		case SKSE::MessagingInterface::kDataLoaded:
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();
