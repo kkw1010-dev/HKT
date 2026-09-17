@@ -21,7 +21,7 @@ namespace CIGAR
 	private:
 		enum : std::uint16_t
 		{
-			kAct = 0
+			kAct = PromptID::kBaboAct
 		};
 
 		BaboKey() { act.SetRepeat(true); }

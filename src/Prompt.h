@@ -13,8 +13,41 @@ namespace CIGAR
 		bool Init();
 		bool Available();
 		SkyPromptAPI::ClientID Client();
+		// True when two prompts share an event ID (found by Init, which logs the pair).
+		bool HasDuplicateIDs();
 		// Takes every prompt of a_owner off the screen (game thread).
 		void WithdrawAll(const Module* a_owner);
+	}
+
+	// Every prompt's SkyPrompt event ID, unique across modules. SkyPrompt treats prompts with the
+	// same (event, action) as one interaction, so a shared ID fires every owner at once, and it
+	// gives each event ID its own key slot (at most four per client), so distinct IDs also get
+	// distinct keys when they are up together.
+	namespace PromptID
+	{
+		inline constexpr std::uint16_t kBathe = 1;
+		inline constexpr std::uint16_t kShower = 2;
+		inline constexpr std::uint16_t kUndress = 3;
+		inline constexpr std::uint16_t kDress = 4;
+		inline constexpr std::uint16_t kBaboAct = 5;
+		inline constexpr std::uint16_t kLock = 6;
+		inline constexpr std::uint16_t kGrapple = 7;
+		inline constexpr std::uint16_t kDeflate = 8;
+		inline constexpr std::uint16_t kSurrender = 9;
+
+		inline constexpr std::array kAll{ kBathe, kShower, kUndress, kDress, kBaboAct, kLock, kGrapple, kDeflate, kSurrender };
+		constexpr bool Unique()
+		{
+			for (std::size_t i = 0; i < kAll.size(); ++i) {
+				for (std::size_t j = i + 1; j < kAll.size(); ++j) {
+					if (kAll[i] == kAll[j]) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		static_assert(Unique(), "prompt event IDs must be unique");
 	}
 
 	// One on-screen prompt. Each prompt is its own sink, because the installed SkyPrompt
@@ -36,6 +69,7 @@ namespace CIGAR
 		// A hold prompt reports key down/up to OnHold and stays on screen when accepted.
 		void SetHoldMode(bool a_hold) { hold = a_hold; }
 		bool Offered() const { return offered; }
+		SkyPromptAPI::EventID ID() const { return id; }
 		// Changes the text colour (ImGui ABGR); an offered prompt is updated in place.
 		void SetColor(std::uint32_t a_color);
 		// kHold shows SkyPrompt's progress ring and accepts only after a full hold.

@@ -1,5 +1,7 @@
 #include "Prompt.h"
 
+#include <map>
+
 #include "Module.h"
 
 namespace CIGAR
@@ -38,19 +40,6 @@ namespace CIGAR
 		}
 	}
 
-	bool Prompts::Init()
-	{
-		if (clientID == 0) {
-			clientID = SkyPromptAPI::RequestClientID();
-		}
-		logs::info("SkyPrompt client id {} (API {}.{})", clientID, SkyPromptAPI::MAJOR, SkyPromptAPI::MINOR);
-		return clientID != 0;
-	}
-
-	bool Prompts::Available() { return clientID != 0; }
-
-	SkyPromptAPI::ClientID Prompts::Client() { return clientID; }
-
 	namespace
 	{
 		// Every slot, so a module switched off in the control panel can be cleared from outside.
@@ -59,7 +48,33 @@ namespace CIGAR
 			static std::vector<std::pair<const Module*, PromptSlot*>> slots;
 			return slots;
 		}
+
+		bool duplicateIDs = false;
 	}
+
+	bool Prompts::Init()
+	{
+		if (clientID == 0) {
+			clientID = SkyPromptAPI::RequestClientID();
+		}
+		logs::info("SkyPrompt client id {} (API {}.{})", clientID, SkyPromptAPI::MAJOR, SkyPromptAPI::MINOR);
+		// A shared event ID makes one key press fire every prompt that uses it.
+		std::map<SkyPromptAPI::EventID, std::string> owners;
+		for (const auto& [owner, slot] : Slots()) {
+			const auto [it, fresh] = owners.emplace(slot->ID(), owner->Name());
+			if (!fresh) {
+				logs::error("prompt event id {} is used by both {} and {}", slot->ID(), it->second, owner->Name());
+				duplicateIDs = true;
+			}
+		}
+		return clientID != 0;
+	}
+
+	bool Prompts::Available() { return clientID != 0; }
+
+	SkyPromptAPI::ClientID Prompts::Client() { return clientID; }
+
+	bool Prompts::HasDuplicateIDs() { return duplicateIDs; }
 
 	void Prompts::WithdrawAll(const Module* a_owner)
 	{

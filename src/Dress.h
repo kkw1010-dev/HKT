@@ -33,8 +33,8 @@ namespace CIGAR
 	private:
 		enum : std::uint16_t
 		{
-			kUndress = 0,
-			kDress = 1
+			kUndress = PromptID::kUndress,
+			kDress = PromptID::kDress
 		};
 
 		Dress() = default;

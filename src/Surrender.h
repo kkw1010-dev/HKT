@@ -23,11 +23,9 @@ namespace CIGAR
 		void OnDisabled() override;
 
 	private:
-		// An event ID no other module uses: SkyPrompt gives each event ID its own key slot, so
-		// this prompt never shares a key with 록온 / 그래플.
 		enum : std::uint16_t
 		{
-			kSurrender = 7
+			kSurrender = PromptID::kSurrender
 		};
 
 		using Clock = std::chrono::steady_clock;

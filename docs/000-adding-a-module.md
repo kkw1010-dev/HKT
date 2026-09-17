@@ -38,7 +38,9 @@ CIGAR module, so their lessons do not have to be learned again.
     `PromptSlot::Update(can, text)`.
   - `OnAccepted(eventID)` performs the action. Every module method runs on the
     game thread.
-- Give each on-screen prompt its own `PromptSlot`. SkyPrompt 2.3.15 has no
+- Give each on-screen prompt its own `PromptSlot` and a new ID in `PromptID`
+  (`src/Prompt.h`). SkyPrompt merges prompts that share an (event, action)
+  pair, so one press would fire both owners. SkyPrompt 2.3.15 has no
   `RemovePromptByID`, so removal is per sink. Send no button list, so
   SkyPrompt assigns the player's keyboard and gamepad defaults.
 - Handle only `kAccepted` (0). The other event types are `kDeclined` (1),

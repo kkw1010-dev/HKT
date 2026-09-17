@@ -49,6 +49,20 @@ Read this first, then `README.md`. The design rationale and test history are in
     check passed, as did the shower check and the SI switches after SI's menu
     was opened. The follow-up fixes (see each doc's Status) are built and
     deployed but not yet retested.
+  - **Retest 2026-09-17.** R1–R4 passed.
+    - R1: the Babo prompt came back after cancelling and resting.
+    - R2: the FHU prompt persisted.
+    - R3: grapple was offered without a lock, and the re-lock worked.
+    - R4: surrender stayed hidden during YK's timeout.
+    - FHU's strip, puddle and sound also fail with FHU's own key. That is to be
+      fixed in FHU in a separate session.
+  - **Unique event IDs.** R1 also showed 행동 선택 and 배출 firing on one
+    press. Every module used event 0 and action 0, and SkyPrompt treats equal
+    (event, action) pairs as one interaction. All prompts now take a unique ID
+    from `PromptID` in `src/Prompt.h`; a `static_assert` enforces it, and
+    `Prompts::Init` logs any runtime duplicate. Distinct IDs also get distinct
+    keys, up to SkyPrompt's four slots per client. This fix is not retested
+    yet.
   - **Prompts are kept on screen** while their gate holds: `PromptSlot`
     re-sends them every 2 s, which resets SkyPrompt's lifetime, and offers
     them again after a `kTimeout`.
@@ -105,6 +119,9 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
   needs `UNICODE`.
 - Hold prompts (`PromptSlot::SetHoldMode`) use 5 down / 6 up instead of
   accepted; SkyPrompt sends them for any prompt type.
+- Event IDs must be unique across modules (`PromptID`). A shared
+  (event, action) pair is one SkyPrompt interaction, and every owner fires on
+  one press.
 - Event types: 0 accepted, 1 declined, 2 removed by mod, 3 timing out,
   4 timeout, 5 down, 6 up, 7 move. Act on 0 only.
 - Unequip/equip is queued. Ignore the worn state for a few ticks after

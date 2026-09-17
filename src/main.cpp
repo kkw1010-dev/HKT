@@ -98,6 +98,9 @@ namespace
 				logs::error("SkyPrompt is missing or incompatible; CIGAR shows no prompts");
 				Util::Notify("CIGAR: SkyPrompt 없음 또는 버전 불일치. 프롬프트 비활성");
 			}
+			if (Prompts::HasDuplicateIDs()) {
+				Util::Notify("CIGAR: 프롬프트 ID 중복. 한 키에 두 동작이 실행됨. 로그 확인");
+			}
 			for (auto* module : Modules()) {
 				module->OnGameLoaded();
 			}

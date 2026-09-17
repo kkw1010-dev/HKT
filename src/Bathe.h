@@ -20,8 +20,8 @@ namespace CIGAR
 	private:
 		enum : std::uint16_t
 		{
-			kBathe = 0,
-			kShower = 1
+			kBathe = PromptID::kBathe,
+			kShower = PromptID::kShower
 		};
 
 		Bathe() = default;

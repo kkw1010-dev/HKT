@@ -29,8 +29,8 @@ namespace CIGAR
 	private:
 		enum : std::uint16_t
 		{
-			kLock = 0,
-			kGrapple = 1
+			kLock = PromptID::kLock,
+			kGrapple = PromptID::kGrapple
 		};
 
 		using Clock = std::chrono::steady_clock;

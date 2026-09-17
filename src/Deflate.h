@@ -26,7 +26,7 @@ namespace CIGAR
 	private:
 		enum : std::uint16_t
 		{
-			kDeflate = 0
+			kDeflate = PromptID::kDeflate
 		};
 
 		Deflate();
