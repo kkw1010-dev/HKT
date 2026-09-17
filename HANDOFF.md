@@ -1,100 +1,151 @@
-# CIGAR — session handoff (2026-09-17)
+# CIGAR — session handoff (updated 2026-09-17, evening)
 
-Read this first, then `README.md`. The design rationale and test history are in
-`docs/`.
+Read this first, then `README.md`. The design rationale and the test history of
+each module are in `docs/`, one file per module, and each file starts with its
+status.
+
+## Open items, in priority order
+
+1. **Retest the unique prompt IDs** (commit `eeaa8c5`, deployed, not tested).
+   - **Test.** In a BaboDialogue kidnap room with Fill Her Up data present,
+     행동 선택 and 배출 must show on **different keys**, and each key must fire
+     only its own action.
+   - **What to read.** `CIGAR.log` must show no
+     `prompt event id ... is used by both` line.
+2. **Pending user decision: "pause FHU during SexLab scenes".** The user asked
+   whether FHU's amounts can be paused during a SexLab scene. They were asked
+   which meaning they want:
+   - (a) FHU stops adding cum and inflating per orgasm during the scene, and
+     applies it after the scene;
+   - (b) FHU's time-based absorb and leak stop during the scene;
+   - (c) CIGAR's 배출 prompt is hidden during the scene. This is already done:
+     it shows 3 s after the scene.
+
+   (a) and (b) change FHU's own scripts and belong with item 3.
+3. **Fill Her Up itself (separate session, by the user's choice).** FHU's own
+   deflate key fails to strip armour, place puddles or play sound, so CIGAR is
+   not the cause. Details:
+   - The Papyrus log shows FHU's path running: `doPush`,
+     `StartLeakage animate:1`, `FHUmoanSoundEffect`. See
+     `docs/006-deflate.md`.
+   - FHU's `defKey` is unbound (-1) on this modlist.
+   - Its drain speed is FHU's MCM `$FHU_ANIM_MULT`.
+4. Backlog below.
 
 ## Where things stand
 
-- `CIGAR.dll` is an ESP-less SKSE plugin (CommonLibSSE-NG alandtse `ng`,
-  SE+AE+VR). It is deployed to `C:\TAKEALOOK\mods\CIGAR\SKSE\Plugins\` and
-  enabled in the MO2 profile `TKL - MUNG ADDON`, directly above
-  `[NoDelete] 0008 StreamlinedInteractions`.
-- The git repo `C:\TAKEALOOK\TKL-Agent\CIGAR` is **local only** (no remote).
-  "Push" has meant "commit" so far.
-- Modules, all confirmed in game by the user:
-  - **Bathe** (`src/Bathe.*`) uses Bathing in Skyrim - Renewed when present
-    (the shower was confirmed on 2026-09-17):
-    목욕하기 in water once nothing strippable is worn, and BiS's own
-    `TryWashActor`. The dirt reset was confirmed. The **shower** path
-    (waterfall) is untested.
-  - **Dress** (`src/Dress.*`) is state-based. At any bed or wardrobe/dresser
-    it offers 탈의하기 when dressed and 착용하기 when naked (the remembered
-    outfit from the inventory). In water it offers 탈의하기; after leaving
-    water it offers 착용하기 only if CIGAR undressed the player. It keeps the
-    Softbody SMP carrier (`HDTSMPObjectBase`) and no-strip/locked items on.
-  - **BaboKey** (`src/BaboKey.*`, `docs/004-babo-key.md`) offers 행동 선택
-    in the BaboDialogue kidnap room while the kidnap quest is at stage 8–249.
-    It is offered again after each accept. Accepting it calls
-    `BaboDiaMonitorScript.OnKeyDown`.
-  - **LockOn** (`src/LockOn.*`, `docs/005-lockon.md`) offers two prompts in
-    combat:
-    - 록온 while TDM is not locked on;
-    - 그래플 while locked on or with a hostile within 350 units.
+- **The plugin.** `CIGAR.dll` is an ESP-less SKSE plugin (CommonLibSSE-NG
+  alandtse `ng`, one DLL for SE, AE and VR).
+  - It is deployed to `C:\TAKEALOOK\mods\CIGAR\SKSE\Plugins\` and enabled in
+    the MO2 profile `TKL - MUNG ADDON`, directly above
+    `[NoDelete] 0008 StreamlinedInteractions`.
+  - The deployed DLL equals the build of `HEAD`, which `verify_deploy.py`
+    checks.
+- **The repo.** `C:\TAKEALOOK\TKL-Agent\CIGAR` is a **local git repo only**
+  (no remote); "push" means "commit".
+  - Branch: `master` only. The earlier `feat/menu-panel` worktree
+    (`..\CIGAR-menu`) was merged and removed.
+  - This machine has **no git identity configured**. Commits so far set it
+    per command, without touching config:
+    `GIT_AUTHOR_NAME=kkw GIT_AUTHOR_EMAIL=kkw1010@gmail.com
+    GIT_COMMITTER_NAME=kkw GIT_COMMITTER_EMAIL=kkw1010@gmail.com git commit ...`,
+    ending the message with
+    `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 
-    Each accept presses that mod's key through `BSInputDeviceManager`. A
-    grapple started while locked is followed by an automatic re-lock. At load,
-    CIGAR syncs Grapple's TDM lock key to TDM's.
-  - **Deflate** (`src/Deflate.*`, `docs/006-deflate.md`) is a hold prompt
-    shown while Fill Her Up tracks an amount, once FHU's and SexLab's
-    animations have been clear for 3 s. SkyPrompt's key down/up events are
-    forwarded to FHU's `OnKeyDown`/`OnKeyUp`.
-  - **Surrender** (`src/Surrender.*`, `docs/008-surrender.md`) is a hold
-    prompt in combat below 20% health that presses Acheron's surrender key
-    (K), with 3 s of x0.3 slow motion and a gold pulse.
-    - Yamete Kudasai 2.2.3 registers its own surrender key but never handles
-      it; Acheron does.
-    - The prompt is hidden while every nearby enemy still has YK's 3-minute
-      surrender timeout.
-  - **In-game test 2026-09-17.** All four worked. Every Bathe, Dress and panel
-    check passed, as did the shower check and the SI switches after SI's menu
-    was opened. The follow-up fixes (see each doc's Status) are built and
-    deployed but not yet retested.
-  - **Retest 2026-09-17.** R1–R4 passed.
-    - R1: the Babo prompt came back after cancelling and resting.
-    - R2: the FHU prompt persisted.
-    - R3: grapple was offered without a lock, and the re-lock worked.
-    - R4: surrender stayed hidden during YK's timeout.
-    - FHU's strip, puddle and sound also fail with FHU's own key. That is to be
-      fixed in FHU in a separate session.
-  - **Unique event IDs.** R1 also showed 행동 선택 and 배출 firing on one
-    press. Every module used event 0 and action 0, and SkyPrompt treats equal
-    (event, action) pairs as one interaction. All prompts now take a unique ID
-    from `PromptID` in `src/Prompt.h`; a `static_assert` enforces it, and
-    `Prompts::Init` logs any runtime duplicate. Distinct IDs also get distinct
-    keys, up to SkyPrompt's four slots per client. This fix is not retested
-    yet.
-  - **Prompts are kept on screen** while their gate holds: `PromptSlot`
-    re-sends them every 2 s, which resets SkyPrompt's lifetime, and offers
-    them again after a `kTimeout`.
-- An optional SKSE Menu Framework page (CIGAR / 설정; `src/Panel.*`,
-  `docs/007-control-panel.md`) switches modules on and off, shows each
-  module's live gate and last log line, and sets the Dress reach. Choices are
-  saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. A module switched off gets
-  `OnDisabled()`: Surrender ends its slow motion, and Deflate releases a held
-  key.
-- SI overlap is handled by `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`:
-  - SI Bathe and DressActions water/bed/wardrobe are off;
-  - SI's preset is pinned to Power User (2), because other presets re-enable
-    modules when SI's menu opens.
-  - `tools/sync_si_settings.py` enforces this on every deploy, and CIGAR
-    warns in game if a switch comes back.
-- Untested: gamepad buttons (the user has no plans to use a pad). SI keeps the
-  switches off after its menu is opened (confirmed 2026-09-17).
+### Modules
+
+All modules are confirmed in game (2026-09-17) unless noted.
+
+| Module | Prompt(s) | Target mods | Doc |
+|---|---|---|---|
+| `Bathe` | 목욕하기, 샤워하기 | Bathing in Skyrim - Renewed | `001` |
+| `Dress` | 탈의하기, 착용하기 | — | `002` |
+| `BaboKey` | 행동 선택 | BaboDialogue | `004` |
+| `LockOn` | 록온, 그래플 | True Directional Movement, Grapple | `005` |
+| `Deflate` | 배출 (길게 누르기) | Fill Her Up Baka Edition | `006` |
+| `Surrender` | 항복 (길게 누르기) | Acheron (+ Yamete Kudasai consequences) | `008` |
+
+- **Bathe.** In water with nothing strippable worn, it calls BiS's own
+  `TryWashActor`. The dirt reset and the waterfall shower were both
+  confirmed.
+- **Dress.**
+  - State-based: at any bed or wardrobe it offers 탈의하기 when dressed and
+    착용하기 when naked, using the outfit remembered in the co-save.
+  - In water it offers 탈의하기; after leaving water it offers 착용하기, but
+    only if CIGAR undressed the player.
+  - It keeps the SMP carrier `HDTSMPObjectBase` and no-strip or locked items
+    on.
+- **BaboKey.**
+  - Shown in the kidnap room (the player's cell equals the
+    `CenterMarkerPlayer` alias's cell) while `BaboKidnapEvent` is at stage
+    8–249, in any script state.
+  - Offered again after every accept.
+  - Accepting calls `BaboDiaMonitorScript.OnKeyDown(NotificationKey)`.
+- **LockOn.**
+  - 록온 shows in combat while TDM is unlocked.
+  - 그래플 shows in combat while locked, or while a hostile is within 350
+    units.
+  - Both work by pressing that mod's key through `BSInputDeviceManager`
+    (`Util::PressKey`), because TDM has no API to set the lock.
+  - A grapple started while locked is followed by an automatic re-lock.
+  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258).
+- **Deflate.**
+  - A hold prompt. SkyPrompt's key down (5) and up (6) are forwarded to FHU's
+    `sr_infDeflateAbility.OnKeyDown` / `OnKeyUp`.
+  - Shown while FHU's `GetMostRecentInflationType(player) > 0`, once FHU's and
+    SexLab's animating factions have been clear for 3 s.
+- **Surrender.**
+  - A `kHold` prompt in combat below 20% health, with 3 s of x0.3 slow motion
+    (`BSTimer::SetGlobalTimeMultiplier`) and a white↔gold text pulse.
+  - Accepting presses Acheron's surrender key (K, from
+    `Data/SKSE/Acheron/Settings.yaml`).
+  - Hidden (`yk-timeout`) while every hostile within 3000 units has
+    `Kudasai_SurrenderTimeoutEFF`: YK's 3-minute rule, under which its
+    surrender quest cannot fill.
+  - Yamete Kudasai 2.2.3 registers its own surrender key but never handles it.
+
+### Shared machinery
+
+- **`PromptSlot`** (`src/Prompt.*`):
+  - one SkyPrompt sink per prompt;
+  - keeps an offered prompt alive by re-sending it every 2 s;
+  - offers it again after `kTimeout`;
+  - optional repeat after an accept, hold mode (down/up), prompt type (e.g.
+    `kHold`), and colour updates;
+  - every prompt has a unique ID from `PromptID`.
+- **Ticks** (`src/main.cpp`): `Tick()` runs every 1 s and `FastTick()` every
+  100 ms. Both run only while unpaused, and only for modules switched on.
+- **Control panel.** An optional SKSE Menu Framework page (CIGAR / 설정;
+  `src/Panel.*`, `src/Settings.*`, `docs/007-control-panel.md`):
+  - per-module on/off switches;
+  - each module's live gate and last log line;
+  - the Dress reach.
+
+  Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
+  module off withdraws its prompts and calls `OnDisabled()`.
+- **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
+  turns off SI's Bathe and DressActions (water, bed, wardrobe) and pins SI's
+  preset to Power User (2). `tools/sync_si_settings.py` enforces this on
+  deploy, and SI keeps the switches off after its menu is opened.
+- **Untested:** gamepad buttons (the user does not use a pad).
 
 ## The user's standing expectations (also in Claude memory)
 
-- CIGAR must stay **ESP-less**. Integrations are optional and detected at
-  runtime, and a missing target is skipped silently (logged). There are no
-  masters, no per-mod patches, and no MCM toggles for detection.
-- Execute the work instead of handing back manual steps. Ask only for what an
-  agent cannot do, such as in-game observation.
-- Make failures self-reporting: log the gate inputs, and notify once on silent
-  blockers. Read `CIGAR.log` before asking the user to re-test.
-- A new game is not a cost for this user; mention it in one line when it
-  applies. DLL changes usually do not need one.
-- Leave no build servers running (`tools/Build.ps1` stops
-  `mspdbsrv`/`vctip`/`MSBuild` it started).
+- CIGAR stays **ESP-less**. Integrations are optional, detected at runtime,
+  and skipped (with a log line) when absent. There are no masters, no per-mod
+  patches, and no MCM toggles for detection.
+- Prompts stay on screen for as long as their condition holds. Prefer broad
+  gates, and log the narrower facts.
+- Execute the work; do not hand back manual steps. Ask only for in-game
+  observation or genuine decisions.
+- Make failures self-reporting: log gate inputs and notify once on silent
+  blockers. **Read the logs before asking the user to retest**, and give the
+  user a short numbered test list with expected results.
+- A new game is not a cost for this user (one line when it applies). DLL-only
+  changes do not need one.
+- Leave no build servers running.
 - Player-facing Korean is short and administrative. Repo docs are in English.
+  Reply to the user in Korean.
 
 ## How to work on it
 
@@ -102,35 +153,60 @@ Read this first, then `README.md`. The design rationale and test history are in
 powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Build.ps1 -Deploy
 ```
 
-- Toolchain: VS 2026 Build Tools, Ninja, and vcpkg at
-  `C:\TAKEALOOK\TOOLS\vcpkg` (baseline pinned in `vcpkg.json`). An
-  incremental build takes well under a minute.
-- Skyrim must be closed to deploy; MO2 may stay open. Profile edits
-  (`tools/register_profile.py`) need MO2 closed, and the tool refuses
-  otherwise.
-- Runtime log: `%USERPROFILE%\OneDrive\Documents\My Games\Skyrim Special Edition\SKSE\CIGAR.log`
-  (recreated each launch).
-- Adding a module: `docs/000-adding-a-module.md`.
+- **Build.** VS 2026 Build Tools, Ninja, and vcpkg at
+  `C:\TAKEALOOK\TOOLS\vcpkg`. An incremental build takes under a minute.
+  Build.ps1 runs `check_menu_framework.py` and, with `-Deploy`,
+  `sync_si_settings.py` and `verify_deploy.py`. `verify_deploy.py` fails on:
+  - a stale DLL;
+  - a missing dependency;
+  - renamed script or property names in BaboDialogue, FHU, Grapple or
+    Acheron;
+  - an unpressable TDM or Acheron key.
+- **Deploy.** Skyrim must be closed; MO2 may stay open.
+- **Logs** (all under `%USERPROFILE%\OneDrive\Documents\My Games\Skyrim Special Edition\`):
+  - `SKSE\CIGAR.log` is CIGAR's own log, recreated each launch. It has `gate`
+    lines per module and every prompt event.
+  - `Logs\Script\Papyrus.0.log` shows what the target mods' scripts did (FHU
+    logs `[FillHerUp]`, YK logs `[Kudasai]`).
+  - `SKSE\Acheron.log`, `SKSE\FH_Grapple_Plugin.log` (logging is off in its
+    ini) and `SKSE\TrueDirectionalMovement.log`.
+- **Reading a target mod.** Decompile its `.pex` with
+  `housecarl_decompile_script` into a temporary `houseCARL - CIGAR_Tmp*` mod
+  folder, copy what you need to the scratchpad, then delete that folder. Those
+  folders are never in modlist.txt. Some mods ship `.psc` sources, but the
+  `.pex` may be newer.
+- **Adding a module.** Follow `docs/000-adding-a-module.md`, including a new
+  `PromptID`.
 
 ## Pitfalls already paid for
 
-- SkyPrompt 2.3.15 exports only `RequestClientID`/`SendPrompt`/`RemovePrompt`/`RequestTheme`.
-  Removal is per sink, so each prompt is its own `PromptSlot`. The API header
-  needs `UNICODE`.
-- Hold prompts (`PromptSlot::SetHoldMode`) use 5 down / 6 up instead of
-  accepted; SkyPrompt sends them for any prompt type.
-- Event IDs must be unique across modules (`PromptID`). A shared
-  (event, action) pair is one SkyPrompt interaction, and every owner fires on
-  one press.
-- Event types: 0 accepted, 1 declined, 2 removed by mod, 3 timing out,
-  4 timeout, 5 down, 6 up, 7 move. Act on 0 only.
-- Unequip/equip is queued. Ignore the worn state for a few ticks after
-  changing it (`kSettleTicks`), or the logic misreads it; this bug happened
-  once.
-- `RE::UI::GameIsPaused()` is non-const.
-- Modules have `Tick()` (1 s) and `FastTick()` (100 ms); both run only while
-  unpaused.
-- CommonLibSSE-NG is GPL-3.0-or-later; mind this before any distribution.
+- **SkyPrompt API** (installed DLL of 2026-03-04, API 2.0):
+  - It exports only `RequestClientID`, `SendPrompt`, `RemovePrompt` and
+    `RequestTheme`.
+  - Removal is per sink. The API header needs `UNICODE`.
+- **SkyPrompt interactions and keys:**
+  - An (event, action) pair is one interaction. Shared IDs fire every owner;
+    use `PromptID`.
+  - Each event ID gets its own key slot, at most 4 per client.
+  - `SendPrompt` on a queued prompt updates its text and colour and resets
+    its lifetime.
+- **SkyPrompt events:** 0 accepted, 1 declined, 2 removed by mod, 3 timing
+  out (every frame; not logged), 4 timeout, 5 down, 6 up, 7 move. Down and up
+  arrive for every prompt type.
+- **Synthetic key presses.** Build `ButtonEvent`s with an empty user event and
+  send them through `BSInputDeviceManager`. Input sinks such as TDM and
+  Acheron react, and the game's own controls ignore them. Key codes: 0–255
+  keyboard, 256+ mouse.
+- **Papyrus calls.** `DispatchMethodCall2` works for events such as
+  `OnKeyDown`. Alias scripts need the alias VM handle (`Util::Handle(alias)`).
+  An auto property is read with `Object::GetProperty`, not
+  `VirtualMachine::GetPropertyValue`.
+- **Worn state.** Unequip and equip are queued, so ignore the worn state for a
+  few ticks after a change (`kSettleTicks`).
+- **Pausing.** `RE::UI::GameIsPaused()` is non-const, and ticks do not run
+  while paused.
+- **Licence.** CommonLibSSE-NG is GPL-3.0-or-later; mind it before any
+  distribution. The user's CIGAR is personal use.
 
 ## Backlog (the user's plan, in the order discussed)
 
@@ -138,21 +214,18 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    `docs/003-immersive-interactions-analysis.md` recommends:
    - install Immersive Interactions as an optional provider and turn its MCM
      toggles off;
-   - have a CIGAR module offer 쓰다듬기 on the crosshair target and dispatch
-     `AR_QuestScript.fpetdog`/`fwavehorse` on `AR_Quest` (`000800:ImmersiveInteractions.esp`);
-   - stress relief already flows II → Stress and Fear through KID
-     (`AR_ReduceStressMEffect` → `Stress_Reduce25`), and CIGAR can add it for
-     horses and cats.
+   - offer 쓰다듬기 on the crosshair target and dispatch
+     `AR_QuestScript.fpetdog`/`fwavehorse` on `AR_Quest`
+     (`000800:ImmersiveInteractions.esp`).
 
-   **Waiting on the user's decision** to install II (the archive is in
-   `C:\TAKEALOOK\downloads`; not installed).
-2. **Babo dialogue hotkey** ("D"). The kidnap-event part is done as
-   `BaboKey`, pending an in-game test. The key's other branches (merchant
-   enthrall, Riekling Thirsk) are not covered; see `docs/004-babo-key.md`.
-3. **Submit/Surrender** ("C"). The Acheron / Yamete Kudasai surrender is done
-   (`Surrender`). BaboDialogue's own `bSurrenderKey` branch
+   **Waiting on the user's decision** to install II. The archive is in
+   `C:\TAKEALOOK\downloads` and is not installed.
+2. **BaboDialogue hotkey, remaining branches.** The kidnap part is done
+   (`BaboKey`). Merchant enthrall (Dibella stage >= 20) and Riekling Thirsk
+   are not covered; see `docs/004-babo-key.md`.
+3. **BaboDialogue's own surrender.** The Acheron / YK surrender is done
+   (`Surrender`). BaboDialogue's `bSurrenderKey` branch
    (`BaboSexControllerManager.Surrender(crosshairRef)`) is not covered.
-4. **Simply Knock** ("B"). Not installed. II bundles a
-   `simplyknockmainscript.pex` override, so check that interaction first.
-5. **Private Needs** ("E"). Not installed. Prefer wrapping an existing needs
-   mod over building a needs system.
+4. **Simply Knock.** Not installed. II bundles a `simplyknockmainscript.pex`
+   override, so check that first.
+5. **Private Needs.** Not installed. Prefer wrapping an existing needs mod.

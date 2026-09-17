@@ -30,10 +30,10 @@ their in-game tests are in git history and in `docs/001`.
 |---|---|---|---|
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
 | `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Confirmed in game 2026-09-17 (water, beds, wardrobes, state-based dress) |
-| `BaboKey` | BaboDialogue (optional) | — | Confirmed in game 2026-09-17; repeat/persistence fix untested |
-| `LockOn` | True Directional Movement, Grapple (both optional) | — | Confirmed in game 2026-09-17; re-lock and lock-free grapple untested |
-| `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17; settle delay and keep-alive untested |
-| `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17; `yk-timeout` gate untested |
+| `BaboKey` | BaboDialogue (optional) | — | Confirmed in game 2026-09-17 (retest passed) |
+| `LockOn` | True Directional Movement, Grapple (both optional) | — | Confirmed in game 2026-09-17 (retest passed) |
+| `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17 (retest passed; FHU-side effects pending in FHU) |
+| `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17 (retest passed) |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
