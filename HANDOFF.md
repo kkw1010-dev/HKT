@@ -6,53 +6,21 @@ status.
 
 ## Open items, in priority order
 
-1. **Test build of 2026-09-19** (deployed, not tested in game).
-   - **Jujutsu / 유술** (new, `docs/012-jujutsu.md`; first module with a game hook). Against a guarding
-     humanoid: 유술: <이름> shows, a kill move plays, the victim lives. Read `[Jujutsu]` lines: `pair started`,
-     `KillActor swallowed for victim`, `payoff`, and the victim state 2 s after (pose after the throw is the
-     open visual question). Balance values are placeholders; the user deferred balance.
-   - **Execute** (new module, `docs/011-execute.md`). The first launch writes
-     `iExecutionKey = 102` into Valhalla's INI (`CIGAR.log`: `Valhalla iExecutionKey -1 -> 102`).
-     Break an enemy's stun and stand within 250 units: 처형: <이름> shows,
-     and accepting logs `kill move started`. A `WARN ... no kill move` line
-     points at Valhalla's stale-entry bug.
-   - **WeaponSwap return.** Axe + shield → 원거리 무기 → 근접 무기 must name the
-     axe (`melee=<axe>(prev)`) and bring the shield back.
-   - **WeaponSwap** (new module, `docs/010-weapon-swap.md`). In combat with
-     a sword out, back off past 800 units (or make an enemy flee): the
-     prompt reads 원거리 무기: <bow>, favourite first. Accepting equips the
-     bow and arrows; `CIGAR.log` shows `equip ranged` and
-     `after equip: right <bow>`. Let the enemy close in: 근접 무기: <weapon>,
-     and a shield worn before comes back (`left hand back:`).
-   - **Grapple after a new game.** 그래플 must show in melee combat without
-     touching Grapple's MCM. With prompt-only on (the default) the hidden key
-     is already in Grapple's INI, so `CIGAR.log` shows
-     `Grapple INI kbKey=100 at startup` and `knownKey=-1`: `ReadGrappleIni`
-     ignores the hidden key on purpose, and the remembered key comes from
-     `CIGAR.json` (`manual key 34`). The restore line
-     `Grapple Hotkey -1; restoring the player's key 34` appears only with
-     prompt-only switched off.
-   - **Prompt keys.** CIGAR / 2. 단축키 / 프롬프트 키 shows 1–4. Prompts show
-     those keys, and a changed key applies at once. `offer` lines show
-     `slot=` and `key=`.
-   - **Surrender and the Babo Acheron patch.** `CIGAR.log` must show
-     `[Surrender] BaboDialogue controller=true acheronPatch=true`. While
-     BaboDialogue holds the player, the gate reads `babo-acheron-off`.
-   - **Panel pages.** CIGAR shows 1. 모듈, 2. 단축키 and 3. 세부 설정.
-   - **Unique prompt IDs** (`eeaa8c5`). In a BaboDialogue kidnap room with
-     Fill Her Up data present, 행동 선택 and 배출 show on different keys.
-   - **Prompt-only keys.** With both switches on (default): Grapple's MCM
-     shows F13 and Acheron's shows F14. G pressed by hand does nothing, and
-     the 그래플 and 항복 prompts still work. `CIGAR.log` shows
-     `prompt-only: ... -> hidden key`.
-   - **Key check button.** With a switch off, change that mod's key in its
-     MCM, then press 모드 키 다시 확인. The panel shows the new key, and
-     `CIGAR.log` shows `key check: ...`.
+1. **Jujutsu / 유술, test 2** (`docs/012-jujutsu.md`). Test 1: the play starts, KillActor is swallowed,
+   and the victim dies anyway. Plays on a blocking victim were refused. The build of 2026-09-19 (00e1224)
+   drops the guard, retries, times every victim event, and alternates strategy A (essential flag) and
+   B (KillMoveEnd swallowed), announced on the HUD. Read `[Jujutsu]` `t=` samples and the event lines
+   to see which strategy keeps the victim alive, then keep only that one and remove the HUD notice.
 2. Backlog below.
 
-Closed on 2026-09-18: the "FHU during SexLab scenes" question. The user traced
-it to a temporary BaboDialogue fault; CIGAR's earlier work was correct. FHU's
-own deflate problem was fixed by the user in FHU.
+Confirmed in game on 2026-09-19:
+- the Execute prompt with actor names;
+- the WeaponSwap return, and the arrows re-equipped with the bow;
+- Grapple after a new game;
+- unique prompt IDs in the kidnap room;
+- the three panel pages;
+- the F13/F14/F15 prompt-only keys, with G and K doing nothing.
+Execute sometimes misses the first press; the user accepts this, because Valhalla's own key misses in the same way.
 
 ## Where things stand
 
