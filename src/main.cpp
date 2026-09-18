@@ -3,6 +3,7 @@
 #include "Deflate.h"
 #include "Dress.h"
 #include "Eat.h"
+#include "Execute.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Panel.h"
@@ -16,10 +17,10 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 8> modules{
+		static const std::array<Module*, 9> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
-			Eat::GetSingleton(), WeaponSwap::GetSingleton()
+			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton()
 		};
 		return modules;
 	}
@@ -116,6 +117,8 @@ namespace
 		switch (a_msg->type) {
 		case SKSE::MessagingInterface::kPostLoad:
 			Settings::Load();
+			// Valhalla Combat reads its settings file at kDataLoaded; set its execution key before that.
+			Execute::GetSingleton()->PrepareKey();
 			Panel::Register();
 			break;
 		case SKSE::MessagingInterface::kDataLoaded:

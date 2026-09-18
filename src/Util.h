@@ -57,6 +57,9 @@ namespace CIGAR::Util
 
 	// An integer from a Data-relative INI file (read through MO2's VFS), or nullopt.
 	std::optional<std::int64_t> IniInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key);
+	// Sets an integer in a Data-relative INI file (written through MO2's VFS), keeping every other line,
+	// the byte-order mark and the line endings; adds the key or the section when missing.
+	bool IniSetInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key, std::int64_t a_value);
 
 	// Presses and releases a key through the game's input event source, as SKSE-style key codes:
 	// 0-255 keyboard scan codes, 256-263 mouse buttons. Input sinks such as True Directional

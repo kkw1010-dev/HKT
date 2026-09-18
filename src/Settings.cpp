@@ -30,7 +30,7 @@ namespace CIGAR::Settings
 			bool on{ true };
 			std::int32_t manualKey{ -1 };
 		};
-		constexpr std::array kPromptOnlyTargets{ "grapple"sv, "surrender"sv };
+		constexpr std::array kPromptOnlyTargets{ "grapple"sv, "surrender"sv, "valhalla"sv };
 		std::map<std::string, PromptOnlyState, std::less<>> promptOnly;
 
 		void ResetPromptOnly()

@@ -13,7 +13,10 @@ needed; TDM is used when present.
   CIGAR / 3. 세부 설정 / 무기 전환 (300–3000). 800 is the user's choice.
 - Staves do not count as ranged weapons. Only bows and crossbows do.
 - The reverse case (enemy near, bow in hand → melee weapon) is required.
-- Weapon order, for both directions: favourites first, then the strongest
+- **Going back returns to the loadout held before** (the user's correction,
+  2026-09-19). Axe + shield → bow → axe + shield, not the strongest melee
+  weapon. The fallback order below applies only when that loadout is gone.
+- Weapon order when there is nothing to go back to: favourites first, then the strongest
   weapon, then anything else of that kind. With staves excluded, "anything
   else" is already covered by "strongest", because every bow or crossbow has a
   damage figure.
@@ -40,6 +43,12 @@ needed; TDM is used when present.
   checked.
 
 ## Picking
+
+- **Previous loadout first.** Taking the bow remembers the melee weapon in
+  the right hand and the left-hand item. Taking the melee weapon remembers
+  the bow and its ammo. Each side's prompt names the remembered weapon while it
+  is still carried (a bow also needs ammo), and the gate marks it `(prev)`.
+  Only when it is gone does the fallback order apply.
 
 - The inventory is scanned only while a prompt could show, at most once a
   second, and again on accept.

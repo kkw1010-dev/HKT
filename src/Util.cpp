@@ -220,6 +220,80 @@ namespace CIGAR::Util
 		return std::nullopt;
 	}
 
+	bool IniSetInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key, std::int64_t a_value)
+	{
+		std::string content;
+		if (std::ifstream in{ a_path, std::ios::binary }) {
+			content.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+		}
+		constexpr std::string_view kBom = "\xEF\xBB\xBF";
+		const bool bom = content.starts_with(kBom);
+		if (bom) {
+			content.erase(0, kBom.size());
+		}
+		const std::string eol = content.find("\r\n") != std::string::npos ? "\r\n" : "\n";
+		const bool finalEol = content.empty() || content.ends_with('\n');
+		std::vector<std::string> lines;
+		for (std::size_t pos = 0; pos < content.size();) {
+			const auto next = content.find('\n', pos);
+			auto line = content.substr(pos, next == std::string::npos ? std::string::npos : next - pos);
+			if (!line.empty() && line.back() == '\r') {
+				line.pop_back();
+			}
+			lines.push_back(std::move(line));
+			pos = next == std::string::npos ? content.size() : next + 1;
+		}
+		const auto trim = [](std::string_view s) {
+			const auto first = s.find_first_not_of(" \t");
+			return first == std::string_view::npos ? std::string_view{} : s.substr(first, s.find_last_not_of(" \t") - first + 1);
+		};
+		const auto entry = std::format("{} = {}", a_key, a_value);
+		std::optional<std::size_t> sectionEnd;  // one past the section's last non-empty line
+		bool inSection = false;
+		bool done = false;
+		for (std::size_t i = 0; i < lines.size() && !done; ++i) {
+			const auto text = trim(lines[i]);
+			if (text.starts_with('[')) {
+				inSection = text.size() > 2 && EqualsNoCase(text.substr(1, text.size() - 2), a_section);
+				if (inSection) {
+					sectionEnd = i + 1;
+				}
+				continue;
+			}
+			if (!inSection || text.empty()) {
+				continue;
+			}
+			sectionEnd = i + 1;
+			const auto eq = text.find('=');
+			if (text.front() != ';' && text.front() != '#' && eq != std::string_view::npos && EqualsNoCase(trim(text.substr(0, eq)), a_key)) {
+				lines[i] = entry;
+				done = true;
+			}
+		}
+		if (!done && sectionEnd) {
+			lines.insert(lines.begin() + static_cast<std::ptrdiff_t>(*sectionEnd), entry);
+		} else if (!done) {
+			if (!lines.empty() && !lines.back().empty()) {
+				lines.emplace_back();
+			}
+			lines.push_back(std::format("[{}]", a_section));
+			lines.push_back(entry);
+		}
+		std::string out = bom ? std::string(kBom) : std::string{};
+		for (std::size_t i = 0; i < lines.size(); ++i) {
+			out += lines[i];
+			if (i + 1 < lines.size() || finalEol) {
+				out += eol;
+			}
+		}
+		std::error_code ec;
+		std::filesystem::create_directories(a_path.parent_path(), ec);
+		std::ofstream file{ a_path, std::ios::binary | std::ios::trunc };
+		file << out;
+		file.close();
+		return static_cast<bool>(file);
+	}
+
 	bool PressKey(std::int64_t a_code)
 	{
 		RE::INPUT_DEVICE device;

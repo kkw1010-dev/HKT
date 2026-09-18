@@ -57,6 +57,22 @@ FHU_SCRIPTS = {
 # Acheron (surrender), read by src/Surrender.cpp.
 ACHERON_MOD = "Acheron - Death Alternative"
 ACHERON_SETTINGS = os.path.join(MODS, "TAKEALOOK - MCM and INI", "SKSE", "Acheron", "Settings.yaml")
+# Valhalla Combat (execution), read by src/Execute.cpp.
+VALHALLA_MOD = "Valhalla Combat"
+VALHALLA_SETTINGS = os.path.join(MO2, "overwrite", "MCM", "Settings", "ValhallaCombat.ini")
+VALHALLA_HIDDEN_KEY = 0x66  # F15
+# Every section data::loadKillMoveIni reads (spelling as in Valhalla, including "Ginat-2HW"). An empty
+# one leaves Valhalla picking a kill move from an empty list for that race and weapon.
+VALHALLA_KILLMOVE_SECTIONS = """Humanoid-Unarmed Humanoid-Dagger Humanoid-Sword Humanoid-Axe Humanoid-Mace
+Humanoid-GreatSword Humanoid-2HW Humanoid-DW Humanoid-1HM-Back Humanoid-2HM-Back Humanoid-2HW-Back
+Humanoid-Unarmed-Back Undead-1HM Undead-2HM Undead-2HW Falmer-1HM Falmer-2HM Falmer-2HW Spider-1HM
+Spider-2HM Spider-2HW Gargoyle-1HM Gargoyle-2HM Gargoyle-2HW Giant-1HM Giant-2HM Ginat-2HW Bear-1HM
+Bear-2HM Bear-2HW SabreCat-1HM SabreCat-2HM SabreCat-2HW Wolf-1HM Wolf-2HM Wolf-2HW Troll-1HM Troll-2HM
+Troll-2HW Hagraven-1HM Hagraven-2HM Hagraven-2HW Spriggan-1HM Spriggan-2HM Spriggan-2HW Boar-1HM Boar-2HM
+Boar-2HW Riekling-1HM Riekling-2HM Riekling-2HW AshHopper-1HM AshHopper-2HM AshHopper-2HW
+DwarvenBallista-1HM DwarvenBallista-2HM DwarvenBallista-2HW SteamCenturion-1HM SteamCenturion-2HM
+SteamCenturion-2HW ChaurusFlyer-1HM ChaurusFlyer-2HM ChaurusFlyer-2HW Lurker-1HM Lurker-2HM Lurker-2HW
+Dragon-1HM Dragon-2HM Dragon-2HW""".split()
 REQUIRED_EXPORTS = {b"SKSEPlugin_Load", b"SKSEPlugin_Query", b"SKSEPlugin_Version"}
 
 failures = []
@@ -368,6 +384,71 @@ def check_surrender(modlist):
         l.startswith("+YameteKudasai") for l in modlist) else "absent: Acheron's own consequences apply"))
 
 
+def ini_sections(path):
+    """{section: [(key, value)]} of an INI file, keeping duplicate-free order."""
+    sections, current = {}, None
+    with open(path, encoding="utf-8-sig", errors="replace") as f:
+        for line in f:
+            text = line.strip()
+            if not text or text[0] in ";#":
+                continue
+            if text.startswith("["):
+                current = text[1:-1].strip()
+                sections.setdefault(current, [])
+            elif current is not None and "=" in text:
+                name, value = text.split("=", 1)
+                sections[current].append((name.strip(), value.strip()))
+    return sections
+
+
+def check_valhalla(modlist):
+    """Execute presses Valhalla's execution key; Valhalla reads it from one INI, re-reads it through
+    one Papyrus native, and plays a kill move from Killmoves.ini. Any of these changing makes the
+    prompt do nothing, with nothing on screen."""
+    if "+" + VALHALLA_MOD not in modlist:
+        note("Valhalla Combat absent: Execute module idles")
+        return
+    root = os.path.join(MODS, VALHALLA_MOD)
+    dll = os.path.join(root, "SKSE", "Plugins", "valhallaCombat.dll")
+    check(os.path.isfile(dll), "Valhalla DLL present")
+    if os.path.isfile(dll):
+        with open(dll, "rb") as f:
+            data = f.read()
+        needles = [rb"Data\MCM\Settings\ValhallaCombat.ini", b"iExecutionKey", b"bStunToggle", b"OnConfigClose",
+                   b"Data/SKSE/Plugins/ValhallaCombat/RaceMapping", b"RequestPluginAPI"]
+        missing = [n.decode() for n in needles if n not in data]
+        check(not missing, "Valhalla DLL still reads its MCM INI, iExecutionKey, the race map and OnConfigClose%s" % (
+            " - missing: " + ", ".join(missing) if missing else ""))
+        check(b"RequestPluginAPI" in dll_exports(dll), "Valhalla DLL exports RequestPluginAPI")
+    pex = os.path.join(root, "scripts", "valhallaCombat_MCM.pex")
+    check(os.path.isfile(pex), "valhallaCombat_MCM.pex present (settings reload)")
+    if os.path.isfile(pex):
+        with open(pex, "rb") as f:
+            check(b"OnConfigClose" in f.read(), "valhallaCombat_MCM.pex declares OnConfigClose")
+    races = os.path.join(root, "SKSE", "Plugins", "ValhallaCombat", "RaceMapping", "Vanilla.ini")
+    check(os.path.isfile(races) and len(ini_sections(races).get("Humanoid", [])) > 0, "Valhalla race map has humanoid races")
+    killmoves = os.path.join(root, "SKSE", "Plugins", "ValhallaCombat", "Killmoves.ini")
+    if not os.path.isfile(killmoves):
+        check(False, "Valhalla Killmoves.ini present")
+    else:
+        sections = ini_sections(killmoves)
+        empty = []
+        for name in VALHALLA_KILLMOVE_SECTIONS:
+            usable = [v for _, v in sections.get(name, []) if "|" in v and find_plugin(modlist, v.split("|")[0].strip())]
+            if not usable:
+                empty.append(name)
+        check(not empty, "every Valhalla kill-move section has an idle from a present plugin%s" % (
+            " - empty: " + ", ".join(empty) if empty else ""))
+    if os.path.isfile(VALHALLA_SETTINGS):
+        stun = ini_int(VALHALLA_SETTINGS, "Stun", "bStunToggle")
+        check(stun in (None, 1), "Valhalla stun enabled: %s" % ("default 1" if stun is None else stun))
+        key = ini_int(VALHALLA_SETTINGS, "Stun", "iExecutionKey")
+        note("Valhalla iExecutionKey %s (CIGAR sets F15 = %d at the next launch when prompt-only is on)" % (
+            "unset (-1)" if key is None else key, VALHALLA_HIDDEN_KEY))
+    else:
+        note("Valhalla settings file absent: DLL defaults (stun on, no execution key) until CIGAR writes it")
+
+
 def main():
     profile = os.path.join(MO2, "profiles", active_profile())
     print("profile:", profile)
@@ -417,6 +498,7 @@ def main():
     check_eat(modlist)
     check_fhu(modlist)
     check_surrender(modlist)
+    check_valhalla(modlist)
 
     # Replaced SI modules must be off, or both prompts appear.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")

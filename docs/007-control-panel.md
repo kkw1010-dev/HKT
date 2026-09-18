@@ -38,6 +38,7 @@ items by name, so the numbers fix their order:
 |---|---|
 | `1. 모듈` | 모듈 (switches, gate, last line) and 상태 |
 | `2. 단축키` | 프롬프트 키 and 모드 단축키 |
+| `2. 단축키` note | prompt-only switches now also cover Valhalla's execution key (F15) |
 | `3. 세부 설정` | 먹기 (start stage), 무기 전환 (switch distance, default 800) and 탈의·착용 (reach) |
 
 Each page logs `control panel: page … drawn for the first time` once.

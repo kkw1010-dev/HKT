@@ -78,7 +78,10 @@ namespace CIGAR
 		offeredMelee = nullptr;
 		nextScan = {};
 		quietUntil = {};
+		savedMelee = nullptr;
 		savedLeft = nullptr;
+		savedBow = nullptr;
+		savedAmmo = nullptr;
 		expected = nullptr;
 		checkPending = false;
 
@@ -176,8 +179,36 @@ namespace CIGAR
 		return best;
 	}
 
+	WeaponSwap::Pick WeaponSwap::PickPrevious(RE::PlayerCharacter* a_player, bool a_ranged) const
+	{
+		auto* weapon = a_ranged ? savedBow : savedMelee;
+		if (!weapon) {
+			return {};
+		}
+		auto inventory = a_player->GetInventory([weapon](RE::TESBoundObject& a_obj) { return &a_obj == weapon; });
+		const auto it = inventory.find(weapon);
+		auto* entry = it != inventory.end() ? it->second.second.get() : nullptr;
+		if (!entry || it->second.first <= 0) {
+			return {};
+		}
+		RE::TESAmmo* ammo = nullptr;
+		if (a_ranged) {
+			const bool bolt = weapon->IsCrossbow();
+			ammo = savedAmmo && savedAmmo->IsBolt() == bolt && Util::ItemCount(a_player, savedAmmo) > 0 ? savedAmmo : PickAmmo(a_player, bolt);
+			if (!ammo) {
+				return {};
+			}
+		}
+		const bool favorite = entry->IsFavorited();
+		return { weapon, ExtraFor(entry, favorite), ammo, favorite, a_player->GetDamage(entry), true };
+	}
+
 	WeaponSwap::Pick WeaponSwap::PickWeapon(RE::PlayerCharacter* a_player, bool a_ranged) const
 	{
+		// The user's rule: switching back returns to the loadout held before, not to the strongest weapon.
+		if (auto previous = PickPrevious(a_player, a_ranged); previous.weapon) {
+			return previous;
+		}
 		RE::TESAmmo* arrows = nullptr;
 		RE::TESAmmo* bolts = nullptr;
 		if (a_ranged) {
@@ -287,7 +318,7 @@ namespace CIGAR
 			if (!a_want) {
 				return "-"s;
 			}
-			return a_pick.weapon ? Util::NameOf(a_pick.weapon) + (a_pick.favorite ? "(fav)" : "") : "none"s;
+			return a_pick.weapon ? Util::NameOf(a_pick.weapon) + (a_pick.previous ? "(prev)" : a_pick.favorite ? "(fav)" : "") : "none"s;
 		};
 		// Distance changes every tick, so the gate carries the zone; the zone line above has the distance.
 		LogGate(std::format("combat={} target={} locked={} zone={} hands={} movable={} sexlab={} quiet={} ranged={} melee={}",
@@ -366,6 +397,7 @@ namespace CIGAR
 		if (isRanged) {
 			auto* right = player->GetEquippedObject(false);
 			auto* left = player->GetEquippedObject(true);
+			savedMelee = s.hands == Hands::kMelee && right ? right->As<RE::TESObjectWEAP>() : nullptr;
 			savedLeft = left && left != right ? left : nullptr;
 			manager->EquipObject(player, pick.weapon, pick.extra);
 			const bool ammoChanged = pick.ammo && player->GetCurrentAmmo() != pick.ammo;
@@ -373,14 +405,18 @@ namespace CIGAR
 				const auto count = std::max(1, Util::ItemCount(player, pick.ammo));
 				manager->EquipObject(player, pick.ammo, nullptr, static_cast<std::uint32_t>(count));
 			}
-			Log("equip ranged {} ({:08X}, damage {:.0f}, favorite={}) ammo {}{}; left hand saved: {}", Util::NameOf(pick.weapon),
-				pick.weapon->GetFormID(), pick.damage, pick.favorite, pick.ammo ? Util::NameOf(pick.ammo) : "-"s,
-				ammoChanged ? " (equipped)" : " (already)", savedLeft ? Util::NameOf(savedLeft) : "-"s);
+			Log("equip ranged {} ({:08X}, damage {:.0f}, favorite={}, previous={}) ammo {}{}; saved melee {} left {}", Util::NameOf(pick.weapon),
+				pick.weapon->GetFormID(), pick.damage, pick.favorite, pick.previous, pick.ammo ? Util::NameOf(pick.ammo) : "-"s,
+				ammoChanged ? " (equipped)" : " (already)", savedMelee ? Util::NameOf(savedMelee) : "-"s, savedLeft ? Util::NameOf(savedLeft) : "-"s);
 		} else {
+			auto* right = player->GetEquippedObject(false);
+			savedBow = right ? right->As<RE::TESObjectWEAP>() : nullptr;
+			savedAmmo = player->GetCurrentAmmo();
 			const bool twoHanded = IsTwoHanded(pick.weapon);
 			manager->EquipObject(player, pick.weapon, pick.extra, 1, twoHanded ? nullptr : rightSlot);
-			Log("equip melee {} ({:08X}, damage {:.0f}, favorite={}, twoHanded={})", Util::NameOf(pick.weapon),
-				pick.weapon->GetFormID(), pick.damage, pick.favorite, twoHanded);
+			Log("equip melee {} ({:08X}, damage {:.0f}, favorite={}, previous={}, twoHanded={}); saved bow {} ammo {}", Util::NameOf(pick.weapon),
+				pick.weapon->GetFormID(), pick.damage, pick.favorite, pick.previous, twoHanded,
+				savedBow ? Util::NameOf(savedBow) : "-"s, savedAmmo ? Util::NameOf(savedAmmo) : "-"s);
 			if (twoHanded) {
 				savedLeft = nullptr;
 			} else {

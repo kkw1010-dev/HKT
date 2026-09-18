@@ -6,7 +6,14 @@ status.
 
 ## Open items, in priority order
 
-1. **Test build of 2026-09-18** (deployed, not tested in game).
+1. **Test build of 2026-09-19** (deployed, not tested in game).
+   - **Execute** (new module, `docs/011-execute.md`). The first launch writes
+     `iExecutionKey = 102` into Valhalla's INI (`CIGAR.log`: `Valhalla iExecutionKey -1 -> 102`).
+     Break an enemy's stun and stand within 250 units: 처형: <이름> shows,
+     and accepting logs `kill move started`. A `WARN ... no kill move` line
+     points at Valhalla's stale-entry bug.
+   - **WeaponSwap return.** Axe + shield → 원거리 무기 → 근접 무기 must name the
+     axe (`melee=<axe>(prev)`) and bring the shield back.
    - **WeaponSwap** (new module, `docs/010-weapon-swap.md`). In combat with
      a sword out, back off past 800 units (or make an enemy flee): the
      prompt reads 원거리 무기: <bow>, favourite first. Accepting equips the
@@ -65,7 +72,7 @@ own deflate problem was fixed by the user in FHU.
 
 ### Modules
 
-All modules except `WeaponSwap` are confirmed in game (2026-09-17; `Eat` on
+All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17; `Eat` on
 2026-09-18: hunger 80 → 0 after 감자 수프).
 
 | Module | Prompt(s) | Target mods | Doc |
@@ -78,6 +85,7 @@ All modules except `WeaponSwap` are confirmed in game (2026-09-17; `Eat` on
 | `Surrender` | 항복 (길게 누르기) | Acheron (+ Yamete Kudasai consequences) | `008` |
 | `Eat` | 먹기: <음식 이름> | Survival Mode + SMI (Starfrost, Gourmet) | `009` |
 | `WeaponSwap` | 원거리 무기, 근접 무기 | — (TDM lock target when present) | `010` |
+| `Execute` | 처형 | Valhalla Combat | `011` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

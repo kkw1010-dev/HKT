@@ -1,6 +1,7 @@
 #include "Panel.h"
 
 #include "Eat.h"
+#include "Execute.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Prompt.h"
@@ -39,6 +40,7 @@ namespace CIGAR::Panel
 			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)" },
 			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
 			Label{ "WeaponSwap", "무기 전환", "" },
+			Label{ "Execute", "처형", "Valhalla Combat" },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -93,6 +95,8 @@ namespace CIGAR::Panel
 				return "F13";
 			case 0x65:
 				return "F14";
+			case 0x66:
+				return "F15";
 			case 0x9C:
 				return "Num Enter";
 			default:
@@ -128,16 +132,21 @@ namespace CIGAR::Panel
 				[] { LockOn::GetSingleton()->CheckKeys(); });
 			RenderPromptOnlyItem("surrender", "Acheron 항복: 프롬프트 전용##po-surrender", "F14",
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
+			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
+				[] { Execute::GetSingleton()->CheckKey(); });
 			if (ImGui::Button("모드 키 다시 확인")) {
 				SKSE::GetTaskInterface()->AddTask([] {
 					LockOn::GetSingleton()->CheckKeys();
 					Surrender::GetSingleton()->CheckKey();
+					Execute::GetSingleton()->CheckKey();
 				});
 			}
 			const auto grapple = LockOn::GetSingleton()->GrappleKey();
 			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
-			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s",
-				grapple >= 0 ? NameOf(grapple).c_str() : "없음", surrender >= 0 ? NameOf(surrender).c_str() : "없음");
+			const auto execution = Execute::GetSingleton()->ExecutionKey();
+			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s",
+				grapple >= 0 ? NameOf(grapple).c_str() : "없음", surrender >= 0 ? NameOf(surrender).c_str() : "없음",
+				execution >= 0 ? NameOf(execution).c_str() : "없음");
 			ImGui::PushTextWrapPos(0.0f);
 			ImGui::TextColored(kDim, "키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림");
 			ImGui::PopTextWrapPos();
@@ -188,9 +197,10 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-			const std::array<std::pair<const char*, std::int64_t>, 2> others{ {
+			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
 				{ "그래플", LockOn::GetSingleton()->GrappleKey() },
 				{ "Acheron 항복", Surrender::GetSingleton()->SurrenderKey() },
+				{ "Valhalla 처형", Execute::GetSingleton()->ExecutionKey() },
 			} };
 			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
 				for (const auto& [who, code] : others) {

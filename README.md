@@ -35,7 +35,8 @@ their in-game tests are in git history and in `docs/001`.
 | `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17 (retest passed; FHU-side effects pending in FHU) |
 | `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17 (retest passed) |
 | `Eat` | Survival Mode + SMI (optional) | — | Confirmed in game 2026-09-18 |
-| `WeaponSwap` | — (TDM's lock target when present) | — | Built 2026-09-18, not tested in game |
+| `WeaponSwap` | — (TDM's lock target when present) | — | Built 2026-09-18; returns to the previous loadout since 2026-09-19; not tested in game |
+| `Execute` | Valhalla Combat (optional) | — | Built 2026-09-19, not tested in game |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -54,10 +55,11 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | Survival Mode hunger at or above the panel's stage (default 3), out of combat, suitable food carried | 먹기: <음식 이름> |
 | In combat, enemy beyond the panel's distance (default 800) or fleeing, melee weapon or fists in hand | 원거리 무기: <무기 이름> |
 | In combat, enemy inside that distance, bow or crossbow in hand | 근접 무기: <무기 이름> |
+| Valhalla's execution key would execute the nearest stun-broken actor within 250 units | 처형: <이름> |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
-`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, and `docs/010-weapon-swap.md`. The in-game control panel
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, and `docs/011-execute.md`. The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
@@ -76,9 +78,11 @@ src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarde
 src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
 src/Eat.*           Survival Mode hunger: eats the cheapest suitable food by equipping it (SMI lowers hunger)
 src/WeaponSwap.*    ranged weapon when the enemy is far or fleeing, melee weapon when it is near (favourites, then strongest)
+src/Execute.*       Valhalla Combat execution: prompt only while its key would execute; presses its key (F15 in prompt-only mode)
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정): switches and live status, keys, module options
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
+include/ValhallaCombat/  Valhalla Combat API, V2 part (BSD-3, D7ry/valhallaCombat)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
 lib/commonlibsse-ng alandtse/CommonLibVR branch ng (submodule)
 tools/Build.ps1     build (VS 2026 Build Tools, Ninja, vcpkg at C:\TAKEALOOK\TOOLS\vcpkg), deploy, verify

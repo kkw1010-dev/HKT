@@ -12,7 +12,9 @@ namespace CIGAR
 {
 	// Offers a ranged weapon when the enemy is beyond the control panel's distance or fleeing, and a
 	// melee weapon when it comes back inside it (bows and crossbows only; staves are not ranged here).
-	// Each side picks a favourited weapon first, then the strongest by the inventory's damage figure.
+	// Each side goes back to what that side last held (the melee weapon and left hand worn before the
+	// bow, or the bow and ammo worn before the melee weapon) while it is still carried. Otherwise it
+	// picks a favourited weapon first, then the strongest by the inventory's damage figure.
 	// A bow without arrows or a crossbow without bolts is never picked. The enemy is TDM's locked
 	// target when TDM is present and locked, otherwise the nearest hostile in combat.
 	class WeaponSwap final : public Module
@@ -61,6 +63,7 @@ namespace CIGAR
 			RE::TESAmmo* ammo{ nullptr };
 			bool favorite{ false };
 			float damage{ 0.0f };
+			bool previous{ false };  // what this side held last time
 		};
 
 		struct State
@@ -86,6 +89,7 @@ namespace CIGAR
 		static bool IsRanged(const RE::TESObjectWEAP* a_weapon);
 		static bool IsTwoHanded(const RE::TESObjectWEAP* a_weapon);
 		static RE::TESAmmo* PickAmmo(RE::PlayerCharacter* a_player, bool a_bolt);
+		Pick PickPrevious(RE::PlayerCharacter* a_player, bool a_ranged) const;
 		Pick PickWeapon(RE::PlayerCharacter* a_player, bool a_ranged) const;
 		State Read(RE::PlayerCharacter* a_player, RE::NiPointer<RE::Actor>& a_hold);
 		void RefreshPicks(RE::PlayerCharacter* a_player, bool a_force);
@@ -108,8 +112,11 @@ namespace CIGAR
 		Clock::time_point nextScan{};
 		Clock::time_point quietUntil{};
 
-		// The left hand before switching to a bow, given back with a one-handed melee weapon.
+		// The loadout each side had when the other side was taken, given back on the way back (session only).
+		RE::TESObjectWEAP* savedMelee{ nullptr };
 		RE::TESForm* savedLeft{ nullptr };
+		RE::TESObjectWEAP* savedBow{ nullptr };
+		RE::TESAmmo* savedAmmo{ nullptr };
 
 		// Checked once the equip has settled.
 		RE::TESObjectWEAP* expected{ nullptr };
