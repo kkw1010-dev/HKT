@@ -244,6 +244,25 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 
 ## Backlog (the user's plan, in the order discussed)
 
+0. **유술 (grappling on a guarding humanoid; plan under review, 2026-09-19).** The user wants the vanilla
+   H2H kill moves played on a humanoid enemy that is blocking. The payoff is the stamina drained, or a large
+   Valhalla stun hit (API `processStunDamage`) when Valhalla is present, plus a little damage.
+   CIGAR stays ESP-less; if that proves impossible, the user will build a separate mod in another session.
+   Findings so far:
+   - **The idles exist.** Skyrim.esm/Update.esm have them: `H2HKillMoveSlamA00` 100EF8 and
+     `pa_KillMoveH2HComboA` 0F9958 (no conditions), and `H2HKillMoveBodySlam` / `KneeThrow` (Update 820/821)
+     and `KillMoveH2HSuplex` (81B), which have conditions. They play through
+     `AIProcess::SetupSpecialIdle`, as Valhalla plays its idles.
+   - **They kill.** The victim's clip in the active `animationdatasinglefile.txt` (Pandora output) ends
+     with `2_KillActor`. KneeThrow fires it at 1.928 s of 2.833 s, SlamA at 1.967 s, ComboA at 2.768 s,
+     BodySlam at 4.136 s and Suplex at 1.679 s. The .hkx files carry no annotations.
+   - **Ways to keep the victim alive:**
+     - swallow `KillActor` for that victim with a vtable hook on the actor's animation-event sink (DLL only);
+     - make the victim essential for the duration, which likely gives bleedout instead;
+     - cut the idle before the event.
+     A one-launch test is needed to choose. Also unknown: the pose after `PairEnd` without a death.
+   - **Open questions for the user:** unarmed only? a cooldown or stamina cost?
+
 1. **Animals** (petting cat/dog/horse; plan "A").
    `docs/003-immersive-interactions-analysis.md` recommends:
    - install Immersive Interactions as an optional provider and turn its MCM
