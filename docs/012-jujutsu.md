@@ -22,6 +22,28 @@ Status (2026-09-19): in progress. This is the first CIGAR module with a game hoo
       when the pair ends.
   Whichever keeps the victim alive and looks right becomes the only path, and the HUD notice goes.
 
+## Test 2 (2026-09-19): KillMoveEnd is the kill
+
+- **Strategy A (essential flag) died every time.** The victim turned `dead=true life=1` on the very
+  tick its KillMoveEnd was passed through (2.90 s). One such play saw no KillActor at all before it.
+- **Strategy B (KillMoveEnd swallowed) kept every victim alive.** The payoff landed (stun 56 of 112,
+  health -6), and the user saw the Valhalla gauge fill and the victim become executable.
+- **B's flaw, seen by the user:** the victim stands straight up at the end of the throw. The user
+  suggested ragdoll as the least awkward ending.
+- **Refusals:** about 4 of 10 plays were refused for the whole 0.6 s window, often with the guard
+  already down, so blocking is not the only cause.
+
+**Changes for test 3:**
+
+- Strategy A and the HUD notice are gone. KillActor and KillMoveEnd are always swallowed for the victim.
+- At the pair's end the victim's in-kill-move flag is cleared, and the victim is knocked into ragdoll
+  with `AIProcess::KnockExplosion` (what Papyrus `PushActorAway` calls). The magnitude is 1.0, a
+  placeholder, so it drops where it lies.
+- 0.4 s later the log says whether it is in ragdoll (`WARN` if not).
+- Every retry logs both actors' attack state, knock state, stagger, sync, sprint and ragdoll, and the
+  distance, so the next log shows why a play is refused.
+
+
 ## What the user asked for
 
 - When a humanoid enemy is guarding, a prompt plays one of the four vanilla

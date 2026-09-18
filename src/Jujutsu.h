@@ -15,11 +15,10 @@ namespace CIGAR
 	// its stun meter, and a little health. Balance values are placeholders (the user asked for function
 	// first).
 	//
-	// Keeping the victim alive is still being worked out in game. Test 1 (2026-09-19) showed the
-	// KillActor event swallowed and the victim dead anyway, so something else in the kill move kills it.
-	// Until the next test decides, attempts alternate two strategies, and every step is logged:
-	//   A: the victim is flagged essential (its own Actor flag, not the shared base) for the kill move;
-	//   B: the victim's KillMoveEnd is swallowed too, and its in-kill-move flag is cleared afterwards.
+	// The kill comes from the victim's KillMoveEnd event (test 2, 2026-09-19: with it passed through the
+	// victim died on that very tick, essential flag or not). Hooks on the engine's KillActor and
+	// KillMoveEnd handlers swallow both for the victim; its in-kill-move flag is cleared by hand, and it
+	// is knocked into ragdoll so it does not stand straight up out of the throw (the user's call).
 	class Jujutsu final : public Module
 	{
 	public:
@@ -52,12 +51,6 @@ namespace CIGAR
 			kSettling    // pair over, watching the victim's state for a moment
 		};
 
-		enum class Strategy
-		{
-			kEssential,
-			kSwallowEnd
-		};
-
 		Jujutsu();
 
 		RE::Actor* FindTarget(RE::PlayerCharacter* a_player, std::string& a_gate) const;
@@ -67,6 +60,8 @@ namespace CIGAR
 		void ApplyPayoff(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Finish(const char* a_reason);
 		std::string DescribeVictim(RE::Actor* a_victim) const;
+		std::string DescribeRefusal(RE::PlayerCharacter* a_player, RE::Actor* a_victim) const;
+		void EndKillMove(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		float Elapsed() const;
 
 		PromptSlot jujutsu{ this, kJujutsu };
@@ -82,14 +77,12 @@ namespace CIGAR
 		RE::Actor* offeredTarget{ nullptr };
 
 		Phase phase{ Phase::kIdle };
-		Strategy strategy{ Strategy::kEssential };
-		Strategy nextStrategy{ Strategy::kEssential };
 		RE::ActorHandle victim;
 		RE::TESIdleForm* playing{ nullptr };
 		Clock::time_point phaseStart{};
 		Clock::time_point settleUntil{};
 		int tries{ 0 };
-		bool setEssential{ false };
+		bool knocked{ false };
 		bool payoffDone{ false };
 		std::string lastSample;
 		bool warnedNoStart{ false };

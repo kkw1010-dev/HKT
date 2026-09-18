@@ -6,11 +6,10 @@ status.
 
 ## Open items, in priority order
 
-1. **Jujutsu / 유술, test 2** (`docs/012-jujutsu.md`). Test 1: the play starts, KillActor is swallowed,
-   and the victim dies anyway. Plays on a blocking victim were refused. The build of 2026-09-19 (00e1224)
-   drops the guard, retries, times every victim event, and alternates strategy A (essential flag) and
-   B (KillMoveEnd swallowed), announced on the HUD. Read `[Jujutsu]` `t=` samples and the event lines
-   to see which strategy keeps the victim alive, then keep only that one and remove the HUD notice.
+1. **Jujutsu / 유술, test 3** (`docs/012-jujutsu.md`). Test 2 settled it: swallowing KillMoveEnd keeps
+   the victim alive (the essential flag does not). The victim now ends the throw in ragdoll. Check:
+   `knocked the victim into ragdoll` followed by `ragdoll=true`, whether that looks right to the user,
+   and the `try N:` lines of refused plays (about 4 in 10 were refused in test 2).
 2. Backlog below.
 
 Confirmed in game on 2026-09-19:
