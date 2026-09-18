@@ -1,7 +1,26 @@
 # 012 · Jujutsu (유술): a kill move on a guarding humanoid, without the kill
 
-Status (2026-09-19): built and deployed, not yet tested in game. This is the first
-CIGAR module with a game hook.
+Status (2026-09-19): in progress. This is the first CIGAR module with a game hook.
+
+## Test 1 (2026-09-19) and what changed
+
+- Two plays started (KneeThrow, SlamA): `pair started after 0.06 s`, and then
+  `KillActor swallowed for victim at 2.07 s`. **The victim was already dead** at that tick
+  (`payoff skipped: victim dead`, `ragdoll=true`). So swallowing KillActor alone does not keep the
+  victim alive; something else in the kill move kills it. KillMoveEnd comes 5 ms after KillActor in
+  KneeThrow, which makes it the first suspect, but deaths were not sampled finely enough to say.
+- Four plays were refused (`SetupSpecialIdle returned false`). All four victims were blocking at
+  that moment; both accepted plays had victims that had just lowered their guard.
+- **Changes for test 2:**
+  - A blocking victim gets `blockStop` sent to its graph, and the play is retried for 0.6 s.
+  - KillMoveStart and KillMoveEnd are hooked too, and every victim event is time-stamped.
+  - The victim's life state is sampled every 100 ms.
+  - Attempts alternate two strategies, each announced on the HUD:
+    - **A:** the victim's own Actor essential flag (`boolFlags.kEssential`, not the shared base)
+      is set for the kill move and restored afterwards;
+    - **B:** the victim's KillMoveEnd is swallowed as well, and its in-kill-move flag is cleared
+      when the pair ends.
+  Whichever keeps the victim alive and looks right becomes the only path, and the HUD notice goes.
 
 ## What the user asked for
 

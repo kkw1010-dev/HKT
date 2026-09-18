@@ -1,6 +1,5 @@
 #include "Jujutsu.h"
 
-#include "Settings.h"
 #include "Util.h"
 
 #include "ValhallaCombat/API.h"
@@ -41,9 +40,12 @@ namespace CIGAR
 		constexpr float kReach = 250.0f;
 		// A guard drops between blows; keep offering the target this long after it was last seen blocking.
 		constexpr auto kBlockGrace = 700ms;
+		// Test 1: SetupSpecialIdle returned false on every victim that was blocking at that moment, and
+		// true on the two that had just lowered their guard. Drop the guard and retry for this long.
+		constexpr auto kPrepareWindow = 600ms;
 		constexpr auto kStartWindow = 1s;
 		constexpr auto kPairTimeout = 10s;
-		// KillActor can arrive just after PairEnd (ComboA: 2.768 s vs 2.757 s), so the hook stays armed
+		// KillActor can arrive just after PairEnd (ComboA: 2.768 s vs 2.757 s), so the hooks stay armed
 		// while the victim's state is watched after the pair.
 		constexpr auto kSettle = 2s;
 
@@ -51,11 +53,72 @@ namespace CIGAR
 		constexpr float kStunShare = 0.5f;     // of Valhalla's max stun, (base health + base stamina) / 2
 		constexpr float kHealthShare = 0.05f;  // of max health; never takes the victim below 1
 
-		using KillActorFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
-		KillActorFn originalKillActor = nullptr;
+		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
+		HandlerFn originalKillActor = nullptr;
+		HandlerFn originalKillMoveStart = nullptr;
+		HandlerFn originalKillMoveEnd = nullptr;
+
+		// Written by the game thread, read by the hooks (which run wherever graph events are delivered).
 		std::atomic<RE::Actor*> armedVictim{ nullptr };
-		// Bit 1: KillActor for the victim was swallowed; bit 2: for the player.
-		std::atomic<int> swallowed{ 0 };
+		std::atomic<bool> swallowKillMoveEnd{ false };
+		std::atomic<std::int64_t> armedAtMs{ 0 };
+		// Milliseconds after arming at which each victim event arrived, or -1; the game thread logs them.
+		std::atomic<std::int64_t> killActorAt{ -1 };
+		std::atomic<std::int64_t> playerKillActorAt{ -1 };
+		std::atomic<std::int64_t> killMoveStartAt{ -1 };
+		std::atomic<std::int64_t> killMoveEndAt{ -1 };
+
+		std::int64_t NowMs()
+		{
+			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+		}
+
+		void Stamp(std::atomic<std::int64_t>& a_slot)
+		{
+			std::int64_t expected = -1;
+			a_slot.compare_exchange_strong(expected, NowMs() - armedAtMs.load());
+		}
+
+		bool KillActorHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
+		{
+			if (auto* v = armedVictim.load(); v) {
+				if (&a_actor == v) {
+					Stamp(killActorAt);
+					return true;
+				}
+				if (&a_actor == RE::PlayerCharacter::GetSingleton()) {
+					Stamp(playerKillActorAt);
+					return true;
+				}
+			}
+			return originalKillActor(a_this, a_actor, a_parameter);
+		}
+
+		bool KillMoveStartHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
+		{
+			if (&a_actor == armedVictim.load()) {
+				Stamp(killMoveStartAt);
+			}
+			return originalKillMoveStart(a_this, a_actor, a_parameter);
+		}
+
+		bool KillMoveEndHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
+		{
+			if (&a_actor == armedVictim.load()) {
+				Stamp(killMoveEndAt);
+				if (swallowKillMoveEnd.load()) {
+					return true;
+				}
+			}
+			return originalKillMoveEnd(a_this, a_actor, a_parameter);
+		}
+
+		HandlerFn HookSlot(REL::VariantID a_vtable, HandlerFn a_hook)
+		{
+			REL::Relocation<std::uintptr_t> vtbl{ a_vtable };
+			// Slot 0 is the destructor; slot 1 is IHandlerFunctor::ExecuteHandler.
+			return reinterpret_cast<HandlerFn>(vtbl.write_vfunc(1, reinterpret_cast<std::uintptr_t>(a_hook)));
+		}
 
 		bool IsHumanoid(RE::Actor* a_actor)
 		{
@@ -72,22 +135,11 @@ namespace CIGAR
 		{
 			a_actor->AsActorValueOwner()->DamageActorValue(a_value, a_amount);
 		}
-	}
 
-	bool Jujutsu::KillActorHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
-	{
-		// Runs wherever the animation graph delivers its events: touch atomics only.
-		if (auto* victimNow = armedVictim.load(); victimNow) {
-			if (&a_actor == victimNow) {
-				swallowed.fetch_or(1);
-				return true;
-			}
-			if (&a_actor == RE::PlayerCharacter::GetSingleton()) {
-				swallowed.fetch_or(2);
-				return true;
-			}
+		const char* StrategyName(int a_strategy)
+		{
+			return a_strategy == 0 ? "A-essential" : "B-swallow-KillMoveEnd";
 		}
-		return originalKillActor(a_this, a_actor, a_parameter);
 	}
 
 	void Jujutsu::InstallHook()
@@ -95,10 +147,11 @@ namespace CIGAR
 		if (originalKillActor) {
 			return;
 		}
-		REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_KillActorHandler[0] };
-		// Slot 0 is the destructor; slot 1 is IHandlerFunctor::ExecuteHandler.
-		originalKillActor = reinterpret_cast<KillActorFn>(vtbl.write_vfunc(1, reinterpret_cast<std::uintptr_t>(&KillActorHook)));
-		logs::info("[Jujutsu] KillActorHandler::ExecuteHandler hooked (original {:X})", reinterpret_cast<std::uintptr_t>(originalKillActor));
+		originalKillActor = HookSlot(RE::VTABLE_KillActorHandler[0], KillActorHook);
+		originalKillMoveStart = HookSlot(RE::VTABLE_KillMoveStartHandler[0], KillMoveStartHook);
+		originalKillMoveEnd = HookSlot(RE::VTABLE_KillMoveEndHandler[0], KillMoveEndHook);
+		logs::info("[Jujutsu] anim handlers hooked: KillActor={} KillMoveStart={} KillMoveEnd={}", originalKillActor != nullptr,
+			originalKillMoveStart != nullptr, originalKillMoveEnd != nullptr);
 	}
 
 	Jujutsu::Jujutsu()
@@ -117,11 +170,11 @@ namespace CIGAR
 		jujutsu.Reset();
 		lastGate.clear();
 		armedVictim = nullptr;
-		swallowed = 0;
 		phase = Phase::kIdle;
 		victim = {};
 		offeredTarget = nullptr;
 		lastBlocker = {};
+		setEssential = false;
 		idles.clear();
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
@@ -140,10 +193,10 @@ namespace CIGAR
 		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
 		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
 		                      nullptr;
-		Log("idles from {}:{}; hook={} valhalla={} sexlab={}", idleSource, found, originalKillActor != nullptr, valhalla != nullptr,
-			sexlabAnimating != nullptr);
-		if (idles.empty() || !originalKillActor) {
-			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the KillActor hook is not installed");
+		const bool hooked = originalKillActor && originalKillMoveStart && originalKillMoveEnd;
+		Log("idles from {}:{}; hooks={} valhalla={} sexlab={}", idleSource, found, hooked, valhalla != nullptr, sexlabAnimating != nullptr);
+		if (idles.empty() || !hooked) {
+			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the anim-handler hooks are not installed");
 			return;
 		}
 		Log("ready");
@@ -199,7 +252,7 @@ namespace CIGAR
 		}
 		std::string gate;
 		auto* target = FindTarget(player, gate);
-		// Remember who blocked, for the grace period (read from the gate's own search).
+		// Remember who blocked, for the grace period.
 		if (target && target->IsBlocking()) {
 			lastBlocker = target->GetHandle();
 			blockSeen = Clock::now();
@@ -225,29 +278,67 @@ namespace CIGAR
 			Log("accept ignored, no target now: {}", gate);
 			return;
 		}
-		Start(player, target);
+		static std::mt19937 rng{ std::random_device{}() };
+		playing = idles[std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng)];
+		strategy = nextStrategy;
+		nextStrategy = strategy == Strategy::kEssential ? Strategy::kSwallowEnd : Strategy::kEssential;
+		victim = target->GetHandle();
+		payoffDone = false;
+		tries = 0;
+		lastSample.clear();
+		phase = Phase::kPreparing;
+		phaseStart = Clock::now();
+		Log("start {} idle {:08X} on {} ({:08X}); victim before: {}", StrategyName(static_cast<int>(strategy)), playing->GetFormID(),
+			Util::NameOf(target), target->GetFormID(), DescribeVictim(target));
+		// Temporary, for the side-by-side test: which strategy this attempt uses.
+		Util::Notify(strategy == Strategy::kEssential ? "CIGAR 유술 테스트: 방식 A (필수 플래그)" : "CIGAR 유술 테스트: 방식 B (KillMoveEnd 차단)");
+		if (TryPlay(player, target)) {
+			phase = Phase::kStarting;
+			phaseStart = Clock::now();
+		}
 	}
 
-	void Jujutsu::Start(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
+	bool Jujutsu::TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
 	{
 		auto* process = a_player->GetActorRuntimeData().currentProcess;
 		if (!process) {
-			Log("WARN player has no AI process; 유술 not started");
-			return;
+			Log("WARN player has no AI process");
+			return false;
 		}
-		static std::mt19937 rng{ std::random_device{}() };
-		playing = idles[std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng)];
-		swallowed = 0;
+		++tries;
+		const bool wasBlocking = a_victim->IsBlocking();
+		if (wasBlocking) {
+			a_victim->NotifyAnimationGraph("blockStop");
+		}
+		// Armed before the call: KillMoveStart may be delivered during it.
+		killActorAt = -1;
+		playerKillActorAt = -1;
+		killMoveStartAt = -1;
+		killMoveEndAt = -1;
+		armedAtMs = NowMs();
+		swallowKillMoveEnd = strategy == Strategy::kSwallowEnd;
+		auto& flags = a_victim->GetActorRuntimeData().boolFlags;
+		setEssential = strategy == Strategy::kEssential && !flags.all(RE::Actor::BOOL_FLAGS::kEssential);
+		if (setEssential) {
+			flags.set(RE::Actor::BOOL_FLAGS::kEssential);
+		}
 		armedVictim = a_victim;
-		victim = a_victim->GetHandle();
-		payoffDone = false;
-		Log("start idle {:08X} on {} ({:08X}); victim before: {}", playing->GetFormID(), Util::NameOf(a_victim), a_victim->GetFormID(),
-			DescribeVictim(a_victim));
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("SetupSpecialIdle returned {}", requested);
-		phase = Phase::kStarting;
-		phaseStart = Clock::now();
+		Log("try {}: blocking={}{} SetupSpecialIdle returned {}", tries, wasBlocking, wasBlocking ? " (sent blockStop)" : "", requested);
+		if (!requested) {
+			armedVictim = nullptr;
+			if (setEssential) {
+				flags.reset(RE::Actor::BOOL_FLAGS::kEssential);
+				setEssential = false;
+			}
+		}
+		return requested;
+	}
+
+	float Jujutsu::Elapsed() const
+	{
+		return std::chrono::duration<float>(Clock::now() - phaseStart).count();
 	}
 
 	std::string Jujutsu::DescribeVictim(RE::Actor* a_victim) const
@@ -258,11 +349,29 @@ namespace CIGAR
 		bool synced = false;
 		a_victim->GetGraphVariableBool("bIsSynced", synced);
 		const auto* state = a_victim->AsActorState();
-		return std::format("dead={} health={:.0f}/{:.0f} stamina={:.0f} bleedout={} knock={} ragdoll={} killmove={} synced={} blocking={}{}",
-			a_victim->IsDead(), AV(a_victim, RE::ActorValue::kHealth), a_victim->GetActorValueMax(RE::ActorValue::kHealth),
-			AV(a_victim, RE::ActorValue::kStamina), state && state->IsBleedingOut(),
-			state ? static_cast<int>(state->GetKnockState()) : -1, a_victim->IsInRagdollState(), a_victim->IsInKillMove(), synced,
-			a_victim->IsBlocking(), valhalla ? std::format(" stunned={}", valhalla->isActorStunned(a_victim)) : ""s);
+		return std::format(
+			"dead={} life={} health={:.0f}/{:.0f} stamina={:.0f} bleedout={} knock={} ragdoll={} killmove={} essential={} synced={} blocking={}{}",
+			a_victim->IsDead(), state ? static_cast<int>(state->GetLifeState()) : -1, AV(a_victim, RE::ActorValue::kHealth),
+			a_victim->GetActorValueMax(RE::ActorValue::kHealth), AV(a_victim, RE::ActorValue::kStamina), state && state->IsBleedingOut(),
+			state ? static_cast<int>(state->GetKnockState()) : -1, a_victim->IsInRagdollState(), a_victim->IsInKillMove(),
+			a_victim->IsEssential(), synced, a_victim->IsBlocking(),
+			valhalla ? std::format(" stunned={}", valhalla->isActorStunned(a_victim)) : ""s);
+	}
+
+	void Jujutsu::Sample(RE::Actor* a_victim, float a_time)
+	{
+		// Logged only when the victim's life-relevant state changes, to time the death to 100 ms.
+		if (!a_victim) {
+			return;
+		}
+		const auto* state = a_victim->AsActorState();
+		auto sample = std::format("dead={} life={} health={:.0f} bleedout={} killmove={} ragdoll={}", a_victim->IsDead(),
+			state ? static_cast<int>(state->GetLifeState()) : -1, AV(a_victim, RE::ActorValue::kHealth), state && state->IsBleedingOut(),
+			a_victim->IsInKillMove(), a_victim->IsInRagdollState());
+		if (sample != lastSample) {
+			Log("t={:.2f}s victim {}", a_time, sample);
+			lastSample = std::move(sample);
+		}
 	}
 
 	void Jujutsu::ApplyPayoff(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
@@ -296,13 +405,39 @@ namespace CIGAR
 		auto victimPtr = victim.get();
 		auto* v = victimPtr.get();
 		const auto now = Clock::now();
-		if (const int seen = swallowed.exchange(0); seen) {
-			Log("KillActor swallowed for{}{} at {:.2f} s", seen & 1 ? " victim" : "", seen & 2 ? " player" : "",
-				std::chrono::duration<float>(now - phaseStart).count());
-			if (!payoffDone) {
-				ApplyPayoff(a_player, v);
+		const float t = Elapsed();
+
+		if (phase == Phase::kPreparing) {
+			if (v && TryPlay(a_player, v)) {
+				phase = Phase::kStarting;
+				phaseStart = now;
+			} else if (!v || now - phaseStart >= kPrepareWindow) {
+				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
+				if (!warnedNoStart) {
+					warnedNoStart = true;
+					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
+				}
+				Finish("refused");
 			}
+			return;
 		}
+
+		Sample(v, t);
+		const auto report = [this](std::atomic<std::int64_t>& a_slot, const char* a_what) {
+			if (const auto ms = a_slot.exchange(-1); ms >= 0) {
+				Log("{} at {:.2f} s after the request", a_what, static_cast<float>(ms) / 1000.0f);
+				return true;
+			}
+			return false;
+		};
+		report(killMoveStartAt, "victim KillMoveStart (passed through)");
+		const bool killActor = report(killActorAt, "victim KillActor swallowed");
+		report(playerKillActorAt, "player KillActor swallowed");
+		report(killMoveEndAt, strategy == Strategy::kSwallowEnd ? "victim KillMoveEnd swallowed" : "victim KillMoveEnd (passed through)");
+		if (killActor && !payoffDone) {
+			ApplyPayoff(a_player, v);
+		}
+
 		bool synced = false;
 		a_player->GetGraphVariableBool("bIsSynced", synced);
 		const bool pairOn = synced || a_player->IsInKillMove() || (v && v->IsInKillMove());
@@ -310,10 +445,10 @@ namespace CIGAR
 		case Phase::kStarting:
 			if (pairOn) {
 				phase = Phase::kRunning;
-				Log("pair started after {:.2f} s (synced={} playerKillMove={} victimKillMove={})",
-					std::chrono::duration<float>(now - phaseStart).count(), synced, a_player->IsInKillMove(), v && v->IsInKillMove());
+				Log("pair started after {:.2f} s (synced={} playerKillMove={} victimKillMove={})", t, synced, a_player->IsInKillMove(),
+					v && v->IsInKillMove());
 			} else if (now - phaseStart >= kStartWindow) {
-				Log("WARN idle {:08X} did not start a pair within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
+				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
 					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
@@ -322,12 +457,17 @@ namespace CIGAR
 			}
 			break;
 		case Phase::kRunning:
-			if (!pairOn) {
+			if (!pairOn || (strategy == Strategy::kSwallowEnd && !synced && !a_player->IsInKillMove())) {
 				if (!payoffDone) {
 					Log("pair ended without a KillActor event; payoff applied at the end");
 					ApplyPayoff(a_player, v);
 				}
-				Log("pair ended after {:.2f} s; victim: {}", std::chrono::duration<float>(now - phaseStart).count(), DescribeVictim(v));
+				Log("pair ended after {:.2f} s; victim: {}", t, DescribeVictim(v));
+				// Strategy B swallowed the victim's KillMoveEnd, which would have cleared this flag.
+				if (v && strategy == Strategy::kSwallowEnd && v->IsInKillMove()) {
+					v->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kIsInKillMove);
+					Log("cleared the victim's in-kill-move flag at the pair's end");
+				}
 				phase = Phase::kSettling;
 				settleUntil = now + kSettle;
 			} else if (now - phaseStart >= kPairTimeout) {
@@ -340,7 +480,7 @@ namespace CIGAR
 				Log("2 s after the pair: victim: {}", DescribeVictim(v));
 				if (v && v->IsDead() && !warnedDied) {
 					warnedDied = true;
-					Log("WARN the victim died although KillActor was swallowed{}", payoffDone ? "" : " (no KillActor seen)");
+					Log("WARN the victim died ({})", StrategyName(static_cast<int>(strategy)));
 					Util::Notify("CIGAR: 유술 대상 사망. 로그 확인");
 				}
 				Finish("done");
@@ -354,10 +494,25 @@ namespace CIGAR
 	void Jujutsu::Finish(const char* a_reason)
 	{
 		armedVictim = nullptr;
-		swallowed = 0;
+		swallowKillMoveEnd = false;
+		auto victimPtr = victim.get();
+		if (auto* v = victimPtr.get()) {
+			auto& flags = v->GetActorRuntimeData().boolFlags;
+			if (setEssential) {
+				flags.reset(RE::Actor::BOOL_FLAGS::kEssential);
+			}
+			// Strategy B swallowed the victim's KillMoveEnd, which would have cleared this flag.
+			if (strategy == Strategy::kSwallowEnd && flags.all(RE::Actor::BOOL_FLAGS::kIsInKillMove)) {
+				flags.reset(RE::Actor::BOOL_FLAGS::kIsInKillMove);
+				Log("cleared the victim's in-kill-move flag");
+			}
+			Log("finished ({}, {}); victim: {}", a_reason, StrategyName(static_cast<int>(strategy)), DescribeVictim(v));
+		} else {
+			Log("finished ({}, {}); victim gone", a_reason, StrategyName(static_cast<int>(strategy)));
+		}
+		setEssential = false;
 		phase = Phase::kIdle;
 		victim = {};
-		Log("finished ({})", a_reason);
 	}
 
 	void Jujutsu::OnDisabled()
