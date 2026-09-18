@@ -310,6 +310,9 @@ namespace CIGAR
 		}
 		++tries;
 		const bool wasBlocking = a_victim->IsBlocking();
+		// Test 4 logged the state after the call, which an accepted play has already changed; the state that
+		// decides is the one before it (and before blockStop).
+		const auto before = DescribeRefusal(a_player, a_victim);
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
 		}
@@ -322,9 +325,7 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		// Test 2: about half the plays were refused, many with no guard up. Log what both actors were doing.
-		Log("try {}: {}{} SetupSpecialIdle returned {}", tries, wasBlocking ? "(sent blockStop) " : "", DescribeRefusal(a_player, a_victim),
-			requested);
+		Log("try {}: before {}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}
@@ -339,9 +340,17 @@ namespace CIGAR
 			a_actor->GetGraphVariableBool("IsStaggering", staggered);
 			bool synced = false;
 			a_actor->GetGraphVariableBool("bIsSynced", synced);
-			return std::format("attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={}",
+			// NPC Block Loop Fix (OAR) replaces the block idle only while the actor moves, and fires blockStop
+			// every second from it; speed and the graph's own block/attack flags show whether that is in play.
+			float speed = 0.0f;
+			a_actor->GetGraphVariableFloat("Speed", speed);
+			bool graphBlocking = false;
+			a_actor->GetGraphVariableBool("IsBlocking", graphBlocking);
+			bool graphAttacking = false;
+			a_actor->GetGraphVariableBool("IsAttacking", graphAttacking);
+			return std::format("attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={}",
 				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
-				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState());
+				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState(), speed, graphBlocking, graphAttacking);
 		};
 		// Test 3: every refusal was one bandit, at 66-153 units, while others were taken at 100-193. So also
 		// the height difference, which way each faces the other, the race and the victim's weapon.

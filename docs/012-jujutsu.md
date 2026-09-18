@@ -130,3 +130,19 @@ Refused and accepted distances can be compared in one log.
   difference, which way each actor faces the other, the victim's race and its weapon.
 - **Hidden while executable.** At the user's request, a target Valhalla reports stun-broken gets the
   처형 prompt only; 유술 skips it.
+
+## Test 4 (2026-09-19)
+
+- **The knock-down at KillMoveEnd looks natural** (the user), and hiding 유술 for stun-broken targets works.
+- **Refusals are not about range.** Accepted plays ranged 86-195 units and refused ones 44-227.
+  One bandit was refused six times and then accepted on the seventh try, and bandits that were not
+  blocking were refused too.
+- **The user's suspect is NPC Block Loop Fix,** an OAR replacer of the NPC block idles. It applies only
+  while the NPC is moving (`IsMovementDirection != 0`, player excluded), and its clips fire `blockStop`
+  every second. Test 4's `try` lines were written after the call, so they showed the state an accepted
+  play had already changed, and nothing about movement.
+- **Changes for test 5:** each try now logs both actors' state from before the call and before
+  `blockStop`: attack, knock, stagger, sync, kill move, sprint, ragdoll, the graph's `Speed`,
+  `IsBlocking` and `IsAttacking`, facing, distance and height. Comparing refusals by `speed` separates
+  "moving" from "not moving". Running once with NPC Block Loop Fix unticked separates the mod from
+  movement itself.
