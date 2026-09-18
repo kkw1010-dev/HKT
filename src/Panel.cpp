@@ -41,6 +41,7 @@ namespace CIGAR::Panel
 			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
 			Label{ "WeaponSwap", "무기 전환", "" },
 			Label{ "Execute", "처형", "Valhalla Combat" },
+			Label{ "Jujutsu", "유술", "" },
 		};
 
 		const Label* Find(std::string_view a_module)

@@ -7,6 +7,10 @@ status.
 ## Open items, in priority order
 
 1. **Test build of 2026-09-19** (deployed, not tested in game).
+   - **Jujutsu / 유술** (new, `docs/012-jujutsu.md`; first module with a game hook). Against a guarding
+     humanoid: 유술: <이름> shows, a kill move plays, the victim lives. Read `[Jujutsu]` lines: `pair started`,
+     `KillActor swallowed for victim`, `payoff`, and the victim state 2 s after (pose after the throw is the
+     open visual question). Balance values are placeholders; the user deferred balance.
    - **Execute** (new module, `docs/011-execute.md`). The first launch writes
      `iExecutionKey = 102` into Valhalla's INI (`CIGAR.log`: `Valhalla iExecutionKey -1 -> 102`).
      Break an enemy's stun and stand within 250 units: 처형: <이름> shows,
@@ -86,6 +90,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Eat` | 먹기: <음식 이름> | Survival Mode + SMI (Starfrost, Gourmet) | `009` |
 | `WeaponSwap` | 원거리 무기, 근접 무기 | — (TDM lock target when present) | `010` |
 | `Execute` | 처형 | Valhalla Combat | `011` |
+| `Jujutsu` | 유술 | — (Valhalla optional) | `012` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -244,24 +249,6 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 
 ## Backlog (the user's plan, in the order discussed)
 
-0. **유술 (grappling on a guarding humanoid; plan under review, 2026-09-19).** The user wants the vanilla
-   H2H kill moves played on a humanoid enemy that is blocking. The payoff is the stamina drained, or a large
-   Valhalla stun hit (API `processStunDamage`) when Valhalla is present, plus a little damage.
-   CIGAR stays ESP-less; if that proves impossible, the user will build a separate mod in another session.
-   Findings so far:
-   - **The idles exist.** Skyrim.esm/Update.esm have them: `H2HKillMoveSlamA00` 100EF8 and
-     `pa_KillMoveH2HComboA` 0F9958 (no conditions), and `H2HKillMoveBodySlam` / `KneeThrow` (Update 820/821)
-     and `KillMoveH2HSuplex` (81B), which have conditions. They play through
-     `AIProcess::SetupSpecialIdle`, as Valhalla plays its idles.
-   - **They kill.** The victim's clip in the active `animationdatasinglefile.txt` (Pandora output) ends
-     with `2_KillActor`. KneeThrow fires it at 1.928 s of 2.833 s, SlamA at 1.967 s, ComboA at 2.768 s,
-     BodySlam at 4.136 s and Suplex at 1.679 s. The .hkx files carry no annotations.
-   - **Ways to keep the victim alive:**
-     - swallow `KillActor` for that victim with a vtable hook on the actor's animation-event sink (DLL only);
-     - make the victim essential for the duration, which likely gives bleedout instead;
-     - cut the idle before the event.
-     A one-launch test is needed to choose. Also unknown: the pose after `PairEnd` without a death.
-   - **Open questions for the user:** unarmed only? a cooldown or stamina cost?
 
 1. **Animals** (petting cat/dog/horse; plan "A").
    `docs/003-immersive-interactions-analysis.md` recommends:

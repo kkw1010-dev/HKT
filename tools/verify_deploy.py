@@ -449,6 +449,53 @@ def check_valhalla(modlist):
         note("Valhalla settings file absent: DLL defaults (stun on, no execution key) until CIGAR writes it")
 
 
+def check_jujutsu(modlist):
+    """Jujutsu plays these kill-move idles and keeps the victim alive by swallowing KillActor. If the
+    idles move, or the victim clips stop ending with 2_KillActor, the design no longer holds."""
+    idles = [("Skyrim.esm", {0x0F9958: "pa_KillMoveH2HComboA", 0x100EF8: "H2HKillMoveSlamA00"}),
+             ("Update.esm", {0x820: "H2HKillMoveBodySlam", 0x821: "H2HKillMoveKneeThrow"})]
+    if "+" + VALHALLA_MOD in modlist:
+        idles.append(("ValhallaCombat.esp", {0xAA3A: "Val_H2HKillMoveKneeThrow", 0xAA3B: "Val_H2HKillMoveBodySlam",
+                                             0xAA3C: "Val_H2HKillMoveComboA", 0xAA3D: "Val_H2HKillMoveSlamA"}))
+    for plugin, forms in idles:
+        path = find_plugin(modlist, plugin)
+        if not path:
+            check(False, "Jujutsu idle plugin present: " + plugin)
+            continue
+        ids = plugin_editor_ids(path, set(forms))
+        wrong = ["%06X=%s (expected %s)" % (fid, ids.get(fid, "missing"), edid) for fid, edid in forms.items() if ids.get(fid) != edid]
+        check(not wrong, "Jujutsu idles in %s%s" % (plugin, ": " + ", ".join(wrong) if wrong else ""))
+    # The behaviour engine output that wins the VFS (modlist.txt lists the highest priority first).
+    adsf = None
+    for folder in [l[1:] for l in modlist if l.startswith("+")]:
+        for name in ("meshes", "Meshes"):
+            path = os.path.join(MODS, folder, name, "animationdatasinglefile.txt")
+            if os.path.isfile(path):
+                adsf = path
+                break
+        if adsf:
+            break
+    if not adsf:
+        note("no animationdatasinglefile.txt in the mods: Jujutsu relies on the vanilla one")
+        return
+    with open(adsf, encoding="utf-8", errors="replace") as f:
+        lines = [l.strip() for l in f]
+    clips = ["NPCPaired_H2HKillMoveSlamA", "PairedNPC_H2HKillMoveComboA", "Paired_NPCH2HKillMoveBodySlam",
+             "NPCPaired_H2HKillMoveKneeThrow"]
+    missing = []
+    for clip in clips:
+        # A clip entry: name, clip id, speed, crop start, crop end, event count, then that many events.
+        at = [i for i, l in enumerate(lines) if l == clip]
+        events = []
+        if at and at[0] + 5 < len(lines) and lines[at[0] + 5].isdigit():
+            count = int(lines[at[0] + 5])
+            events = lines[at[0] + 6:at[0] + 6 + count]
+        if not any(e.startswith("2_KillActor:") for e in events):
+            missing.append(clip)
+    check(not missing, "victim clips end with 2_KillActor in %s%s" % (os.path.relpath(adsf, MODS),
+          " - not found: " + ", ".join(missing) if missing else ""))
+
+
 def main():
     profile = os.path.join(MO2, "profiles", active_profile())
     print("profile:", profile)
@@ -499,6 +546,7 @@ def main():
     check_fhu(modlist)
     check_surrender(modlist)
     check_valhalla(modlist)
+    check_jujutsu(modlist)
 
     # Replaced SI modules must be off, or both prompts appear.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")
