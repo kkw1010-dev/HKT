@@ -7,9 +7,20 @@ status.
 ## Open items, in priority order
 
 1. **Test build of 2026-09-18** (deployed, not tested in game).
+   - **WeaponSwap** (new module, `docs/010-weapon-swap.md`). In combat with
+     a sword out, back off past 800 units (or make an enemy flee): the
+     prompt reads 원거리 무기: <bow>, favourite first. Accepting equips the
+     bow and arrows; `CIGAR.log` shows `equip ranged` and
+     `after equip: right <bow>`. Let the enemy close in: 근접 무기: <weapon>,
+     and a shield worn before comes back (`left hand back:`).
    - **Grapple after a new game.** 그래플 must show in melee combat without
-     touching Grapple's MCM. `CIGAR.log` must show `Grapple INI kbKey=34 at
-     startup` and, in a new game, `Grapple Hotkey is unset; restoring 34`.
+     touching Grapple's MCM. With prompt-only on (the default) the hidden key
+     is already in Grapple's INI, so `CIGAR.log` shows
+     `Grapple INI kbKey=100 at startup` and `knownKey=-1`: `ReadGrappleIni`
+     ignores the hidden key on purpose, and the remembered key comes from
+     `CIGAR.json` (`manual key 34`). The restore line
+     `Grapple Hotkey -1; restoring the player's key 34` appears only with
+     prompt-only switched off.
    - **Prompt keys.** CIGAR / 2. 단축키 / 프롬프트 키 shows 1–4. Prompts show
      those keys, and a changed key applies at once. `offer` lines show
      `slot=` and `key=`.
@@ -54,8 +65,8 @@ own deflate problem was fixed by the user in FHU.
 
 ### Modules
 
-All modules are confirmed in game (2026-09-17; `Eat` on 2026-09-18: hunger 80 → 0
-after 감자 수프).
+All modules except `WeaponSwap` are confirmed in game (2026-09-17; `Eat` on
+2026-09-18: hunger 80 → 0 after 감자 수프).
 
 | Module | Prompt(s) | Target mods | Doc |
 |---|---|---|---|
@@ -66,6 +77,7 @@ after 감자 수프).
 | `Deflate` | 배출 (길게 누르기) | Fill Her Up Baka Edition | `006` |
 | `Surrender` | 항복 (길게 누르기) | Acheron (+ Yamete Kudasai consequences) | `008` |
 | `Eat` | 먹기: <음식 이름> | Survival Mode + SMI (Starfrost, Gourmet) | `009` |
+| `WeaponSwap` | 원거리 무기, 근접 무기 | — (TDM lock target when present) | `010` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

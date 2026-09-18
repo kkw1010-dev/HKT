@@ -6,6 +6,7 @@
 #include "Prompt.h"
 #include "Settings.h"
 #include "Surrender.h"
+#include "WeaponSwap.h"
 
 #include <set>
 
@@ -37,6 +38,7 @@ namespace CIGAR::Panel
 			Label{ "Deflate", "배출", "Fill Her Up" },
 			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)" },
 			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
+			Label{ "WeaponSwap", "무기 전환", "" },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -279,6 +281,16 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::TextColored(kDim, "기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시");
+
+			ImGui::SeparatorText("무기 전환");
+			float swap = Settings::WeaponSwapRange();
+			if (ImGui::SliderFloat("전환 거리", &swap, WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh, "%.0f")) {
+				Settings::SetWeaponSwapRange(swap);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+			ImGui::TextColored(kDim, "기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트");
 
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();

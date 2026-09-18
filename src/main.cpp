@@ -10,15 +10,16 @@
 #include "Settings.h"
 #include "Surrender.h"
 #include "Util.h"
+#include "WeaponSwap.h"
 
 namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 7> modules{
+		static const std::array<Module*, 8> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
-			Eat::GetSingleton()
+			Eat::GetSingleton(), WeaponSwap::GetSingleton()
 		};
 		return modules;
 	}

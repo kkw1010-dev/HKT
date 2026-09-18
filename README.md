@@ -34,6 +34,8 @@ their in-game tests are in git history and in `docs/001`.
 | `LockOn` | True Directional Movement, Grapple (both optional) | — | Confirmed in game 2026-09-17 (retest passed) |
 | `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17 (retest passed; FHU-side effects pending in FHU) |
 | `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17 (retest passed) |
+| `Eat` | Survival Mode + SMI (optional) | — | Confirmed in game 2026-09-18 |
+| `WeaponSwap` | — (TDM's lock target when present) | — | Built 2026-09-18, not tested in game |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -50,10 +52,12 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | Fill Her Up tracks an amount, not animating (hold the key) | 배출 (길게 누르기) |
 | In combat below 40% health, not defeated (hold the key; slow motion and a pulsing prompt) | 항복 (길게 누르기) |
 | Survival Mode hunger at or above the panel's stage (default 3), out of combat, suitable food carried | 먹기: <음식 이름> |
+| In combat, enemy beyond the panel's distance (default 800) or fleeing, melee weapon or fists in hand | 원거리 무기: <무기 이름> |
+| In combat, enemy inside that distance, bow or crossbow in hand | 근접 무기: <무기 이름> |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
-`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, and `docs/009-eat.md`. The in-game control panel
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, and `docs/010-weapon-swap.md`. The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
@@ -71,7 +75,8 @@ src/LockOn.*        TDM target lock and Grapple in combat (synthetic key press t
 src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarded to FHU's own handlers)
 src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
 src/Eat.*           Survival Mode hunger: eats the cheapest suitable food by equipping it (SMI lowers hunger)
-src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
+src/WeaponSwap.*    ranged weapon when the enemy is far or fleeing, melee weapon when it is near (favourites, then strongest)
+src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정): switches and live status, keys, module options
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)

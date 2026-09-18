@@ -39,6 +39,11 @@ namespace CIGAR::Settings
 	int EatMinStage();
 	void SetEatMinStage(int a_stage);
 
+	// The enemy distance at which the weapon swap offers a ranged weapon (beyond) or a melee weapon
+	// (inside); default 800, the user's choice.
+	float WeaponSwapRange();
+	void SetWeaponSwapRange(float a_range);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 

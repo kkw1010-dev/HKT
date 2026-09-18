@@ -3,6 +3,7 @@
 #include "Eat.h"
 #include "Module.h"
 #include "Prompt.h"
+#include "WeaponSwap.h"
 
 #include <nlohmann/json.hpp>
 
@@ -22,6 +23,7 @@ namespace CIGAR::Settings
 		float placeRange = kPlaceRangeDefault;
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
 		int eatMinStage = Eat::kMinStageDefault;
+		float swapRange = WeaponSwap::kRangeDefault;
 
 		struct PromptOnlyState
 		{
@@ -49,6 +51,7 @@ namespace CIGAR::Settings
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
 			j["eat"]["minStage"] = eatMinStage;
+			j["weaponSwap"]["range"] = swapRange;
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -76,6 +79,7 @@ namespace CIGAR::Settings
 		placeRange = kPlaceRangeDefault;
 		promptKeys = kDefaultPromptKeys;
 		eatMinStage = Eat::kMinStageDefault;
+		swapRange = WeaponSwap::kRangeDefault;
 		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
@@ -112,6 +116,9 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
 			}
+			if (const auto it = j.find("weaponSwap"); it != j.end() && it->is_object()) {
+				swapRange = std::clamp(it->value("range", WeaponSwap::kRangeDefault), WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
+			}
 			if (const auto it = j.find("promptOnly"); it != j.end() && it->is_object()) {
 				for (auto& [target, state] : promptOnly) {
 					if (const auto t = it->find(target); t != it->end() && t->is_object()) {
@@ -135,6 +142,7 @@ namespace CIGAR::Settings
 			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
 		}
 		logs::info("settings: eat from hunger stage {}", eatMinStage);
+		logs::info("settings: weapon swap range {:.0f}", swapRange);
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -210,6 +218,18 @@ namespace CIGAR::Settings
 		eatMinStage = std::clamp(a_stage, Eat::kMinStageLow, Eat::kMinStageHigh);
 	}
 
+	float WeaponSwapRange()
+	{
+		std::scoped_lock guard(lock);
+		return swapRange;
+	}
+
+	void SetWeaponSwapRange(float a_range)
+	{
+		std::scoped_lock guard(lock);
+		swapRange = std::clamp(a_range, WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
+	}
+
 	bool PromptOnly(std::string_view a_target)
 	{
 		std::scoped_lock guard(lock);
@@ -248,7 +268,7 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		SaveLocked();
-		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}", placeRange, eatMinStage);
+		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, weapon swap range {:.0f}", placeRange, eatMinStage, swapRange);
 	}
 
 	std::string SourceDescription()
