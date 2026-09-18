@@ -71,7 +71,7 @@ Status (2026-09-19): in progress. This is the first CIGAR module with a game hoo
 
 ## Gate and play
 
-- **Target:** a hostile humanoid (body part data `0x1D`) within 250 units that
+- **Target:** a hostile humanoid (body part data `0x1D`) within the panel's 유술 거리 (3. 세부 설정, 100–400, default 250 by the user's choice) that
   is blocking (`Actor::IsBlocking`). It must not be in a kill move, mounted or a
   teammate. It stays offered for 0.7 s after its guard drops.
 - **Player:** movement controls on, not in a SexLab scene, humanoid, not
@@ -104,3 +104,12 @@ Status (2026-09-19): in progress. This is the first CIGAR module with a game hoo
   and the same line 2 s later. A dead victim gives a `WARN` and a HUD notice.
 - `tools/verify_deploy.py` fails the deploy if the idles' EditorIDs move or the
   active behaviour output's victim clips stop ending with `2_KillActor`.
+
+## Distance check (2026-09-19)
+
+The user suspects the refused plays were targets beyond 250 units: bandits never stop moving. The
+prompt already requires the target within reach at the press, so a target out of reach at the press
+logs `accept ignored`, not a refusal. The engine may still refuse a pair that has drifted during the
+0.6 s of retries. So the distance is logged at the press (`start ... distance=`), on every retry
+(`try N: ... distance=`) and with the number of tries on success (`pair started ... after N tries`).
+Refused and accepted distances can be compared in one log.

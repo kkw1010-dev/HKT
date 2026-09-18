@@ -44,6 +44,10 @@ namespace CIGAR::Settings
 	float WeaponSwapRange();
 	void SetWeaponSwapRange(float a_range);
 
+	// How close a guarding humanoid must be for the 유술 prompt; default 250, the user's choice.
+	float JujutsuReach();
+	void SetJujutsuReach(float a_reach);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 

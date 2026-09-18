@@ -1,5 +1,6 @@
 #include "Jujutsu.h"
 
+#include "Settings.h"
 #include "Util.h"
 
 #include "ValhallaCombat/API.h"
@@ -36,8 +37,6 @@ namespace CIGAR
 		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
 		constexpr RE::FormID kHumanoidBodyPartData = 0x1D;
 
-		// Kill moves snap the pair together from about this distance (Valhalla uses the same for its own).
-		constexpr float kReach = 250.0f;
 		// A guard drops between blows; keep offering the target this long after it was last seen blocking.
 		constexpr auto kBlockGrace = 700ms;
 		// Test 1: SetupSpecialIdle returned false on every victim that was blocking at that moment, and
@@ -218,7 +217,7 @@ namespace CIGAR
 		RE::Actor* blocking = nullptr;
 		RE::Actor* recent = nullptr;
 		const auto lastBlockerNow = lastBlocker.get();
-		for (auto* actor : Util::NearbyHostiles(a_player, kReach)) {
+		for (auto* actor : Util::NearbyHostiles(a_player, Settings::JujutsuReach())) {
 			if (!IsHumanoid(actor) || actor->IsInKillMove() || actor->IsOnMount() || actor->IsPlayerTeammate()) {
 				continue;
 			}
@@ -285,8 +284,10 @@ namespace CIGAR
 		lastSample.clear();
 		phase = Phase::kPreparing;
 		phaseStart = Clock::now();
-		Log("start idle {:08X} on {} ({:08X}); victim before: {}", playing->GetFormID(), Util::NameOf(target), target->GetFormID(),
-			DescribeVictim(target));
+		// The distance at the press, beside each retry's and the start's: tells a play refused because the
+		// target moved from one the engine refused at close range.
+		Log("start idle {:08X} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), Util::NameOf(target),
+			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();
@@ -468,8 +469,8 @@ namespace CIGAR
 		case Phase::kStarting:
 			if (pairOn) {
 				phase = Phase::kRunning;
-				Log("pair started after {:.2f} s (synced={} playerKillMove={} victimKillMove={})", t, synced, a_player->IsInKillMove(),
-					v && v->IsInKillMove());
+				Log("pair started after {:.2f} s after {} tries (synced={} playerKillMove={} victimKillMove={})", t, tries, synced,
+					a_player->IsInKillMove(), v && v->IsInKillMove());
 			} else if (now - phaseStart >= kStartWindow) {
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {

@@ -2,6 +2,7 @@
 
 #include "Eat.h"
 #include "Module.h"
+#include "Jujutsu.h"
 #include "Prompt.h"
 #include "WeaponSwap.h"
 
@@ -24,6 +25,7 @@ namespace CIGAR::Settings
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
 		int eatMinStage = Eat::kMinStageDefault;
 		float swapRange = WeaponSwap::kRangeDefault;
+		float jujutsuReach = Jujutsu::kReachDefault;
 
 		struct PromptOnlyState
 		{
@@ -52,6 +54,7 @@ namespace CIGAR::Settings
 			j["prompt"]["keys"] = promptKeys;
 			j["eat"]["minStage"] = eatMinStage;
 			j["weaponSwap"]["range"] = swapRange;
+			j["jujutsu"]["reach"] = jujutsuReach;
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -80,6 +83,7 @@ namespace CIGAR::Settings
 		promptKeys = kDefaultPromptKeys;
 		eatMinStage = Eat::kMinStageDefault;
 		swapRange = WeaponSwap::kRangeDefault;
+		jujutsuReach = Jujutsu::kReachDefault;
 		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
@@ -116,6 +120,9 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
 			}
+			if (const auto it = j.find("jujutsu"); it != j.end() && it->is_object()) {
+				jujutsuReach = std::clamp(it->value("reach", Jujutsu::kReachDefault), Jujutsu::kReachLow, Jujutsu::kReachHigh);
+			}
 			if (const auto it = j.find("weaponSwap"); it != j.end() && it->is_object()) {
 				swapRange = std::clamp(it->value("range", WeaponSwap::kRangeDefault), WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
 			}
@@ -143,6 +150,7 @@ namespace CIGAR::Settings
 		}
 		logs::info("settings: eat from hunger stage {}", eatMinStage);
 		logs::info("settings: weapon swap range {:.0f}", swapRange);
+		logs::info("settings: jujutsu reach {:.0f}", jujutsuReach);
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -218,6 +226,18 @@ namespace CIGAR::Settings
 		eatMinStage = std::clamp(a_stage, Eat::kMinStageLow, Eat::kMinStageHigh);
 	}
 
+	float JujutsuReach()
+	{
+		std::scoped_lock guard(lock);
+		return jujutsuReach;
+	}
+
+	void SetJujutsuReach(float a_reach)
+	{
+		std::scoped_lock guard(lock);
+		jujutsuReach = std::clamp(a_reach, Jujutsu::kReachLow, Jujutsu::kReachHigh);
+	}
+
 	float WeaponSwapRange()
 	{
 		std::scoped_lock guard(lock);
@@ -268,7 +288,7 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		SaveLocked();
-		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, weapon swap range {:.0f}", placeRange, eatMinStage, swapRange);
+		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, weapon swap range {:.0f}, jujutsu reach {:.0f}", placeRange, eatMinStage, swapRange, jujutsuReach);
 	}
 
 	std::string SourceDescription()

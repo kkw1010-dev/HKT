@@ -2,6 +2,7 @@
 
 #include "Eat.h"
 #include "Execute.h"
+#include "Jujutsu.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Prompt.h"
@@ -302,6 +303,16 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::TextColored(kDim, "기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트");
+
+			ImGui::SeparatorText("유술");
+			float reach = Settings::JujutsuReach();
+			if (ImGui::SliderFloat("유술 거리", &reach, Jujutsu::kReachLow, Jujutsu::kReachHigh, "%.0f")) {
+				Settings::SetJujutsuReach(reach);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+			ImGui::TextColored(kDim, "기본 250. 가드 중인 인간형 적이 이 거리 안이면 프롬프트 표시");
 
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();

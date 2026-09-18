@@ -87,5 +87,11 @@ namespace CIGAR
 		std::string lastSample;
 		bool warnedNoStart{ false };
 		bool warnedDied{ false };
+
+	public:
+		// The grapple reach (control panel). The default of 250 is the user's choice.
+		static constexpr float kReachLow = 100.0f;
+		static constexpr float kReachHigh = 400.0f;
+		static constexpr float kReachDefault = 250.0f;
 	};
 }
