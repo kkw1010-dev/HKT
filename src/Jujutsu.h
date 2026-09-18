@@ -62,6 +62,12 @@ namespace CIGAR
 		std::string DescribeVictim(RE::Actor* a_victim) const;
 		std::string DescribeRefusal(RE::PlayerCharacter* a_player, RE::Actor* a_victim) const;
 		void EndKillMove(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
+
+	public:
+		// Game thread, queued by the KillMoveEnd hook: the moment the victim would have died.
+		void OnVictimKillMoveEnd();
+
+	private:
 		float Elapsed() const;
 
 		PromptSlot jujutsu{ this, kJujutsu };
@@ -83,6 +89,8 @@ namespace CIGAR
 		Clock::time_point settleUntil{};
 		int tries{ 0 };
 		bool knocked{ false };
+		bool ended{ false };
+		Clock::time_point knockAt{};
 		bool payoffDone{ false };
 		std::string lastSample;
 		bool warnedNoStart{ false };

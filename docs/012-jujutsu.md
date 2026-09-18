@@ -113,3 +113,20 @@ logs `accept ignored`, not a refusal. The engine may still refuse a pair that ha
 0.6 s of retries. So the distance is logged at the press (`start ... distance=`), on every retry
 (`try N: ... distance=`) and with the number of tries on success (`pair started ... after N tries`).
 Refused and accepted distances can be compared in one log.
+
+## Test 3 (2026-09-19)
+
+- **Survival and payoff hold.** Every accepted play left the victim alive, with the stun share and
+  health loss applied.
+- **The victim stood up before going down** (the user's report). The log shows why: the victim's own
+  clip ends at its KillMoveEnd (about 1.9-4.3 s), and it returns to standing then. The knock-down
+  waited for the player's side of the pair, which ends 0.3-0.5 s later and longer on some idles.
+  **Fix:** the KillMoveEnd hook queues the knock-down for the next frame, on the victim's own
+  would-be death moment. The 0.4 s ragdoll check now counts from the knock.
+- **Refusals.** Accepted plays were at 100, 121, 145, 176, 178 and 193 units, on five bandits. All
+  five refused plays were on one bandit, at 66-153 units. The user suspects that close range fails.
+  Short range may be part of it, but 120-153 failed on that bandit while 121 worked on another, so the
+  log cannot separate range from that bandit's situation yet. Refusals now also log the height
+  difference, which way each actor faces the other, the victim's race and its weapon.
+- **Hidden while executable.** At the user's request, a target Valhalla reports stun-broken gets the
+  처형 prompt only; 유술 skips it.

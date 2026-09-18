@@ -6,10 +6,10 @@ status.
 
 ## Open items, in priority order
 
-1. **Jujutsu / 유술, test 3** (`docs/012-jujutsu.md`). Test 2 settled it: swallowing KillMoveEnd keeps
-   the victim alive (the essential flag does not). The victim now ends the throw in ragdoll. Check:
-   `knocked the victim into ragdoll` followed by `ragdoll=true`, whether that looks right to the user,
-   and the `try N:` lines of refused plays (about 4 in 10 were refused in test 2).
+1. **Jujutsu / 유술, test 4** (`docs/012-jujutsu.md`). Survival works. This build knocks the victim down at its
+   own KillMoveEnd (it stood up first in test 3), hides 유술 for Valhalla-stunned targets, and logs dz, facing,
+   race and weapon on refusals. Refusals in test 3 were all one bandit at 66-153 units, so compare
+   `try N:` lines against accepted plays before blaming range. The user wants the reach kept at 250.
 2. Backlog below.
 
 Confirmed in game on 2026-09-19:

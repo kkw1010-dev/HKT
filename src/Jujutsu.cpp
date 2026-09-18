@@ -108,8 +108,10 @@ namespace CIGAR
 		bool KillMoveEndHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
 		{
 			if (&a_actor == armedVictim.load()) {
-				// This is the event that kills a kill-move victim.
+				// This is the event that kills a kill-move victim. Test 3: knocking it down when the player's
+				// side ended left it standing up for 0.5-2.5 s first, so it goes down now, on the next frame.
 				Stamp(killMoveEndAt);
+				SKSE::GetTaskInterface()->AddTask([] { Jujutsu::GetSingleton()->OnVictimKillMoveEnd(); });
 				return true;
 			}
 			return originalKillMoveEnd(a_this, a_actor, a_parameter);
@@ -221,6 +223,10 @@ namespace CIGAR
 			if (!IsHumanoid(actor) || actor->IsInKillMove() || actor->IsOnMount() || actor->IsPlayerTeammate()) {
 				continue;
 			}
+			// A target Valhalla lets you execute gets the 처형 prompt, not this one (the user's rule).
+			if (valhalla && valhalla->isActorStunned(actor)) {
+				continue;
+			}
 			if (actor->IsBlocking()) {
 				blocking = actor;
 				break;
@@ -280,6 +286,7 @@ namespace CIGAR
 		victim = target->GetHandle();
 		payoffDone = false;
 		knocked = false;
+		ended = false;
 		tries = 0;
 		lastSample.clear();
 		phase = Phase::kPreparing;
@@ -336,15 +343,39 @@ namespace CIGAR
 				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
 				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState());
 		};
-		return std::format("victim[blocking={} {}] player[weaponDrawn={} {}] distance={:.0f}", a_victim->IsBlocking(), state(a_victim),
-			a_player->AsActorState()->IsWeaponDrawn(), state(a_player), a_player->GetPosition().GetDistance(a_victim->GetPosition()));
+		// Test 3: every refusal was one bandit, at 66-153 units, while others were taken at 100-193. So also
+		// the height difference, which way each faces the other, the race and the victim's weapon.
+		const auto* race = a_victim->GetRace();
+		const auto* weapon = a_victim->GetEquippedObject(false);
+		return std::format("victim[blocking={} {} race={} weapon={} facesPlayer={:.0f}] player[weaponDrawn={} {} facesVictim={:.0f}] "
+		                   "distance={:.0f} dz={:.0f}",
+			a_victim->IsBlocking(), state(a_victim), race ? Util::NameOf(race) : "-"s, weapon ? Util::NameOf(weapon) : "-"s,
+			a_victim->GetHeadingAngle(a_player->GetPosition(), false), a_player->AsActorState()->IsWeaponDrawn(), state(a_player),
+			a_player->GetHeadingAngle(a_victim->GetPosition(), false), a_player->GetPosition().GetDistance(a_victim->GetPosition()),
+			a_victim->GetPositionZ() - a_player->GetPositionZ());
+	}
+
+	void Jujutsu::OnVictimKillMoveEnd()
+	{
+		if (phase != Phase::kRunning && phase != Phase::kStarting) {
+			return;
+		}
+		auto victimPtr = victim.get();
+		auto* v = victimPtr.get();
+		auto* player = Util::Player();
+		if (!payoffDone) {
+			ApplyPayoff(player, v);
+		}
+		Log("victim KillMoveEnd at {:.2f} s: knocking it down now", Elapsed());
+		EndKillMove(player, v);
 	}
 
 	void Jujutsu::EndKillMove(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
 	{
-		if (!a_victim || a_victim->IsDead()) {
+		if (ended || !a_victim || a_victim->IsDead()) {
 			return;
 		}
+		ended = true;
 		// KillMoveEnd was swallowed, and it would have cleared this flag.
 		if (a_victim->IsInKillMove()) {
 			a_victim->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kIsInKillMove);
@@ -357,6 +388,7 @@ namespace CIGAR
 		}
 		process->KnockExplosion(a_victim, a_player->GetPosition(), kKnockMagnitude);
 		knocked = true;
+		knockAt = Clock::now();
 		Log("knocked the victim into ragdoll (magnitude {:.1f})", kKnockMagnitude);
 	}
 
@@ -462,6 +494,16 @@ namespace CIGAR
 			ApplyPayoff(a_player, v);
 		}
 
+		// The knock-down should show as ragdoll within a moment; say so when it does not.
+		if (knocked && v && now >= knockAt + kKnockCheck) {
+			knocked = false;
+			Log("{:.1f} s after the knock-down: ragdoll={} knock={}", std::chrono::duration<float>(kKnockCheck).count(), v->IsInRagdollState(),
+				static_cast<int>(v->AsActorState()->GetKnockState()));
+			if (!v->IsInRagdollState() && !v->IsDead()) {
+				Log("WARN the victim is not in ragdoll after the knock-down");
+			}
+		}
+
 		bool synced = false;
 		a_player->GetGraphVariableBool("bIsSynced", synced);
 		const bool pairOn = synced || a_player->IsInKillMove() || (v && v->IsInKillMove());
@@ -497,15 +539,6 @@ namespace CIGAR
 			}
 			break;
 		case Phase::kSettling:
-			// The knock-down should show as ragdoll within a moment; say so when it does not.
-			if (knocked && v && now >= settleUntil - kSettle + kKnockCheck) {
-				knocked = false;
-				Log("{:.1f} s after the knock-down: ragdoll={} knock={}", std::chrono::duration<float>(kKnockCheck).count(),
-					v->IsInRagdollState(), static_cast<int>(v->AsActorState()->GetKnockState()));
-				if (!v->IsInRagdollState() && !v->IsDead()) {
-					Log("WARN the victim is not in ragdoll after the knock-down");
-				}
-			}
 			if (now >= settleUntil) {
 				Log("2 s after the pair: victim: {}", DescribeVictim(v));
 				if (v && v->IsDead() && !warnedDied) {
