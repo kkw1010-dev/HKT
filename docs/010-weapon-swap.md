@@ -1,6 +1,10 @@
 # 010 · WeaponSwap: ranged weapon when the enemy is far, melee when it is near
 
-Status (2026-09-18): built and deployed, not yet tested in game.
+Status (2026-09-19): tested in game. 강철 철퇴 + 견고한 철 방패 → 긴 활 → 강철 철퇴 +
+방패 (`previous=true`, `left hand back`). That run also showed the arrows queued
+right after the bow not equipped (`after equip: ... ammo -`). The result
+check now equips them again and logs
+`ammo was not equipped with the bow; equipping ...`; not yet seen in game.
 
 The user asked for a prompt that equips a bow or other ranged weapon when the
 enemy moves away or flees, and the reverse when it comes back. No mod is

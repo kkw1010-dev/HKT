@@ -424,6 +424,7 @@ namespace CIGAR
 			}
 		}
 		expected = pick.weapon;
+		expectedAmmo = isRanged ? pick.ammo : nullptr;
 		checkPending = true;
 		quietUntil = Clock::now() + kQuietAfterEquip;
 	}
@@ -437,6 +438,13 @@ namespace CIGAR
 		if (right == expected) {
 			Log("after equip: right {} left {} ammo {}", Util::NameOf(right), left ? Util::NameOf(left) : "-"s,
 				ammo ? Util::NameOf(ammo) : "-"s);
+			// Seen in game (2026-09-19): the ammo queued right after the bow was not equipped. Equip it
+			// again now that the bow is in hand, and say so.
+			if (expectedAmmo && ammo != expectedAmmo && Util::ItemCount(a_player, expectedAmmo) > 0) {
+				const auto count = std::max(1, Util::ItemCount(a_player, expectedAmmo));
+				RE::ActorEquipManager::GetSingleton()->EquipObject(a_player, expectedAmmo, nullptr, static_cast<std::uint32_t>(count));
+				Log("ammo was not equipped with the bow; equipping {} x{} again", Util::NameOf(expectedAmmo), count);
+			}
 			return;
 		}
 		Log("WARN after equip: right hand is {}, expected {}", right ? Util::NameOf(right) : "-"s, Util::NameOf(expected));

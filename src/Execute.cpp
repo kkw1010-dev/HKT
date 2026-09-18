@@ -376,7 +376,8 @@ namespace CIGAR
 		std::string gate;
 		RE::Actor* victim = nullptr;
 		const bool live = !pressPending && Executable(player, gate, victim);
-		LogGate(std::move(gate));
+		// While a press is being checked the gate is not read; say so rather than logging an empty gate.
+		LogGate(pressPending ? "pending: waiting for the kill move"s : std::move(gate));
 		// The prompt names the target; when it changes, offer it again with the new name.
 		if (execute.Offered() && victim != offeredVictim) {
 			execute.Withdraw();

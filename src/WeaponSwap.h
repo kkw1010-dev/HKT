@@ -120,6 +120,7 @@ namespace CIGAR
 
 		// Checked once the equip has settled.
 		RE::TESObjectWEAP* expected{ nullptr };
+		RE::TESAmmo* expectedAmmo{ nullptr };
 		bool checkPending{ false };
 		bool warnedEquip{ false };
 	};

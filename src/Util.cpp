@@ -97,6 +97,16 @@ namespace CIGAR::Util
 		if (!a_form) {
 			return "-";
 		}
+		// A placed reference (an actor) has no name of its own in TESForm::GetName; the display name
+		// is what the game shows (leveled and renamed actors included).
+		if (const auto* ref = a_form->As<RE::TESObjectREFR>()) {
+			if (const char* shown = const_cast<RE::TESObjectREFR*>(ref)->GetDisplayFullName(); shown && *shown) {
+				return shown;
+			}
+			if (const auto* base = ref->GetBaseObject(); base && base->GetName() && *base->GetName()) {
+				return base->GetName();
+			}
+		}
 		const char* name = a_form->GetName();
 		if (name && *name) {
 			return name;

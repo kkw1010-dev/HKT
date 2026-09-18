@@ -1,6 +1,10 @@
 # 011 · Execute: Valhalla Combat's execution as a prompt
 
-Status (2026-09-19): built and deployed, not yet tested in game.
+Status (2026-09-19): tested in game. Three targets were executed. Twice the first
+press started no kill move and a second press about 3 s later did
+(`WARN ... no kill move`, then `kill move started`). The user accepts this,
+because Valhalla's own key misses in the same way. Target names showed as
+FormIDs; `Util::NameOf` now uses the reference's display name.
 
 The user asked for Valhalla Combat's execution as a CIGAR prompt that shows
 only when an execution can actually happen. The background research is in
