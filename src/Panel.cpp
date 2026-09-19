@@ -342,6 +342,47 @@ namespace CIGAR::Panel
 			}
 			ImGui::TextColored(kDim, "기본 250. 가드 중인 인간형 적이 이 거리 안이면 프롬프트 표시");
 
+			auto tune = Settings::JujutsuTune();
+			bool changed = false;
+			bool released = false;
+			float guardPct = tune.guardStun * 100.0f;
+			if (ImGui::SliderFloat("가드 대상 게이지 피해", &guardPct, 0.0f, 100.0f, "%.0f%%")) {
+				tune.guardStun = guardPct / 100.0f;
+				changed = true;
+			}
+			released |= ImGui::IsItemDeactivatedAfterEdit();
+			float parryPct = tune.parryStun * 100.0f;
+			if (ImGui::SliderFloat("퍼펙트 패리 후 게이지 피해", &parryPct, 0.0f, 100.0f, "%.0f%%")) {
+				tune.parryStun = parryPct / 100.0f;
+				changed = true;
+			}
+			released |= ImGui::IsItemDeactivatedAfterEdit();
+			if (ImGui::SliderFloat("퍼펙트 패리 후 유효 시간", &tune.parryWindow, 0.5f, 5.0f, "%.1f초")) {
+				changed = true;
+			}
+			released |= ImGui::IsItemDeactivatedAfterEdit();
+			if (ImGui::Checkbox("발동 순간 슬로우", &tune.slow)) {
+				changed = true;
+				released = true;
+			}
+			if (ImGui::SliderFloat("슬로우 배율", &tune.slowMultiplier, 0.1f, 1.0f, "x%.2f")) {
+				changed = true;
+			}
+			released |= ImGui::IsItemDeactivatedAfterEdit();
+			if (ImGui::SliderFloat("슬로우 시간", &tune.slowSeconds, 0.1f, 3.0f, "%.1f초")) {
+				changed = true;
+			}
+			released |= ImGui::IsItemDeactivatedAfterEdit();
+			if (changed) {
+				Settings::SetJujutsuTune(tune);
+			}
+			if (released) {
+				Settings::Save();
+			}
+			ImGui::PushTextWrapPos(0.0f);
+			ImGui::TextColored(kDim, "기본: 가드 15%%, 패리 후 25%% (발할라 최대 게이지 기준), 패리 후 1.5초 동안 거리 무관 발동, 슬로우 x0.30 0.5초");
+			ImGui::PopTextWrapPos();
+
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();
 			if (ImGui::SliderFloat("침대·옷장 유효 거리", &range, Settings::kPlaceRangeMin, Settings::kPlaceRangeMax, "%.0f")) {

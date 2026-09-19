@@ -288,3 +288,33 @@ API; the MCM has no NPC-grapple switch.
 
 Open: a payoff without a visible kill move means the payoff can fire on a KillMoveEnd that is not
 from the 유술 play; check against a clean log once NPC grapples are off.
+
+## Test 12 (2026-09-20 02:59): 20 of 20
+
+Log: `testlogs/2026-09-20-jujutsu-test12-nonpcgrapple.log`. Pre-install `mt_behavior.hkx`, NPC grapples
+off: 20 presses, 20 plays, all on the first try (standing 10/10, moving 10/10). With tests 9-11 this
+points at the 15:40 Pandora `mt_behavior.hkx` (same content, different order) as the cause of the
+refusals. NPC grapples were off only in this test, so their share is not separated.
+
+## Perfect parry, fixed stun shares, slow motion (2026-09-20)
+
+The user's design:
+
+- **Stun shares are fixed values the player can change** in the panel (3. 세부 설정 → 유술):
+  15% of Valhalla's max stun on a guarding target ("the ragdoll alone makes it a guard break"), 25%
+  after a perfect parry. The user first considered topping Valhalla's own parry damage up to 50%, but
+  Valhalla's timed-block stun is the player's weapon damage times difficulty times
+  `fStunTimedBlockMult` (blockHandler::processMeleeTimedBlock), not a share of the meter, so the user
+  chose fixed, player-tunable values as the simpler game and mod design.
+- **A perfect parry opens the attacker to 유술 for 1.5 s at any distance**, as a reward that must not
+  fail. Sources, each optional:
+  - Valhalla: no parry event exists; a perfect block staggers the attacker at once and a plain/timed
+    block does not, so an attacker within 400 that starts staggering while the player blocks (or
+    blocked within 0.4 s) counts. The log line `parry (Valhalla)` carries Valhalla's timed/perfect
+    flags at that moment, to confirm the rule in game.
+  - Parry for All: the attacker's `GotParriedCMF` graph int becoming 2 (its OAR "Perfect" submod's
+    condition). Parry for All is disabled in this profile (it needs DynamicFormsGenerator), so this path
+    is untested; the log prints every `GotParriedCMF` change when the DLL is loaded.
+  A parried play sends `staggerStop` to the victim and is retried until the window ends.
+- **Slow motion** at the start of the pair: x0.3 for 0.5 s (panel), left alone if something else
+  changed the multiplier meanwhile.

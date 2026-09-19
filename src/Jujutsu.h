@@ -11,9 +11,10 @@ namespace VAL_API
 namespace CIGAR
 {
 	// 유술: a vanilla hand-to-hand kill move played on a humanoid enemy that is blocking, without the
-	// kill. At the victim's kill moment it loses its stamina, or, with Valhalla Combat, a large share of
-	// its stun meter, and a little health. Balance values are placeholders (the user asked for function
-	// first).
+	// kill. At the victim's kill moment it loses its stamina, or, with Valhalla Combat, a share of its stun
+	// meter (panel; the user's defaults 15% on a guarding target, 25% after a perfect parry), and a little
+	// health. A perfect parry (Valhalla or Parry for All) opens the attacker to 유술 at any distance for the
+	// panel's window (1.5 s). The throw starts with a short slow motion (panel; x0.3 for 0.5 s).
 	//
 	// The kill comes from the victim's KillMoveEnd event (test 2, 2026-09-19: with it passed through the
 	// victim died on that very tick, essential flag or not). Hooks on the engine's KillActor and
@@ -54,6 +55,12 @@ namespace CIGAR
 		Jujutsu();
 
 		RE::Actor* FindTarget(RE::PlayerCharacter* a_player, std::string& a_gate) const;
+		// A perfect parry opens the attacker to 유술 for the panel's window, at any distance: Valhalla's
+		// (the player blocked and the attacker was staggered at once) or Parry for All's (GotParriedCMF 2).
+		void DetectParry(RE::PlayerCharacter* a_player);
+		RE::Actor* ParriedTarget() const;
+		void StartSlow();
+		void EndSlow(const char* a_reason);
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
 		void Sample(RE::Actor* a_victim, float a_time);
@@ -94,6 +101,22 @@ namespace CIGAR
 		bool payoffDone{ false };
 		std::string lastSample;
 		bool warnedNoStart{ false };
+
+		// Perfect parry.
+		bool parryAll{ false };
+		RE::ActorHandle parried;
+		Clock::time_point parryUntil{};
+		const char* parrySource{ "-" };
+		Clock::time_point playerBlockSeen{};
+		std::unordered_map<RE::FormID, bool> wasStaggering;
+		std::unordered_map<RE::FormID, std::int32_t> lastParriedCMF;
+		bool fromParry{ false };
+		Clock::time_point prepareUntil{};
+
+		// Slow motion at the start of the throw.
+		bool slowOwned{ false };
+		float slowMultiplier{ 1.0f };
+		Clock::time_point slowUntil{};
 		bool warnedDied{ false };
 
 	public:

@@ -69,9 +69,21 @@ namespace CIGAR
 		constexpr float kKnockMagnitude = 1.0f;
 		constexpr auto kKnockCheck = 400ms;
 
-		// Placeholder balance, not the user's numbers: the user asked for the function first.
-		constexpr float kStunShare = 0.5f;     // of Valhalla's max stun, (base health + base stamina) / 2
+		// The stun shares (of Valhalla's max stun, (base health + base stamina) / 2) come from the panel.
 		constexpr float kHealthShare = 0.05f;  // of max health; never takes the victim below 1
+
+		// Perfect-parry detection. Valhalla 1.3.3 exposes no parry event: a perfect block staggers the
+		// attacker on the spot (blockHandler::processMeleeTimedBlock -> triggerStagger), while a plain or
+		// timed block does not. So an attacker that starts staggering while the player blocks, or just
+		// blocked, counts as parried.
+		constexpr float kParryScan = 400.0f;
+		constexpr auto kBlockRecent = 400ms;
+		// Parry for All (Viny) sets the attacker's GotParriedCMF graph int: 1 parried, 2 perfect (its
+		// OAR "Perfect" submod conditions on 2). Scanned wider: its parries include reflected ranged hits.
+		constexpr float kParryAllScan = 1500.0f;
+		constexpr std::int32_t kParryAllPerfect = 2;
+		// A parried play may be refused while the attacker is still in its stagger; it is retried at least this long.
+		constexpr auto kParryMinPrepare = 300ms;
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -191,6 +203,12 @@ namespace CIGAR
 		offeredTarget = nullptr;
 		lastBlocker = {};
 		idles.clear();
+		parried = {};
+		parryUntil = {};
+		wasStaggering.clear();
+		lastParriedCMF.clear();
+		EndSlow("game loaded");
+		parryAll = GetModuleHandleW(L"ParryAll.dll") != nullptr;
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		const bool valhallaEsp = handler && handler->LookupModByName("ValhallaCombat.esp"sv);
@@ -209,7 +227,8 @@ namespace CIGAR
 		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
 		                      nullptr;
 		const bool hooked = originalKillActor && originalKillMoveStart && originalKillMoveEnd;
-		Log("idles from {}:{}; hooks={} valhalla={} sexlab={}", idleSource, found, hooked, valhalla != nullptr, sexlabAnimating != nullptr);
+		Log("idles from {}:{}; hooks={} valhalla={} parryForAll={} sexlab={}", idleSource, found, hooked, valhalla != nullptr, parryAll,
+			sexlabAnimating != nullptr);
 		if (idles.empty() || !hooked) {
 			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the anim-handler hooks are not installed");
 			return;
@@ -231,6 +250,12 @@ namespace CIGAR
 		if (a_player->IsDead() || a_player->IsInKillMove() || a_player->IsOnMount() || !IsHumanoid(a_player)) {
 			a_gate = "why=player";
 			return nullptr;
+		}
+		// A parried attacker is offered at any distance and whatever else holds (the user's rule: a perfect
+		// parry is rewarded without fail).
+		if (auto* target = ParriedTarget()) {
+			a_gate = std::format("target={} why=parry({})", Util::NameOf(target), parrySource);
+			return target;
 		}
 		RE::Actor* blocking = nullptr;
 		RE::Actor* recent = nullptr;
@@ -263,12 +288,16 @@ namespace CIGAR
 			return;
 		}
 		auto* player = Util::Player();
+		if (slowOwned && Clock::now() >= slowUntil) {
+			EndSlow("time");
+		}
 		if (phase != Phase::kIdle) {
 			Watch(player);
 			LogGate("busy: 유술 in progress");
 			jujutsu.Update(false, [] { return ""s; });
 			return;
 		}
+		DetectParry(player);
 		std::string gate;
 		auto* target = FindTarget(player, gate);
 		// Remember who blocked, for the grace period.
@@ -307,10 +336,14 @@ namespace CIGAR
 		lastSample.clear();
 		phase = Phase::kPreparing;
 		phaseStart = Clock::now();
+		fromParry = target == ParriedTarget();
+		// A parried attacker is retried for the rest of its window, so the reward is not lost to its stagger.
+		prepareUntil = fromParry ? std::max(parryUntil, phaseStart + kParryMinPrepare) : phaseStart + kPrepareWindow;
 		// The distance at the press, beside each retry's and the start's: tells a play refused because the
 		// target moved from one the engine refused at close range.
-		Log("start idle {:08X} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), Util::NameOf(target),
-			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
+		Log("start idle {:08X} on {} ({:08X}) distance={:.0f} reach={:.0f} parry={}; victim before: {}", playing->GetFormID(),
+			Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(),
+			fromParry ? parrySource : "-", DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();
@@ -332,6 +365,11 @@ namespace CIGAR
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
 		}
+		// A parried attacker is mid-stagger; end it the way Valhalla does (reactionHandler: staggerStop).
+		const bool victimStaggering = GraphBool(a_victim, "IsStaggering");
+		if (victimStaggering) {
+			a_victim->NotifyAnimationGraph("staggerStop");
+		}
 		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
 			a_player->NotifyAnimationGraph("attackStop");
@@ -345,8 +383,8 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
-			playerAttacking ? " (sent attackStop to the player)" : "", requested);
+		Log("try {}: before {}{}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
+			victimStaggering ? " (sent staggerStop)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}
@@ -511,10 +549,13 @@ namespace CIGAR
 		if (valhalla) {
 			auto* owner = a_victim->AsActorValueOwner();
 			const float maxStun = (owner->GetPermanentActorValue(RE::ActorValue::kHealth) + owner->GetPermanentActorValue(RE::ActorValue::kStamina)) / 2.0f;
-			const float stun = maxStun * kStunShare;
-			// timedBlock applies the base damage times fStunTimedBlockMult (1 here) and nothing else.
+			const auto tuning = Settings::JujutsuTune();
+			const float share = fromParry ? tuning.parryStun : tuning.guardStun;
+			const float stun = maxStun * share;
+			// timedBlock applies the base damage times fStunTimedBlockMult (1 by default) and nothing else.
 			valhalla->processStunDamage(VAL_API::timedBlock, nullptr, a_player, a_victim, stun);
-			what = std::format("stun {:.0f} of max {:.0f} (stunned now={})", stun, maxStun, valhalla->isActorStunned(a_victim));
+			what = std::format("stun {:.0f} = {:.0f}% of max {:.0f} ({}) (stunned now={})", stun, share * 100.0f, maxStun,
+				fromParry ? "after a parry" : "on guard", valhalla->isActorStunned(a_victim));
 		} else {
 			const float stamina = AV(a_victim, RE::ActorValue::kStamina);
 			DamageAV(a_victim, RE::ActorValue::kStamina, stamina);
@@ -537,7 +578,7 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || now - phaseStart >= kPrepareWindow) {
+			} else if (!v || now >= prepareUntil) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
@@ -583,6 +624,7 @@ namespace CIGAR
 				phase = Phase::kRunning;
 				Log("pair started after {:.2f} s after {} tries (synced={} playerKillMove={} victimKillMove={})", t, tries, synced,
 					a_player->IsInKillMove(), v && v->IsInKillMove());
+				StartSlow();
 			} else if (now - phaseStart >= kStartWindow) {
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {
@@ -640,6 +682,12 @@ namespace CIGAR
 		}
 		knocked = false;
 		phase = Phase::kIdle;
+		// The parry is spent once its 유술 has played or been refused.
+		if (fromParry) {
+			parried = {};
+			parryUntil = {};
+		}
+		fromParry = false;
 		victim = {};
 	}
 
@@ -648,5 +696,105 @@ namespace CIGAR
 		if (phase != Phase::kIdle) {
 			Finish("module switched off");
 		}
+		EndSlow("module switched off");
+	}
+
+	RE::Actor* Jujutsu::ParriedTarget() const
+	{
+		if (Clock::now() >= parryUntil) {
+			return nullptr;
+		}
+		auto ptr = parried.get();
+		auto* actor = ptr.get();
+		if (!actor || actor->IsDead() || actor->IsInKillMove() || !actor->Is3DLoaded()) {
+			return nullptr;
+		}
+		return actor;
+	}
+
+	void Jujutsu::DetectParry(RE::PlayerCharacter* a_player)
+	{
+		const auto now = Clock::now();
+		const bool blocking = a_player->IsBlocking() && !GraphBool(a_player, "IsAttacking");
+		if (blocking) {
+			playerBlockSeen = now;
+		}
+		const bool blockedRecently = now - playerBlockSeen < kBlockRecent;
+		const auto open = [&](RE::Actor* a_actor, const char* a_source, const std::string& a_facts) {
+			const auto tuning = Settings::JujutsuTune();
+			parried = a_actor->GetHandle();
+			parrySource = a_source;
+			parryUntil = now + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<float>(tuning.parryWindow));
+			Log("parry ({}): {} open to 유술 for {:.1f} s; {}", a_source, Util::NameOf(a_actor), tuning.parryWindow, a_facts);
+		};
+
+		std::unordered_map<RE::FormID, bool> staggering;
+		std::unordered_map<RE::FormID, std::int32_t> parriedCMF;
+		const float scan = parryAll ? kParryAllScan : kParryScan;
+		for (auto* actor : Util::NearbyHostiles(a_player, scan)) {
+			if (!IsHumanoid(actor) || actor->IsDead()) {
+				continue;
+			}
+			const auto id = actor->GetFormID();
+			const float distance = a_player->GetPosition().GetDistance(actor->GetPosition());
+			if (parryAll) {
+				std::int32_t value = 0;
+				actor->GetGraphVariableInt("GotParriedCMF", value);
+				parriedCMF[id] = value;
+				const auto it = lastParriedCMF.find(id);
+				const auto before = it == lastParriedCMF.end() ? 0 : it->second;
+				if (value != before) {
+					Log("Parry for All: {} GotParriedCMF {} -> {} at {:.0f}", Util::NameOf(actor), before, value, distance);
+				}
+				if (value == kParryAllPerfect && before != kParryAllPerfect) {
+					open(actor, "Parry for All", std::format("distance={:.0f}", distance));
+				}
+			}
+			if (valhalla && distance <= kParryScan) {
+				const bool staggeringNow = GraphBool(actor, "IsStaggering");
+				staggering[id] = staggeringNow;
+				const auto it = wasStaggering.find(id);
+				const bool before = it != wasStaggering.end() && it->second;
+				if (staggeringNow && !before && blockedRecently) {
+					open(actor, "Valhalla", std::format("distance={:.0f} playerBlocking={} timedBlocking={} perfectBlocking={} stunned={}",
+						distance, blocking, valhalla->getIsPCTimedBlocking(), valhalla->getIsPCPerfectBlocking(), valhalla->isActorStunned(actor)));
+				}
+			}
+		}
+		wasStaggering = std::move(staggering);
+		lastParriedCMF = std::move(parriedCMF);
+	}
+
+	void Jujutsu::StartSlow()
+	{
+		const auto tuning = Settings::JujutsuTune();
+		auto* timer = RE::BSTimer::GetSingleton();
+		if (!tuning.slow || !timer || tuning.slowMultiplier >= 0.99f) {
+			return;
+		}
+		const float before = RE::BSTimer::QGlobalTimeMultiplier();
+		timer->SetGlobalTimeMultiplier(tuning.slowMultiplier, true);
+		slowOwned = true;
+		slowMultiplier = tuning.slowMultiplier;
+		slowUntil = Clock::now() + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<float>(tuning.slowSeconds));
+		Log("slow motion x{:.2f} for {:.1f} s (was x{:.2f})", tuning.slowMultiplier, tuning.slowSeconds, before);
+	}
+
+	void Jujutsu::EndSlow(const char* a_reason)
+	{
+		if (!slowOwned) {
+			return;
+		}
+		slowOwned = false;
+		const float now = RE::BSTimer::QGlobalTimeMultiplier();
+		// Leave the multiplier alone if something else (Valhalla's parry slow, 항복) changed it meanwhile.
+		if (std::abs(now - slowMultiplier) > 0.01f) {
+			Log("slow motion end ({}): multiplier is x{:.2f}, changed elsewhere; left as is", a_reason, now);
+			return;
+		}
+		if (auto* timer = RE::BSTimer::GetSingleton()) {
+			timer->SetGlobalTimeMultiplier(1.0f, true);
+		}
+		Log("slow motion end ({})", a_reason);
 	}
 }

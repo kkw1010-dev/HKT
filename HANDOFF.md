@@ -6,7 +6,11 @@ status.
 
 ## Open items, in priority order
 
-1. **Jujutsu / 유술, test 9** (`docs/012-jujutsu.md`, read its test sections 1-8 first). State of the build
+1. **Jujutsu / 유술** — test 12 played 20 of 20 after the pre-install `mt_behavior.hkx` was restored
+   (see `docs/012-jujutsu.md`, tests 9-12). Next: test the perfect-parry path, the stun shares and the
+   slow motion (2026-09-20 build). NPC grapples are off in Grapple's INI for testing (backup in `build\`).
+   Older notes follow.
+   **Jujutsu / 유술, test 9** (`docs/012-jujutsu.md`, read its test sections 1-8 first). State of the build
    deployed at 16daf79:
    - **Works (confirmed in game):** the prompt on a guarding humanoid within the panel's 유술 거리
      (default 250, the user's choice); the vanilla H2H kill move; the victim surviving (KillActor and
