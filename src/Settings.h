@@ -42,9 +42,9 @@ namespace CIGAR::Settings
 	int EatMinStage();
 	void SetEatMinStage(int a_stage);
 
-	// The Private Needs bladder/bowel level (1-5) the needs prompts start at; default 1.
-	int NeedsMinStage();
-	void SetNeedsMinStage(int a_stage);
+	// The Private Needs bladder/bowel fill (percent) the needs prompts start at; default 50, the user's choice.
+	int NeedsMinPercent();
+	void SetNeedsMinPercent(int a_percent);
 
 	// The enemy distance at which the weapon swap offers a ranged weapon (beyond) or a melee weapon
 	// (inside); default 800, the user's choice.
@@ -64,7 +64,7 @@ namespace CIGAR::Settings
 		float guardStun{ 0.15f };
 		float parryStun{ 0.25f };
 		float parryWindow{ 1.5f };
-		bool slow{ true };
+		bool slow{ true };  // after a perfect parry only (the user's rule, 2026-09-20)
 		float slowMultiplier{ 0.3f };
 		float slowSeconds{ 0.5f };
 	};

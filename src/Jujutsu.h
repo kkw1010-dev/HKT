@@ -14,7 +14,8 @@ namespace CIGAR
 	// kill. At the victim's kill moment it loses its stamina, or, with Valhalla Combat, a share of its stun
 	// meter (panel; the user's defaults 15% on a guarding target, 25% after a perfect parry), and a little
 	// health. A perfect parry (Valhalla or Parry for All) opens the attacker to 유술 at any distance for the
-	// panel's window (1.5 s). The throw starts with a short slow motion (panel; x0.3 for 0.5 s).
+	// panel's window (1.5 s), with slow motion from the parry into the throw (panel; x0.3, held 0.5 s
+	// after the pair starts). A 유술 on a guarding target has no slow motion (the user's rule).
 	//
 	// The kill comes from the victim's KillMoveEnd event (test 2, 2026-09-19: with it passed through the
 	// victim died on that very tick, essential flag or not). Hooks on the engine's KillActor and
@@ -59,7 +60,7 @@ namespace CIGAR
 		// (the player blocked and the attacker was staggered at once) or Parry for All's (GotParriedCMF 2).
 		void DetectParry(RE::PlayerCharacter* a_player);
 		RE::Actor* ParriedTarget() const;
-		void StartSlow();
+		void StartSlow(Clock::time_point a_until);
 		void EndSlow(const char* a_reason);
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);

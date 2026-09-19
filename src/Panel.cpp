@@ -313,14 +313,14 @@ namespace CIGAR::Panel
 			ImGui::TextColored(kDim, "기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시");
 
 			ImGui::SeparatorText("용변");
-			int needs = Settings::NeedsMinStage();
-			if (ImGui::SliderInt("표시 시작 단계", &needs, Needs::kMinStageLow, Needs::kMinStageHigh)) {
-				Settings::SetNeedsMinStage(needs);
+			int needs = Settings::NeedsMinPercent();
+			if (ImGui::SliderInt("표시 시작 수치", &needs, Needs::kMinPercentLow, Needs::kMinPercentHigh, "%d%%")) {
+				Settings::SetNeedsMinPercent(needs);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 1. Private Needs의 방광·장 단계(1-5)가 이 이상이면 프롬프트 표시");
+			ImGui::TextColored(kDim, "기본 50%%. Private Needs의 방광·장 수치가 이 이상이면 프롬프트 표시");
 
 			ImGui::SeparatorText("무기 전환");
 			float swap = Settings::WeaponSwapRange();
@@ -361,7 +361,7 @@ namespace CIGAR::Panel
 				changed = true;
 			}
 			released |= ImGui::IsItemDeactivatedAfterEdit();
-			if (ImGui::Checkbox("발동 순간 슬로우", &tune.slow)) {
+			if (ImGui::Checkbox("퍼펙트 패리 슬로우", &tune.slow)) {
 				changed = true;
 				released = true;
 			}
@@ -369,7 +369,7 @@ namespace CIGAR::Panel
 				changed = true;
 			}
 			released |= ImGui::IsItemDeactivatedAfterEdit();
-			if (ImGui::SliderFloat("슬로우 시간", &tune.slowSeconds, 0.1f, 3.0f, "%.1f초")) {
+			if (ImGui::SliderFloat("유술 시작 후 슬로우 유지", &tune.slowSeconds, 0.1f, 3.0f, "%.1f초")) {
 				changed = true;
 			}
 			released |= ImGui::IsItemDeactivatedAfterEdit();
@@ -380,7 +380,7 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::PushTextWrapPos(0.0f);
-			ImGui::TextColored(kDim, "기본: 가드 15%%, 패리 후 25%% (발할라 최대 게이지 기준), 패리 후 1.5초 동안 거리 무관 발동, 슬로우 x0.30 0.5초");
+			ImGui::TextColored(kDim, "기본: 가드 15%%, 패리 후 25%% (발할라 최대 게이지 기준), 패리 후 1.5초 동안 거리 무관 발동. 슬로우는 퍼펙트 패리 순간 시작해 유술 시작 후 0.5초까지(누르지 않으면 패리 시간 끝까지), x0.30");
 			ImGui::PopTextWrapPos();
 
 			ImGui::SeparatorText("탈의·착용");

@@ -318,3 +318,18 @@ The user's design:
   A parried play sends `staggerStop` to the victim and is retried until the window ends.
 - **Slow motion** at the start of the pair: x0.3 for 0.5 s (panel), left alone if something else
   changed the multiplier meanwhile.
+
+## Test 13 (2026-09-20 04:24) and the changes after it
+
+Log: `testlogs/2026-09-20-jujutsu-test13-parry.log`. The user's verdicts:
+
+- The slow motion on a guard 유술 (at the pair start) felt awkward; **removed**. Slow motion now belongs to
+  the perfect parry only: it starts at the parry, the 유술 prompt appears during it, and it carries into
+  the throw (held 0.5 s after the pair starts; unpressed, it ends with the 1.5 s window).
+- **No 유술 prompt after a Valhalla perfect parry.** The log has no `parry (` line: detection never
+  fired. Cause: the installed Valhalla (source f5a9056) *recoils* the attacker on a perfect block
+  (`triggerRecoil` -> `recoilLargeStart`); the stagger rule came from later source. Detection now also
+  accepts `IsRecoiling` (present in `0_Master.hkx` and `1hm_behavior.hkx`). In f5a9056 the perfect window
+  is the first `fPerfectBlockWindow` (0.15 s) of a block.
+- The balance (Valhalla gauge damage and ragdoll) is right as it is.
+- Needs: the prompts now start at 50% fill (the user's choice), panel `표시 시작 수치`.

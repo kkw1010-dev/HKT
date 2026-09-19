@@ -240,16 +240,16 @@ namespace CIGAR
 		// PNO turns its excrete keys into an orgasm during a scene; the prompts stay out of scenes.
 		const bool scene = Util::ScriptBool(utility, "IsInSexScene") || (sexlabAnimating && a_player->IsInFaction(sexlabAnimating));
 		const bool quiet = Clock::now() < quietUntil;
-		const int minStage = Settings::NeedsMinStage();
+		const int minPercent = Settings::NeedsMinPercent();
 
 		// PNO's own refusals (combat, swimming) plus what would break its animation.
 		const bool free = s.running && !s.excreting && !combat && !swimming && !seated && !mounted && movable && !scene && !quiet;
-		s.canUrinate = free && s.bladderOn && s.bladderLevel >= minStage;
-		s.canDefecate = free && s.bowelOn && s.bowelLevel >= minStage;
+		s.canUrinate = free && s.bladderOn && s.bladderLevel >= 1 && s.bladderPercent >= static_cast<float>(minPercent);
+		s.canDefecate = free && s.bowelOn && s.bowelLevel >= 1 && s.bowelPercent >= static_cast<float>(minPercent);
 
 		// The fill changes every PNO update; the gate logs levels only.
-		a_gate = std::format("running={} bladder={}:{} bowel={}:{} min={} excreting={} combat={} swim={} seated={} mounted={} movable={} scene={} quiet={}",
-			s.running, s.bladderOn ? "on" : "off", s.bladderLevel, s.bowelOn ? "on" : "off", s.bowelLevel, minStage, s.excreting, combat,
+		a_gate = std::format("running={} bladder={}:{} bowel={}:{} min={}% excreting={} combat={} swim={} seated={} mounted={} movable={} scene={} quiet={}",
+			s.running, s.bladderOn ? "on" : "off", s.bladderLevel, s.bowelOn ? "on" : "off", s.bowelLevel, minPercent, s.excreting, combat,
 			swimming, seated, mounted, movable, scene, quiet);
 		return s;
 	}

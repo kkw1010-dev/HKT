@@ -33,11 +33,11 @@ namespace CIGAR
 		// PNO's bound hotkeys as "name=key" pairs, for the control panel (any thread).
 		std::string KeySummary() const;
 
-		// The bladder/bowel level (PNO's 1-5) the prompts start at (control panel).
-		static constexpr int kMinStageLow = 1;
-		static constexpr int kMinStageHigh = 5;
-		// PNO refuses to excrete at level 0, so level 1 is the lowest that can act.
-		static constexpr int kMinStageDefault = 1;
+		// The bladder/bowel fill (percent of PNO's size) the prompts start at (control panel). The default
+		// of 50 is the user's choice (2026-09-20). PNO refuses to excrete at level 0 (below 20%) whatever this is.
+		static constexpr int kMinPercentLow = 20;
+		static constexpr int kMinPercentHigh = 100;
+		static constexpr int kMinPercentDefault = 50;
 
 	private:
 		enum : std::uint16_t

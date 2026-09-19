@@ -59,7 +59,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In combat, enemy inside that distance, bow or crossbow in hand | 근접 무기: <무기 이름> |
 | Valhalla's execution key would execute the nearest stun-broken actor within 250 units | 처형: <이름> |
 | A hostile humanoid within 250 units is guarding, or one perfect-parried in the last 1.5 s (any distance) | 유술: <이름> |
-| Private Needs bladder / bowel at or above the panel's level (default 1), out of combat and scenes | 소변 보기 (N%), 대변 보기 (N%) |
+| Private Needs bladder / bowel at or above the panel's fill (default 50%), out of combat and scenes | 소변 보기 (N%), 대변 보기 (N%) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and

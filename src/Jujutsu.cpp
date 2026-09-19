@@ -72,10 +72,12 @@ namespace CIGAR
 		// The stun shares (of Valhalla's max stun, (base health + base stamina) / 2) come from the panel.
 		constexpr float kHealthShare = 0.05f;  // of max health; never takes the victim below 1
 
-		// Perfect-parry detection. Valhalla 1.3.3 exposes no parry event: a perfect block staggers the
-		// attacker on the spot (blockHandler::processMeleeTimedBlock -> triggerStagger), while a plain or
-		// timed block does not. So an attacker that starts staggering while the player blocks, or just
-		// blocked, counts as parried.
+		// Perfect-parry detection. Valhalla exposes no parry event. The installed 1.3.3 (source commit
+		// f5a9056) recoils the attacker on a perfect block (processMeleeTimedBlock -> triggerRecoil:
+		// recoilLargeStart; the perfect window is the first fPerfectBlockWindow = 0.15 s of a block); later
+		// source staggers it instead. A plain or timed block does neither. So an attacker that starts
+		// recoiling or staggering while the player blocks, or just blocked, counts as parried.
+		// Test 13 (2026-09-20): with only the stagger checked, no parry was ever detected.
 		constexpr float kParryScan = 400.0f;
 		constexpr auto kBlockRecent = 400ms;
 		// Parry for All (Viny) sets the attacker's GotParriedCMF graph int: 1 parried, 2 perfect (its
@@ -624,7 +626,11 @@ namespace CIGAR
 				phase = Phase::kRunning;
 				Log("pair started after {:.2f} s after {} tries (synced={} playerKillMove={} victimKillMove={})", t, tries, synced,
 					a_player->IsInKillMove(), v && v->IsInKillMove());
-				StartSlow();
+				if (fromParry && slowOwned) {
+					const auto tuning = Settings::JujutsuTune();
+					slowUntil = now + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<float>(tuning.slowSeconds));
+					Log("slow motion held {:.1f} s into the throw", tuning.slowSeconds);
+				}
 			} else if (now - phaseStart >= kStartWindow) {
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {
@@ -726,6 +732,8 @@ namespace CIGAR
 			parrySource = a_source;
 			parryUntil = now + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<float>(tuning.parryWindow));
 			Log("parry ({}): {} open to 유술 for {:.1f} s; {}", a_source, Util::NameOf(a_actor), tuning.parryWindow, a_facts);
+			// The slow starts at the parry and carries into the throw (the user's rule); unpressed, it ends with the window.
+			StartSlow(parryUntil);
 		};
 
 		std::unordered_map<RE::FormID, bool> staggering;
@@ -751,13 +759,14 @@ namespace CIGAR
 				}
 			}
 			if (valhalla && distance <= kParryScan) {
-				const bool staggeringNow = GraphBool(actor, "IsStaggering");
+				const bool staggeringNow = GraphBool(actor, "IsStaggering") || GraphBool(actor, "IsRecoiling");
 				staggering[id] = staggeringNow;
 				const auto it = wasStaggering.find(id);
 				const bool before = it != wasStaggering.end() && it->second;
 				if (staggeringNow && !before && blockedRecently) {
-					open(actor, "Valhalla", std::format("distance={:.0f} playerBlocking={} timedBlocking={} perfectBlocking={} stunned={}",
-						distance, blocking, valhalla->getIsPCTimedBlocking(), valhalla->getIsPCPerfectBlocking(), valhalla->isActorStunned(actor)));
+					open(actor, "Valhalla", std::format("distance={:.0f} recoil={} stagger={} playerBlocking={} timedBlocking={} perfectBlocking={} stunned={}",
+						distance, GraphBool(actor, "IsRecoiling"), GraphBool(actor, "IsStaggering"), blocking, valhalla->getIsPCTimedBlocking(),
+						valhalla->getIsPCPerfectBlocking(), valhalla->isActorStunned(actor)));
 				}
 			}
 		}
@@ -765,7 +774,7 @@ namespace CIGAR
 		lastParriedCMF = std::move(parriedCMF);
 	}
 
-	void Jujutsu::StartSlow()
+	void Jujutsu::StartSlow(Clock::time_point a_until)
 	{
 		const auto tuning = Settings::JujutsuTune();
 		auto* timer = RE::BSTimer::GetSingleton();
@@ -776,8 +785,8 @@ namespace CIGAR
 		timer->SetGlobalTimeMultiplier(tuning.slowMultiplier, true);
 		slowOwned = true;
 		slowMultiplier = tuning.slowMultiplier;
-		slowUntil = Clock::now() + std::chrono::duration_cast<Clock::duration>(std::chrono::duration<float>(tuning.slowSeconds));
-		Log("slow motion x{:.2f} for {:.1f} s (was x{:.2f})", tuning.slowMultiplier, tuning.slowSeconds, before);
+		slowUntil = a_until;
+		Log("slow motion x{:.2f} until the parry window ends (was x{:.2f})", tuning.slowMultiplier, before);
 	}
 
 	void Jujutsu::EndSlow(const char* a_reason)

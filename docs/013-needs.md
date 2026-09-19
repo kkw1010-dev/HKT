@@ -38,7 +38,7 @@ Type 3 urinates as well when the bladder level is above 0. Sitting on furniture 
 
 ## The module
 
-- **Prompts.** 소변 보기 (N%) while the bladder is on and at or above the panel's stage (default 1,
+- **Prompts.** 소변 보기 (N%) while the bladder is on and at or above the panel's fill (default 50%, the user's choice 2026-09-20; was stage 1,
   the lowest level PNO acts on); 대변 보기 (N%) likewise for the bowel. The bowel is **off by default
   in PNO's MCM** (`boweltoggleVal = false`), so 대변 보기 needs it switched on there. A prompt is
   offered again when its level changes, so the percent stays roughly current.
