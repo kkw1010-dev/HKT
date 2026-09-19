@@ -272,3 +272,19 @@ was replaced by the pre-install copy (md5 cb3a5b03...), the file tests 5-8 ran o
 copy (md5 3168ff4d...) is kept at `build\mt_behavior.pandora-20260919-1540.hkx` (git-ignored) to
 swap back. Neither copy has PNO content (PNO's FNIS list lives in `0_Master.hkx` and the character
 files), so PNO keeps working. Any later Pandora run overwrites this experiment.
+
+## Test 11 (2026-09-19 23:40): pre-install mt_behavior.hkx
+
+Log: `testlogs/2026-09-19-jujutsu-test11-mtbehavior.log`. 8 of 12 presses played (6 on the first
+try); presses while not attacking 7 of 11 (standing 6 of 8). Test 10, same build with the 15:40
+`mt_behavior.hkx`: 5 of 13 (standing 1 of 7). Better, but below tests 5-8 and too few presses to
+decide. NPC grapples (Grapple's own `bEnableNPCGrapple`) also hit the player during presses; the user
+saw the 유술 payoff (Valhalla stun damage, no ragdoll) land while no kill move was visible.
+
+For test 12, NPC grapples are off: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini`
+`bEnableNPCGrapple = false` (the user's temporary choice; the original INI is kept at
+`build\FH_Grapple_Plugin.ini.bak_20260919_npcgrapple`). The DLL reads the key through the wide INI
+API; the MCM has no NPC-grapple switch.
+
+Open: a payoff without a visible kill move means the payoff can fire on a KillMoveEnd that is not
+from the 유술 play; check against a clean log once NPC grapples are off.
