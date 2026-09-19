@@ -292,6 +292,17 @@ namespace CIGAR
 		auto* player = Util::Player();
 		if (slowOwned && Clock::now() >= slowUntil) {
 			EndSlow("time");
+		} else if (slowOwned) {
+			// Test 14: Valhalla's own perfect-block slow (x0.1) resets the multiplier to 1 from a thread
+			// 0.3 s later, which wiped this slow. While it should hold, a faster multiplier is put back;
+			// a slower one (Valhalla's x0.1, 항복) is left to run.
+			const float current = RE::BSTimer::QGlobalTimeMultiplier();
+			if (current > slowMultiplier + 0.01f) {
+				if (auto* timer = RE::BSTimer::GetSingleton()) {
+					timer->SetGlobalTimeMultiplier(slowMultiplier, true);
+				}
+				Log("slow motion restored to x{:.2f} (was reset to x{:.2f})", slowMultiplier, current);
+			}
 		}
 		if (phase != Phase::kIdle) {
 			Watch(player);
@@ -367,10 +378,20 @@ namespace CIGAR
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
 		}
-		// A parried attacker is mid-stagger; end it the way Valhalla does (reactionHandler: staggerStop).
+		// A parried attacker is mid-stagger or, with the installed Valhalla, mid-recoil; end either.
+		// Test 14: all 7 plays after a parry were refused with the victim recoiling and the player's graph
+		// still blocking (gBlock), while guard plays (neither) went through.
 		const bool victimStaggering = GraphBool(a_victim, "IsStaggering");
 		if (victimStaggering) {
 			a_victim->NotifyAnimationGraph("staggerStop");
+		}
+		const bool victimRecoiling = GraphBool(a_victim, "IsRecoiling");
+		if (victimRecoiling) {
+			a_victim->NotifyAnimationGraph("recoilStop");
+		}
+		const bool playerBlocking = GraphBool(a_player, "IsBlocking");
+		if (playerBlocking) {
+			a_player->NotifyAnimationGraph("blockStop");
 		}
 		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
@@ -385,8 +406,9 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {}{}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
-			victimStaggering ? " (sent staggerStop)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
+		Log("try {}: before {}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
+			victimStaggering ? " (sent staggerStop)" : "", victimRecoiling ? " (sent recoilStop)" : "",
+			playerBlocking ? " (sent blockStop to the player)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}
@@ -413,8 +435,9 @@ namespace CIGAR
 			bool iframe = false;
 			a_actor->GetGraphVariableBool("bInIframe", iframe);
 			return std::format(
-				"attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={} dodge={} iframe={}",
-				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
+				"recoil={} attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={} dodge={} iframe={}",
+				GraphBool(a_actor, "IsRecoiling"), s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1,
+				staggered, synced,
 				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState(), speed, graphBlocking, graphAttacking,
 				IsDodging(a_actor), iframe);
 		};
@@ -796,8 +819,8 @@ namespace CIGAR
 		}
 		slowOwned = false;
 		const float now = RE::BSTimer::QGlobalTimeMultiplier();
-		// Leave the multiplier alone if something else (Valhalla's parry slow, 항복) changed it meanwhile.
-		if (std::abs(now - slowMultiplier) > 0.01f) {
+		// Leave the multiplier alone if something else (Valhalla's parry slow, 항복) set a slower one meanwhile.
+		if (now < slowMultiplier - 0.01f) {
 			Log("slow motion end ({}): multiplier is x{:.2f}, changed elsewhere; left as is", a_reason, now);
 			return;
 		}

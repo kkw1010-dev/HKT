@@ -333,3 +333,20 @@ Log: `testlogs/2026-09-20-jujutsu-test13-parry.log`. The user's verdicts:
   is the first `fPerfectBlockWindow` (0.15 s) of a block.
 - The balance (Valhalla gauge damage and ragdoll) is right as it is.
 - Needs: the prompts now start at 50% fill (the user's choice), panel `표시 시작 수치`.
+
+## Test 14 (2026-09-20 05:24)
+
+Log: `testlogs/2026-09-20-jujutsu-test14-recoil.log`. The user: no slow motion after a perfect parry;
+guard 유술 fine; no prompt after a plain block; needs prompt absent below 50%.
+
+- **Parry detection works**: 9 `parry (Valhalla)` lines, each with recoil=true, timedBlocking=true,
+  perfectBlocking=true.
+- **Slow motion was wiped by Valhalla**: CIGAR set x0.3 while Valhalla's own perfect-block slow ran
+  (`inlineUtils::slowTime(fTimedBlockSlowTime_Perfect, 0.1)`), whose thread resets the multiplier to 1
+  after 0.3 s; CIGAR then left it alone. Now, while CIGAR's slow should hold, a faster multiplier is put
+  back to x0.3 (within one 100 ms tick); a slower one is left to run.
+- **Found in the log, not reported by the user: all 7 plays after a parry were refused** (8-11 tries
+  each), while both guard plays went through. At every try the victim was recoiling and the player's
+  graph still blocking. Each try now sends `recoilStop` to a recoiling victim and `blockStop` to a
+  blocking player (both events exist in `0_Master.hkx` / `1hm_behavior.hkx`), and the state line logs
+  `recoil=`.
