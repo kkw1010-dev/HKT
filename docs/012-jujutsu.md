@@ -266,3 +266,9 @@ rewrote: the same strings, reordered (Pandora's order is nondeterministic), so i
 transition arrays are in a different order than in the build tests 5-8 ran on. `1hm_behavior.hkx`
 (attacks, kill-move states) is byte-identical. Decisive check: put the pre-install
 `mt_behavior.hkx` back (it carries no PNO content) and press while not attacking.
+
+Test 11 setup (2026-09-19): `mods\MUNG - Pandora Output NEW\meshes\actors\character\Behaviors\mt_behavior.hkx`
+was replaced by the pre-install copy (md5 cb3a5b03...), the file tests 5-8 ran on. The 15:40 Pandora
+copy (md5 3168ff4d...) is kept at `build\mt_behavior.pandora-20260919-1540.hkx` (git-ignored) to
+swap back. Neither copy has PNO content (PNO's FNIS list lives in `0_Master.hkx` and the character
+files), so PNO keeps working. Any later Pandora run overwrites this experiment.
