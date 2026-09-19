@@ -184,3 +184,21 @@ Log kept at `docs/testlogs/2026-09-19-jujutsu-test6-blockloopfix-OFF.log`.
     out rather than refused.
 
   If the refused tries show `dodge=true` and the refusals drop, the cause is confirmed.
+
+## Test 7 (2026-09-19): the player's own attack is the cause
+
+Log kept at `docs/testlogs/2026-09-19-jujutsu-test7-dodge.log`.
+
+- **30 attempts: 24 played, 6 refused.** The victim was dodging (`bIsDodging`) in only 2 of the 6
+  refused attempts, and in both the refusal had started before the dodge. **Dodge is not the cause.**
+  The user saw plays fire mid-dodge.
+- **Pooled over tests 5-7:** in 14 of 15 refused attempts, the **player's** graph `IsAttacking` was
+  set on every retry (attack state Draw or Hit), for the whole 0.6-1.5 s. At the first try, the player
+  was mid-attack in 13 of 20 refused attempts and 20 of 90 played ones. The victim's attack, block,
+  movement, the distance and the facing all overlap between the two groups.
+- **Reading:** the engine does not start a paired idle while the requesting actor is in an attack.
+  Holding or chaining attacks keeps it refused. This also fits the first-press misses of Valhalla's
+  execution (see `011-execute.md`), where the key comes just after the stun-breaking blow.
+- **Change for test 8:** if the player's graph is attacking, `attackStop` is sent to the player
+  before each try. While the player is attacking or the victim is dodging, the retry window runs to
+  1.5 s. The `try` line says `(sent attackStop to the player)`.

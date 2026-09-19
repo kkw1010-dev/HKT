@@ -42,14 +42,21 @@ namespace CIGAR
 		// Test 1: SetupSpecialIdle returned false on every victim that was blocking at that moment, and
 		// true on the two that had just lowered their guard. Drop the guard and retry for this long.
 		constexpr auto kPrepareWindow = 600ms;
-		// Test 6: refusals came in runs on one NPC, and the user saw them while NPCs dodged (TK Dodge RE). A
-		// victim that is dodging (its graph's bIsDodging) is waited out for up to this long instead.
-		constexpr auto kDodgeWindow = 1500ms;
+		// Tests 5-7: in 14 of 15 refused attempts the PLAYER's graph had IsAttacking set on every retry; the
+		// victim's state varied. The engine will not start a paired idle on an actor mid-attack. So the player's
+		// attack is cancelled (attackStop), and an attacking player or a dodging victim (TK Dodge RE's
+		// bIsDodging) is waited out for up to this long.
+		constexpr auto kLongWindow = 1500ms;
+
+		bool GraphBool(RE::Actor* a_actor, const char* a_name)
+		{
+			bool value = false;
+			return a_actor && a_actor->GetGraphVariableBool(a_name, value) && value;
+		}
 
 		bool IsDodging(RE::Actor* a_actor)
 		{
-			bool dodging = false;
-			return a_actor && a_actor->GetGraphVariableBool("bIsDodging", dodging) && dodging;
+			return GraphBool(a_actor, "bIsDodging");
 		}
 		constexpr auto kStartWindow = 1s;
 		constexpr auto kPairTimeout = 10s;
@@ -320,10 +327,14 @@ namespace CIGAR
 		++tries;
 		const bool wasBlocking = a_victim->IsBlocking();
 		// Test 4 logged the state after the call, which an accepted play has already changed; the state that
-		// decides is the one before it (and before blockStop).
+		// decides is the one before it (and before blockStop / attackStop).
 		const auto before = DescribeRefusal(a_player, a_victim);
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
+		}
+		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
+		if (playerAttacking) {
+			a_player->NotifyAnimationGraph("attackStop");
 		}
 		// Armed before the call: KillMoveStart may be delivered during it.
 		killActorAt = -1;
@@ -334,7 +345,8 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "", requested);
+		Log("try {}: before {}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
+			playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}
@@ -490,7 +502,8 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || (now - phaseStart >= kPrepareWindow && !(IsDodging(v) && now - phaseStart < kDodgeWindow))) {
+			} else if (!v || (now - phaseStart >= kPrepareWindow &&
+			                     !((IsDodging(v) || GraphBool(a_player, "IsAttacking")) && now - phaseStart < kLongWindow))) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
