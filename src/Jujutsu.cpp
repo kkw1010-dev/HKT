@@ -39,14 +39,14 @@ namespace CIGAR
 
 		// A guard drops between blows; keep offering the target this long after it was last seen blocking.
 		constexpr auto kBlockGrace = 700ms;
-		// Test 1: SetupSpecialIdle returned false on every victim that was blocking at that moment, and
-		// true on the two that had just lowered their guard. Drop the guard and retry for this long.
-		constexpr auto kPrepareWindow = 600ms;
 		// Tests 5-7: in 14 of 15 refused attempts the PLAYER's graph had IsAttacking set on every retry; the
-		// victim's state varied. The engine will not start a paired idle on an actor mid-attack. So the player's
-		// attack is cancelled (attackStop), and an attacking player or a dodging victim (TK Dodge RE's
-		// bIsDodging) is waited out for up to this long.
-		constexpr auto kLongWindow = 1500ms;
+		// victim's state varied. The engine will not start a paired idle on an actor mid-attack, so an attacking
+		// player gets attackStop (the victim, blockStop) before each try.
+		// Test 8: 19 of 20 plays started on the first try, right at the press; retrying for 1.5 s saved one
+		// and cut the player's next attacks short, which the user saw as an awkward stop. So retries (and the
+		// attackStop that comes with them) last only this long: the swing in progress at the press is cut,
+		// and the next one is left alone.
+		constexpr auto kPrepareWindow = 300ms;
 
 		bool GraphBool(RE::Actor* a_actor, const char* a_name)
 		{
@@ -502,8 +502,7 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || (now - phaseStart >= kPrepareWindow &&
-			                     !((IsDodging(v) || GraphBool(a_player, "IsAttacking")) && now - phaseStart < kLongWindow))) {
+			} else if (!v || now - phaseStart >= kPrepareWindow) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;

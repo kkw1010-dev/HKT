@@ -202,3 +202,20 @@ Log kept at `docs/testlogs/2026-09-19-jujutsu-test7-dodge.log`.
 - **Change for test 8:** if the player's graph is attacking, `attackStop` is sent to the player
   before each try. While the player is attacking or the victim is dodging, the retry window runs to
   1.5 s. The `try` line says `(sent attackStop to the player)`.
+
+## Test 8 (2026-09-19): attackStop works; the window is now 0.3 s
+
+Log kept at `docs/testlogs/2026-09-19-jujutsu-test8-attackstop.log`.
+
+- **23 attempts: 20 played, 3 refused.** Of the attempts where the player was mid-attack at the
+  press, 18 of 21 played, and all of those played on the first try with `attackStop`. Before, in
+  tests 5-7, only 20 of 33 such attempts played (61%). This confirms the player's attack as the cause.
+- **Remaining refusals:**
+  - Two had the player attacking again on every retry, despite `attackStop` each time (the attack
+    button held, or input buffered). Cutting those for 1.5 s is what the user saw as attacks stopping
+    awkwardly after a failed grapple.
+  - One had neither actor attacking nor dodging and is unexplained.
+- **Retries were worth little.** 19 of 20 plays started at the press, and one was saved at 0.6 s.
+- **Change (recommended to the user):** the retry window, and with it the `attackStop`s, is now
+  0.3 s, with no extension for attacks or dodges. It cuts the swing in progress at the press and
+  leaves the next one alone.
