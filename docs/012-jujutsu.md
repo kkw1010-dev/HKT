@@ -146,3 +146,21 @@ Refused and accepted distances can be compared in one log.
   `IsBlocking` and `IsAttacking`, facing, distance and height. Comparing refusals by `speed` separates
   "moving" from "not moving". Running once with NPC Block Loop Fix unticked separates the mod from
   movement itself.
+
+## Test 5 (2026-09-19): baseline with NPC Block Loop Fix ON
+
+Log kept at `docs/testlogs/2026-09-19-jujutsu-test5-blockloopfix-ON.log`; CIGAR.log is recreated
+on every launch.
+
+- **39 attempts on 17 bandits: 34 played, 5 refused (13%).** Test 3 refused 5 of 10, but that was
+  mostly one bandit.
+- **A refusal holds for the whole attempt.** All 8 retries (0.6 s) fail together, and a play almost
+  always lands on its first try; only 3 of 34 needed retries (5, 7 and 8 tries). So the deciding
+  state lasts longer than 0.6 s and is fixed per attempt.
+- **Not movement.** The victim's graph `Speed` at refused tries ranged 0-450, and plays were accepted
+  at 0-508. The victim's own attack (`gAttack`), the player's speed, the distance (43-178 refused,
+  47-174 accepted) and the facing do not separate the two either.
+- **Clustering.** Three of the five refusals were one bandit, three attempts in a row (KneeThrow,
+  ComboA, SlamA); it then took two plays at once. By idle: SlamA was refused 3 of 9, KneeThrow 1 of
+  11, ComboA 1 of 14 and BodySlam 0 of 5. That is too few to blame SlamA.
+- **Next:** the same test with NPC Block Loop Fix unticked, compared against these numbers.
