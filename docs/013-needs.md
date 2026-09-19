@@ -1,6 +1,6 @@
 # 013 · Needs (Private Needs - Orgasm)
 
-**Status:** built 2026-09-19, not tested in game.
+**Status:** confirmed in game 2026-09-19 (test 1, all four steps passed); start threshold 50% since 2026-09-20.
 
 ## Target
 
@@ -61,7 +61,7 @@ Type 3 urinates as well when the bladder level is above 0. Sitting on furniture 
 - Orgasm during a scene (PNO's excrete keys call `Orgasm(player)` then): no prompt; the prompts are
   hidden in scenes.
 
-## Test 1 (pending)
+## Test 1 (2026-09-19): passed, all four steps
 
 1. New game, PNO MCM: switch the mod on and press Initialize, close the menu. Expect a log line
    `PNO keys changed (prompt-only=true): menu 21->- check 22->-` and Y/U doing nothing.
