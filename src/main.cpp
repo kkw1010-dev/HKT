@@ -7,6 +7,7 @@
 #include "Jujutsu.h"
 #include "LockOn.h"
 #include "Module.h"
+#include "Needs.h"
 #include "Panel.h"
 #include "Prompt.h"
 #include "Settings.h"
@@ -18,10 +19,11 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 10> modules{
+		static const std::array<Module*, 11> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
-			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton()
+			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
+			Needs::GetSingleton()
 		};
 		return modules;
 	}
@@ -125,6 +127,7 @@ namespace
 		case SKSE::MessagingInterface::kDataLoaded:
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();
+			Needs::GetSingleton()->RegisterEvents();
 			LockOn::GetSingleton()->ReadGrappleIni();
 			Jujutsu::InstallHook();
 			StartTicker();

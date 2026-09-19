@@ -54,6 +54,15 @@ FHU_SCRIPTS = {
                         "inflaterAnimatingFaction", "slAnimatingFaction"],
     "sr_inflateConfig": ["defKey"],
 }
+# Private Needs - Orgasm names read and called by src/Needs.cpp (Papyrus names are case-insensitive).
+PNO_MOD = "[SL+] Private Needs - Orgasm KOR"
+PNO_SCRIPTS = {
+    "pno_configscript": ["Universal_keyCode", "CheckNeeds_keyCode", "Urinate_KeyCode", "Excrete_KeyCode",
+                         "Wetself_KeyCode", "Toilet_Keycode", "bladdertoggleVal", "boweltoggleVal",
+                         "bladdercontent", "bowelcontent", "mapKey"],
+    "pno_utilityscript": ["UrinateAndDefecate", "IsInSexScene"],
+    "pno_qf_mainquest": ["bladder_lastlevel", "bowel_lastlevel", "bladderSize", "bowelSize"],
+}
 # Acheron (surrender), read by src/Surrender.cpp.
 ACHERON_MOD = "Acheron - Death Alternative"
 ACHERON_SETTINGS = os.path.join(MODS, "TAKEALOOK - MCM and INI", "SKSE", "Acheron", "Settings.yaml")
@@ -348,6 +357,23 @@ def check_fhu(modlist):
         check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
 
 
+def check_pno(modlist):
+    """Needs reads PNO's fill levels and keys and calls UrinateAndDefecate by name; a renamed
+    variable leaves the prompts absent or the keys bound without an error."""
+    if "+" + PNO_MOD not in modlist:
+        note("Private Needs - Orgasm absent: Needs module idles")
+        return
+    for name, needles in PNO_SCRIPTS.items():
+        path = os.path.join(MODS, PNO_MOD, "scripts", name + ".pex")
+        if not os.path.isfile(path):
+            check(False, "PNO script present: %s.pex" % name)
+            continue
+        with open(path, "rb") as f:
+            data = f.read().lower()
+        missing = [n for n in needles if n.lower().encode() not in data]
+        check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+
+
 def yaml_scalar(path, key):
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -544,6 +570,7 @@ def main():
     check_lockon(modlist)
     check_eat(modlist)
     check_fhu(modlist)
+    check_pno(modlist)
     check_surrender(modlist)
     check_valhalla(modlist)
     check_jujutsu(modlist)

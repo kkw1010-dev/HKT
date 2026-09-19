@@ -5,6 +5,7 @@
 #include "Jujutsu.h"
 #include "LockOn.h"
 #include "Module.h"
+#include "Needs.h"
 #include "Prompt.h"
 #include "Settings.h"
 #include "Surrender.h"
@@ -43,6 +44,7 @@ namespace CIGAR::Panel
 			Label{ "WeaponSwap", "무기 전환", "" },
 			Label{ "Execute", "처형", "Valhalla Combat" },
 			Label{ "Jujutsu", "유술", "" },
+			Label{ "Needs", "용변", "Private Needs - Orgasm" },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -136,11 +138,27 @@ namespace CIGAR::Panel
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
 			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
 				[] { Execute::GetSingleton()->CheckKey(); });
+			{
+				bool on = Settings::PromptOnly("privateneeds");
+				if (ImGui::Checkbox("Private Needs: 프롬프트 전용##po-privateneeds", &on)) {
+					Settings::SetPromptOnly("privateneeds", on);
+					SKSE::GetTaskInterface()->AddTask([] { Needs::GetSingleton()->ApplyKeyMode(); });
+				}
+				ImGui::Indent();
+				const auto keys = Needs::GetSingleton()->KeySummary();
+				if (on) {
+					ImGui::TextColored(kDim, "PNO 단축키 6개 해제(메뉴 Y, 수치 확인 U 포함). MCM을 닫을 때마다 다시 확인");
+				} else {
+					ImGui::TextColored(kDim, "PNO 자체 키 사용. 현재 키 코드: %s", keys.empty() ? "없음" : keys.c_str());
+				}
+				ImGui::Unindent();
+			}
 			if (ImGui::Button("모드 키 다시 확인")) {
 				SKSE::GetTaskInterface()->AddTask([] {
 					LockOn::GetSingleton()->CheckKeys();
 					Surrender::GetSingleton()->CheckKey();
 					Execute::GetSingleton()->CheckKey();
+					Needs::GetSingleton()->ApplyKeyMode();
 				});
 			}
 			const auto grapple = LockOn::GetSingleton()->GrappleKey();
@@ -293,6 +311,16 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::TextColored(kDim, "기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시");
+
+			ImGui::SeparatorText("용변");
+			int needs = Settings::NeedsMinStage();
+			if (ImGui::SliderInt("표시 시작 단계", &needs, Needs::kMinStageLow, Needs::kMinStageHigh)) {
+				Settings::SetNeedsMinStage(needs);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+			ImGui::TextColored(kDim, "기본 1. Private Needs의 방광·장 단계(1-5)가 이 이상이면 프롬프트 표시");
 
 			ImGui::SeparatorText("무기 전환");
 			float swap = Settings::WeaponSwapRange();

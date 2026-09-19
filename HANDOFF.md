@@ -24,7 +24,10 @@ status.
      (test 7).
    - **Later:** balance values (stun 50%, health 5%, knock magnitude 1.0) are placeholders. The user
      deferred balance until the function is done.
-2. Backlog below.
+2. **Needs / 용변, test 1** (`docs/013-needs.md`). Built 2026-09-19 on Private Needs - Orgasm 1.10.2,
+   not tested in game. The doc lists the test steps; the log lines to read are `[Needs] gate`,
+   `PNO keys changed` and `excrete handler ended`.
+3. Backlog below.
 
 Confirmed in game on 2026-09-19:
 - the Execute prompt with actor names;
@@ -73,6 +76,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `WeaponSwap` | 원거리 무기, 근접 무기 | — (TDM lock target when present) | `010` |
 | `Execute` | 처형 | Valhalla Combat | `011` |
 | `Jujutsu` | 유술 | — (Valhalla optional) | `012` |
+| `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm | `013` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -250,4 +254,5 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    (`BaboSexControllerManager.Surrender(crosshairRef)`) is not covered.
 4. **Simply Knock.** Not installed. II bundles a `simplyknockmainscript.pex`
    override, so check that first.
-5. **Private Needs.** Not installed. Prefer wrapping an existing needs mod.
+5. **Private Needs.** Done as `Needs` on Private Needs - Orgasm (installed 2026-09-19); see item 2
+   above.

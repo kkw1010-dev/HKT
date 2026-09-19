@@ -38,6 +38,7 @@ their in-game tests are in git history and in `docs/001`.
 | `WeaponSwap` | — (TDM's lock target when present) | — | Built 2026-09-18; returns to the previous loadout since 2026-09-19; not tested in game |
 | `Execute` | Valhalla Combat (optional) | — | Tested in game 2026-09-19 |
 | `Jujutsu` | — (Valhalla optional) | — | Built 2026-09-19, not tested in game |
+| `Needs` | Private Needs - Orgasm (optional) | — | Built 2026-09-19, not tested in game |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -58,6 +59,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | In combat, enemy inside that distance, bow or crossbow in hand | 근접 무기: <무기 이름> |
 | Valhalla's execution key would execute the nearest stun-broken actor within 250 units | 처형: <이름> |
 | A hostile humanoid within 250 units is guarding | 유술: <이름> |
+| Private Needs bladder / bowel at or above the panel's level (default 1), out of combat and scenes | 소변 보기 (N%), 대변 보기 (N%) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and

@@ -34,10 +34,17 @@ namespace CIGAR::Settings
 	void SetPromptOnly(std::string_view a_target, bool a_on);
 	std::int32_t ManualKey(std::string_view a_target);
 	void SetManualKey(std::string_view a_target, std::int32_t a_key);
+	// The same for a target with several keys ("privateneeds": PNO's six hotkeys), one per name.
+	std::int32_t ManualKey(std::string_view a_target, std::string_view a_name);
+	void SetManualKey(std::string_view a_target, std::string_view a_name, std::int32_t a_key);
 
 	// The Survival Mode hunger stage (1-5) the eat prompt starts at; default 3.
 	int EatMinStage();
 	void SetEatMinStage(int a_stage);
+
+	// The Private Needs bladder/bowel level (1-5) the needs prompts start at; default 1.
+	int NeedsMinStage();
+	void SetNeedsMinStage(int a_stage);
 
 	// The enemy distance at which the weapon swap offers a ranged weapon (beyond) or a melee weapon
 	// (inside); default 800, the user's choice.

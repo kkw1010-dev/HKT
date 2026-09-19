@@ -191,6 +191,12 @@ namespace CIGAR::Util
 		return var && var->IsBool() && var->GetBool();
 	}
 
+	float ScriptFloat(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, float a_default)
+	{
+		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		return var && var->IsFloat() ? var->GetFloat() : a_default;
+	}
+
 	std::optional<std::int64_t> IniInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key)
 	{
 		std::ifstream file{ a_path };

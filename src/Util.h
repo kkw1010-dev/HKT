@@ -54,6 +54,8 @@ namespace CIGAR::Util
 	// An int property of a bound script object, or a_default.
 	std::int32_t ScriptInt(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, std::int32_t a_default = -1);
 	bool ScriptBool(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name);
+	// A float property of a bound script object, or a_default.
+	float ScriptFloat(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, float a_default = 0.0f);
 
 	// An integer from a Data-relative INI file (read through MO2's VFS), or nullopt.
 	std::optional<std::int64_t> IniInt(const std::filesystem::path& a_path, std::string_view a_section, std::string_view a_key);
