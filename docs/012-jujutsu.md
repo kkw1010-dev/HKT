@@ -248,3 +248,21 @@ Ruled out, with evidence:
 Not yet decided, because the logs do not carry it: the player's side. The try line now also logs
 the player's right/left hand objects, race, sex, movement/fighting/activate controls,
 `PNO_Animation_Idx`, `bAnimationDriven` and every active effect not from the base game.
+
+## Test 10 (2026-09-19 23:20): diagnostic build, 5 of 13 presses played
+
+Log: `testlogs/2026-09-19-jujutsu-test10-diag.log`. Player: Nord (UBE), female, iron axe and shield,
+every control enabled, `PNO_Animation_Idx` 0, not animation-driven; a PNO urination finished 14 s
+before the first press. So neither the weapon, a PNO lock on the player, nor a PNO effect decides it:
+the plays and refusals had the same player state.
+
+Across all tests, plays start on the **first try** (tests 5-8: 107 of 110); retries saved 3. So the
+0.3 s window of 16daf79 is not the cause. What fell is the first-try rate: tests 5-8 about 80-100%,
+test 9 0 of 11, test 10 5 of 13. Tests 5-6 pressed mostly while not attacking and still played
+(idle presses 9/13, 25/26, 18/20, 10/10); tests 9-10 idle presses played 5 of 23.
+
+Open lead: presses while not attacking go through `mt_behavior.hkx`, which the 15:40 Pandora run
+rewrote: the same strings, reordered (Pandora's order is nondeterministic), so its state and
+transition arrays are in a different order than in the build tests 5-8 ran on. `1hm_behavior.hkx`
+(attacks, kill-move states) is byte-identical. Decisive check: put the pre-install
+`mt_behavior.hkx` back (it carries no PNO content) and press while not attacking.
