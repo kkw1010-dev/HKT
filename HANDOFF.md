@@ -1,4 +1,4 @@
-# CIGAR — session handoff (updated 2026-09-17, evening)
+# CIGAR — session handoff (updated 2026-09-19)
 
 Read this first, then `README.md`. The design rationale and the test history of
 each module are in `docs/`, one file per module, and each file starts with its
@@ -6,20 +6,35 @@ status.
 
 ## Open items, in priority order
 
-1. **Jujutsu / 유술, test 4** (`docs/012-jujutsu.md`). Survival works. This build knocks the victim down at its
-   own KillMoveEnd (it stood up first in test 3), hides 유술 for Valhalla-stunned targets, and logs dz, facing,
-   race and weapon on refusals. Refusals in test 3 were all one bandit at 66-153 units, so compare
-   `try N:` lines against accepted plays before blaming range. The user wants the reach kept at 250.
+1. **Jujutsu / 유술, test 9** (`docs/012-jujutsu.md`, read its test sections 1-8 first). State of the build
+   deployed at 16daf79:
+   - **Works (confirmed in game):** the prompt on a guarding humanoid within the panel's 유술 거리
+     (default 250, the user's choice); the vanilla H2H kill move; the victim surviving (KillActor and
+     KillMoveEnd swallowed by vtable hooks on their anim-event handlers); the victim knocked into ragdoll
+     at its own KillMoveEnd, which the user called very natural; the payoff (Valhalla stun share, or
+     stamina, plus a little health); hiding 유술 for Valhalla-stunned targets.
+   - **Refusals** were traced to the **player's own attack**: the engine will not start a paired idle
+     mid-attack. `attackStop` is sent to an attacking player; test 8 then played 18 of 21 mid-attack
+     presses (61% before). The retry window was cut from 1.5 s to 0.3 s, so the player's next attack is
+     no longer cut after a failed grapple.
+   - **Test 9 checks:** no awkward attack stop after a failed press, and the refusal rate. Pool the
+     `try N:` lines with the scripts in the doc's method. Save CIGAR.log to `docs/testlogs/` before the
+     next launch, because it is recreated on every launch.
+   - **Ruled out:** distance, NPC Block Loop Fix (test 6, mod off: 22% refused vs 13% on), and TK Dodge
+     (test 7).
+   - **Later:** balance values (stun 50%, health 5%, knock magnitude 1.0) are placeholders. The user
+     deferred balance until the function is done.
 2. Backlog below.
 
 Confirmed in game on 2026-09-19:
 - the Execute prompt with actor names;
-- the WeaponSwap return, and the arrows re-equipped with the bow;
+- the WeaponSwap return to the previous loadout, and the arrows re-equipped with the bow;
 - Grapple after a new game;
 - unique prompt IDs in the kidnap room;
 - the three panel pages;
 - the F13/F14/F15 prompt-only keys, with G and K doing nothing.
-Execute sometimes misses the first press; the user accepts this, because Valhalla's own key misses in the same way.
+Execute sometimes misses the first press; the user accepts this. Test 7 suggests the same cause as 유술's
+refusals (the stun-breaking swing still in progress), so `attackStop` could help there too. Not done yet.
 
 ## Where things stand
 
