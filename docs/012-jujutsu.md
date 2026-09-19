@@ -164,3 +164,23 @@ on every launch.
   ComboA, SlamA); it then took two plays at once. By idle: SlamA was refused 3 of 9, KneeThrow 1 of
   11, ComboA 1 of 14 and BodySlam 0 of 5. That is too few to blame SlamA.
 - **Next:** the same test with NPC Block Loop Fix unticked, compared against these numbers.
+
+## Test 6 (2026-09-19): NPC Block Loop Fix OFF, so it is not the cause
+
+Log kept at `docs/testlogs/2026-09-19-jujutsu-test6-blockloopfix-OFF.log`.
+
+- **41 attempts: 32 played, 9 refused (22%),** against 13% with the mod on. Taking the mod out did
+  not help, so NPC Block Loop Fix is ruled out.
+- **Refusals come in runs on one NPC.** One NPC was refused three times in a row (14:36:20-24),
+  another five times in a row over 5 s (14:37:43-47). Every other NPC played on the first try. The
+  user saw the refusals while NPCs were dodging.
+- The list runs TK Dodge RE, including on NPCs. Its Nemesis patch adds a `TKDodgeState` state
+  machine and the graph variables `bIsDodging`, `bInIframe` and `bIframeActive` to `1hm_behavior`
+  and `magicbehavior`. A victim inside that state machine probably has no transition into the
+  paired kill move.
+- **Changes for test 7:**
+  - each try logs the victim's and the player's `dodge` (`bIsDodging`) and `iframe` (`bInIframe`);
+  - while the victim is dodging, the retry window stretches from 0.6 s to 1.5 s, so a dodge is waited
+    out rather than refused.
+
+  If the refused tries show `dodge=true` and the refusals drop, the cause is confirmed.

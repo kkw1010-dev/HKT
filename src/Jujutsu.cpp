@@ -42,6 +42,15 @@ namespace CIGAR
 		// Test 1: SetupSpecialIdle returned false on every victim that was blocking at that moment, and
 		// true on the two that had just lowered their guard. Drop the guard and retry for this long.
 		constexpr auto kPrepareWindow = 600ms;
+		// Test 6: refusals came in runs on one NPC, and the user saw them while NPCs dodged (TK Dodge RE). A
+		// victim that is dodging (its graph's bIsDodging) is waited out for up to this long instead.
+		constexpr auto kDodgeWindow = 1500ms;
+
+		bool IsDodging(RE::Actor* a_actor)
+		{
+			bool dodging = false;
+			return a_actor && a_actor->GetGraphVariableBool("bIsDodging", dodging) && dodging;
+		}
 		constexpr auto kStartWindow = 1s;
 		constexpr auto kPairTimeout = 10s;
 		// KillActor can arrive just after PairEnd (ComboA: 2.768 s vs 2.757 s), so the hooks stay armed
@@ -348,9 +357,14 @@ namespace CIGAR
 			a_actor->GetGraphVariableBool("IsBlocking", graphBlocking);
 			bool graphAttacking = false;
 			a_actor->GetGraphVariableBool("IsAttacking", graphAttacking);
-			return std::format("attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={}",
+			// TK Dodge RE's graph variables (its Nemesis patch adds them to 1hm_behavior and magicbehavior).
+			bool iframe = false;
+			a_actor->GetGraphVariableBool("bInIframe", iframe);
+			return std::format(
+				"attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={} dodge={} iframe={}",
 				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
-				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState(), speed, graphBlocking, graphAttacking);
+				a_actor->IsInKillMove(), s && s->IsSprinting(), a_actor->IsInRagdollState(), speed, graphBlocking, graphAttacking,
+				IsDodging(a_actor), iframe);
 		};
 		// Test 3: every refusal was one bandit, at 66-153 units, while others were taken at 100-193. So also
 		// the height difference, which way each faces the other, the race and the victim's weapon.
@@ -476,7 +490,7 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || now - phaseStart >= kPrepareWindow) {
+			} else if (!v || (now - phaseStart >= kPrepareWindow && !(IsDodging(v) && now - phaseStart < kDodgeWindow))) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
