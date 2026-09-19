@@ -382,11 +382,46 @@ namespace CIGAR
 		// the height difference, which way each faces the other, the race and the victim's weapon.
 		const auto* race = a_victim->GetRace();
 		const auto* weapon = a_victim->GetEquippedObject(false);
-		return std::format("victim[blocking={} {} race={} weapon={} facesPlayer={:.0f}] player[weaponDrawn={} {} facesVictim={:.0f}] "
+		// 2026-09-19: every H2H kill move was refused after Private Needs was installed, while Valhalla's
+		// execution still played on the same victim. The player's side is logged in full to tell apart
+		// what it holds, who it is, which controls are locked and what is active on it.
+		const auto* right = a_player->GetEquippedObject(false);
+		const auto* left = a_player->GetEquippedObject(true);
+		const auto* playerRace = a_player->GetRace();
+		const auto* base = a_player->GetActorBase();
+		const auto* controls = RE::ControlMap::GetSingleton();
+		std::int32_t pnoIdx = 0;
+		a_player->GetGraphVariableInt("PNO_Animation_Idx", pnoIdx);
+		bool animDriven = false;
+		a_player->GetGraphVariableBool("bAnimationDriven", animDriven);
+		std::string effects;
+		std::size_t effectCount = 0;
+		if (auto* list = a_player->AsMagicTarget()->GetActiveEffectList()) {
+			for (auto* effect : *list) {
+				const auto* mgef = effect ? effect->GetBaseObject() : nullptr;
+				if (!mgef || effect->flags.any(RE::ActiveEffect::Flag::kInactive)) {
+					continue;
+				}
+				++effectCount;
+				const auto* file = mgef->GetFile(0);
+				const std::string_view plugin = file ? file->GetFilename() : ""sv;
+				// Name the effects that are not from the base game, which is where a new cause would come from.
+				if (plugin != "Skyrim.esm"sv && plugin != "Update.esm"sv && plugin != "Dawnguard.esm"sv && plugin != "Dragonborn.esm"sv) {
+					const std::string_view edid = mgef->GetFormEditorID();
+					effects += std::format("{}{}({})", effects.empty() ? "" : ",",
+						edid.empty() ? std::format("{:08X}", mgef->GetFormID()) : std::string(edid), plugin);
+				}
+			}
+		}
+		return std::format("victim[blocking={} {} race={} weapon={} facesPlayer={:.0f}] player[weaponDrawn={} {} facesVictim={:.0f} "
+		                   "right={} left={} race={} female={} move={} fight={} activate={} pnoIdx={} animDriven={} effects={}:{}] "
 		                   "distance={:.0f} dz={:.0f}",
 			a_victim->IsBlocking(), state(a_victim), race ? Util::NameOf(race) : "-"s, weapon ? Util::NameOf(weapon) : "-"s,
 			a_victim->GetHeadingAngle(a_player->GetPosition(), false), a_player->AsActorState()->IsWeaponDrawn(), state(a_player),
-			a_player->GetHeadingAngle(a_victim->GetPosition(), false), a_player->GetPosition().GetDistance(a_victim->GetPosition()),
+			a_player->GetHeadingAngle(a_victim->GetPosition(), false), right ? Util::NameOf(right) : "-"s, left ? Util::NameOf(left) : "-"s,
+			playerRace ? Util::NameOf(playerRace) : "-"s, base && base->IsFemale(), controls && controls->IsMovementControlsEnabled(),
+			controls && controls->IsFightingControlsEnabled(), controls && controls->IsActivateControlsEnabled(), pnoIdx, animDriven,
+			effectCount, effects.empty() ? "-"s : effects, a_player->GetPosition().GetDistance(a_victim->GetPosition()),
 			a_victim->GetPositionZ() - a_player->GetPositionZ());
 	}
 

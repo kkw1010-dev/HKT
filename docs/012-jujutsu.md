@@ -219,3 +219,32 @@ Log kept at `docs/testlogs/2026-09-19-jujutsu-test8-attackstop.log`.
 - **Change (recommended to the user):** the retry window, and with it the `attackStop`s, is now
   0.3 s, with no extension for attacks or dodges. It cuts the swing in progress at the press and
   leaves the next one alone.
+
+## Test 9 (2026-09-19 22:25): every kill move refused after Private Needs was installed
+
+Log: `testlogs/2026-09-19-needs-test1-jujutsu-missing.log`. 11 presses, 54 tries, **0** accepted by
+`SetupSpecialIdle` (test 8: 20 of 68 tries, 20 of 23 presses played). Valhalla's execution still
+played on the same victim (FF001520) a minute later, so both actors can still enter a paired idle.
+
+What changed between test 8 (15:24) and test 9: the Private Needs - Orgasm install (case 008, 15:37),
+a Pandora regeneration for its FNIS list (15:40), the CIGAR `Needs` module, and a new session.
+
+Ruled out, with evidence:
+
+- **CIGAR code.** `Jujutsu.cpp` is unchanged since 16daf79; the Needs commit touched only
+  `Util.cpp` (a new helper) and `main.cpp` (registration).
+- **Pandora output.** Against the pre-install backup: `1hm_behavior.hkx`, which holds every
+  `pa_KillMove*` state, is byte-identical; `animationdatasinglefile.txt` differs only in line order
+  (the sorted files are identical; the H2H kill-move clip entries hash the same); `0_Master.hkx`
+  only gains the `FNIS_Private_Needs_Behavior` reference. The Engine.log sets differ only by
+  `FNIS_Private_Needs_List`; Pandora's order is nondeterministic between runs, which explains the
+  many same-size files that differ (`mt_behavior.hkx`).
+- **MO2 profile.** Against the `.bak_20260919_pno` files, the only change is the PNO mod and plugin.
+- **PNO.dll's player vtable hook.** It hooks slot 0xAF on AE (0xAD on SE), which CommonLib names
+  `UpdateCharacterControllerSimulationSettings`, but its thunk calls the original first with every
+  argument register untouched, then runs PNO's ejection update.
+- **PNO's SkyPatcher lines.** Only a hidden wet-self perk on female NPCs, keywords and projectile flags.
+
+Not yet decided, because the logs do not carry it: the player's side. The try line now also logs
+the player's right/left hand objects, race, sex, movement/fighting/activate controls,
+`PNO_Animation_Idx`, `bAnimationDriven` and every active effect not from the base game.
