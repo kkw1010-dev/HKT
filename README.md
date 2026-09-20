@@ -40,7 +40,7 @@ their in-game tests are in git history and in `docs/001`.
 | `Execute` | Valhalla Combat (optional) | — | Tested in game 2026-09-19 |
 | `Jujutsu` | — (Valhalla optional) | — | Built 2026-09-19, not tested in game |
 | `Needs` | Private Needs - Orgasm (optional) | — | Built 2026-09-19, not tested in game |
-| `Potion` | — | `ItemUse` potion actions (health, stamina, magicka, cure disease, cure poison, water breathing) | Built 2026-09-20, not tested in game |
+| `Potion` | — | `ItemUse` potion actions (health, stamina, magicka, cure disease, cure poison, water breathing) | Confirmed in game 2026-09-20 (health and stamina; cures and water breathing untested) |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 

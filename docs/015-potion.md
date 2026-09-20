@@ -1,7 +1,7 @@
 # 015 · Potion: drinking from a prompt
 
-**Status:** built 2026-09-20. First run showed no prompt; the cause was found in the log
-and fixed the same day (see *Test 1* below). **The fix is not tested in game.**
+**Status:** confirmed in game 2026-09-20 (test 2). Test 1 the same day showed no
+prompt at all; the cause is below, and the fix is what test 2 ran on.
 
 This module takes over the potion half of Streamlined Interactions' `ItemUse`
 module, which the deployed SI override now turns off. SI's other `ItemUse`
@@ -138,3 +138,31 @@ no potion for health: 31 alchemy stacks examined, 12 food, 6 poison, 0 harmful,
 `alch=0 potions=0` means an empty pack; `alch=31 potions=0` means the filter
 turned everything down, and the line names the bottles. The first version could
 not tell those two apart, which is what cost a run.
+
+## Test 2 (2026-09-20): confirmed
+
+`CIGAR.log` 19:23-19:26:
+
+- health at 44% offered `마시기: 물약 - 체력 회복 최하급 (44%)`; accepting logged
+  `drank 물약 - 체력 회복 최하급 (0003EADD, strength 50) for health at 0.49`, and
+  three seconds later `after drinking for health: need is now -`. Twice.
+- with health back up, the next need in the order took over: at stamina 27% the
+  prompt became `마시기: 물약 - 지구력 회복 최하급 (43%)`, and that need cleared
+  the same way.
+- the prompt took whichever key slot was free (1 and 2 across the four offers),
+  so it shares SkyPrompt's four slots with the other modules as intended.
+
+The test-1 diagnostic proved itself in the same run. With the healing potions
+drunk up, a health need logged:
+
+```
+no potion for health: 2 alchemy stacks examined, 0 food, 0 poison, 0 harmful,
+2 without an effect for it; rejected: 물약 - 매지카 회복 최하급(no effect for
+this need), 물약 - 지구력 회복 최하급(no effect for this need)
+```
+
+which says plainly that the pack was out of health potions rather than that the
+filter had gone wrong again.
+
+Not yet exercised in game: 해독, 질병 치료, 수중 호흡, and the 체력 위급
+threshold picking the strongest bottle.
