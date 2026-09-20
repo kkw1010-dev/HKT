@@ -34,10 +34,16 @@ status.
      (`build\mt_behavior.jujutsu-good.hkx`; the 15:40 output is still
      `build\mt_behavior.pandora-20260919-1540.hkx`). After a future Pandora run and a fresh 유술
      test, record the new file with `python tools/verify_deploy.py --accept-behaviour`.
-3. **The `Potion` module (2026-09-20) is not tested in game.** It replaces Streamlined
-   Interactions' six `ItemUse` potion actions, which the SI override now turns off, so if it does
-   not work there is no potion prompt at all rather than SI's. See `docs/015-potion.md` for what
-   was deliberately not carried over (SI's `cooldown`, its HP-potion slow motion).
+3. **The `Potion` module (2026-09-20): first run showed no prompt, cause found and fixed, the fix
+   is not tested in game.** The gate was right (`need=health ratio=0.45`) and the inventory scan
+   rejected every bottle, because the filter required `IsMedicine()` — a flag set on 27 ALCH
+   records in this whole order and on none of the healing potions (vanilla `RestoreHealth02` has
+   `Flags = 0`). That test is gone; a potion is now anything that is neither food nor poison and
+   whose effects serve the need. The gate line gained `alch=` and an empty-handed scan now names
+   what it turned down, so the same class of failure reads off one launch. It replaces SI's six
+   `ItemUse` potion actions, which the override turns off, so a failure means no potion prompt at
+   all rather than SI's. `docs/015-potion.md` has test 1 and what was deliberately not carried
+   over (SI's `cooldown`, its HP-potion slow motion).
 4. Backlog below.
 
 Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 18:24-18:32):

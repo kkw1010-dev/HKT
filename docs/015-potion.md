@@ -1,6 +1,7 @@
 # 015 · Potion: drinking from a prompt
 
-**Status:** built 2026-09-20, **not tested in game.**
+**Status:** built 2026-09-20. First run showed no prompt; the cause was found in the log
+and fixed the same day (see *Test 1* below). **The fix is not tested in game.**
 
 This module takes over the potion half of Streamlined Interactions' `ItemUse`
 module, which the deployed SI override now turns off. SI's other `ItemUse`
@@ -44,8 +45,8 @@ after a drink.
 Potions are recognised by **what their effects do**, never by form ID, so an
 alchemy overhaul's potions (Apothecary on this modlist) work with no patch.
 
-- The item must be an `AlchemyItem` that `IsMedicine()`, is not a poison, is not
-  food, is not a quest object, and is carried.
+- The item must be an `AlchemyItem` that is carried, is not food, is not a
+  poison, and is not a quest object. **Not `IsMedicine()`** — see test 1.
 - **One hostile or detrimental effect rules the whole bottle out**, however good
   the rest of it is.
 - For 체력 / 기력 / 마나 / 수중 호흡, a matching effect has the need's actor
@@ -82,8 +83,10 @@ changed while the prompt was up.
 
 - On load: `ready: health=...(50%/20%) stamina=... ... sexlab=...`, the switches
   and thresholds actually in force.
-- `gate need=... ratio=... urgent=... movable=... sexlab=... quiet=...
-  potions=... pick=...` on every change.
+- `gate need=... ratio=... urgent=... movable=... sexlab=... quiet=... alch=...
+  potions=... pick=...` on every change. `alch=` counts the alchemy stacks the scan
+  examined, so an empty pack and a filter that turned everything down are not the
+  same line (test 1).
 - Every drink logs the bottle, its strength, the need and the ratio.
 - Three seconds later the log records what the need became. A need that did not
   ease is a WARN and one HUD notification per session: the bottle did not do
@@ -101,3 +104,37 @@ changed while the prompt was up.
   wanted.
 - **The non-potion `ItemUse` actions**: recharge a weapon, equip a weapon,
   armour or spellbook, make light. They remain SI's.
+
+## Test 1 (2026-09-20): the prompt never appeared
+
+`CIGAR.log` had the gate firing correctly — `need=health ratio=0.45` down to
+`ratio=0.29` over two minutes — and `potions=0` on every line. So the need was
+read right and the inventory scan rejected everything.
+
+The cause was `AlchemyItem::IsMedicine()` in the filter. The Medicine flag is
+set on **27 ALCH records in this entire load order** (mostly follower-mod
+items), and on none of the healing potions: vanilla's own `RestoreHealth02`
+(`03EADE:Skyrim.esm`) carries `Flags = 0`, and so does Apothecary's override of
+it. CommonLibSSE reads that flag as `flags >> 16`, which is also true for
+poisons, so the test was wrong in both directions.
+
+It is gone. What makes an `AlchemyItem` a potion here is that it is neither food
+nor poison and that its effects serve the need — checks that hold whatever an
+overhaul does with the flags. The restore-health effect itself was verified
+against the data at the same time: `MAG_AlchRestoreHealth` (`03EB15:Skyrim.esm`,
+Apothecary's version) has archetype `PeakValueModifier`, actor value `Health`,
+and flags `NoArea, PowerAffectsMagnitude` — no Detrimental and no Hostile — so
+it passes.
+
+**Made self-reporting.** The gate line now carries `alch=`, the number of
+alchemy stacks actually examined, beside `potions=`. A need that holds with
+nothing picked also logs once per session what was turned down and why:
+
+```
+no potion for health: 31 alchemy stacks examined, 12 food, 6 poison, 0 harmful,
+13 without an effect for it; rejected: ...
+```
+
+`alch=0 potions=0` means an empty pack; `alch=31 potions=0` means the filter
+turned everything down, and the line names the bottles. The first version could
+not tell those two apart, which is what cost a run.

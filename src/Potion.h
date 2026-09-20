@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "Prompt.h"
 
+#include <set>
+
 namespace CIGAR
 {
 	// Drinks a potion from the inventory when the player needs one: low health, stamina or magicka,
@@ -56,12 +58,22 @@ namespace CIGAR
 		{
 			RE::AlchemyItem* potion{ nullptr };
 			std::size_t candidates{ 0 };
+			// Every AlchemyItem stack looked at, and why the rejected ones were rejected. A need
+			// that holds with no pick is otherwise indistinguishable from an empty pack.
+			std::size_t examined{ 0 };
+			std::size_t food{ 0 };
+			std::size_t poison{ 0 };
+			std::size_t harmful{ 0 };
+			std::size_t noMatch{ 0 };
+			// The first few rejections, named, for the one diagnostic line.
+			std::string rejected;
 		};
 
 		Potion();
 
 		// The strength of a_potion for a_need: the restored amount, or 0 when it does not serve it.
-		// A potion with a hostile or detrimental effect scores 0.
+		// A potion with a hostile or detrimental effect scores 0 and sets a_harmful.
+		static float Strength(const RE::AlchemyItem* a_potion, Need a_need, bool& a_harmful);
 		static float Strength(const RE::AlchemyItem* a_potion, Need a_need);
 		Pick Scan(RE::PlayerCharacter* a_player, Need a_need, float a_missing, bool a_strongest) const;
 
@@ -83,5 +95,7 @@ namespace CIGAR
 		Need drankFor{ Need::kNone };
 		float ratioBeforeDrink{ 0.0f };
 		bool warnedNoChange{ false };
+		// The needs whose empty-handed scan has already been explained, once per session each.
+		std::set<Need> explained;
 	};
 }

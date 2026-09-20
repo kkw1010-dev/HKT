@@ -93,6 +93,7 @@ namespace CIGAR
 		lastGate.clear();
 		offeredNeed = Need::kNone;
 		offeredPotion = nullptr;
+		explained.clear();
 		scannedAt = {};
 		quietUntil = {};
 		checkAfterDrink = false;
@@ -171,6 +172,13 @@ namespace CIGAR
 
 	float Potion::Strength(const RE::AlchemyItem* a_potion, Need a_need)
 	{
+		bool harmful = false;
+		return Strength(a_potion, a_need, harmful);
+	}
+
+	float Potion::Strength(const RE::AlchemyItem* a_potion, Need a_need, bool& a_harmful)
+	{
+		a_harmful = false;
 		float total = 0.0f;
 		for (const auto* effect : a_potion->effects) {
 			const auto* base = effect ? effect->baseEffect : nullptr;
@@ -179,6 +187,7 @@ namespace CIGAR
 			}
 			// One harmful effect rules the whole bottle out, however good the rest is.
 			if (base->IsHostile() || base->IsDetrimental()) {
+				a_harmful = true;
 				return 0.0f;
 			}
 			const auto archetype = base->GetArchetype();
@@ -216,17 +225,40 @@ namespace CIGAR
 		RE::AlchemyItem* enough = nullptr;
 		float enoughScore = 0.0f;
 
+		const auto note = [&result](const RE::AlchemyItem* a_item, const char* a_why) {
+			if (result.rejected.size() < 200) {
+				result.rejected += std::format("{}{}({})", result.rejected.empty() ? "" : ", ", Util::NameOf(a_item), a_why);
+			}
+		};
+
 		const auto inventory = a_player->GetInventory([](RE::TESBoundObject& a_obj) { return a_obj.Is(RE::FormType::AlchemyItem); });
 		for (const auto& [object, data] : inventory) {
 			auto* potion = object ? object->As<RE::AlchemyItem>() : nullptr;
-			if (!potion || data.first <= 0 || !potion->IsMedicine() || potion->IsPoison() || potion->IsFood()) {
+			if (!potion || data.first <= 0) {
+				continue;
+			}
+			++result.examined;
+			// Not IsMedicine(): the Medicine flag is set on 27 records in this whole load order, and
+			// on none of the restore-health potions — vanilla's own RestoreHealth02 has no flags at
+			// all. What makes an AlchemyItem a potion here is that it is neither food nor poison and
+			// that its effects serve the need.
+			if (potion->IsFood()) {
+				++result.food;
+				continue;
+			}
+			if (potion->IsPoison()) {
+				++result.poison;
 				continue;
 			}
 			if (data.second && data.second->IsQuestObject()) {
+				note(potion, "quest");
 				continue;
 			}
-			const float score = Strength(potion, a_need);
+			bool harmful = false;
+			const float score = Strength(potion, a_need, harmful);
 			if (score <= 0.0f) {
+				++(harmful ? result.harmful : result.noMatch);
+				note(potion, harmful ? "harmful" : "no effect for this need");
 				continue;
 			}
 			++result.candidates;
@@ -348,20 +380,30 @@ namespace CIGAR
 		// The inventory is read when the need changes, when the bottle in hand is gone, and once a
 		// second otherwise; the rest of this gate is cheap enough to run every tick.
 		std::size_t candidates = 0;
+		std::size_t examined = 0;
 		if (!ready) {
 			offeredPotion = nullptr;
 		} else if (need != offeredNeed || !offeredPotion || now - scannedAt >= kScanInterval) {
 			const auto pick = Scan(player, need, missing, urgent);
 			offeredPotion = pick.potion;
 			candidates = pick.candidates;
+			examined = pick.examined;
 			scannedAt = now;
+			// A need that holds with nothing to drink: say once whether the pack is empty of
+			// potions or the filter turned them all down, and which ones.
+			if (!pick.potion && explained.insert(need).second) {
+				Log("no potion for {}: {} alchemy stacks examined, {} food, {} poison, {} harmful, {} without an effect for it{}",
+					NeedTag(need), pick.examined, pick.food, pick.poison, pick.harmful, pick.noMatch,
+					pick.rejected.empty() ? ""s : std::format("; rejected: {}", pick.rejected));
+			}
 		}
 		const Need was = offeredNeed;
 		offeredNeed = ready ? need : Need::kNone;
 
-		LogGate(std::format("need={} ratio={:.2f} urgent={} movable={} sexlab={} quiet={} potions={} pick={}",
+		LogGate(std::format("need={} ratio={:.2f} urgent={} movable={} sexlab={} quiet={} alch={} potions={} pick={}",
 			NeedTag(need), ratio, urgent, movable, sexlab, quiet,
-			ready ? std::to_string(candidates) : "-"s, offeredPotion ? Util::NameOf(offeredPotion) : "-"s));
+			ready ? std::to_string(examined) : "-"s, ready ? std::to_string(candidates) : "-"s,
+			offeredPotion ? Util::NameOf(offeredPotion) : "-"s));
 
 		// The prompt names the potion, so a different need or bottle is offered again with its name.
 		if (drink.Offered() && (need != was || !offeredPotion)) {
