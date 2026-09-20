@@ -54,7 +54,9 @@ Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 20:22-20:46), release build:
 - the player-facing panel (no `조건:` / `최근:` line), by eye — the panel logs no contents;
 - gamepad prompts, by eye — CIGAR logs only the keyboard key, so a pad accept and a keyboard
   accept are the same line. SkyPrompt supplies the pad button from its own settings.json.
-- Still open: whether the SKSE Menu Framework panel can be *operated* with a pad.
+CIGAR targets keyboard and mouse; the pad is not an audience (the user, 2026-09-20). Pad gaps
+are known limits, not open items, and no gamepad feature belongs in the mod. See
+`docs/016-gamepad.md`.
 
 Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 18:24-18:32):
 - the LockOn / Grapple split: both modules resolved on their own, 록온 and 그래플 were offered at the

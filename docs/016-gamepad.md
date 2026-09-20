@@ -1,7 +1,10 @@
 # 016 · Gamepad, and why CIGAR adds no binding layer
 
-**Status:** confirmed in game 2026-09-20 with the release build. CIGAR needs no
-gamepad code; SkyPrompt already carries the per-device buttons.
+**Status:** settled 2026-09-20. **CIGAR targets keyboard and mouse.** The pad is
+not an audience — the user's words: "키보드로 하겠지, 애초에 엑박유저를 대상으로
+한 모드도 아님". What works on a pad works because SkyPrompt supplies its own
+per-device buttons, not because CIGAR aims at it, so no gamepad feature belongs
+in this mod and no gamepad gap is a blocker.
 
 ## SkyPrompt already solves it
 
@@ -104,12 +107,13 @@ on their observation rather than on this file:
   release panel showing the player descriptions instead of the `조건:` gate line
   was confirmed by eye.
 
-## Still open
+## Known limits, not open items
+
+These were never chased, and by the scope above they should not be:
 
 - Whether the SKSE Menu Framework panel can be *operated* with a pad. If it
-  cannot, a pad-only player cannot reach CIGAR's settings at all, and the answer
-  would be to document editing `CIGAR.json` directly, or to add an MCM.
-- Whether `cycle_L` / `cycle_R` paging works on a pad when more than four
-  prompts are live.
-- Slot 4 on Xbox is `A`, the activate button. No conflict was reported, but it
+  cannot, a pad-only player edits `CIGAR.json` by hand. No MCM is planned for
+  this.
+- Whether `cycle_L` / `cycle_R` paging works on a pad past four prompts.
+- Slot 4 on Xbox is `A`, the activate button; no conflict was reported, but it
   was not deliberately exercised.
