@@ -366,3 +366,24 @@ attempt with the player blocking now switches the fighting controls off
 (`ControlMap::ToggleControls(kFighting, false)`), which ends the block; the next retry (100 ms) finds
 it clear. They go back on in `Finish()`, when the module is switched off, when the module is idle, and
 at the latest 5 s after they went off, so they can never stay off.
+
+## Test 16 (2026-09-20 16:41): the controls trick sheathed the weapon; what the tries show
+
+Log: `testlogs/2026-09-20-jujutsu-test16-controls.log`. Switching the fighting controls off did end the
+block, but it also **sheathed the player's weapon** and no play started; the user judged that worse than
+the refusal. Reverted.
+
+What 841 tries across tests 5-16 say:
+
+- By trigger: guard presses played 158 of 208 (~76%), parry presses **0 of 30**, and that holds for each
+  of the four idles, so the idle is not it.
+- Player blocking is not an absolute bar: test 7 played 10 of 24 tries while blocking. But in tests
+  14-16 every parry try had the player blocking (a parry is held block) and none played.
+- Per-try traces of the parry presses: the victim's recoil clears after ~0.7-0.8 s, the player's block
+  stays on for the rest of the window, and the tries after the recoil are still refused. In test 16 the
+  two tries with neither recoil nor block were during the sheathe.
+
+So the attempt now ends the player's block without touching the controls: the want-to-block bit
+(`ActorState2::wantBlocking`) is cleared, `blockStop` is sent, and the input layer is told the block
+button was released under the game's own `rightAttack` user event (the key is still physically held, so
+this is done before every try).

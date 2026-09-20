@@ -86,8 +86,6 @@ namespace CIGAR
 		constexpr std::int32_t kParryAllPerfect = 2;
 		// A parried play may be refused while the attacker is still in its stagger; it is retried at least this long.
 		constexpr auto kParryMinPrepare = 300ms;
-		// However a play ends, the fighting controls go back on at the latest this long after they went off.
-		constexpr auto kBlockOffLimit = 5s;
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -212,7 +210,6 @@ namespace CIGAR
 		wasStaggering.clear();
 		lastParriedCMF.clear();
 		EndSlow("game loaded");
-		blockSuppressed = false;
 		parryAll = GetModuleHandleW(L"ParryAll.dll") != nullptr;
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
@@ -293,10 +290,6 @@ namespace CIGAR
 			return;
 		}
 		auto* player = Util::Player();
-		// Safety net: the fighting controls must never stay off, whatever happens to a play.
-		if (blockSuppressed && (phase == Phase::kIdle || Clock::now() - blockSuppressedAt > kBlockOffLimit)) {
-			RestoreBlock(phase == Phase::kIdle ? "idle" : "time limit");
-		}
 		if (slowOwned && Clock::now() >= slowUntil) {
 			EndSlow("time");
 		} else if (slowOwned) {
@@ -397,12 +390,10 @@ namespace CIGAR
 			a_victim->NotifyAnimationGraph("recoilStop");
 		}
 		// Test 15: every one of the 198 refused tries had the player blocking (a parry is made holding
-		// block), and the 3 that played did not. blockStop alone loses against the held key, so the
-		// fighting controls go off for the attempt.
+		// block), and the 3 that played did not.
 		const bool playerBlocking = GraphBool(a_player, "IsBlocking");
 		if (playerBlocking) {
-			a_player->NotifyAnimationGraph("blockStop");
-			SuppressBlock(a_player);
+			StopPlayerBlock(a_player);
 		}
 		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
@@ -419,7 +410,7 @@ namespace CIGAR
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
 		Log("try {}: before {}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
 			victimStaggering ? " (sent staggerStop)" : "", victimRecoiling ? " (sent recoilStop)" : "",
-			playerBlocking ? " (sent blockStop to the player)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
+			playerBlocking ? " (stopped the player's block)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}
@@ -709,7 +700,6 @@ namespace CIGAR
 	void Jujutsu::Finish(const char* a_reason)
 	{
 		armedVictim = nullptr;
-		RestoreBlock(a_reason);
 		auto victimPtr = victim.get();
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.
@@ -738,34 +728,41 @@ namespace CIGAR
 			Finish("module switched off");
 		}
 		EndSlow("module switched off");
-		RestoreBlock("module switched off");
 	}
 
-	void Jujutsu::SuppressBlock(RE::PlayerCharacter*)
+	void Jujutsu::StopPlayerBlock(RE::PlayerCharacter* a_player)
 	{
-		if (blockSuppressed) {
-			return;
+		// Test 16: switching the fighting controls off did end the block, but it also sheathed the
+		// player's weapon, which is worse than the refusal. The want-to-block bit is cleared instead
+		// (the input sets it again while the key is held, so this is done before every try).
+		auto* state = a_player->AsActorState();
+		const bool wanted = state && state->actorState2.wantBlocking != 0;
+		if (state) {
+			state->actorState2.wantBlocking = 0;
 		}
+		a_player->NotifyAnimationGraph("blockStop");
+		// The block key is still held, so the input layer is told it was released as well, under the
+		// game's own user event, which is what the block handler listens to.
+		std::string released;
+		auto* manager = RE::BSInputDeviceManager::GetSingleton();
 		auto* controls = RE::ControlMap::GetSingleton();
-		if (!controls) {
-			return;
+		const auto* events = RE::UserEvents::GetSingleton();
+		if (manager && controls && events) {
+			for (const auto device : { RE::INPUT_DEVICE::kMouse, RE::INPUT_DEVICE::kKeyboard }) {
+				const auto key = controls->GetMappedKey(events->rightAttack, device);
+				if (key == 0xFF || key == 0xFFFF) {
+					continue;
+				}
+				if (auto* up = RE::ButtonEvent::Create(device, events->rightAttack, key, 0.0f, 0.1f)) {
+					auto* source = static_cast<RE::BSTEventSource<RE::InputEvent*>*>(manager);
+					RE::InputEvent* event = up;
+					source->SendEvent(&event);
+					RE::free(up);
+					released += std::format("{}{}:{}", released.empty() ? "" : " ", device == RE::INPUT_DEVICE::kMouse ? "mouse" : "key", key);
+				}
+			}
 		}
-		controls->ToggleControls(RE::ControlMap::UEFlag::kFighting, false, false);
-		blockSuppressed = true;
-		blockSuppressedAt = Clock::now();
-		Log("fighting controls off so the block ends");
-	}
-
-	void Jujutsu::RestoreBlock(const char* a_reason)
-	{
-		if (!blockSuppressed) {
-			return;
-		}
-		blockSuppressed = false;
-		if (auto* controls = RE::ControlMap::GetSingleton()) {
-			controls->ToggleControls(RE::ControlMap::UEFlag::kFighting, true, false);
-		}
-		Log("fighting controls back on ({})", a_reason);
+		Log("player block stopped (wantBlocking was {}, released {})", wanted, released.empty() ? "nothing"s : released);
 	}
 
 	RE::Actor* Jujutsu::ParriedTarget() const
