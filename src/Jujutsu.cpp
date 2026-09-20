@@ -86,6 +86,8 @@ namespace CIGAR
 		constexpr std::int32_t kParryAllPerfect = 2;
 		// A parried play may be refused while the attacker is still in its stagger; it is retried at least this long.
 		constexpr auto kParryMinPrepare = 300ms;
+		// After this many refused tries of a parried play, the slow motion is dropped (see Watch).
+		constexpr int kTriesBeforeNoSlow = 4;
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -408,7 +410,7 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
+		Log("try {} (time x{:.2f}): before {}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, RE::BSTimer::QGlobalTimeMultiplier(), before, wasBlocking ? " (sent blockStop)" : "",
 			victimStaggering ? " (sent staggerStop)" : "", victimRecoiling ? " (sent recoilStop)" : "",
 			playerBlocking ? " (stopped the player's block)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
@@ -602,6 +604,12 @@ namespace CIGAR
 		const float t = Elapsed();
 
 		if (phase == Phase::kPreparing) {
+			// Tests 14-17: every parry press (0 of 30 played) ran while this slow motion was on, and no
+			// other state told the plays and the refusals apart. So the slow is dropped after a few refused
+			// tries: if the play then starts, the slow was the cause.
+			if (fromParry && slowOwned && tries >= kTriesBeforeNoSlow) {
+				EndSlow("retrying without it");
+			}
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;

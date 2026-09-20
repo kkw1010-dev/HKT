@@ -387,3 +387,14 @@ So the attempt now ends the player's block without touching the controls: the wa
 (`ActorState2::wantBlocking`) is cleared, `blockStop` is sent, and the input layer is told the block
 button was released under the game's own `rightAttack` user event (the key is still physically held, so
 this is done before every try).
+
+## Test 17 (2026-09-20 16:58): not the block either — the slow motion is the only thing left
+
+Log: `testlogs/2026-09-20-jujutsu-test17-blockrelease.log`. 20 parry presses, none played; guard presses
+still fine. The block release worked in the sense that tries with neither the victim's recoil nor the
+player's block appeared (`--`), and those were refused too, so neither is the cause.
+
+What every parry press has in common and no guard press does: **it runs inside CIGAR's slow motion**
+(x0.3 from the parry). The two have been perfectly confounded since test 14: parry 0 of 30, guard 158
+of 208. So each try now logs the global time multiplier, and after 4 refused tries of a parried play the
+slow is dropped and the retries continue. If the play starts right after that, the slow was the cause.
