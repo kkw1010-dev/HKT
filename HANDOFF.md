@@ -19,7 +19,7 @@ status.
      attacking), most likely from `IdleForceDefaultState` / `recoilStop` sent to the victim.
    - **Not yet tested in game after the rollback.** Guard 유술 needs one confirming run.
 2. **Test environment left changed for the 유술 tests** (both reversible, both the user's call):
-   - `mods\MUNG - Pandora Output NEW\meshesctors\character\Behaviors\mt_behavior.hkx` is the
+   - `mods\MUNG - Pandora Output NEW\meshes\actors\character\Behaviors\mt_behavior.hkx` is the
      pre-PNO copy; the 2026-09-19 15:40 Pandora output is kept at
      `build\mt_behavior.pandora-20260919-1540.hkx`. Any Pandora run overwrites this.
    - NPC grapples are off: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`,
