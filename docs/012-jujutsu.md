@@ -350,3 +350,19 @@ guard 유술 fine; no prompt after a plain block; needs prompt absent below 50%.
   graph still blocking. Each try now sends `recoilStop` to a recoiling victim and `blockStop` to a
   blocking player (both events exist in `0_Master.hkx` / `1hm_behavior.hkx`), and the state line logs
   `recoil=`.
+
+## Test 15 (2026-09-20 12:50): the player's own block is what refuses the play
+
+Log: `testlogs/2026-09-20-jujutsu-test15-recoilstop.log`. Slow motion after a parry now works and guard
+유술 played 3 of 3, but **every one of the 18 presses after a parry was refused** (8-13 tries each).
+
+Sorting the 201 tries by state settles it: all 198 refused tries had the **player blocking**
+(`gBlock=true`, so blockStop was sent), and the 3 that played did not. The victim's recoil does not
+decide it: 59 refused tries had no recoil. A parry is made holding block, so every parry press hit
+this.
+
+`blockStop` cannot win against a held block key: the graph blocks again on the next frame. So an
+attempt with the player blocking now switches the fighting controls off
+(`ControlMap::ToggleControls(kFighting, false)`), which ends the block; the next retry (100 ms) finds
+it clear. They go back on in `Finish()`, when the module is switched off, when the module is idle, and
+at the latest 5 s after they went off, so they can never stay off.

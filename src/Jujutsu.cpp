@@ -86,6 +86,8 @@ namespace CIGAR
 		constexpr std::int32_t kParryAllPerfect = 2;
 		// A parried play may be refused while the attacker is still in its stagger; it is retried at least this long.
 		constexpr auto kParryMinPrepare = 300ms;
+		// However a play ends, the fighting controls go back on at the latest this long after they went off.
+		constexpr auto kBlockOffLimit = 5s;
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -210,6 +212,7 @@ namespace CIGAR
 		wasStaggering.clear();
 		lastParriedCMF.clear();
 		EndSlow("game loaded");
+		blockSuppressed = false;
 		parryAll = GetModuleHandleW(L"ParryAll.dll") != nullptr;
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
@@ -290,6 +293,10 @@ namespace CIGAR
 			return;
 		}
 		auto* player = Util::Player();
+		// Safety net: the fighting controls must never stay off, whatever happens to a play.
+		if (blockSuppressed && (phase == Phase::kIdle || Clock::now() - blockSuppressedAt > kBlockOffLimit)) {
+			RestoreBlock(phase == Phase::kIdle ? "idle" : "time limit");
+		}
 		if (slowOwned && Clock::now() >= slowUntil) {
 			EndSlow("time");
 		} else if (slowOwned) {
@@ -389,9 +396,13 @@ namespace CIGAR
 		if (victimRecoiling) {
 			a_victim->NotifyAnimationGraph("recoilStop");
 		}
+		// Test 15: every one of the 198 refused tries had the player blocking (a parry is made holding
+		// block), and the 3 that played did not. blockStop alone loses against the held key, so the
+		// fighting controls go off for the attempt.
 		const bool playerBlocking = GraphBool(a_player, "IsBlocking");
 		if (playerBlocking) {
 			a_player->NotifyAnimationGraph("blockStop");
+			SuppressBlock(a_player);
 		}
 		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
@@ -698,6 +709,7 @@ namespace CIGAR
 	void Jujutsu::Finish(const char* a_reason)
 	{
 		armedVictim = nullptr;
+		RestoreBlock(a_reason);
 		auto victimPtr = victim.get();
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.
@@ -726,6 +738,34 @@ namespace CIGAR
 			Finish("module switched off");
 		}
 		EndSlow("module switched off");
+		RestoreBlock("module switched off");
+	}
+
+	void Jujutsu::SuppressBlock(RE::PlayerCharacter*)
+	{
+		if (blockSuppressed) {
+			return;
+		}
+		auto* controls = RE::ControlMap::GetSingleton();
+		if (!controls) {
+			return;
+		}
+		controls->ToggleControls(RE::ControlMap::UEFlag::kFighting, false, false);
+		blockSuppressed = true;
+		blockSuppressedAt = Clock::now();
+		Log("fighting controls off so the block ends");
+	}
+
+	void Jujutsu::RestoreBlock(const char* a_reason)
+	{
+		if (!blockSuppressed) {
+			return;
+		}
+		blockSuppressed = false;
+		if (auto* controls = RE::ControlMap::GetSingleton()) {
+			controls->ToggleControls(RE::ControlMap::UEFlag::kFighting, true, false);
+		}
+		Log("fighting controls back on ({})", a_reason);
 	}
 
 	RE::Actor* Jujutsu::ParriedTarget() const

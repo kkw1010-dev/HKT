@@ -61,6 +61,10 @@ namespace CIGAR
 		void DetectParry(RE::PlayerCharacter* a_player);
 		RE::Actor* ParriedTarget() const;
 		void StartSlow(Clock::time_point a_until);
+		// The engine refuses a paired idle while the player blocks, and blockStop cannot hold against a held
+		// block key, so the fighting controls are switched off for the attempt and restored right after.
+		void SuppressBlock(RE::PlayerCharacter* a_player);
+		void RestoreBlock(const char* a_reason);
 		void EndSlow(const char* a_reason);
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
@@ -112,6 +116,8 @@ namespace CIGAR
 		std::unordered_map<RE::FormID, bool> wasStaggering;
 		std::unordered_map<RE::FormID, std::int32_t> lastParriedCMF;
 		bool fromParry{ false };
+		bool blockSuppressed{ false };
+		Clock::time_point blockSuppressedAt{};
 		Clock::time_point prepareUntil{};
 
 		// Slow motion at the start of the throw.
