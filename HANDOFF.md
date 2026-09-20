@@ -18,13 +18,25 @@ status.
      ruled out with per-try logs). The last build also broke NPC combat AI (they moved but stopped
      attacking), most likely from `IdleForceDefaultState` / `recoilStop` sent to the victim.
    - **Not yet tested in game after the rollback.** Guard 유술 needs one confirming run.
-2. **Test environment left changed for the 유술 tests** (both reversible, both the user's call):
-   - `mods\MUNG - Pandora Output NEW\meshes\actors\character\Behaviors\mt_behavior.hkx` is the
-     pre-PNO copy; the 2026-09-19 15:40 Pandora output is kept at
-     `build\mt_behavior.pandora-20260919-1540.hkx`. Any Pandora run overwrites this.
-   - NPC grapples are off: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`,
-     original at `build\FH_Grapple_Plugin.ini.bak_20260919_npcgrapple`.
-3. Backlog below.
+2. **Test environment, settled 2026-09-20** (the reasoning is in `docs/012-jujutsu.md`):
+   - NPC grapples are **on again**: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini`
+     `bEnableNPCGrapple = true`, byte-identical to
+     `build\FH_Grapple_Plugin.ini.bak_20260919_npcgrapple`.
+   - `mt_behavior.hkx` **stays the pre-PNO copy** (md5 `cb3a5b03...`), and **Pandora must not be
+     run.** Private Needs needs no run: the 15:40 output already covered its FNIS list, PNO's
+     animations do not pass through `mt_behavior.hkx` (neither copy holds one `Private`/`Needs`
+     string; its list resolves through `0_Master.hkx` into the `FNIS_Private_Needs_Behavior.hkx`
+     the mod ships), and the two copies of `mt_behavior.hkx` hold the *same multiset of strings*
+     in a different order. A run would rewrite that order, which is what tests 9-12 tie to the
+     유술 refusals.
+   - **Guard.** `tools/behaviour_baseline.json` records that file's md5 and `verify_deploy.py`
+     now fails the build when it changes, naming the spare to copy back
+     (`build\mt_behavior.jujutsu-good.hkx`; the 15:40 output is still
+     `build\mt_behavior.pandora-20260919-1540.hkx`). After a future Pandora run and a fresh 유술
+     test, record the new file with `python tools/verify_deploy.py --accept-behaviour`.
+3. **The LockOn / Grapple module split (2026-09-20) is not tested in game.** One combat showing
+   록온 and 그래플, and one grapple accepted while locked, settles it.
+4. Backlog below.
 
 Confirmed in game on 2026-09-19:
 - the Execute prompt with actor names;
@@ -66,7 +78,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Bathe` | 목욕하기, 샤워하기 | Bathing in Skyrim - Renewed | `001` |
 | `Dress` | 탈의하기, 착용하기 | — | `002` |
 | `BaboKey` | 행동 선택 | BaboDialogue | `004` |
-| `LockOn` | 록온, 그래플 | True Directional Movement, Grapple | `005` |
+| `LockOn` | 록온 | True Directional Movement | `005` |
+| `Grapple` | 그래플 | Grapple (Patreon; usually absent) | `014` |
 | `Deflate` | 배출 (길게 누르기) | Fill Her Up Baka Edition | `006` |
 | `Surrender` | 항복 (길게 누르기) | Acheron (+ Yamete Kudasai consequences) | `008` |
 | `Eat` | 먹기: <음식 이름> | Survival Mode + SMI (Starfrost, Gourmet) | `009` |
@@ -93,16 +106,26 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
   - Accepting calls `BaboDiaMonitorScript.OnKeyDown(NotificationKey)`.
 - **LockOn.**
   - 록온 shows in combat while TDM is unlocked.
-  - 그래플 shows in combat while locked, or while a hostile is within 350
-    units.
-  - Both work by pressing that mod's key through `BSInputDeviceManager`
+  - It works by pressing TDM's key through `BSInputDeviceManager`
     (`Util::PressKey`), because TDM has no API to set the lock.
-  - A grapple started while locked is followed by an automatic re-lock.
-  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258).
+  - The prompt stays down while Grapple is taking the lock again.
+- **Grapple** (split out of `LockOn` on 2026-09-20, because Grapple is a
+  Patreon mod that most setups will not have while nearly all have TDM).
+  - 그래플 shows in combat while locked, or while a hostile is within 350
+    units; it presses Grapple's own hotkey the same way.
+  - A grapple started while locked is followed by an automatic re-lock. For
+    its whole wait the module raises `TDMLock::SetBusy(true)`, so the two
+    modules never press TDM's key in the same frame.
+  - At load, Grapple's `TargetLockKey` is synced to TDM's key (258) when TDM
+    is present. Without TDM the module still offers the prompt on a hostile
+    in reach.
   - Prompt-only mode (default on) moves Grapple's `Hotkey` to F13, so G is
     free. When it is off, an unset `Hotkey` (every new game) is restored from
     the remembered key or `FH_Grapple_Plugin.ini`. Keys are read only at load
     and on the panel's key check button; nothing polls.
+  - `src/TDMLock.*` holds what the two modules share: TDM's API pointer, its
+    lock key and that busy flag. Each module resolves it on every game load,
+    so either can be switched off on its own.
 - **Deflate.**
   - A hold prompt. SkyPrompt's key down (5) and up (6) are forwarded to FHU's
     `sr_infDeflateAbility.OnKeyDown` / `OnKeyUp`.
@@ -183,7 +206,10 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
   - a missing dependency;
   - renamed script or property names in BaboDialogue, FHU, Grapple or
     Acheron;
-  - an unpressable TDM or Acheron key.
+  - an unpressable TDM or Acheron key;
+  - a behaviour file in `tools/behaviour_baseline.json` whose md5 changed
+    (a Pandora run), which is otherwise silent in game. `--accept-behaviour`
+    records the current file once the module has been re-tested.
 - **Deploy.** Skyrim must be closed; MO2 may stay open.
 - **Logs** (all under `%USERPROFILE%\OneDrive\Documents\My Games\Skyrim Special Edition\`):
   - `SKSE\CIGAR.log` is CIGAR's own log, recreated each launch. It has `gate`

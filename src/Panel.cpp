@@ -2,8 +2,8 @@
 
 #include "Eat.h"
 #include "Execute.h"
+#include "Grapple.h"
 #include "Jujutsu.h"
-#include "LockOn.h"
 #include "Module.h"
 #include "Needs.h"
 #include "Prompt.h"
@@ -37,7 +37,8 @@ namespace CIGAR::Panel
 			Label{ "Bathe", "목욕", "Bathing in Skyrim - Renewed" },
 			Label{ "Dress", "탈의·착용", "" },
 			Label{ "BaboKey", "납치 행동 선택", "BaboDialogue" },
-			Label{ "LockOn", "록온·그래플", "True Directional Movement, Grapple" },
+			Label{ "LockOn", "록온", "True Directional Movement" },
+			Label{ "Grapple", "그래플", "Grapple (Patreon)" },
 			Label{ "Deflate", "배출", "Fill Her Up" },
 			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)" },
 			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
@@ -133,7 +134,7 @@ namespace CIGAR::Panel
 		void RenderPromptOnly()
 		{
 			RenderPromptOnlyItem("grapple", "그래플: 프롬프트 전용##po-grapple", "F13",
-				[] { LockOn::GetSingleton()->CheckKeys(); });
+				[] { Grapple::GetSingleton()->CheckKeys(); });
 			RenderPromptOnlyItem("surrender", "Acheron 항복: 프롬프트 전용##po-surrender", "F14",
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
 			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
@@ -155,13 +156,13 @@ namespace CIGAR::Panel
 			}
 			if (ImGui::Button("모드 키 다시 확인")) {
 				SKSE::GetTaskInterface()->AddTask([] {
-					LockOn::GetSingleton()->CheckKeys();
+					Grapple::GetSingleton()->CheckKeys();
 					Surrender::GetSingleton()->CheckKey();
 					Execute::GetSingleton()->CheckKey();
 					Needs::GetSingleton()->ApplyKeyMode();
 				});
 			}
-			const auto grapple = LockOn::GetSingleton()->GrappleKey();
+			const auto grapple = Grapple::GetSingleton()->Key();
 			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
 			const auto execution = Execute::GetSingleton()->ExecutionKey();
 			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s",
@@ -218,7 +219,7 @@ namespace CIGAR::Panel
 				}
 			}
 			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
-				{ "그래플", LockOn::GetSingleton()->GrappleKey() },
+				{ "그래플", Grapple::GetSingleton()->Key() },
 				{ "Acheron 항복", Surrender::GetSingleton()->SurrenderKey() },
 				{ "Valhalla 처형", Execute::GetSingleton()->ExecutionKey() },
 			} };

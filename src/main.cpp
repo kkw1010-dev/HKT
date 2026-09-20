@@ -4,6 +4,7 @@
 #include "Dress.h"
 #include "Eat.h"
 #include "Execute.h"
+#include "Grapple.h"
 #include "Jujutsu.h"
 #include "LockOn.h"
 #include "Module.h"
@@ -19,9 +20,9 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 11> modules{
+		static const std::array<Module*, 12> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
-			LockOn::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
+			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 			Needs::GetSingleton()
 		};
@@ -128,7 +129,7 @@ namespace
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();
 			Needs::GetSingleton()->RegisterEvents();
-			LockOn::GetSingleton()->ReadGrappleIni();
+			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
 			StartTicker();
 			break;

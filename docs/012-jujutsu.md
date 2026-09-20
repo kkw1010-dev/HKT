@@ -431,3 +431,49 @@ What the 30 parry presses proved, for whoever tries this again: the engine refus
 after a perfect block, and none of the states that were logged per try (player block, victim recoil or
 stagger, the global time multiplier, which idle, distance, facing, speeds) separates the one play from
 the refusals. Valhalla itself brute-forces the same call every 50 ms with a fresh random idle.
+
+## The test environment, put back (2026-09-20)
+
+Both changes made for tests 11-12 were reviewed once the parry work was dropped.
+
+- **NPC grapples are on again.** `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini`
+  `bEnableNPCGrapple = true`, matching `build\FH_Grapple_Plugin.ini.bak_20260919_npcgrapple`
+  byte for byte. They were off only for test 12, so their share of the refusals was never
+  separated; the file is back to what the user plays with.
+- **`mt_behavior.hkx` stays the pre-install copy** (md5 `cb3a5b03...`), and **Pandora should not
+  be run.** The 15:40 output is kept at `build\mt_behavior.pandora-20260919-1540.hkx`, and a copy
+  of the good file now also lives at `build\mt_behavior.jujutsu-good.hkx`.
+
+### Why no Pandora run
+
+The reason for a run would be Private Needs - Orgasm's FNIS list, installed at 15:37. It does not
+need one, on three counts:
+
+1. The 15:40 run already covered it (`Engine.log`: `FNIS Mod 166 : FNIS_Private_Needs_List`), and
+   everything that run produced is still in place except `mt_behavior.hkx`.
+2. PNO's animations do not pass through `mt_behavior.hkx` at all. Neither copy of the file carries
+   one `Private`/`Needs` string; PNO's list resolves through `0_Master.hkx`, which is the 15:40
+   copy and does carry `FNIS_Private_Needs_Behavior`, into the
+   `Behaviors\FNIS_Private_Needs_Behavior.hkx` the mod itself ships.
+3. The two copies of `mt_behavior.hkx` hold the **same multiset of strings** - compared entry by
+   entry, nothing is unique to either. They differ only in order, as Pandora's nondeterminism
+   predicts. The pre-install copy therefore loses no mod's content.
+
+Nothing installed since 15:40 changes this: the only mods added are `Vel'dun UI - QJO Patch` and
+`Vel'dun UI - RaceMenu`, both interface-only.
+
+A run would be actively harmful: it rewrites `mt_behavior.hkx` with a fresh order, which is what
+tests 9-12 tie to the refusals. Pandora is headless
+(`TKL-Agent\Toolchain\README.md`), so when a future behaviour mod does need one, CIGAR's side can
+run it - but the 유술 baseline has to be re-tested afterwards.
+
+### The guard
+
+`tools/behaviour_baseline.json` records the md5 of the winning `mt_behavior.hkx`, and
+`verify_deploy.py` fails the build when it changes, naming the spare to copy back. Without it a
+Pandora run made for an unrelated mod would be found only by pressing 유술 twenty times in game.
+After re-running Pandora and re-testing 유술, record the new file with
+
+```
+python tools/verify_deploy.py --accept-behaviour
+```

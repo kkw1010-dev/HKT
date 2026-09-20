@@ -31,7 +31,8 @@ their in-game tests are in git history and in `docs/001`.
 | `Bathe` | Bathing in Skyrim - Renewed (optional) | `Bathe` (animation only; BiS dirt untouched) | DLL confirmed in game 2026-09-17; shower untested |
 | `Dress` | — | `DressActions` water / bed / wardrobe undress (strips the Softbody SMP carrier) | Confirmed in game 2026-09-17 (water, beds, wardrobes, state-based dress) |
 | `BaboKey` | BaboDialogue (optional) | — | Confirmed in game 2026-09-17 (retest passed) |
-| `LockOn` | True Directional Movement, Grapple (both optional) | — | Confirmed in game 2026-09-17 (retest passed) |
+| `LockOn` | True Directional Movement (optional) | — | Confirmed in game 2026-09-17 (retest passed); split from `Grapple` 2026-09-20, split not tested |
+| `Grapple` | Grapple (optional; a Patreon mod, so usually absent) | — | Confirmed in game 2026-09-19; split out of `LockOn` 2026-09-20, split not tested |
 | `Deflate` | Fill Her Up (optional) | — | Confirmed in game 2026-09-17 (retest passed; FHU-side effects pending in FHU) |
 | `Surrender` | Acheron (optional; Yamete Kudasai supplies the consequences) | — | Confirmed in game 2026-09-17 (retest passed) |
 | `Eat` | Survival Mode + SMI (optional) | — | Confirmed in game 2026-09-18 |
@@ -63,7 +64,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
-`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, `docs/011-execute.md`, and `docs/012-jujutsu.md`. The in-game control panel
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, `docs/011-execute.md`, `docs/012-jujutsu.md`, and `docs/014-grapple.md`. The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
@@ -77,7 +78,9 @@ src/Util.*          strip rules, worn description, Papyrus script-property reade
 src/Bathe.*         Bathing in Skyrim integration (properties read from its quest script at load)
 src/Dress.*         state-based undress / dress, crosshair-based bed and wardrobe detection, co-saved outfit
 src/BaboKey.*       BaboDialogue hotkey during kidnap events (quest stage, script state, kidnap-room cell)
-src/LockOn.*        TDM target lock and Grapple in combat (synthetic key press through the input event source)
+src/LockOn.*        TDM target lock in combat (synthetic key press through the input event source)
+src/Grapple.*       Grapple in combat, its key management, and the re-lock afterwards (Patreon mod; idles when absent)
+src/TDMLock.*       TDM's lock shared by LockOn and Grapple: API pointer, lock key, and the busy flag during a re-lock
 src/Deflate.*       Fill Her Up deflation as a hold prompt (key down/up forwarded to FHU's own handlers)
 src/Surrender.*     Acheron surrender key below 40% health as a hold prompt, with slow motion and a text pulse
 src/Eat.*           Survival Mode hunger: eats the cheapest suitable food by equipping it (SMI lowers hunger)

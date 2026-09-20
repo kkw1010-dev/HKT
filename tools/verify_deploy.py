@@ -7,6 +7,7 @@ module still on (double prompts), the override losing to SI's original, or a
 missing hard dependency. Optional integrations (Bathing in Skyrim) are reported,
 never required.
 """
+import hashlib
 import json
 import os
 import struct
@@ -38,14 +39,17 @@ BABO_SCRIPTS = {
 # Read by src/Surrender.cpp when the BaboDialogue 6.2 Acheron patch is installed.
 BABO_CONTROLLER = "BaboSexControllerManager"
 BABO_SUSPENDED_VAR = "AcheronSuspendedByUs"
-# TDM and Grapple, read by src/LockOn.cpp.
+# TDM, read by src/TDMLock.cpp for the LockOn and Grapple modules.
 TDM_MOD = "True Directional Movement - Modernized Third Person Gameplay"
 TDM_SETTINGS = [
     os.path.join(MODS, "TAKEALOOK - MCM and INI", "MCM", "Settings", "TrueDirectionalMovement.ini"),
     os.path.join(MODS, TDM_MOD, "MCM", "Config", "TrueDirectionalMovement", "settings.ini"),
 ]
+# Grapple (a Patreon mod), read by src/Grapple.cpp.
 GRAPPLE_MOD = "Grapple"
 GRAPPLE_NEEDLES = ["Hotkey", "ModifierEnabled", "TargetLockKey", "UpdateGlobals", "ApplySettings"]
+# Behaviour-graph files a module was confirmed against; see the file's own comment.
+BEHAVIOUR_BASELINE = os.path.join(HERE, "behaviour_baseline.json")
 # Fill Her Up names read by src/Deflate.cpp.
 FHU_MOD = "Fill Her Up Baka Edition"
 FHU_SCRIPTS = {
@@ -297,10 +301,10 @@ def ini_int(path, section, key):
 
 
 def check_lockon(modlist):
-    """LockOn presses TDM's lock key and Grapple's hotkey; a key it cannot press, or a missing API
-    export, leaves the prompt absent without an error."""
+    """LockOn presses TDM's lock key; a key it cannot press, or a missing API export, leaves the
+    prompt absent without an error."""
     if "+" + TDM_MOD not in modlist:
-        note("True Directional Movement absent: LockOn module idles")
+        note("True Directional Movement absent: LockOn module idles, Grapple loses its re-lock")
         return
     dll = os.path.join(MODS, TDM_MOD, "SKSE", "Plugins", "TrueDirectionalMovement.dll")
     check(os.path.isfile(dll) and b"RequestPluginAPI" in dll_exports(dll), "TDM DLL exports RequestPluginAPI")
@@ -313,8 +317,13 @@ def check_lockon(modlist):
                 break
     check(tdm_key is not None and 0 <= tdm_key < 264, "TDM lock key is a keyboard or mouse key: %s" % tdm_key)
 
+
+def check_grapple(modlist):
+    """Grapple is a Patreon mod, so most setups do not have it and the module simply idles. When it
+    is installed, CIGAR presses its hotkey, so a renamed script or an unset key leaves the prompt
+    absent without an error."""
     if "+" + GRAPPLE_MOD not in modlist:
-        note("Grapple absent: grapple prompt idles")
+        note("Grapple absent: Grapple module idles")
         return
     base = os.path.join(MODS, GRAPPLE_MOD)
     check(os.path.isfile(os.path.join(base, "SKSE", "Plugins", "FH_Grapple_Plugin.dll")), "Grapple DLL present")
@@ -331,7 +340,7 @@ def check_lockon(modlist):
         lock = ini_int(grapple_ini, "Keys", "targetLockKey")
         kb = ini_int(grapple_ini, "Keys", "kbKey")
         mod = ini_int(grapple_ini, "Keys", "kbModifier")
-        note("Grapple keys: hotkey=%s modifier=%s lock=%s (CIGAR syncs lock to TDM's at load)" % (kb, mod, lock))
+        note("Grapple keys: hotkey=%s modifier=%s lock=%s (CIGAR syncs lock to TDM's at load when TDM is present)" % (kb, mod, lock))
         # A new game starts Grapple's MCM with no hotkey; CIGAR restores the key from this INI, so
         # an unset key here leaves the grapple prompt off in every new game.
         check(kb is not None and 0 <= kb < 264,
@@ -522,7 +531,78 @@ def check_jujutsu(modlist):
           " - not found: " + ", ".join(missing) if missing else ""))
 
 
+def winning_file(modlist, relative):
+    """The copy of a Data-relative path that wins MO2's VFS, or None. modlist.txt lists the highest
+    priority first, and the path is matched case-insensitively because mods spell it either way."""
+    parts = relative.split("/")
+    for folder in [l[1:] for l in modlist if l.startswith("+")]:
+        path = os.path.join(MODS, folder)
+        for part in parts:
+            if not os.path.isdir(path):
+                path = None
+                break
+            match = next((e for e in os.listdir(path) if e.lower() == part.lower()), None)
+            if match is None:
+                path = None
+                break
+            path = os.path.join(path, match)
+        if path and os.path.isfile(path):
+            return path
+    return None
+
+
+def md5_of(path):
+    with open(path, "rb") as f:
+        return hashlib.md5(f.read()).hexdigest()
+
+
+def check_behaviour(modlist, accept=False):
+    """Behaviour-graph files a module was confirmed against. Pandora rewrites its whole output on
+    every run, and the rewrite is silent in game: the animation simply refuses to play. A run made
+    for an unrelated mod would otherwise be found only by re-testing in game."""
+    if not os.path.isfile(BEHAVIOUR_BASELINE):
+        note("no behaviour baseline recorded (%s)" % BEHAVIOUR_BASELINE)
+        return
+    with open(BEHAVIOUR_BASELINE, encoding="utf-8") as f:
+        baseline = json.load(f)
+    changed = False
+    for relative, expected in baseline.get("files", {}).items():
+        path = winning_file(modlist, relative)
+        if not path:
+            note("%s not in any enabled mod: the vanilla BSA copy is used" % relative)
+            continue
+        actual = md5_of(path)
+        if accept:
+            if actual != expected["md5"]:
+                print("  baseline %s: %s -> %s" % (relative, expected["md5"], actual))
+                expected["md5"] = actual
+                changed = True
+            continue
+        spare = os.path.join(REPO, expected["spare"]) if expected.get("spare") else None
+        hint = ""
+        if actual != expected["md5"]:
+            lines = [
+                "",
+                "      %s was rewritten, probably by a Pandora run." % os.path.relpath(path, MODS),
+                "      %s" % expected.get("why", ""),
+                "      Restore: copy %s over %s" % (expected.get("spare", "(no spare kept)"), path),
+                "      Or, once %s is re-tested in game: python tools/verify_deploy.py --accept-behaviour"
+                % expected.get("module", "the module"),
+            ]
+            if spare and os.path.isfile(spare) and md5_of(spare) == expected["md5"]:
+                lines.append("      (the spare in the repo matches the recorded hash)")
+            hint = "\n".join(lines)
+        check(actual == expected["md5"], "%s is the copy %s was confirmed on%s"
+              % (relative, expected.get("module", "CIGAR"), hint))
+    if accept and changed:
+        with open(BEHAVIOUR_BASELINE, "w", encoding="utf-8", newline="\n") as f:
+            json.dump(baseline, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print("behaviour baseline updated")
+
+
 def main():
+    accept_behaviour = "--accept-behaviour" in sys.argv
     profile = os.path.join(MO2, "profiles", active_profile())
     print("profile:", profile)
 
@@ -568,12 +648,14 @@ def main():
     check_prompt_keys()
     check_babo(modlist)
     check_lockon(modlist)
+    check_grapple(modlist)
     check_eat(modlist)
     check_fhu(modlist)
     check_pno(modlist)
     check_surrender(modlist)
     check_valhalla(modlist)
     check_jujutsu(modlist)
+    check_behaviour(modlist, accept_behaviour)
 
     # Replaced SI modules must be off, or both prompts appear.
     check(os.path.isfile(SI_SETTINGS), "SI settings override exists")

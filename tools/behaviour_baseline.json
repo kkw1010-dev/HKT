@@ -1,0 +1,17 @@
+{
+  "_comment": [
+    "The behaviour-graph files CIGAR's modules were last confirmed against, by md5 of the file that",
+    "wins MO2's VFS. Pandora rewrites these in place on every run, so a run made for an unrelated",
+    "mod can silently change what CIGAR depends on. verify_deploy.py fails when a hash differs.",
+    "After re-running Pandora and re-testing the module named below, record the new hash with",
+    "    python tools/verify_deploy.py --accept-behaviour"
+  ],
+  "files": {
+    "meshes/actors/character/behaviors/mt_behavior.hkx": {
+      "md5": "cb3a5b0334f0362db5f6625419657355",
+      "module": "Jujutsu",
+      "why": "The pre-Private-Needs copy. Jujutsu test 12 (2026-09-20) played 20 of 20 presses on this file; the 2026-09-19 15:40 Pandora output (md5 3168ff4dc477112852889102a421cecc, same strings in a different order) played 5 of 13. See docs/012-jujutsu.md.",
+      "spare": "build/mt_behavior.jujutsu-good.hkx"
+    }
+  }
+}
