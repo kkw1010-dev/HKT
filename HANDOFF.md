@@ -70,10 +70,18 @@ refusals (the stun-breaking swing still in progress), so `attackStop` could help
     `[NoDelete] 0008 StreamlinedInteractions`.
   - The deployed DLL equals the build of `HEAD`, which `verify_deploy.py`
     checks.
-- **The repo.** `C:\TAKEALOOK\TKL-Agent\CIGAR` is a **local git repo only**
-  (no remote); "push" means "commit".
-  - Branch: `master` only. The earlier `feat/menu-panel` worktree
-    (`..\CIGAR-menu`) was merged and removed.
+- **The repo.** `C:\TAKEALOOK\TKL-Agent\CIGAR`, published on 2026-09-20 to
+  `origin` = <https://github.com/kkw1010-dev/HKT> (**public**). Until then it
+  was local only, and older notes that say "push means commit" are out of date:
+  commit, then `git push`.
+  - Branch: `master`, tracking `origin/master`. The earlier `feat/menu-panel`
+    worktree (`..\CIGAR-menu`) was merged and removed.
+  - Only CIGAR is on that remote. The other 15 repos under `TKL-Agent` are
+    still local only, by the user's choice on 2026-09-20.
+  - `lib/commonlibsse-ng` is a submodule, so only its gitlink is pushed; a
+    fresh clone needs `git submodule update --init --recursive`.
+  - CommonLibSSE-NG is GPL-3.0-or-later, so publishing this source is the
+    licence-consistent direction; see the Pitfalls note.
   - This machine has **no git identity configured**. Commits so far set it
     per command, without touching config:
     `GIT_AUTHOR_NAME=kkw GIT_AUTHOR_EMAIL=kkw1010@gmail.com
