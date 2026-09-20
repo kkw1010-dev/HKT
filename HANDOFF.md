@@ -71,13 +71,17 @@ refusals (the stun-breaking swing still in progress), so `attackStop` could help
   - The deployed DLL equals the build of `HEAD`, which `verify_deploy.py`
     checks.
 - **The repo.** `C:\TAKEALOOK\TKL-Agent\CIGAR`, published on 2026-09-20 to
-  `origin` = <https://github.com/kkw1010-dev/HKT> (**public**). Until then it
-  was local only, and older notes that say "push means commit" are out of date:
-  commit, then `git push`.
+  `origin` = <https://github.com/kkw1010-dev/HKT> (**public**).
+  - **Commit locally on every change; push only when the user asks.** That is
+    the user's standing rule (2026-09-20), and having a remote does not soften
+    it: commit as work lands, without being asked, and then stop. Never run
+    `git push` on your own initiative, not even as the last step of a finished
+    task — say the commit is local and unpushed instead.
   - Branch: `master`, tracking `origin/master`. The earlier `feat/menu-panel`
     worktree (`..\CIGAR-menu`) was merged and removed.
   - Only CIGAR is on that remote. The other 15 repos under `TKL-Agent` are
-    still local only, by the user's choice on 2026-09-20.
+    still local only, by the user's choice on 2026-09-20. Do not give one a
+    remote without being asked.
   - `lib/commonlibsse-ng` is a submodule, so only its gitlink is pushed; a
     fresh clone needs `git submodule update --init --recursive`.
   - CommonLibSSE-NG is GPL-3.0-or-later, so publishing this source is the
@@ -211,6 +215,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 - A new game is not a cost for this user (one line when it applies). DLL-only
   changes do not need one.
 - Leave no build servers running.
+- **Commit every change locally as it lands; push to GitHub only on the user's
+  explicit command.** See the repo note above.
 - Player-facing Korean is short and administrative. Repo docs are in English.
   Reply to the user in Korean.
 
