@@ -64,6 +64,27 @@ namespace CIGAR::Settings
 	JujutsuTuning JujutsuTune();
 	void SetJujutsuTune(const JujutsuTuning& a_tuning);
 
+	// Which potions the Potion module offers and when. The defaults are the values the user was
+	// running in Streamlined Interactions' ItemUse module, whose potion actions CIGAR replaces.
+	// Each threshold is a fraction of the full bar.
+	struct PotionTuning
+	{
+		bool health{ true };
+		bool stamina{ true };
+		bool magicka{ true };
+		bool curePoison{ true };
+		bool cureDisease{ true };
+		bool waterBreathing{ true };
+		float healthThreshold{ 0.5f };
+		// At or below this, the strongest healing potion is picked instead of the weakest that
+		// covers the missing health.
+		float urgentHealthThreshold{ 0.2f };
+		float staminaThreshold{ 0.5f };
+		float magickaThreshold{ 0.5f };
+	};
+	PotionTuning PotionTune();
+	void SetPotionTune(const PotionTuning& a_tuning);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 

@@ -4,6 +4,7 @@
 #include "Module.h"
 #include "Jujutsu.h"
 #include "Needs.h"
+#include "Potion.h"
 #include "Prompt.h"
 #include "WeaponSwap.h"
 
@@ -29,10 +30,21 @@ namespace CIGAR::Settings
 		float swapRange = WeaponSwap::kRangeDefault;
 		float jujutsuReach = Jujutsu::kReachDefault;
 		JujutsuTuning jujutsuTuning;
+		PotionTuning potionTuning;
 
 		JujutsuTuning Clamped(JujutsuTuning a_t)
 		{
 			a_t.guardStun = std::clamp(a_t.guardStun, 0.0f, 1.0f);
+			return a_t;
+		}
+
+		PotionTuning Clamped(PotionTuning a_t)
+		{
+			const auto bar = [](float a_value) { return std::clamp(a_value, Potion::kThresholdLow, Potion::kThresholdHigh); };
+			a_t.healthThreshold = bar(a_t.healthThreshold);
+			a_t.urgentHealthThreshold = std::min(bar(a_t.urgentHealthThreshold), a_t.healthThreshold);
+			a_t.staminaThreshold = bar(a_t.staminaThreshold);
+			a_t.magickaThreshold = bar(a_t.magickaThreshold);
 			return a_t;
 		}
 
@@ -68,6 +80,16 @@ namespace CIGAR::Settings
 			j["weaponSwap"]["range"] = swapRange;
 			j["jujutsu"]["reach"] = jujutsuReach;
 			j["jujutsu"]["guardStun"] = jujutsuTuning.guardStun;
+			j["potion"]["health"] = potionTuning.health;
+			j["potion"]["stamina"] = potionTuning.stamina;
+			j["potion"]["magicka"] = potionTuning.magicka;
+			j["potion"]["curePoison"] = potionTuning.curePoison;
+			j["potion"]["cureDisease"] = potionTuning.cureDisease;
+			j["potion"]["waterBreathing"] = potionTuning.waterBreathing;
+			j["potion"]["healthThreshold"] = potionTuning.healthThreshold;
+			j["potion"]["urgentHealthThreshold"] = potionTuning.urgentHealthThreshold;
+			j["potion"]["staminaThreshold"] = potionTuning.staminaThreshold;
+			j["potion"]["magickaThreshold"] = potionTuning.magickaThreshold;
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -102,6 +124,7 @@ namespace CIGAR::Settings
 		swapRange = WeaponSwap::kRangeDefault;
 		jujutsuReach = Jujutsu::kReachDefault;
 		jujutsuTuning = {};
+		potionTuning = {};
 		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
@@ -144,7 +167,16 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("jujutsu"); it != j.end() && it->is_object()) {
 				jujutsuReach = std::clamp(it->value("reach", Jujutsu::kReachDefault), Jujutsu::kReachLow, Jujutsu::kReachHigh);
 				const JujutsuTuning d;
-				jujutsuTuning = Clamped({ it->value("guardStun", d.guardStun) });
+				jujutsuTuning = Clamped(JujutsuTuning{ it->value("guardStun", d.guardStun) });
+			}
+			if (const auto it = j.find("potion"); it != j.end() && it->is_object()) {
+				const PotionTuning d;
+				potionTuning = Clamped(PotionTuning{
+					it->value("health", d.health), it->value("stamina", d.stamina), it->value("magicka", d.magicka),
+					it->value("curePoison", d.curePoison), it->value("cureDisease", d.cureDisease),
+					it->value("waterBreathing", d.waterBreathing),
+					it->value("healthThreshold", d.healthThreshold), it->value("urgentHealthThreshold", d.urgentHealthThreshold),
+					it->value("staminaThreshold", d.staminaThreshold), it->value("magickaThreshold", d.magickaThreshold) });
 			}
 			if (const auto it = j.find("weaponSwap"); it != j.end() && it->is_object()) {
 				swapRange = std::clamp(it->value("range", WeaponSwap::kRangeDefault), WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
@@ -186,6 +218,10 @@ namespace CIGAR::Settings
 		logs::info("settings: weapon swap range {:.0f}", swapRange);
 		logs::info("settings: jujutsu reach {:.0f}", jujutsuReach);
 		logs::info("settings: jujutsu stun share {:.2f}", jujutsuTuning.guardStun);
+		logs::info("settings: potion health={}@{:.2f}/{:.2f} stamina={}@{:.2f} magicka={}@{:.2f} curePoison={} cureDisease={} waterBreathing={}",
+			potionTuning.health, potionTuning.healthThreshold, potionTuning.urgentHealthThreshold,
+			potionTuning.stamina, potionTuning.staminaThreshold, potionTuning.magicka, potionTuning.magickaThreshold,
+			potionTuning.curePoison, potionTuning.cureDisease, potionTuning.waterBreathing);
 	}
 
 	bool Enabled(std::string_view a_module)
@@ -289,6 +325,18 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		return jujutsuTuning;
+	}
+
+	PotionTuning PotionTune()
+	{
+		std::scoped_lock guard(lock);
+		return potionTuning;
+	}
+
+	void SetPotionTune(const PotionTuning& a_tuning)
+	{
+		std::scoped_lock guard(lock);
+		potionTuning = Clamped(a_tuning);
 	}
 
 	void SetJujutsuTune(const JujutsuTuning& a_tuning)

@@ -1,4 +1,4 @@
-# CIGAR — session handoff (updated 2026-09-19)
+# CIGAR — session handoff (updated 2026-09-20)
 
 Read this first, then `README.md`. The design rationale and the test history of
 each module are in `docs/`, one file per module, and each file starts with its
@@ -34,9 +34,21 @@ status.
      (`build\mt_behavior.jujutsu-good.hkx`; the 15:40 output is still
      `build\mt_behavior.pandora-20260919-1540.hkx`). After a future Pandora run and a fresh 유술
      test, record the new file with `python tools/verify_deploy.py --accept-behaviour`.
-3. **The LockOn / Grapple module split (2026-09-20) is not tested in game.** One combat showing
-   록온 and 그래플, and one grapple accepted while locked, settles it.
+3. **The `Potion` module (2026-09-20) is not tested in game.** It replaces Streamlined
+   Interactions' six `ItemUse` potion actions, which the SI override now turns off, so if it does
+   not work there is no potion prompt at all rather than SI's. See `docs/015-potion.md` for what
+   was deliberately not carried over (SI's `cooldown`, its HP-potion slow motion).
 4. Backlog below.
+
+Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 18:24-18:32):
+- the LockOn / Grapple split: both modules resolved on their own, 록온 and 그래플 were offered at the
+  same time on different keys, both presses landed, and a grapple accepted while locked was followed
+  by the re-lock (`re-lock after grapple ... pressed=true`, then `after re-lock press: locked=true`)
+  while 록온 stayed off the screen for the whole wait. A second grapple ended with
+  `re-lock dropped (not needed)`, the lock having come back by itself.
+- **Not** guard 유술: 20 presses, 9 refused. That is well below test 12's 20 of 20, so the rollback
+  did not restore the old rate; the refused tries show the victim moving and no longer blocking, the
+  same pattern as tests 13-18.
 
 Confirmed in game on 2026-09-19:
 - the Execute prompt with actor names;
@@ -87,6 +99,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Execute` | 처형 | Valhalla Combat | `011` |
 | `Jujutsu` | 유술 | — (Valhalla optional) | `012` |
 | `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm | `013` |
+| `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

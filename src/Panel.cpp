@@ -6,6 +6,7 @@
 #include "Jujutsu.h"
 #include "Module.h"
 #include "Needs.h"
+#include "Potion.h"
 #include "Prompt.h"
 #include "Settings.h"
 #include "Surrender.h"
@@ -46,6 +47,7 @@ namespace CIGAR::Panel
 			Label{ "Execute", "처형", "Valhalla Combat" },
 			Label{ "Jujutsu", "유술", "" },
 			Label{ "Needs", "용변", "Private Needs - Orgasm" },
+			Label{ "Potion", "물약", "" },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -322,6 +324,47 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			ImGui::TextColored(kDim, "기본 50%%. Private Needs의 방광·장 수치가 이 이상이면 프롬프트 표시");
+
+			ImGui::SeparatorText("물약");
+			{
+				auto tune = Settings::PotionTune();
+				bool changed = false;
+				changed |= ImGui::Checkbox("체력##pot-hp", &tune.health);
+				ImGui::SameLine();
+				changed |= ImGui::Checkbox("기력##pot-sp", &tune.stamina);
+				ImGui::SameLine();
+				changed |= ImGui::Checkbox("마나##pot-mp", &tune.magicka);
+				changed |= ImGui::Checkbox("해독##pot-poison", &tune.curePoison);
+				ImGui::SameLine();
+				changed |= ImGui::Checkbox("질병 치료##pot-disease", &tune.cureDisease);
+				ImGui::SameLine();
+				changed |= ImGui::Checkbox("수중 호흡##pot-water", &tune.waterBreathing);
+				if (changed) {
+					Settings::SetPotionTune(tune);
+					Settings::Save();
+				}
+
+				const auto bar = [&tune](const char* a_label, float& a_value, const char* a_help) {
+					float percent = a_value * 100.0f;
+					const float low = Potion::kThresholdLow * 100.0f;
+					const float high = Potion::kThresholdHigh * 100.0f;
+					if (ImGui::SliderFloat(a_label, &percent, low, high, "%.0f%%")) {
+						a_value = percent / 100.0f;
+						Settings::SetPotionTune(tune);
+					}
+					if (ImGui::IsItemDeactivatedAfterEdit()) {
+						Settings::Save();
+					}
+					ImGui::TextColored(kDim, "%s", a_help);
+				};
+				bar("체력 표시 시작##pot-hp-th", tune.healthThreshold, "기본 50%. 체력이 이 비율 이하면 프롬프트 표시");
+				bar("체력 위급##pot-hp-urgent", tune.urgentHealthThreshold, "기본 20%. 이 이하면 가장 약한 물약 대신 가장 강한 물약을 선택");
+				bar("기력 표시 시작##pot-sp-th", tune.staminaThreshold, "기본 50%");
+				bar("마나 표시 시작##pot-mp-th", tune.magickaThreshold, "기본 50%");
+				ImGui::PushTextWrapPos(0.0f);
+				ImGui::TextColored(kDim, "물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
+				ImGui::PopTextWrapPos();
+			}
 
 			ImGui::SeparatorText("무기 전환");
 			float swap = Settings::WeaponSwapRange();

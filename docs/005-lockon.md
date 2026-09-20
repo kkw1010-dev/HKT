@@ -1,7 +1,8 @@
 # 005 · LockOn: the TDM target lock prompt in combat
 
-Status (2026-09-17): tested in game. Split from the grapple prompt on 2026-09-20
-(see below); **the split itself is not yet confirmed in game.**
+Status (2026-09-20): tested in game, including the split from the grapple prompt
+(see below): 록온 and 그래플 were offered together on different keys, both presses
+landed, and 록온 stayed off the screen while Grapple took the lock again.
 
 - **Results.** Lock-on worked. The prompt left when combat ended.
 

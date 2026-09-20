@@ -1,8 +1,10 @@
 # 014 · Grapple: the 그래플 prompt
 
-Status: split out of the `LockOn` module on 2026-09-20. The prompt itself was
-confirmed in game on 2026-09-17 and again on 2026-09-19 (test 2 below);
-**the module split is not yet confirmed in game.**
+Status: split out of the `LockOn` module on 2026-09-20 and confirmed in game the
+same day. A grapple accepted while locked played, the re-lock pressed TDM's key
+and the log recorded `after re-lock press: locked=true`; a second grapple ended
+with `re-lock dropped (not needed)`, the lock having come back by itself. The
+prompt itself was confirmed on 2026-09-17 and 2026-09-19 (test 2 below).
 
 Grapple is a Patreon mod, so most setups will not have it. The module then logs
 `Grapple not found; this module idles` and shows nothing. That is why it is its

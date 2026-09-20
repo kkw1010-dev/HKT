@@ -28,6 +28,14 @@ REPLACED = [
     ("DressActions", "enabled_water"),
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
+    # ItemUse's potion actions: the CIGAR Potion module replaces them. ItemUse itself stays on,
+    # because its other actions (recharge a weapon, equip a weapon or armour) have no CIGAR module.
+    ("ItemUse", "enabled_hp_pot"),
+    ("ItemUse", "enabled_stamina_potion"),
+    ("ItemUse", "enabled_magicka_potion"),
+    ("ItemUse", "enabled_curedisease_potion"),
+    ("ItemUse", "enabled_curepoison_potion"),
+    ("ItemUse", "enabled_waterbreath_potion"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 BABO_SCRIPTS = {
