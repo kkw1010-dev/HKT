@@ -6,31 +6,24 @@ status.
 
 ## Open items, in priority order
 
-1. **Jujutsu / 유술** — test 12 played 20 of 20 after the pre-install `mt_behavior.hkx` was restored
-   (see `docs/012-jujutsu.md`, tests 9-12). Next: test the perfect-parry path, the stun shares and the
-   slow motion (2026-09-20 build). NPC grapples are off in Grapple's INI for testing (backup in `build\`).
-   Older notes follow.
-   **Jujutsu / 유술, test 9** (`docs/012-jujutsu.md`, read its test sections 1-8 first). State of the build
-   deployed at 16daf79:
-   - **Works (confirmed in game):** the prompt on a guarding humanoid within the panel's 유술 거리
-     (default 250, the user's choice); the vanilla H2H kill move; the victim surviving (KillActor and
-     KillMoveEnd swallowed by vtable hooks on their anim-event handlers); the victim knocked into ragdoll
-     at its own KillMoveEnd, which the user called very natural; the payoff (Valhalla stun share, or
-     stamina, plus a little health); hiding 유술 for Valhalla-stunned targets.
-   - **Refusals** were traced to the **player's own attack**: the engine will not start a paired idle
-     mid-attack. `attackStop` is sent to an attacking player; test 8 then played 18 of 21 mid-attack
-     presses (61% before). The retry window was cut from 1.5 s to 0.3 s, so the player's next attack is
-     no longer cut after a failed grapple.
-   - **Test 9 checks:** no awkward attack stop after a failed press, and the refusal rate. Pool the
-     `try N:` lines with the scripts in the doc's method. Save CIGAR.log to `docs/testlogs/` before the
-     next launch, because it is recreated on every launch.
-   - **Ruled out:** distance, NPC Block Loop Fix (test 6, mod off: 22% refused vs 13% on), and TK Dodge
-     (test 7).
-   - **Later:** balance values (stun 50%, health 5%, knock magnitude 1.0) are placeholders. The user
-     deferred balance until the function is done.
-2. **Needs / 용변, test 1** (`docs/013-needs.md`). Built 2026-09-19 on Private Needs - Orgasm 1.10.2,
-   not tested in game. The doc lists the test steps; the log lines to read are `[Needs] gate`,
-   `PNO keys changed` and `excrete handler ended`.
+1. **Jujutsu / 유술 is guard-break only again.** On 2026-09-20 the user dropped the perfect-parry
+   feature ("패리 유술은 유기한다") and asked for a rollback to the most stable guard version. `src/Jujutsu.cpp`
+   and `src/Jujutsu.h` are back to the code test 12 ran (20 of 20 presses played), with one change kept:
+   the Valhalla stun share is the panel's value, default 15% (the user's choice). Removed with the
+   feature: parry detection, the slow motion, the victim's recoil/stagger reset, the player's block
+   suppression, the idle rotation and the forced idle state. `docs/012-jujutsu.md` keeps the full test
+   history (tests 9-19) so none of it has to be re-derived.
+   - Why it was dropped: after a parry the engine refused the paired idle 29 times out of 30, and no
+     state told the plays from the refusals (block, recoil, time multiplier, idle and distance were all
+     ruled out with per-try logs). The last build also broke NPC combat AI (they moved but stopped
+     attacking), most likely from `IdleForceDefaultState` / `recoilStop` sent to the victim.
+   - **Not yet tested in game after the rollback.** Guard 유술 needs one confirming run.
+2. **Test environment left changed for the 유술 tests** (both reversible, both the user's call):
+   - `mods\MUNG - Pandora Output NEW\meshesctors\character\Behaviors\mt_behavior.hkx` is the
+     pre-PNO copy; the 2026-09-19 15:40 Pandora output is kept at
+     `build\mt_behavior.pandora-20260919-1540.hkx`. Any Pandora run overwrites this.
+   - NPC grapples are off: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`,
+     original at `build\FH_Grapple_Plugin.ini.bak_20260919_npcgrapple`.
 3. Backlog below.
 
 Confirmed in game on 2026-09-19:

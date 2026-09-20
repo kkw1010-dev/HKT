@@ -414,3 +414,20 @@ with a **newly drawn random idle** each time, i.e. it brute-forces refusals.
 So CIGAR now does the same two things: every retry takes the next idle in turn instead of repeating one,
 and from the third try the victim is sent `IdleForceDefaultState` before the attempt. Each try logs the
 idle it used.
+
+## Test 19 (2026-09-20) and the rollback
+
+The idle rotation and the forced idle state did not help: no parry press played, and NPCs afterwards
+moved but stopped attacking — the resets sent to the victim (`IdleForceDefaultState`, `recoilStop`)
+are the likely cause.
+
+The user dropped the perfect-parry 유술 ("패리 유술은 유기한다") and asked for the most stable guard
+version back. `Jujutsu.cpp` / `Jujutsu.h` are the code of test 12 (20 of 20) again; the only thing kept
+from the parry work is the panel's stun share, default 15%. Everything the parry feature added is gone:
+parry detection (Valhalla recoil / Parry for All `GotParriedCMF`), the slow motion, the victim's
+recoil and stagger resets, the player's block suppression, the idle rotation and the forced idle state.
+
+What the 30 parry presses proved, for whoever tries this again: the engine refuses the paired idle
+after a perfect block, and none of the states that were logged per try (player block, victim recoil or
+stagger, the global time multiplier, which idle, distance, facing, speeds) separates the one play from
+the refusals. Valhalla itself brute-forces the same call every 50 ms with a fresh random idle.

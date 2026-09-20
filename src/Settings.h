@@ -55,18 +55,11 @@ namespace CIGAR::Settings
 	float JujutsuReach();
 	void SetJujutsuReach(float a_reach);
 
-	// 유술 tuning, each a fixed value the player can change in the panel (the user's defaults, 2026-09-20):
-	// the Valhalla stun share of a 유술 on a guarding target (0.15) and after a perfect parry (0.25), how
-	// long a parried attacker stays open to 유술 (1.5 s, at any distance), and the slow motion at the
-	// start of the throw (on, x0.3 for 0.5 s).
+	// 유술 tuning the player can change in the panel: the Valhalla stun share of a 유술 on a guarding
+	// target. The default of 0.15 is the user's choice (2026-09-20).
 	struct JujutsuTuning
 	{
 		float guardStun{ 0.15f };
-		float parryStun{ 0.25f };
-		float parryWindow{ 1.5f };
-		bool slow{ true };  // after a perfect parry only (the user's rule, 2026-09-20)
-		float slowMultiplier{ 0.3f };
-		float slowSeconds{ 0.5f };
 	};
 	JujutsuTuning JujutsuTune();
 	void SetJujutsuTune(const JujutsuTuning& a_tuning);

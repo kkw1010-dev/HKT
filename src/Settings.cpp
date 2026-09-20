@@ -33,10 +33,6 @@ namespace CIGAR::Settings
 		JujutsuTuning Clamped(JujutsuTuning a_t)
 		{
 			a_t.guardStun = std::clamp(a_t.guardStun, 0.0f, 1.0f);
-			a_t.parryStun = std::clamp(a_t.parryStun, 0.0f, 1.0f);
-			a_t.parryWindow = std::clamp(a_t.parryWindow, 0.5f, 5.0f);
-			a_t.slowMultiplier = std::clamp(a_t.slowMultiplier, 0.1f, 1.0f);
-			a_t.slowSeconds = std::clamp(a_t.slowSeconds, 0.1f, 3.0f);
 			return a_t;
 		}
 
@@ -72,11 +68,6 @@ namespace CIGAR::Settings
 			j["weaponSwap"]["range"] = swapRange;
 			j["jujutsu"]["reach"] = jujutsuReach;
 			j["jujutsu"]["guardStun"] = jujutsuTuning.guardStun;
-			j["jujutsu"]["parryStun"] = jujutsuTuning.parryStun;
-			j["jujutsu"]["parryWindow"] = jujutsuTuning.parryWindow;
-			j["jujutsu"]["slow"] = jujutsuTuning.slow;
-			j["jujutsu"]["slowMultiplier"] = jujutsuTuning.slowMultiplier;
-			j["jujutsu"]["slowSeconds"] = jujutsuTuning.slowSeconds;
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -153,9 +144,7 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("jujutsu"); it != j.end() && it->is_object()) {
 				jujutsuReach = std::clamp(it->value("reach", Jujutsu::kReachDefault), Jujutsu::kReachLow, Jujutsu::kReachHigh);
 				const JujutsuTuning d;
-				jujutsuTuning = Clamped({ it->value("guardStun", d.guardStun), it->value("parryStun", d.parryStun),
-					it->value("parryWindow", d.parryWindow), it->value("slow", d.slow), it->value("slowMultiplier", d.slowMultiplier),
-					it->value("slowSeconds", d.slowSeconds) });
+				jujutsuTuning = Clamped({ it->value("guardStun", d.guardStun) });
 			}
 			if (const auto it = j.find("weaponSwap"); it != j.end() && it->is_object()) {
 				swapRange = std::clamp(it->value("range", WeaponSwap::kRangeDefault), WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
@@ -196,9 +185,7 @@ namespace CIGAR::Settings
 		logs::info("settings: needs from {}%", needsMinPercent);
 		logs::info("settings: weapon swap range {:.0f}", swapRange);
 		logs::info("settings: jujutsu reach {:.0f}", jujutsuReach);
-		logs::info("settings: jujutsu stun guard {:.2f} parry {:.2f}, parry window {:.1f} s, slow {} x{:.2f} for {:.1f} s",
-			jujutsuTuning.guardStun, jujutsuTuning.parryStun, jujutsuTuning.parryWindow, jujutsuTuning.slow, jujutsuTuning.slowMultiplier,
-			jujutsuTuning.slowSeconds);
+		logs::info("settings: jujutsu stun share {:.2f}", jujutsuTuning.guardStun);
 	}
 
 	bool Enabled(std::string_view a_module)
