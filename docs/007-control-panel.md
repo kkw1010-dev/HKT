@@ -169,6 +169,10 @@ a module without a label is shown under its own name.
 
 ## The release variant (2026-09-20)
 
+Confirmed in game on 2026-09-20 with the release build: the module page showed
+the descriptions and no `조건:` / `최근:` line. The panel logs nothing about its
+own contents, so that was checked by eye rather than from `CIGAR.log`.
+
 The panel has two faces, chosen at compile time by the `CIGAR_RELEASE` option
 (`cmake --preset dist`):
 

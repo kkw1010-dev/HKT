@@ -41,6 +41,21 @@ status.
    ALCH records in this whole order and on none of the healing potions; see `docs/015-potion.md`.
 4. Backlog below.
 
+The **release build** (`CIGAR 0.2.0`) is what is enabled right now, not the author build:
+`-CIGAR` / `+CIGAR 0.2.0` in modlist.txt. So `verify_deploy.py` fails on "mod enabled in
+modlist.txt" until that is swapped back, and the dev mod folder's SI override is not in the VFS
+either — the replaced switches were turned off in **SI's own** settings.json instead
+(preset 2, Bathe / DressActions / the six ItemUse potions all false), backed up as
+`settings.json.bak_20260920_2016_padtest`. The profile files have the same backup stamp.
+`Auto Input Switch` is the only gamepad mod enabled; see `docs/016-gamepad.md`.
+
+Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 20:22-20:46), release build:
+- 20 prompts offered, 11 accepted across 록온, 그래플, 유술, 소변 보기, no WARN in the run;
+- the player-facing panel (no `조건:` / `최근:` line), by eye — the panel logs no contents;
+- gamepad prompts, by eye — CIGAR logs only the keyboard key, so a pad accept and a keyboard
+  accept are the same line. SkyPrompt supplies the pad button from its own settings.json.
+- Still open: whether the SKSE Menu Framework panel can be *operated* with a pad.
+
 Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 18:24-18:32):
 - the LockOn / Grapple split: both modules resolved on their own, 록온 and 그래플 were offered at the
   same time on different keys, both presses landed, and a grapple accepted while locked was followed

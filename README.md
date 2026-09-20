@@ -66,7 +66,8 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
-`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, `docs/011-execute.md`, `docs/012-jujutsu.md`, `docs/014-grapple.md`, and `docs/015-potion.md`. The in-game control panel
+`docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, `docs/011-execute.md`, `docs/012-jujutsu.md`, `docs/014-grapple.md`, `docs/015-potion.md`, and
+`docs/016-gamepad.md` (why CIGAR adds no gamepad binding layer). The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
