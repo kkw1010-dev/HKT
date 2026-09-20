@@ -88,6 +88,8 @@ namespace CIGAR
 		constexpr auto kParryMinPrepare = 300ms;
 		// After this many refused tries of a parried play, the slow motion is dropped (see Watch).
 		constexpr int kTriesBeforeNoSlow = 4;
+		// From this try on, the victim is also forced back to its default idle state before the attempt.
+		constexpr int kTriesBeforeForceIdle = 3;
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -373,6 +375,14 @@ namespace CIGAR
 			return false;
 		}
 		++tries;
+		// Valhalla retries its own executions every 50 ms with a NEW random idle each time
+		// (executionHandler::async_queueExecutionThreadFunc), so a refusal can be idle-specific at that
+		// moment. Every retry here takes the next idle in turn.
+		if (tries > 1 && idles.size() > 1) {
+			const auto at = std::ranges::find(idles, playing);
+			const auto index = at == idles.end() ? 0 : static_cast<std::size_t>(at - idles.begin());
+			playing = idles[(index + 1) % idles.size()];
+		}
 		const bool wasBlocking = a_victim->IsBlocking();
 		// Test 4 logged the state after the call, which an accepted play has already changed; the state that
 		// decides is the one before it (and before blockStop / attackStop).
@@ -390,6 +400,13 @@ namespace CIGAR
 		const bool victimRecoiling = GraphBool(a_victim, "IsRecoiling");
 		if (victimRecoiling) {
 			a_victim->NotifyAnimationGraph("recoilStop");
+		}
+		// Test 18: the refused tries had the victim running at the player (graph Speed 110-146) and the one
+		// parried play came when it stood still again. From the third try the victim is sent back to its
+		// default idle state, the way PNO and Valhalla reset an actor.
+		const bool forcedIdle = tries >= kTriesBeforeForceIdle;
+		if (forcedIdle) {
+			a_victim->NotifyAnimationGraph("IdleForceDefaultState");
 		}
 		// Test 15: every one of the 198 refused tries had the player blocking (a parry is made holding
 		// block), and the 3 that played did not.
@@ -410,9 +427,11 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {} (time x{:.2f}): before {}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, RE::BSTimer::QGlobalTimeMultiplier(), before, wasBlocking ? " (sent blockStop)" : "",
+		Log("try {} idle {:08X} (time x{:.2f}): before {}{}{}{}{}{}{} -> SetupSpecialIdle returned {}", tries, playing->GetFormID(),
+			RE::BSTimer::QGlobalTimeMultiplier(), before, wasBlocking ? " (sent blockStop)" : "",
 			victimStaggering ? " (sent staggerStop)" : "", victimRecoiling ? " (sent recoilStop)" : "",
-			playerBlocking ? " (stopped the player's block)" : "", playerAttacking ? " (sent attackStop to the player)" : "", requested);
+			forcedIdle ? " (sent IdleForceDefaultState)" : "", playerBlocking ? " (stopped the player's block)" : "",
+			playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
 		}

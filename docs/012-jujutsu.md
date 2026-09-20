@@ -398,3 +398,19 @@ What every parry press has in common and no guard press does: **it runs inside C
 (x0.3 from the parry). The two have been perfectly confounded since test 14: parry 0 of 30, guard 158
 of 208. So each try now logs the global time multiplier, and after 4 refused tries of a parried play the
 slow is dropped and the retries continue. If the play starts right after that, the slow was the cause.
+
+## Test 18 (2026-09-20 17:2x): one parry play; the slow motion is not the whole story
+
+Log: `testlogs/2026-09-20-jujutsu-test18-noslow.log`. 11 parry presses, **1 played**. Dropping the slow
+after 4 tries works (the try lines show x0.30 → x1.00), and the one play came at x1.00 with the victim's
+recoil and the player's block both clear — but other tries in exactly that state were refused too, so
+the slow alone does not decide it either.
+
+The refused tries at x1.00 have the victim **running at the player** (graph Speed 110-146); the play
+came when it stood still and blocked again (Speed 0). Valhalla has the same problem with its own
+executions: `executionHandler::async_queueExecutionThreadFunc` re-queues the paired idle every 50 ms
+with a **newly drawn random idle** each time, i.e. it brute-forces refusals.
+
+So CIGAR now does the same two things: every retry takes the next idle in turn instead of repeating one,
+and from the third try the victim is sent `IdleForceDefaultState` before the attempt. Each try logs the
+idle it used.
