@@ -166,3 +166,26 @@ The only conflict was in `RunTick`, which now skips both `FastTick()` and
 `Tick()` for a switched-off module. `Panel.cpp` has Korean labels for all six
 modules. New modules need nothing extra: they appear through `Modules()`, and
 a module without a label is shown under its own name.
+
+## The release variant (2026-09-20)
+
+The panel has two faces, chosen at compile time by the `CIGAR_RELEASE` option
+(`cmake --preset dist`):
+
+| | author build (default) | release build |
+|---|---|---|
+| switch label | `목욕 (Bathe)` | `목욕` |
+| under it | what the module does, the integration it waits for, the live `조건:` gate string and the last `최근:` log line | what the module does, and the integration it waits for |
+| 상태 block | SkyPrompt, the settings-file path, the log path | SkyPrompt, and a line asking for the log when reporting a problem |
+
+The gate string and the log line are author-side diagnostics: they read
+`combat=true locked=false movable=true quiet=false`, which explains a missing
+prompt to whoever wrote the module and to nobody else. A player gets a sentence
+saying what the module is for instead, which is what the release build ships.
+
+The descriptions live in the `kLabels` table next to each module's title, so a
+new module adds its own in the same place (see `docs/000-adding-a-module.md`).
+
+`tools/make_release.py` refuses to package a DLL that still carries the
+`조건: %s` format string, so an author build cannot be shipped under a release
+name by mistake.

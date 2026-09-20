@@ -92,6 +92,8 @@ src/Jujutsu.*       vanilla H2H kill move on a guarding humanoid; KillActorHandl
 src/Potion.*        drinks a potion for low health, stamina, magicka, a poison, a disease or being submerged (potions found by their effects, not by form ID)
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정): switches and live status, keys, module options
+tools/make_release.py   assembles the installable folder under Downloads from a CIGAR_RELEASE build (refuses an author build)
+dist/README-release.md  the readme that ships with the release; the player-facing one
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/ValhallaCombat/  Valhalla Combat API, V2 part (BSD-3, D7ry/valhallaCombat)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)

@@ -226,6 +226,14 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Build.ps1 -Deploy
 ```
 
+- **Two build variants.** The default is the author build: the control panel shows each
+  module's live gate string and last log line. `-Package` builds the `dist` preset instead
+  (`CIGAR_RELEASE`), whose panel shows what each module does for the player and no
+  diagnostics, and then assembles `%USERPROFILE%\Downloads\CIGAR <version>\` through
+  `tools/make_release.py`. `-Deploy` and `-Package` cannot be combined: the mod folder keeps
+  the author build. `make_release.py` refuses a DLL that still carries the `조건: %s` string,
+  so an author build cannot ship under a release name.
+
 - **Build.** VS 2026 Build Tools, Ninja, and vcpkg at
   `C:\TAKEALOOK\TOOLS\vcpkg`. An incremental build takes under a minute.
   Build.ps1 runs `check_menu_framework.py` and, with `-Deploy`,

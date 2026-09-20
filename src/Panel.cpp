@@ -26,28 +26,51 @@ namespace CIGAR::Panel
 	{
 		constexpr auto kSection = "CIGAR";
 
+		// A release build hides what only a mod author reads: the internal module name, the live
+		// gate string and the last log line. It shows what the module DOES instead.
+#ifdef CIGAR_RELEASE
+		constexpr bool kRelease = true;
+#else
+		constexpr bool kRelease = false;
+#endif
+
 		struct Label
 		{
 			std::string_view module;
 			const char* title;
 			const char* needs;
+			// What the player gets from it, in one or two sentences.
+			const char* what;
 		};
 
 		// Modules missing here still get a switch, titled with their own name.
 		constexpr std::array kLabels{
-			Label{ "Bathe", "목욕", "Bathing in Skyrim - Renewed" },
-			Label{ "Dress", "탈의·착용", "" },
-			Label{ "BaboKey", "납치 행동 선택", "BaboDialogue" },
-			Label{ "LockOn", "록온", "True Directional Movement" },
-			Label{ "Grapple", "그래플", "Grapple (Patreon)" },
-			Label{ "Deflate", "배출", "Fill Her Up" },
-			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)" },
-			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)" },
-			Label{ "WeaponSwap", "무기 전환", "" },
-			Label{ "Execute", "처형", "Valhalla Combat" },
-			Label{ "Jujutsu", "유술", "" },
-			Label{ "Needs", "용변", "Private Needs - Orgasm" },
-			Label{ "Potion", "물약", "" },
+			Label{ "Bathe", "목욕", "Bathing in Skyrim - Renewed",
+				"물에 들어가면 목욕, 폭포 아래에서는 샤워 프롬프트가 뜹니다. 씻으면 때가 사라집니다." },
+			Label{ "Dress", "탈의·착용", "",
+				"침대나 옷장 앞, 그리고 물속에서 탈의 프롬프트가 뜹니다. 벗은 옷은 기억해 두었다가 착용 프롬프트로 그대로 입습니다." },
+			Label{ "BaboKey", "납치 행동 선택", "BaboDialogue",
+				"납치당한 방에서 행동 선택 프롬프트가 뜹니다. 단축키 대신 프롬프트로 고릅니다." },
+			Label{ "LockOn", "록온", "True Directional Movement",
+				"전투 중 적을 록온하는 프롬프트가 뜹니다. 이미 록온 중이면 뜨지 않습니다." },
+			Label{ "Grapple", "그래플", "Grapple (Patreon)",
+				"전투 중 가까운 적에게 그래플 프롬프트가 뜹니다. 록온 상태에서 쓰면 그래플이 끝난 뒤 다시 록온합니다." },
+			Label{ "Deflate", "배출", "Fill Her Up",
+				"몸에 찬 것을 배출하는 프롬프트가 뜹니다. 키를 길게 누릅니다." },
+			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)",
+				"전투 중 체력이 40% 아래로 떨어지면 항복 프롬프트가 뜹니다. 키를 길게 누르며, 누르는 동안 화면이 느려집니다." },
+			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)",
+				"배가 고프면 가진 음식 중 가장 싼 것을 먹는 프롬프트가 뜹니다. 날고기, 술, 상한 음식은 고르지 않습니다." },
+			Label{ "WeaponSwap", "무기 전환", "",
+				"적이 멀거나 도망치면 원거리 무기로, 가까우면 근접 무기로 바꾸는 프롬프트가 뜹니다. 쓰기 전 무기로 되돌아옵니다." },
+			Label{ "Execute", "처형", "Valhalla Combat",
+				"스태거가 깨진 적에게 처형 프롬프트가 뜹니다. 프롬프트는 실제로 처형이 나갈 때만 보입니다." },
+			Label{ "Jujutsu", "유술", "",
+				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 적을 죽이지 않고 넘어뜨리며, 가드를 무너뜨립니다." },
+			Label{ "Needs", "용변", "Private Needs - Orgasm",
+				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다." },
+			Label{ "Potion", "물약", "",
+				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다." },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -238,26 +261,33 @@ namespace CIGAR::Panel
 		{
 			const std::string_view name = a_module->Name();
 			const auto* label = Find(name);
-			const std::string id = std::format("{} ({})##{}", label ? label->title : a_module->Name(), name, name);
+			const std::string id = kRelease
+			                           ? std::format("{}##{}", label ? label->title : a_module->Name(), name)
+			                           : std::format("{} ({})##{}", label ? label->title : a_module->Name(), name, name);
 
 			bool on = Settings::Enabled(name);
 			if (ImGui::Checkbox(id.c_str(), &on)) {
 				Settings::SetEnabled(name, on);
 			}
 			ImGui::Indent();
+			ImGui::PushTextWrapPos(0.0f);
+			if (label && label->what[0] != '\0') {
+				ImGui::TextColored(kDim, "%s", label->what);
+			}
 			if (label && label->needs[0] != '\0') {
 				ImGui::TextColored(kDim, "연동: %s (없으면 대기)", label->needs);
 			}
-			if (on) {
+			if (!on) {
+				ImGui::TextColored(kDim, "꺼짐. 프롬프트 표시 안 함");
+			} else if constexpr (!kRelease) {
+				// Author-side: the live gate inputs and the last log line, so a missing prompt is
+				// explained without opening the log.
 				const auto gate = a_module->ShownGate();
 				const auto line = a_module->ShownLine();
-				ImGui::PushTextWrapPos(0.0f);
 				ImGui::TextColored(kDim, "조건: %s", gate.empty() ? "기록 없음" : gate.c_str());
 				ImGui::TextColored(kDim, "최근: %s", line.empty() ? "기록 없음" : line.c_str());
-				ImGui::PopTextWrapPos();
-			} else {
-				ImGui::TextColored(kDim, "꺼짐. 프롬프트 표시 안 함");
 			}
+			ImGui::PopTextWrapPos();
 			ImGui::Unindent();
 			ImGui::Spacing();
 		}
@@ -287,9 +317,11 @@ namespace CIGAR::Panel
 
 			ImGui::SeparatorText("상태");
 			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? "연결됨" : "없음 (프롬프트 비활성)");
-			const auto source = Settings::SourceDescription();
-			ImGui::TextColored(kDim, "설정 파일: %s", source.c_str());
-			ImGui::TextColored(kDim, "상세 기록: SKSE\\CIGAR.log");
+			if constexpr (!kRelease) {
+				const auto source = Settings::SourceDescription();
+				ImGui::TextColored(kDim, "설정 파일: %s", source.c_str());
+			}
+			ImGui::TextColored(kDim, "문제가 생기면 SKSE\\CIGAR.log를 첨부해 주세요");
 		}
 
 		void __stdcall RenderKeyPage()

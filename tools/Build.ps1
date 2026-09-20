@@ -13,14 +13,21 @@
   powershell -ExecutionPolicy Bypass -File tools\Build.ps1 -Deploy
 #>
 param(
-    [switch]$Deploy
+    [switch]$Deploy,
+    # Build the player-facing variant (CIGAR_RELEASE) into build\dist and assemble the
+    # installable folder under Downloads. Not combinable with -Deploy: the deployed mod folder
+    # keeps the author build, whose panel shows the gate lines.
+    [switch]$Package
 )
+
+if ($Deploy -and $Package) { throw 'Use -Deploy or -Package, not both.' }
 
 $ErrorActionPreference = 'Stop'
 $Repo      = Split-Path -Parent $PSScriptRoot
 $VsDevCmd  = 'C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\Tools\VsDevCmd.bat'
 $ModFolder = 'C:\TAKEALOOK\mods\CIGAR'
-$Output    = Join-Path $Repo 'build\release'
+$Preset    = if ($Package) { 'dist' } else { 'release' }
+$Output    = Join-Path $Repo (Join-Path 'build' $Preset)
 
 if (-not (Test-Path $VsDevCmd)) { throw "Missing Visual Studio Build Tools: $VsDevCmd" }
 
@@ -32,7 +39,7 @@ $env:VCPKG_DISABLE_METRICS = '1'
 $before = @(Get-Process -Name mspdbsrv, vctip, MSBuild -ErrorAction SilentlyContinue | ForEach-Object Id)
 
 # Configure + build inside the developer environment; cmd /c keeps it scoped to this call.
-$cmd = "`"$VsDevCmd`" -arch=x64 -host_arch=x64 >nul && cd /d `"$Repo`" && cmake --preset release && cmake --build --preset release"
+$cmd = "`"$VsDevCmd`" -arch=x64 -host_arch=x64 >nul && cd /d `"$Repo`" && cmake --preset $Preset && cmake --build --preset $Preset"
 cmd /c $cmd
 $buildExit = $LASTEXITCODE
 $left = @(Get-Process -Name mspdbsrv, vctip, MSBuild -ErrorAction SilentlyContinue | Where-Object { $before -notcontains $_.Id })
@@ -49,6 +56,12 @@ Write-Host "built: $dll"
 
 & python (Join-Path $PSScriptRoot 'check_menu_framework.py')
 if ($LASTEXITCODE -ne 0) { throw 'Control-panel checks failed.' }
+
+if ($Package) {
+    & python (Join-Path $PSScriptRoot 'make_release.py') $dll
+    if ($LASTEXITCODE -ne 0) { throw 'Release packaging failed.' }
+    exit 0
+}
 
 if (-not $Deploy) { exit 0 }
 

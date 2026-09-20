@@ -31,6 +31,9 @@ CIGAR module, so their lessons do not have to be learned again.
 
 - Add `src/<Name>.h/.cpp` with a singleton class deriving from `CIGAR::Module`,
   and add it to `Modules()` in `main.cpp`.
+- Add a `Label` in `src/Panel.cpp`: the Korean title, the mod it waits for, and
+  one or two sentences of what the player gets. That last field is what the
+  release build shows in place of the gate line.
   - `OnGameLoaded()` resolves the integration. If the target is missing, log
     why, leave the module idle, and **return quietly**. Never make the target
     a hard requirement.
