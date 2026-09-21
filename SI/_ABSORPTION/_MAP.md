@@ -18,8 +18,6 @@
 
 - **Quest Tracking:** implemented as `QuestTrack` on 2026-09-21; hold, tracking, and objective-text label fallback confirmed in game.
 - **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
-- **Pass Time:** implemented as `PassTime` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
-- SI overlap disabled by CIGAR for IdleActions: `enabled_passtime` only. Furniture idle actions remain owned by SI.
 - SI overlap disabled by CIGAR for ItemUse: `enabled_equip_weapon` and `enabled_equip_armor`. Recharge, spellbook equip, and make-light remain owned by SI.
 - SI overlap disabled by CIGAR: `QuestActions.enabled_track` only. Other `QuestActions` behavior remains owned by SI.
 - Runtime implementation uses `ObjectiveState::Event` for the new-objective gate and the verified native
@@ -88,7 +86,7 @@ SI에서 `enabled_piecewiseoutfitswap` 활성화 후, 옷장 근처/바닥 아�
 - **Event-driven 가능 여부:** [INFERENCE — 가구는 CrosshairRefEvent 활용 가능할 수 있으나, PassTime은 Polling이 필요할 것으로 추정]
 - **필요한 최소 polling 주기:** 1s 이하 [INFERENCE]
 - **CIGAR에서 재사용 가능한 machinery:** `Tick()`, `PromptSlot` [EVIDENCE: CIGAR]
-- **SI에서 disable해야 하는 setting:** CIGAR가 PassTime만 흡수한 현재 상태에서는 `IdleActions.enabled_passtime`만 비활성화한다. 부모 `enabled`를 끄면 아직 SI가 담당하는 가구 idle 동작까지 함께 사라진다 [EVIDENCE: CIGAR, IMPLEMENTATION POLICY].
+- **SI에서 disable해야 하는 setting:** `IdleActions.enabled`, `IdleActions.enabled_passtime` [EVIDENCE: SETTINGS]
 - **Save persistence 필요 여부:** 없음 [INFERENCE]
 - **Known edge cases:** 이미 다른 유휴 애니메이션이 재생 중이거나 무기를 뽑은 상태 [INFERENCE]
 - **구현에 필요한 미확인 정보:** 벽 기대기나 손 녹이기의 대상 감지 방식(크로스헤어 타겟팅인지 위치 기반인지), `t_threshold`의 의미.

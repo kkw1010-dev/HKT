@@ -51,11 +51,7 @@ status.
    and revalidates ownership and equipped state before calling `ActorEquipManager::EquipObject`.
    It replaces only `ItemUse.enabled_equip_weapon` and `enabled_equip_armor`; runtime test pending.
    See `docs/018-item-equip.md`.
-6. **`PassTime` continues the SI absorption pass (2026-09-21).** It offers a hold prompt after five
-   seconds of stillness outside combat, then opens Skyrim's ordinary wait menu through its `Wait`
-   input action. Only `IdleActions.enabled_passtime` is replaced; furniture idles stay with SI.
-   Runtime test pending. See `docs/019-pass-time.md`.
-7. Backlog below.
+6. Backlog below.
 
 The **author/dev build** (`CIGAR`) is enabled and the release build (`CIGAR 0.2.0`) is disabled.
 The dev mod folder's SI override is therefore active in the VFS; deploy sync keeps the absorbed
@@ -145,7 +141,6 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 | `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
-| `PassTime` | 시간 보내기 (길게) | — (replaces SI PassTime only) | `019` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -228,8 +223,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
   module off withdraws its prompts and calls `OnDisabled()`.
 - **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
-  turns off SI's Bathe, DressActions (water, bed, wardrobe), PassTime, Quest Tracking, weapon/armor
-  equip, and the six ItemUse potion actions, and pins SI's
+  turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, weapon/armor equip,
+  and the six ItemUse potion actions, and pins SI's
   preset to Power User (2). `tools/sync_si_settings.py` enforces this on
   deploy, and SI keeps the switches off after its menu is opened.
 - **Untested:** gamepad buttons (the user does not use a pad).

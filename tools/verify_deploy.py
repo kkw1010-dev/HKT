@@ -29,7 +29,6 @@ REPLACED = [
     ("DressActions", "enabled_water"),
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
-    ("IdleActions", "enabled_passtime"),
     ("QuestActions", "enabled_track"),
     # ItemUse stays on because recharge, spellbook and make-light are not absorbed yet.
     ("ItemUse", "enabled_equip_weapon"),

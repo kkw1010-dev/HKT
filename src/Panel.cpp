@@ -8,7 +8,6 @@
 #include "Module.h"
 #include "Needs.h"
 #include "Potion.h"
-#include "PassTime.h"
 #include "Prompt.h"
 #include "QuestTrack.h"
 #include "Settings.h"
@@ -78,8 +77,6 @@ namespace CIGAR::Panel
 				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
 			Label{ "ItemEquip", "획득 장비 착용", "",
 				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
-			Label{ "PassTime", "시간 보내기", "",
-				"전투 밖에서 5초간 가만히 있으면 시간 보내기 프롬프트가 뜹니다. 키를 길게 누르면 바닐라 대기 창을 엽니다." },
 		};
 
 		const Label* Find(std::string_view a_module)

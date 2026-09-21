@@ -67,9 +67,6 @@ namespace CIGAR::Util
 	// 0-255 keyboard scan codes, 256-263 mouse buttons. Input sinks such as True Directional
 	// Movement see it like a real press. Returns false for other codes (gamepad is not supported).
 	bool PressKey(std::int64_t a_code);
-	// Dispatches a named vanilla input action (such as "Wait") through the same input event source.
-	// Returns false only when the event source or event allocation is unavailable.
-	bool SendUserEvent(std::string_view a_event);
 
 	// Streamlined Interactions switches CIGAR replaces. SI rewrites its settings.json from its menu,
 	// so the file is read as it is now. Returns 1 on, 0 off, -1 unreadable or SI absent.
