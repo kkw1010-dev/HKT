@@ -41,6 +41,7 @@ their in-game tests are in git history and in `docs/001`.
 | `Jujutsu` | — (Valhalla optional) | — | Built 2026-09-19, not tested in game |
 | `Needs` | Private Needs - Orgasm (optional) | — | Built 2026-09-19, not tested in game |
 | `Potion` | — | `ItemUse` potion actions (health, stamina, magicka, cure disease, cure poison, water breathing) | Confirmed in game 2026-09-20 (health and stamina; cures and water breathing untested) |
+| `QuestTrack` | — | `QuestActions.enabled_track` | Built 2026-09-21; not yet tested in game |
 
 Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 
@@ -63,11 +64,13 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | A hostile humanoid within 250 units is guarding, or one perfect-parried in the last 1.5 s (any distance) | 유술: <이름> |
 | Private Needs bladder / bowel at or above the panel's fill (default 50%), out of combat and scenes | 소변 보기 (N%), 대변 보기 (N%) |
 | Health, stamina or magicka at or below the panel's fraction (default 50%), poisoned, diseased, or submerged without water breathing | 마시기: <물약 이름> |
+| A new objective appears for a quest that is not tracked | 추적하기: <퀘스트 이름> (15 seconds) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and
 `docs/004-babo-key.md`, `docs/005-lockon.md`, `docs/006-deflate.md`, `docs/008-surrender.md`, `docs/009-eat.md`, `docs/010-weapon-swap.md`, `docs/011-execute.md`, `docs/012-jujutsu.md`, `docs/014-grapple.md`, `docs/015-potion.md`, and
-`docs/016-gamepad.md` (why CIGAR adds no gamepad binding layer). The in-game control panel
+`docs/016-gamepad.md` (why CIGAR adds no gamepad binding layer), and
+`docs/017-quest-track.md`. The in-game control panel
 (SKSE Menu Framework, optional) is described in `docs/007-control-panel.md`. To add
 a module, see `docs/000-adding-a-module.md`. Session handoff: `HANDOFF.md`.
 
@@ -91,6 +94,7 @@ src/WeaponSwap.*    ranged weapon when the enemy is far or fleeing, melee weapon
 src/Execute.*       Valhalla Combat execution: prompt only while its key would execute; presses its key (F15 in prompt-only mode)
 src/Jujutsu.*       vanilla H2H kill move on a guarding humanoid; KillActorHandler hook keeps the victim alive
 src/Potion.*        drinks a potion for low health, stamina, magicka, a poison, a disease or being submerged (potions found by their effects, not by form ID)
+src/QuestTrack.*     offers an untracked quest when one of its objectives becomes displayed, then calls Quest.SetActive
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정): switches and live status, keys, module options
 tools/make_release.py   assembles the installable folder under Downloads from a CIGAR_RELEASE build (refuses an author build)

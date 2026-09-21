@@ -12,6 +12,7 @@
 #include "Panel.h"
 #include "Potion.h"
 #include "Prompt.h"
+#include "QuestTrack.h"
 #include "Settings.h"
 #include "Surrender.h"
 #include "Util.h"
@@ -21,11 +22,11 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 13> modules{
+		static const std::array<Module*, 14> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
-			Needs::GetSingleton(), Potion::GetSingleton()
+			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton()
 		};
 		return modules;
 	}
@@ -130,6 +131,7 @@ namespace
 			Prompts::Init();
 			Dress::GetSingleton()->RegisterEvents();
 			Needs::GetSingleton()->RegisterEvents();
+			QuestTrack::GetSingleton()->RegisterEvents();
 			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
 			StartTicker();

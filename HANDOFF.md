@@ -1,4 +1,4 @@
-# CIGAR — session handoff (updated 2026-09-20)
+# CIGAR — session handoff (updated 2026-09-21)
 
 Read this first, then `README.md`. The design rationale and the test history of
 each module are in `docs/`, one file per module, and each file starts with its
@@ -39,7 +39,12 @@ status.
    수중 호흡, and the 체력 위급 threshold picking the strongest bottle. Test 1 the same day
    found the module showing nothing because the filter required `IsMedicine()`, a flag set on 27
    ALCH records in this whole order and on none of the healing potions; see `docs/015-potion.md`.
-4. Backlog below.
+4. **`QuestTrack` starts the SI absorption pass (2026-09-21).** It listens for an objective-state
+   transition to displayed, offers the untracked quest for 15 seconds, and dispatches the native
+   Papyrus `Quest.SetActive(true)` method. The SE+AE+VR build passed. **Not yet tested in game.**
+   `QuestActions.enabled_track` is the only new SI switch CIGAR replaces; the rest of QuestActions
+   remains enabled. See `docs/017-quest-track.md` and `SI/_ABSORPTION/_MAP.md`.
+5. Backlog below.
 
 The **release build** (`CIGAR 0.2.0`) is what is enabled right now, not the author build:
 `-CIGAR` / `+CIGAR 0.2.0` in modlist.txt. So `verify_deploy.py` fails on "mod enabled in
@@ -130,6 +135,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Jujutsu` | 유술 | — (Valhalla optional) | `012` |
 | `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm | `013` |
 | `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
+| `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -212,7 +218,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
   module off withdraws its prompts and calls `OnDisabled()`.
 - **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
-  turns off SI's Bathe and DressActions (water, bed, wardrobe) and pins SI's
+  turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, and the six
+  ItemUse potion actions, and pins SI's
   preset to Power User (2). `tools/sync_si_settings.py` enforces this on
   deploy, and SI keeps the switches off after its menu is opened.
 - **Untested:** gamepad buttons (the user does not use a pad).

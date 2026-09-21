@@ -8,6 +8,7 @@
 #include "Needs.h"
 #include "Potion.h"
 #include "Prompt.h"
+#include "QuestTrack.h"
 #include "Settings.h"
 #include "Surrender.h"
 #include "WeaponSwap.h"
@@ -71,6 +72,8 @@ namespace CIGAR::Panel
 				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다." },
 			Label{ "Potion", "물약", "",
 				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다." },
+			Label{ "QuestTrack", "퀘스트 추적", "",
+				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
 		};
 
 		const Label* Find(std::string_view a_module)

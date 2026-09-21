@@ -44,8 +44,9 @@ namespace CIGAR
 		inline constexpr std::uint16_t kUrinate = 15;
 		inline constexpr std::uint16_t kDefecate = 16;
 		inline constexpr std::uint16_t kDrink = 17;
+		inline constexpr std::uint16_t kTrackQuest = 18;
 
-		inline constexpr std::array kAll{ kBathe, kShower, kUndress, kDress, kBaboAct, kLock, kGrapple, kDeflate, kSurrender, kEat, kRanged, kMelee, kExecute, kJujutsu, kUrinate, kDefecate, kDrink };
+		inline constexpr std::array kAll{ kBathe, kShower, kUndress, kDress, kBaboAct, kLock, kGrapple, kDeflate, kSurrender, kEat, kRanged, kMelee, kExecute, kJujutsu, kUrinate, kDefecate, kDrink, kTrackQuest };
 		constexpr bool Unique()
 		{
 			for (std::size_t i = 0; i < kAll.size(); ++i) {
