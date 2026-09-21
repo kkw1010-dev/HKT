@@ -1,8 +1,9 @@
 # 019 · Rest: sit or lie down on the ground
 
 Status (2026-09-22): floor sit, lie down, get up and ledge sit confirmed in game by the user.
-Lean tested once in game: wall direction and the table hold were wrong, both fixed
-and redeployed, not yet retested.
+Lean in game 2026-09-22: wall (facing only), table and rail leans, hold prompts and
+random clips passed; 그만 기대기 after a wall lean failed and is fixed, not yet
+retested.
 
 Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, 일어나기). SI's
 `IdleActions.enabled` is off since 2026-09-21; the rest of that module (lean, warm
@@ -49,6 +50,14 @@ without the floor-pitch condition, rescanning every 250 ms:
   offered only facing a wall. A back-to-wall variant with `IdleWallLeanEnterInstant`
   worked but the user dropped it: each extra entry path multiplies the motion-sync
   cases to solve.
+- Until the pose is reached (`idleChairSitting`, or `tailLayDown` for lying; up to 6 s),
+  movement does not end the rest. In game (2026-09-22) the wall lean's turn set
+  `moving=true` in the same tick as the enter event, so CIGAR dropped the rest at once
+  and 그만 기대기 never appeared. `idleChairSitting` arrived about 3 s later, and the
+  game's sit state (`seated`) was on while leaning. The table lean sends the same tag.
+- Table, rail and wall leans play vanilla enter and exit clips around the OAR loop:
+  no installed mod replaces `IdleLeanTable enter/exit.hkx`, `RailLeanEnter/Exit.hkx` or,
+  for women, `Wall_IdleBackEnter.hkx` (checked across every enabled mod, 2026-09-22).
 - The lean prompt was single press in the first build (its `SetPromptType(kHold)`
   was missing); fixed.
 - The numbers are my choices. Accepting logs `lean scan: groundZ=.. front@25=..

@@ -18,7 +18,8 @@ namespace CIGAR
 		// Animation events logged from entering until this long after getting up.
 		constexpr auto kRecordAfterGetUp = 5s;
 		constexpr int kRecordCap = 80;
-		// SI waits for these tags to know the pose is reached (read from its DLL).
+		// SI waits for these tags to know the pose is reached (read from its DLL). In game (2026-09-22)
+		// idleChairSitting also arrives for the wall and table leans, about 2-3 s after the enter event.
 		constexpr auto kSatTag = "idleChairSitting"sv;
 		constexpr auto kLayTag = "tailLayDown"sv;
 		constexpr auto kConfirmWait = 6s;
@@ -381,22 +382,24 @@ namespace CIGAR
 		const bool drawn = state && state->IsWeaponDrawn();
 		const bool dead = a_player->IsDead() || (state && state->IsBleedingOut());
 		const bool driven = GraphBool(a_player, "bAnimationDriven");
+		const bool seated = state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal;
 		const auto since = now - poseSince;
+		const bool confirmed = restConfirmed.load();
+		// Until the pose is reached the enter animation may move the player (the wall lean turns
+		// around, seen in game as moving=true), so movement ends the rest only after that.
+		const bool settling = !confirmed && since < kConfirmWait;
+		const auto tag = pose == Pose::kLying ? kLayTag : kSatTag;
 
-		LogGate(std::format("pose={} for={:.0f}s confirmed={} moving={} combat={} drawn={} animDriven={}",
-			PoseName(pose), std::chrono::duration<float>(since).count(), restConfirmed.load(), moving, combat,
-			drawn, driven));
+		LogGate(std::format("pose={} for={:.0f}s confirmed={} settling={} moving={} combat={} drawn={} seated={} animDriven={}",
+			PoseName(pose), std::chrono::duration<float>(since).count(), confirmed, settling, moving, combat, drawn,
+			seated, driven));
 
-		if (IsLean(pose)) {
-			confirmReported = true;  // No known "pose reached" tag for leans; the recorded events show it.
-		}
-		if (!confirmReported && restConfirmed) {
+		if (!confirmReported && confirmed) {
 			confirmReported = true;
-			Log("{} reached ({} seen)", PoseName(pose), pose == Pose::kSitting ? kSatTag : kLayTag);
+			Log("{} reached ({} seen)", PoseName(pose), tag);
 		} else if (!confirmReported && since >= kConfirmWait) {
 			confirmReported = true;
-			Log("WARN {} not confirmed: no '{}' event within {}s; see the recorded events above", PoseName(pose),
-				pose == Pose::kSitting ? kSatTag : kLayTag,
+			Log("WARN {} not confirmed: no '{}' event within {}s; see the recorded events above", PoseName(pose), tag,
 				std::chrono::duration_cast<std::chrono::seconds>(kConfirmWait).count());
 		}
 
@@ -409,7 +412,7 @@ namespace CIGAR
 			Log("rest ended: dead or bleeding out");
 			return;
 		}
-		if (moving || drawn) {
+		if ((moving || drawn) && !settling) {
 			// Something else stood the player up; stop offering 일어나기.
 			pose = Pose::kStanding;
 			readySince = now;
