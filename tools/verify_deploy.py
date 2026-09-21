@@ -41,6 +41,12 @@ REPLACED = [
     ("ItemUse", "enabled_waterbreath_potion"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
+# SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
+# leaves its switch off in the deployed settings, and the feature then vanishes from the game
+# silently (this happened with pass time on 2026-09-21).
+KEPT = [
+    ("IdleActions", "enabled_passtime"),
+]
 BABO_SCRIPTS = {
     "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
     "BaboDialogueConfigMenu": ["NotificationKey"],
@@ -677,6 +683,9 @@ def main():
             settings = json.load(f)
         for module, switch in REPLACED:
             check(settings["MCP"]["modules"][module][switch] is False, "SI %s.%s disabled" % (module, switch))
+        for module, switch in KEPT:
+            check(settings["MCP"]["modules"][module][switch] is True,
+                  "SI %s.%s still on (not absorbed by CIGAR)" % (module, switch))
         check(settings["MCP"].get("preset") == 2, "SI preset is Power User (menu keeps module switches)")
 
     if failures:
