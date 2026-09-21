@@ -16,7 +16,9 @@
 
 ## CIGAR absorption status
 
-- **Quest Tracking:** implemented as `QuestTrack` on 2026-09-21; SE+AE+VR build passed, in-game test pending.
+- **Quest Tracking:** implemented as `QuestTrack` on 2026-09-21; hold, tracking, and objective-text label fallback confirmed in game.
+- **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
+- SI overlap disabled by CIGAR for ItemUse: `enabled_equip_weapon` and `enabled_equip_armor`. Recharge, spellbook equip, and make-light remain owned by SI.
 - SI overlap disabled by CIGAR: `QuestActions.enabled_track` only. Other `QuestActions` behavior remains owned by SI.
 - Runtime implementation uses `ObjectiveState::Event` for the new-objective gate and the verified native
   Papyrus call `Quest.SetActive(true)` for the action. This is CIGAR implementation policy, not evidence
@@ -207,7 +209,7 @@ new objective 수신 직후 Track Quest prompt가 출현하고, 수락 시 해�
 - SI의 정확한 suppression 조건과 동시에 여러 objective가 표시될 때의 선택 규칙 [UNKNOWN]
 
 ##### CIGAR implementation policy
-`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID와 objective index만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 hold이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — runtime confirmed 2026-09-21; label fallback runtime test pending].
+`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID와 objective index만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 hold이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — runtime confirmed 2026-09-21, including objective-text label fallback].
 
 ##### Minimal experiment
 SI의 Quest Tracking 활성 상태에서 퀘스트 단계 진행 시 프롬프트가 즉시(이벤트) 뜨는지, 지연 후(polling) 뜨는지 관찰.
@@ -394,6 +396,20 @@ SI에서 HelmetToggle 활성화 후, 투구를 쓴 상태에서 프롬프트가 
 - **SI에서 disable해야 하는 setting:** `ItemUse.enabled_recharge_weapon`, `enabled_makelight`, `enabled_equip_weapon`, `enabled_equip_armor`, `enabled_equip_spellbook` [EVIDENCE: SETTINGS]
 - **Save persistence 필요 여부:** [UNKNOWN]
 - **Known edge cases:** 아주라의 별 소모 규칙 [INFERENCE], 은신 플레이 시 강제 불빛 팝업 방해 [INFERENCE]
+
+### IMPLEMENTATION CONTRACT (Acquired Gear Equip)
+
+#### Evidence-backed behavior
+공식 영상에서 아이템 습득 맥락의 Equip prompt가 확인되며, SI에는 무기와 방어구에 대한 독립 설정이 있다 [EVIDENCE: OFFICIAL VIDEO/DOC, SETTINGS].
+
+#### CIGAR implementation policy
+`TESContainerChangedEvent`에서 플레이어 인벤토리로 새로 들어온 playable `WEAP`/`ARMO`만 제안한다. 이벤트 싱크는 FormID만 복사하고 게임 스레드에서 재검증한다. 비전투 행동은 hold이며 15초 동안 유지하고, 전투 중이거나 이동 조작이 막힌 동안 숨긴다. 수락 시 `ActorEquipManager::EquipObject`를 사용한다 [IMPLEMENTATION POLICY].
+
+#### SI ownership boundary
+CIGAR는 `enabled_equip_weapon`과 `enabled_equip_armor`만 끈다. `enabled_recharge_weapon`, `enabled_equip_spellbook`, `enabled_makelight`는 아직 SI가 담당한다. Quest Item Equip은 `QuestActions` 전체의 다른 미흡수 기능과 겹치므로 별도 경계가 확보될 때까지 SI 소유로 둔다 [IMPLEMENTATION POLICY].
+
+#### Runtime status
+SE+AE+VR build와 deploy 검증 통과. 실제 습득·장착 테스트 대기 [CIGAR].
 
 ### IMPLEMENTATION CONTRACT (RechargeWeapon)
 

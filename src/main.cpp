@@ -6,6 +6,7 @@
 #include "Execute.h"
 #include "Grapple.h"
 #include "Jujutsu.h"
+#include "ItemEquip.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Needs.h"
@@ -22,11 +23,11 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 14> modules{
+		static const std::array<Module*, 15> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
-			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton()
+			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton()
 		};
 		return modules;
 	}
@@ -132,6 +133,7 @@ namespace
 			Dress::GetSingleton()->RegisterEvents();
 			Needs::GetSingleton()->RegisterEvents();
 			QuestTrack::GetSingleton()->RegisterEvents();
+			ItemEquip::GetSingleton()->RegisterEvents();
 			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
 			StartTicker();

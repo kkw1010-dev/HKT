@@ -43,17 +43,19 @@ status.
    transition to displayed, offers the untracked quest as a 15-second hold prompt, and dispatches the native
    Papyrus `Quest.SetActive(true)` method. Hold and tracking are confirmed in game. A nameless
    miscellaneous QUST now falls back to the new objective text instead of exposing its FormID;
-   that label fix is built but not yet confirmed in game.
+   that label fix is confirmed in game.
    `QuestActions.enabled_track` is the only new SI switch CIGAR replaces; the rest of QuestActions
    remains enabled. See `docs/017-quest-track.md` and `SI/_ABSORPTION/_MAP.md`.
-5. Backlog below.
+5. **`ItemEquip` continues the SI absorption pass (2026-09-21).** A newly acquired playable weapon
+   or armor piece gets a 15-second hold prompt outside combat. It uses `TESContainerChangedEvent`
+   and revalidates ownership and equipped state before calling `ActorEquipManager::EquipObject`.
+   It replaces only `ItemUse.enabled_equip_weapon` and `enabled_equip_armor`; runtime test pending.
+   See `docs/018-item-equip.md`.
+6. Backlog below.
 
-The **release build** (`CIGAR 0.2.0`) is what is enabled right now, not the author build:
-`-CIGAR` / `+CIGAR 0.2.0` in modlist.txt. So `verify_deploy.py` fails on "mod enabled in
-modlist.txt" until that is swapped back, and the dev mod folder's SI override is not in the VFS
-either — the replaced switches were turned off in **SI's own** settings.json instead
-(preset 2, Bathe / DressActions / the six ItemUse potions all false), backed up as
-`settings.json.bak_20260920_2016_padtest`. The profile files have the same backup stamp.
+The **author/dev build** (`CIGAR`) is enabled and the release build (`CIGAR 0.2.0`) is disabled.
+The dev mod folder's SI override is therefore active in the VFS; deploy sync keeps the absorbed
+switches off while leaving the rest of each SI module intact.
 `Auto Input Switch` is the only gamepad mod enabled; see `docs/016-gamepad.md`.
 
 Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 20:22-20:46), release build:
@@ -138,6 +140,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm | `013` |
 | `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
+| `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -220,8 +223,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
   module off withdraws its prompts and calls `OnDisabled()`.
 - **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
-  turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, and the six
-  ItemUse potion actions, and pins SI's
+  turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, weapon/armor equip,
+  and the six ItemUse potion actions, and pins SI's
   preset to Power User (2). `tools/sync_si_settings.py` enforces this on
   deploy, and SI keeps the switches off after its menu is opened.
 - **Untested:** gamepad buttons (the user does not use a pad).

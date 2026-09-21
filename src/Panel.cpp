@@ -4,6 +4,7 @@
 #include "Execute.h"
 #include "Grapple.h"
 #include "Jujutsu.h"
+#include "ItemEquip.h"
 #include "Module.h"
 #include "Needs.h"
 #include "Potion.h"
@@ -74,6 +75,8 @@ namespace CIGAR::Panel
 				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다." },
 			Label{ "QuestTrack", "퀘스트 추적", "",
 				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
+			Label{ "ItemEquip", "획득 장비 착용", "",
+				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
 		};
 
 		const Label* Find(std::string_view a_module)

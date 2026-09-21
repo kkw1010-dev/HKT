@@ -26,8 +26,9 @@ REPLACED = [
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
     ("QuestActions", "enabled_track"),
-    # ItemUse's potion actions: the CIGAR Potion module replaces them. ItemUse itself stays on,
-    # because its other actions (recharge a weapon, equip a weapon or armour) have no CIGAR module.
+    # ItemUse stays on because recharge, spellbook and make-light are not absorbed yet.
+    ("ItemUse", "enabled_equip_weapon"),
+    ("ItemUse", "enabled_equip_armor"),
     ("ItemUse", "enabled_hp_pot"),
     ("ItemUse", "enabled_stamina_potion"),
     ("ItemUse", "enabled_magicka_potion"),

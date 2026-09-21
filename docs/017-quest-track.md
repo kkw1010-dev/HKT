@@ -1,6 +1,6 @@
 # 017 · Quest tracking
 
-Status: hold and tracking confirmed in game on 2026-09-21; label fallback fix built, awaiting runtime confirmation.
+Status: hold, tracking and objective-text label fallback confirmed in game on 2026-09-21.
 
 ## Contract
 
