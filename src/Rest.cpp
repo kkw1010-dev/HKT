@@ -28,7 +28,10 @@ namespace CIGAR
 		constexpr auto kLedgeEvent = "IdleSitLedgeEnter"sv;
 		constexpr auto kLieEvent = "IdleLayDownEnter"sv;
 		// Lean events SI sends (its LeanWall, LeanTable and LeanEdge); the rail has its own exit.
-		constexpr auto kLeanWallEvent = "IdleWallLeanStart"sv;
+		// IdleWallLeanStart turns the actor around before leaning back, so it is for a wall in front;
+		// with the back already to the wall the loop is entered directly (in game, 2026-09-22).
+		constexpr auto kLeanWallTurnEvent = "IdleWallLeanStart"sv;
+		constexpr auto kLeanWallEvent = "IdleWallLeanEnterInstant"sv;
 		constexpr auto kLeanTableEvent = "IdleLeanTableEnter"sv;
 		constexpr auto kLeanRailEvent = "IdleRailLeanEnter"sv;
 		constexpr auto kRailExitEvent = "IdleRailLeanExit"sv;
@@ -117,7 +120,8 @@ namespace CIGAR
 
 		// Lean test, in game units; my choices, logged on every lean for tuning. In front: the first
 		// surface found looking down at kLeanProbes ahead, kTableMin-kTableMax above the ground a
-		// table, up to kRailMax a rail. Behind: a wall hit within kWallReach at waist and chest.
+		// table, up to kRailMax a rail. A wall is hit within kWallReach at waist and chest height,
+		// first in front, then behind.
 		constexpr std::array kLeanProbes{ 25.0f, 35.0f, 45.0f };
 		constexpr float kLeanTop = 140.0f;
 		constexpr float kLeanBottom = 20.0f;
@@ -133,6 +137,7 @@ namespace CIGAR
 		{
 			kNone,
 			kWall,
+			kWallFront,
 			kTable,
 			kRail
 		};
@@ -167,16 +172,22 @@ namespace CIGAR
 					return LeanSpot::kRail;
 				}
 			}
-			const auto back = forward * -kWallReach;
 			const RE::NiPoint3 waist{ origin.x, origin.y, *ground + kWallWaist };
 			const RE::NiPoint3 chest{ origin.x, origin.y, *ground + kWallChest };
-			const auto waistHit = Cast(a_player, waist, waist + back);
-			const auto chestHit = Cast(a_player, chest, chest + back);
 			const auto at = [](const std::optional<float>& a_hit) {
 				return a_hit ? std::format("{:.0f}", *a_hit * kWallReach) : "none"s;
 			};
-			a_scan += std::format(" back waist={} chest={}", at(waistHit), at(chestHit));
-			return waistHit && chestHit ? LeanSpot::kWall : LeanSpot::kNone;
+			const auto wall = [&](float a_sign, const char* a_side) {
+				const auto reach = forward * (a_sign * kWallReach);
+				const auto waistHit = Cast(a_player, waist, waist + reach);
+				const auto chestHit = Cast(a_player, chest, chest + reach);
+				a_scan += std::format(" {} waist={} chest={}", a_side, at(waistHit), at(chestHit));
+				return waistHit && chestHit;
+			};
+			if (wall(1.0f, "front")) {
+				return LeanSpot::kWallFront;
+			}
+			return wall(-1.0f, "back") ? LeanSpot::kWall : LeanSpot::kNone;
 		}
 
 		bool GraphBool(RE::PlayerCharacter* a_player, const char* a_name)
@@ -196,6 +207,7 @@ namespace CIGAR
 		sit.SetPromptType(SkyPromptAPI::kHold);
 		lie.SetPromptType(SkyPromptAPI::kHold);
 		getUp.SetPromptType(SkyPromptAPI::kHold);
+		lean.SetPromptType(SkyPromptAPI::kHold);
 	}
 
 	Rest* Rest::GetSingleton()
@@ -213,6 +225,8 @@ namespace CIGAR
 			return "lying";
 		case Pose::kLeanWall:
 			return "leaning on a wall";
+		case Pose::kLeanWallTurn:
+			return "leaning on a wall (turned)";
 		case Pose::kLeanTable:
 			return "leaning on a table";
 		case Pose::kLeanRail:
@@ -329,6 +343,9 @@ namespace CIGAR
 			switch (ScanLean(a_player, leanScan)) {
 			case LeanSpot::kWall:
 				leanFound = Pose::kLeanWall;
+				break;
+			case LeanSpot::kWallFront:
+				leanFound = Pose::kLeanWallTurn;
 				break;
 			case LeanSpot::kTable:
 				leanFound = Pose::kLeanTable;
@@ -487,6 +504,9 @@ namespace CIGAR
 			break;
 		case Pose::kLeanWall:
 			event = kLeanWallEvent;
+			break;
+		case Pose::kLeanWallTurn:
+			event = kLeanWallTurnEvent;
 			break;
 		case Pose::kLeanTable:
 			event = kLeanTableEvent;

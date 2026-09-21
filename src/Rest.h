@@ -46,7 +46,8 @@ namespace CIGAR
 			kStanding,
 			kSitting,
 			kLying,
-			kLeanWall,
+			kLeanWall,      // back already to the wall: entered in place
+			kLeanWallTurn,  // facing the wall: the enter animation turns the player around
 			kLeanTable,
 			kLeanRail
 		};
@@ -56,7 +57,8 @@ namespace CIGAR
 		static const char* PoseName(Pose a_pose);
 		static bool IsLean(Pose a_pose)
 		{
-			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanTable || a_pose == Pose::kLeanRail;
+			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanWallTurn || a_pose == Pose::kLeanTable ||
+			       a_pose == Pose::kLeanRail;
 		}
 		void Enter(Pose a_pose);
 		bool SendEnter(RE::PlayerCharacter* a_player, Pose a_pose);

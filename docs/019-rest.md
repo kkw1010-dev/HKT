@@ -1,7 +1,8 @@
 # 019 · Rest: sit or lie down on the ground
 
 Status (2026-09-22): floor sit, lie down, get up and ledge sit confirmed in game by the user.
-Lean (wall, table, rail) built and deployed, not yet tested in game.
+Lean tested once in game: wall direction and the table hold were wrong, both fixed
+and redeployed, not yet retested.
 
 Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, 일어나기). SI's
 `IdleActions.enabled` is off since 2026-09-21; the rest of that module (lean, warm
@@ -41,8 +42,14 @@ without the floor-pitch condition, rescanning every 250 ms:
 
 - In front: at 25, 35 and 45 units ahead, a ray from 140 units above the ground down
   to 20 units. The first surface 60-95 units high is a table, 95-125 a rail.
-- Behind (only when nothing in front): rays 40 units back at waist (60) and chest
-  (100) height; both hitting is a wall.
+- Wall (only when no table or rail): rays 40 units at waist (60) and chest (100)
+  height, forward first, then back; both hitting is a wall.
+- In game (2026-09-22) `IdleWallLeanStart` turned the player around before leaning
+  back, so with the back to a wall it leaned on air. It is now sent only for a wall
+  in front (the turn puts the back to it); with the back already to the wall CIGAR
+  sends `IdleWallLeanEnterInstant`, which enters the lean without turning.
+- The lean prompt was single press in the first build (its `SetPromptType(kHold)`
+  was missing); fixed.
 - The numbers are my choices. Accepting logs `lean scan: groundZ=.. front@25=..
   ... back waist=.. chest=.. -> leaning on ..`.
 - While leaning the prompt reads 그만 기대기. The animation plays where the player
