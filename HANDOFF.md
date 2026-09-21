@@ -356,13 +356,13 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    2026-09-21 (the user's call), so every action below is gone from the game until CIGAR has it.
    The user wants each one kept, even where CIGAR has a similar module, because the point is
    roleplay rather than removing a duplicate. Read from SI's DLL strings; gates are inferred.
-   - **Sit / lie down on the ground** — built as `Rest` (`docs/019-rest.md`), untested in game. SI sends the vanilla events `IdleSitCrossLeggedEnter`
+   - **Sit / lie down on the ground** — built as `Rest` (`docs/019-rest.md`), passed in game 2026-09-22 (floor, ledge, lie; exit on movement). SI sends the vanilla events `IdleSitCrossLeggedEnter`
      and `IdleLayDownEnter`, and gets up with `IdleChairExitStart` (also `IdleStop`,
      `IdleForceDefaultState`); it watches `idleChairSitting` and `tailLayDown`. The user's gate:
      looking at the floor for a while, then a hold prompt.
    - **Pass time** — after sit/lie. While sitting or lying for `passtime_delay` (5 s), time speeds
      up gradually to `max_timemult` (2x). Never the Wait menu (see `6dd9a7d`, reverted).
-   - **Lean** — built in `Rest`, untested in game. Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
+   - **Lean** — built in `Rest`, passed in game 2026-09-22 (facing wall only, table, rail; clips randomized by OAR patch, install case 016). Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
      (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
    - **Warm hands** — near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
      its fire list from `ccqdrsse002-firewood.esl` (installed).

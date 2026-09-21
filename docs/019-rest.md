@@ -2,8 +2,9 @@
 
 Status (2026-09-22): floor sit, lie down, get up and ledge sit confirmed in game by the user.
 Lean in game 2026-09-22: wall (facing only), table and rail leans, hold prompts and
-random clips passed. Exit redesigned the same day (see "Getting up"), not yet
-retested.
+random clips passed. The movement exit (see "Getting up") passed in game the same day
+for every pose: wall, table and rail leans, sit, lie, input queued during the enter
+animation, jump out, and no prompt on screen while resting.
 
 ## Getting up (redesigned 2026-09-22)
 
