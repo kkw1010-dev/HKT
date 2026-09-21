@@ -24,10 +24,91 @@ namespace CIGAR
 		constexpr auto kConfirmWait = 6s;
 
 		constexpr auto kSitEvent = "IdleSitCrossLeggedEnter"sv;
+		// Sitting on an edge with the legs hanging, which SI picks after a ray scan (RayCollector).
+		constexpr auto kLedgeEvent = "IdleSitLedgeEnter"sv;
 		constexpr auto kLieEvent = "IdleLayDownEnter"sv;
 		constexpr auto kExitEvent = "IdleChairExitStart"sv;
 		constexpr auto kStopEvent = "IdleStop"sv;
 		constexpr auto kResetEvent = "IdleForceDefaultState"sv;
+
+		// Ledge test, in game units; my choices, logged on every sit for tuning. A ledge is a drop
+		// of at least kLedgeDrop within kLedgeProbes ahead, with nothing solid in the way at knee
+		// height.
+		constexpr float kLedgeDrop = 40.0f;
+		constexpr std::array kLedgeProbes{ 25.0f, 40.0f, 55.0f };
+		constexpr float kRayTop = 40.0f;
+		constexpr float kRayDepth = 250.0f;
+		constexpr float kKneeHeight = 25.0f;
+
+		// The fraction along a_from -> a_to where the first solid is hit, or nullopt. Uses the
+		// line-of-sight layer in the player's own collision group, so the player is not hit.
+		std::optional<float> Cast(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
+		{
+			auto* cell = a_player->GetParentCell();
+			auto* world = cell ? cell->GetbhkWorld() : nullptr;
+			if (!world) {
+				return std::nullopt;
+			}
+			const float scale = RE::bhkWorld::GetWorldScale();
+			RE::bhkPickData pick{};
+			pick.rayInput.from = RE::hkVector4(a_from.x * scale, a_from.y * scale, a_from.z * scale, 0.0f);
+			pick.rayInput.to = RE::hkVector4(a_to.x * scale, a_to.y * scale, a_to.z * scale, 0.0f);
+			RE::CFilter filter{};
+			a_player->GetCollisionFilterInfo(filter);
+			pick.rayInput.filterInfo.filter =
+				(filter.filter & 0xFFFF0000) | static_cast<std::uint32_t>(RE::COL_LAYER::kLOS);
+			{
+				RE::BSReadLockGuard lock(world->worldLock);
+				world->PickObject(pick);
+			}
+			if (!pick.rayOutput.HasHit()) {
+				return std::nullopt;
+			}
+			return pick.rayOutput.hitFraction;
+		}
+
+		// The ground height below a_at (searched from kRayTop above it to kRayDepth below), or nullopt.
+		std::optional<float> GroundZ(RE::PlayerCharacter* a_player, RE::NiPoint3 a_at)
+		{
+			const RE::NiPoint3 from{ a_at.x, a_at.y, a_at.z + kRayTop };
+			const RE::NiPoint3 to{ a_at.x, a_at.y, a_at.z - kRayDepth };
+			const auto hit = Cast(a_player, from, to);
+			if (!hit) {
+				return std::nullopt;
+			}
+			return from.z + (to.z - from.z) * *hit;
+		}
+
+		// Whether the player faces a drop to sit on, with the scan written to a_scan for the log.
+		bool LedgeAhead(RE::PlayerCharacter* a_player, std::string& a_scan)
+		{
+			const auto origin = a_player->GetPosition();
+			const float yaw = a_player->GetAngleZ();
+			const RE::NiPoint3 forward{ std::sin(yaw), std::cos(yaw), 0.0f };
+
+			const auto ground = GroundZ(a_player, origin);
+			if (!ground) {
+				a_scan = "no ground under the player";
+				return false;
+			}
+			const RE::NiPoint3 knee{ origin.x, origin.y, *ground + kKneeHeight };
+			const float reach = kLedgeProbes.back();
+			const auto wall = Cast(a_player, knee, knee + forward * reach);
+			a_scan = std::format("groundZ={:.0f}", *ground);
+			if (wall) {
+				a_scan += std::format(" blocked at {:.0f}", *wall * reach);
+				return false;
+			}
+			bool ledge = false;
+			for (const float distance : kLedgeProbes) {
+				const auto at = origin + forward * distance;
+				const auto below = GroundZ(a_player, RE::NiPoint3{ at.x, at.y, *ground });
+				const float drop = below ? *ground - *below : kRayDepth;
+				a_scan += std::format(" drop@{:.0f}={:.0f}{}", distance, drop, below ? "" : "+");
+				ledge = ledge || drop >= kLedgeDrop;
+			}
+			return ledge;
+		}
 
 		bool GraphBool(RE::PlayerCharacter* a_player, const char* a_name)
 		{
@@ -273,8 +354,20 @@ namespace CIGAR
 
 	bool Rest::SendEnter(RE::PlayerCharacter* a_player, Pose a_pose)
 	{
-		const auto event = a_pose == Pose::kSitting ? kSitEvent : kLieEvent;
-		if (!Notify(a_player, event)) {
+		auto event = a_pose == Pose::kSitting ? kSitEvent : kLieEvent;
+		if (a_pose == Pose::kSitting) {
+			std::string scan;
+			const bool ledge = LedgeAhead(a_player, scan);
+			Log("ledge scan: {} -> {}", scan, ledge ? "ledge" : "floor");
+			if (ledge) {
+				if (Notify(a_player, kLedgeEvent)) {
+					event = kLedgeEvent;
+				} else {
+					Log("{} refused; sitting on the floor instead", kLedgeEvent);
+				}
+			}
+		}
+		if (event != kLedgeEvent && !Notify(a_player, event)) {
 			return false;
 		}
 		pose = a_pose;

@@ -1,6 +1,7 @@
 # 019 · Rest: sit or lie down on the ground
 
-Status (2026-09-21): built and deployed; **not yet tested in game.**
+Status (2026-09-21): floor sit, lie down and get up confirmed in game by the user. Ledge sit
+built and deployed, not yet tested in game.
 
 Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, 일어나기). SI's
 `IdleActions.enabled` is off since 2026-09-21; the rest of that module (lean, warm
@@ -14,6 +15,20 @@ hands, chair eat/drink, tidy-up, pass time) is on the HANDOFF backlog.
 - Waits for the tags `idleChairSitting` and `tailLayDown`, presumably to know the
   pose is reached (pass time counts from there).
 - `t_threshold` 1.0: seconds of standing idle before its prompts.
+
+## Ledge sit
+
+SI sits on an edge with the legs hanging (`IdleSitLedgeEnter`) when a ray scan
+(`RayCollector` in its DLL) finds a drop ahead; see `SI_IDLE_LEDGE_SIT_ANALYSIS.md`
+(Antigravity's report). Its DLL has no furniture-activation strings, so "sitting on
+furniture" in SI is this edge sit on a bench, wall or slope, not a chair being used.
+
+CIGAR on 앉기: rays on the line-of-sight layer, in the player's own collision group so
+the player is not hit. Ground under the player; a knee-height ray 55 units forward
+(anything hit means a wall or furniture face, so no ledge); ground at 25, 40 and 55
+units ahead. A drop of 40 units or more at any probe picks the ledge sit. The
+numbers are my choices. Each sit logs `ledge scan: groundZ=.. drop@25=.. ... ->
+ledge|floor`. If the graph refuses the ledge event, CIGAR sits cross-legged.
 
 ## CIGAR's gate
 
