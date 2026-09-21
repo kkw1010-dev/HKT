@@ -1,0 +1,81 @@
+#pragma once
+
+#include "Module.h"
+#include "Prompt.h"
+
+namespace CIGAR
+{
+	// Sit or lie down on the ground (SI IdleActions' ground actions): looking at the floor while
+	// standing still offers 앉기 and 눕기; while resting, 일어나기. Uses the vanilla idle events
+	// SI sends. Pass time will build on Resting().
+	class Rest final :
+		public Module,
+		public RE::BSTEventSink<RE::BSAnimationGraphEvent>
+	{
+	public:
+		static Rest* GetSingleton();
+
+		const char* Name() const override { return "Rest"; }
+		void OnGameLoaded() override;
+		void Tick() override;
+		void FastTick() override;
+		void OnAccepted(std::uint16_t a_eventID) override;
+		void OnDisabled() override;
+
+		// True while CIGAR has the player sitting or lying on the ground (game thread).
+		bool Resting() const { return pose != Pose::kStanding; }
+
+		// Records the player's animation events around a rest, for the log (any thread).
+		RE::BSEventNotifyControl ProcessEvent(
+			const RE::BSAnimationGraphEvent* a_event,
+			RE::BSTEventSource<RE::BSAnimationGraphEvent>* a_source) override;
+
+	private:
+		Rest();
+
+		enum : std::uint16_t
+		{
+			kSit = PromptID::kSit,
+			kLie = PromptID::kLieDown,
+			kGetUp = PromptID::kGetUp
+		};
+
+		enum class Pose
+		{
+			kStanding,
+			kSitting,
+			kLying
+		};
+
+		using Clock = std::chrono::steady_clock;
+
+		static const char* PoseName(Pose a_pose);
+		void Enter(Pose a_pose);
+		bool SendEnter(RE::PlayerCharacter* a_player, Pose a_pose);
+		void GetUp(std::string_view a_reason);
+		void StandingTick(RE::PlayerCharacter* a_player);
+		void RestingTick(RE::PlayerCharacter* a_player);
+		void ListenToPlayer(RE::PlayerCharacter* a_player);
+		void StartRecording(Clock::duration a_for);
+		void FlushRecorded();
+
+		PromptSlot sit{ this, kSit };
+		PromptSlot lie{ this, kLie };
+		PromptSlot getUp{ this, kGetUp };
+
+		Pose pose{ Pose::kStanding };
+		Clock::time_point poseSince{};
+		Clock::time_point readySince{};
+		// An enter request waiting for the third-person graph after a camera switch.
+		Pose pendingPose{ Pose::kStanding };
+		Clock::time_point pendingUntil{};
+		bool confirmReported{ false };
+
+		// Animation events arrive on animation threads; FastTick() writes them to the log.
+		std::mutex recordLock;
+		std::vector<std::string> recorded;
+		Clock::time_point recordUntil{};
+		int recordedCount{ 0 };
+		std::atomic_bool restConfirmed{ false };
+	};
+}

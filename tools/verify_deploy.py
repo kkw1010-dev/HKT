@@ -575,6 +575,19 @@ def winning_file(modlist, relative):
     return None
 
 
+def check_rest(modlist):
+    """Rest sends vanilla idle events to the player's graph; a behaviour build without them makes
+    the prompt do nothing in game. Case-insensitive, as the game matches event names."""
+    master = winning_file(modlist, "meshes/actors/character/behaviors/0_master.hkx")
+    check(master is not None, "player behaviour graph 0_master.hkx found")
+    if master is None:
+        return
+    with open(master, "rb") as f:
+        data = f.read().lower()
+    for event in ["IdleSitCrossLeggedEnter", "IdleLayDownEnter", "IdleChairExitStart", "IdleStop"]:
+        check(event.lower().encode() in data, "0_master.hkx has Rest event %s" % event)
+
+
 def md5_of(path):
     with open(path, "rb") as f:
         return hashlib.md5(f.read()).hexdigest()
@@ -681,6 +694,7 @@ def main():
     check_surrender(modlist)
     check_valhalla(modlist)
     check_jujutsu(modlist)
+    check_rest(modlist)
     check_behaviour(modlist, accept_behaviour)
 
     # Replaced SI modules must be off, or both prompts appear.

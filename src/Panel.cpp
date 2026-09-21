@@ -10,6 +10,7 @@
 #include "Potion.h"
 #include "Prompt.h"
 #include "QuestTrack.h"
+#include "Rest.h"
 #include "Settings.h"
 #include "Surrender.h"
 #include "WeaponSwap.h"
@@ -77,6 +78,8 @@ namespace CIGAR::Panel
 				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
 			Label{ "ItemEquip", "획득 장비 착용", "",
 				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
+			Label{ "Rest", "앉기·눕기", "",
+				"무기를 넣고 가만히 서서 바닥을 내려다보면 바닥에 앉거나 눕는 프롬프트가 뜹니다. 쉬는 동안에는 일어나기가 뜹니다." },
 		};
 
 		const Label* Find(std::string_view a_module)

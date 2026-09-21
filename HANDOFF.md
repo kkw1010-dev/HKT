@@ -356,7 +356,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    2026-09-21 (the user's call), so every action below is gone from the game until CIGAR has it.
    The user wants each one kept, even where CIGAR has a similar module, because the point is
    roleplay rather than removing a duplicate. Read from SI's DLL strings; gates are inferred.
-   - **Sit / lie down on the ground** — next. SI sends the vanilla events `IdleSitCrossLeggedEnter`
+   - **Sit / lie down on the ground** — built as `Rest` (`docs/019-rest.md`), untested in game. SI sends the vanilla events `IdleSitCrossLeggedEnter`
      and `IdleLayDownEnter`, and gets up with `IdleChairExitStart` (also `IdleStop`,
      `IdleForceDefaultState`); it watches `idleChairSitting` and `tailLayDown`. The user's gate:
      looking at the floor for a while, then a hold prompt.
