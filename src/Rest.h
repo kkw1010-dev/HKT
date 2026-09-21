@@ -6,8 +6,9 @@
 namespace CIGAR
 {
 	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
-	// 앉기 and 눕기; a wall, table or rail in front offers 기대기; while resting,
-	// 일어나기. Uses the vanilla idle events SI sends. Pass time will build on Resting().
+	// 앉기 and 눕기; a wall, table or rail in front offers 기대기. There is no prompt while resting:
+	// movement input gets the player up. Uses the vanilla idle events SI sends. Pass time will
+	// build on Resting().
 	class Rest final :
 		public Module,
 		public RE::BSTEventSink<RE::BSAnimationGraphEvent>
@@ -37,7 +38,6 @@ namespace CIGAR
 		{
 			kSit = PromptID::kSit,
 			kLie = PromptID::kLieDown,
-			kGetUp = PromptID::kGetUp,
 			kLean = PromptID::kLean
 		};
 
@@ -69,7 +69,6 @@ namespace CIGAR
 
 		PromptSlot sit{ this, kSit };
 		PromptSlot lie{ this, kLie };
-		PromptSlot getUp{ this, kGetUp };
 		PromptSlot lean{ this, kLean };
 
 		Pose pose{ Pose::kStanding };
@@ -84,6 +83,11 @@ namespace CIGAR
 		Pose pendingPose{ Pose::kStanding };
 		Clock::time_point pendingUntil{};
 		bool confirmReported{ false };
+		// Movement input arrived; the player gets up once the pose is reached.
+		bool exitQueued{ false };
+		// The game's sit state was on during this rest; it going off means the game stood the
+		// player up (a jump, a drawn weapon, a script).
+		bool seenSeated{ false };
 
 		// Animation events arrive on animation threads; FastTick() writes them to the log.
 		std::mutex recordLock;

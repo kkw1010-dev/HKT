@@ -2,10 +2,30 @@
 
 Status (2026-09-22): floor sit, lie down, get up and ledge sit confirmed in game by the user.
 Lean in game 2026-09-22: wall (facing only), table and rail leans, hold prompts and
-random clips passed; 그만 기대기 after a wall lean failed and is fixed, not yet
+random clips passed. Exit redesigned the same day (see "Getting up"), not yet
 retested.
 
-Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, 일어나기). SI's
+## Getting up (redesigned 2026-09-22)
+
+There is no 일어나기 / 그만 기대기 prompt. The user dropped it: these poses are for
+roleplay and screenshots, and an exit prompt on screen spoils them. A jump already
+leaves at once, so a slow exit costs nothing in a safe spot.
+
+- Movement input gets the player up with the slow exit (`IdleChairExitStart`, or
+  `IdleRailLeanExit` for the rail). Input is read from `PlayerControls`
+  (`moveInputVec` at least 0.2, or auto-move), not `IsMoving()`: the wall lean
+  reports `moving=true` for its whole loop, which is why the earlier movement check
+  kept ending wall leans at once (A4 failed twice).
+- Input during the enter animation is queued and acted on once the pose is reached
+  (`idleChairSitting` / `tailLayDown`) or after 6 s.
+- The game standing the player up by itself (a jump, a drawn weapon) is read from
+  its sit state: once it has been on during the rest, it going off ends the rest
+  with nothing sent. Floor sit and lie are not known to set that state, so for
+  them only movement input, combat and a drawn weapon end the rest.
+- Combat still sends the exit at once.
+- The gate logs `moveInput`, `exitQueued`, `settled` and `seated`.
+
+Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, and getting up). SI's
 `IdleActions.enabled` is off since 2026-09-21; the rest of that module (lean, warm
 hands, chair eat/drink, tidy-up, pass time) is on the HANDOFF backlog.
 
@@ -62,7 +82,7 @@ without the floor-pitch condition, rescanning every 250 ms:
   was missing); fixed.
 - The numbers are my choices. Accepting logs `lean scan: groundZ=.. front@25=..
   ... back waist=.. chest=.. -> leaning on ..`.
-- While leaning the prompt reads 그만 기대기. The animation plays where the player
+- The animation plays where the player
   stands; the player is not moved to the surface, so a lean from further away may
   float or clip.
 
@@ -73,10 +93,7 @@ without the floor-pitch condition, rescanning every 250 ms:
   weapon sheathed, not in furniture, swimming, sneaking, midair, mounted or an
   animation-driven scene (`bAnimationDriven`), movement and look controls on, no
   menu or dialogue.
-- While resting, 일어나기 (hold) appears after 2 s, so the enter animation is not
-  cut short.
-- Combat gets the player up. Moving or drawing a weapon ends the rest state
-  without sending anything (the game already stood the player up).
+- Getting up: see "Getting up" above.
 - First person is switched to third person first; the enter event is retried for
   1 s while the camera changes.
 
@@ -94,14 +111,14 @@ without the floor-pitch condition, rescanning every 250 ms:
 
 1. Back to a wall, standing still: 벽에 기대기. Facing a table or bar counter:
    탁자에 기대기. Facing a railing: 난간에 기대기.
-2. Hold it, then 그만 기대기.
+2. Hold it, then move to get up.
 3. If the wrong kind or none appears, the `lean scan` line and the gate's `lean=`
    say why.
 
 ## To check in game (sit)
 
 1. Sheathe, stand still, look at the floor: 앉기 / 눕기 appear within about 1 s.
-2. Hold 앉기: the player sits cross-legged; 일어나기 appears; hold it to stand.
+2. Hold 앉기: the player sits; move to stand up slowly.
 3. Same with 눕기.
 4. Read `CIGAR.log` for `[Rest]`: the accepted flags, `reached` or `WARN not
    confirmed`, and the recorded events.

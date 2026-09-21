@@ -11,8 +11,8 @@ namespace CIGAR
 		constexpr float kFloorPitch = 0.6f;
 		// SI's IdleActions.t_threshold: seconds of standing still before the prompts appear.
 		constexpr auto kReadyDelay = 1s;
-		// The enter animation plays before 일어나기 is offered, so a hold cannot cut it short.
-		constexpr auto kGetUpDelay = 2s;
+		// Stick or key input at least this strong (0-1) counts as wanting to move.
+		constexpr float kMoveInput = 0.2f;
 		// A pending enter waits this long for the third-person graph after a camera switch.
 		constexpr auto kThirdPersonWait = 1s;
 		// Animation events logged from entering until this long after getting up.
@@ -199,7 +199,6 @@ namespace CIGAR
 	{
 		sit.SetPromptType(SkyPromptAPI::kHold);
 		lie.SetPromptType(SkyPromptAPI::kHold);
-		getUp.SetPromptType(SkyPromptAPI::kHold);
 		lean.SetPromptType(SkyPromptAPI::kHold);
 	}
 
@@ -231,7 +230,6 @@ namespace CIGAR
 	{
 		sit.Reset();
 		lie.Reset();
-		getUp.Reset();
 		lean.Reset();
 		lastGate.clear();
 		leanFound = Pose::kStanding;
@@ -353,7 +351,6 @@ namespace CIGAR
 			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound), moving, combat, drawn, seated,
 			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
 
-		getUp.Update(false, {});
 		sit.Update(available, [] { return "앉기 (길게)"s; });
 		lie.Update(available, [] { return "눕기 (길게)"s; });
 		if (leanShown != leanFound) {
@@ -377,7 +374,9 @@ namespace CIGAR
 	{
 		const auto now = Clock::now();
 		const auto* state = a_player->AsActorState();
-		const bool moving = a_player->IsMoving();
+		const auto* controls = RE::PlayerControls::GetSingleton();
+		// Movement input, not IsMoving(): the wall lean reports moving=true for its whole loop.
+		const bool moveInput = controls && (controls->data.moveInputVec.Length() >= kMoveInput || controls->data.autoMove);
 		const bool combat = a_player->IsInCombat();
 		const bool drawn = state && state->IsWeaponDrawn();
 		const bool dead = a_player->IsDead() || (state && state->IsBleedingOut());
@@ -385,14 +384,17 @@ namespace CIGAR
 		const bool seated = state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal;
 		const auto since = now - poseSince;
 		const bool confirmed = restConfirmed.load();
-		// Until the pose is reached the enter animation may move the player (the wall lean turns
-		// around, seen in game as moving=true), so movement ends the rest only after that.
-		const bool settling = !confirmed && since < kConfirmWait;
+		// Until the pose is reached the enter animation is still playing and an exit event could be
+		// refused or cut it short, so a movement exit waits for it (or for kConfirmWait).
+		const bool settled = confirmed || since >= kConfirmWait;
 		const auto tag = pose == Pose::kLying ? kLayTag : kSatTag;
+		seenSeated = seenSeated || seated;
 
-		LogGate(std::format("pose={} for={:.0f}s confirmed={} settling={} moving={} combat={} drawn={} seated={} animDriven={}",
-			PoseName(pose), std::chrono::duration<float>(since).count(), confirmed, settling, moving, combat, drawn,
-			seated, driven));
+		LogGate(std::format(
+			"pose={} for={:.0f}s confirmed={} settled={} moveInput={} exitQueued={} combat={} drawn={} seated={} "
+			"animDriven={}",
+			PoseName(pose), std::chrono::duration<float>(since).count(), confirmed, settled, moveInput, exitQueued,
+			combat, drawn, seated, driven));
 
 		if (!confirmReported && confirmed) {
 			confirmReported = true;
@@ -403,6 +405,10 @@ namespace CIGAR
 				std::chrono::duration_cast<std::chrono::seconds>(kConfirmWait).count());
 		}
 
+		sit.Update(false, {});
+		lie.Update(false, {});
+		lean.Update(false, {});
+
 		if (combat) {
 			GetUp("combat started");
 			return;
@@ -412,19 +418,21 @@ namespace CIGAR
 			Log("rest ended: dead or bleeding out");
 			return;
 		}
-		if ((moving || drawn) && !settling) {
-			// Something else stood the player up; stop offering 일어나기.
+		if (settled && ((seenSeated && !seated) || drawn)) {
+			// The game already stood the player up (a jump exits at once); send nothing.
 			pose = Pose::kStanding;
 			readySince = now;
 			StartRecording(kRecordAfterGetUp);
-			Log("rest ended by the game: moving={} drawn={}", moving, drawn);
+			Log("rest ended by the game: seated={} (was on: {}) drawn={}", seated, seenSeated, drawn);
 			return;
 		}
-
-		sit.Update(false, {});
-		lie.Update(false, {});
-		lean.Update(false, {});
-		getUp.Update(since >= kGetUpDelay, [this] { return IsLean(pose) ? "그만 기대기 (길게)"s : "일어나기 (길게)"s; });
+		if (moveInput && !exitQueued) {
+			exitQueued = true;
+			Log("movement input while {}; getting up{}", PoseName(pose), settled ? "" : " once the pose is reached");
+		}
+		if (exitQueued && settled) {
+			GetUp("movement input");
+		}
 	}
 
 	void Rest::OnAccepted(std::uint16_t a_eventID)
@@ -446,11 +454,6 @@ namespace CIGAR
 				Enter(leanShown);
 			}
 			break;
-		case kGetUp:
-			if (pose != Pose::kStanding) {
-				GetUp("prompt");
-			}
-			break;
 		default:
 			break;
 		}
@@ -469,6 +472,8 @@ namespace CIGAR
 		ListenToPlayer(player);
 		restConfirmed = false;
 		confirmReported = false;
+		exitQueued = false;
+		seenSeated = false;
 		StartRecording(Clock::duration::max());
 
 		auto* camera = RE::PlayerCamera::GetSingleton();
@@ -531,7 +536,7 @@ namespace CIGAR
 		const auto was = pose;
 		pose = Pose::kStanding;
 		readySince = Clock::now();
-		getUp.Withdraw();
+		exitQueued = false;
 		StartRecording(kRecordAfterGetUp);
 		if (!player) {
 			return;
