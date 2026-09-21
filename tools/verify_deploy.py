@@ -585,7 +585,7 @@ def check_rest(modlist):
     with open(master, "rb") as f:
         data = f.read().lower()
     for event in ["IdleSitCrossLeggedEnter", "IdleSitLedgeEnter", "IdleLayDownEnter", "IdleChairExitStart", "IdleStop",
-                  "IdleWallLeanStart", "IdleWallLeanEnterInstant", "IdleLeanTableEnter", "IdleRailLeanEnter", "IdleRailLeanExit"]:
+                  "IdleWallLeanStart", "IdleLeanTableEnter", "IdleRailLeanEnter", "IdleRailLeanExit"]:
         check(event.lower().encode() in data, "0_master.hkx has Rest event %s" % event)
 
 

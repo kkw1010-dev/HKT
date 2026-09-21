@@ -42,12 +42,13 @@ without the floor-pitch condition, rescanning every 250 ms:
 
 - In front: at 25, 35 and 45 units ahead, a ray from 140 units above the ground down
   to 20 units. The first surface 60-95 units high is a table, 95-125 a rail.
-- Wall (only when no table or rail): rays 40 units at waist (60) and chest (100)
-  height, forward first, then back; both hitting is a wall.
-- In game (2026-09-22) `IdleWallLeanStart` turned the player around before leaning
-  back, so with the back to a wall it leaned on air. It is now sent only for a wall
-  in front (the turn puts the back to it); with the back already to the wall CIGAR
-  sends `IdleWallLeanEnterInstant`, which enters the lean without turning.
+- Wall (only when no table or rail): rays 40 units ahead at waist (60) and chest
+  (100) height; both hitting is a wall in front.
+- `IdleWallLeanStart` turns the player around before leaning back (seen in game
+  2026-09-22: with the back to a wall it leaned on air). The wall lean is therefore
+  offered only facing a wall. A back-to-wall variant with `IdleWallLeanEnterInstant`
+  worked but the user dropped it: each extra entry path multiplies the motion-sync
+  cases to solve.
 - The lean prompt was single press in the first build (its `SetPromptType(kHold)`
   was missing); fixed.
 - The numbers are my choices. Accepting logs `lean scan: groundZ=.. front@25=..

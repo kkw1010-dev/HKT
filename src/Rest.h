@@ -6,7 +6,7 @@
 namespace CIGAR
 {
 	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
-	// 앉기 and 눕기; a wall behind, or a table or rail in front, offers 기대기; while resting,
+	// 앉기 and 눕기; a wall, table or rail in front offers 기대기; while resting,
 	// 일어나기. Uses the vanilla idle events SI sends. Pass time will build on Resting().
 	class Rest final :
 		public Module,
@@ -46,8 +46,7 @@ namespace CIGAR
 			kStanding,
 			kSitting,
 			kLying,
-			kLeanWall,      // back already to the wall: entered in place
-			kLeanWallTurn,  // facing the wall: the enter animation turns the player around
+			kLeanWall,  // facing the wall: the enter animation turns the player around
 			kLeanTable,
 			kLeanRail
 		};
@@ -57,8 +56,7 @@ namespace CIGAR
 		static const char* PoseName(Pose a_pose);
 		static bool IsLean(Pose a_pose)
 		{
-			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanWallTurn || a_pose == Pose::kLeanTable ||
-			       a_pose == Pose::kLeanRail;
+			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanTable || a_pose == Pose::kLeanRail;
 		}
 		void Enter(Pose a_pose);
 		bool SendEnter(RE::PlayerCharacter* a_player, Pose a_pose);
