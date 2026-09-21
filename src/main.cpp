@@ -11,6 +11,7 @@
 #include "Module.h"
 #include "Needs.h"
 #include "Panel.h"
+#include "PassTime.h"
 #include "Potion.h"
 #include "Prompt.h"
 #include "QuestTrack.h"
@@ -23,11 +24,12 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 15> modules{
+		static const std::array<Module*, 16> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
-			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton()
+			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
+			PassTime::GetSingleton()
 		};
 		return modules;
 	}

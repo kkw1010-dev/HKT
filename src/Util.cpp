@@ -346,6 +346,33 @@ namespace CIGAR::Util
 		return true;
 	}
 
+	bool SendUserEvent(std::string_view a_event)
+	{
+		if (a_event.empty()) {
+			return false;
+		}
+		auto* manager = RE::BSInputDeviceManager::GetSingleton();
+		if (!manager) {
+			return false;
+		}
+		const RE::BSFixedString event{ a_event };
+		auto* down = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kKeyboard, event, 0, 1.0f, 0.0f);
+		auto* up = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kKeyboard, event, 0, 0.0f, 0.1f);
+		if (!down || !up) {
+			RE::free(down);
+			RE::free(up);
+			return false;
+		}
+		auto* source = static_cast<RE::BSTEventSource<RE::InputEvent*>*>(manager);
+		RE::InputEvent* input = down;
+		source->SendEvent(&input);
+		input = up;
+		source->SendEvent(&input);
+		RE::free(down);
+		RE::free(up);
+		return true;
+	}
+
 	int SISetting(std::string_view a_jsonPointer)
 	{
 		std::ifstream file{ std::filesystem::path{ kSISettings } };
