@@ -47,6 +47,10 @@ CIGAR module, so their lessons do not have to be learned again.
   `RemovePromptByID`, so removal is per sink. `PromptSlot` lists the keyboard
   key from CIGAR's key slots itself (`docs/007-control-panel.md`); a module
   never sets keys.
+- **Input policy:** non-combat contextual actions use `SkyPromptAPI::kHold` by default, so an
+  incidental tap cannot change player state. Single press is for timing-sensitive combat actions
+  or an explicitly documented exception. `SetHoldMode(true)` is separate: use it only when the
+  module needs key-down/key-up callbacks while the hold is in progress.
 - Handle only `kAccepted` (0). The other event types are `kDeclined` (1),
   `kRemovedByMod` (2), `kTimingOut` (3), `kTimeout` (4), `kDown` (5),
   `kUp` (6) and `kMove` (7). The Papyrus test logs showed 5 before 0 and

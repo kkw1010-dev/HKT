@@ -27,6 +27,8 @@ namespace CIGAR
 			RE::BSTEventSource<RE::ObjectiveState::Event>* a_source) override;
 
 	private:
+		QuestTrack();
+
 		enum : std::uint16_t
 		{
 			kTrack = PromptID::kTrackQuest

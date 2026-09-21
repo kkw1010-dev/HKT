@@ -36,6 +36,11 @@ namespace CIGAR
 		};
 	}
 
+	QuestTrack::QuestTrack()
+	{
+		track.SetPromptType(SkyPromptAPI::kHold);
+	}
+
 	QuestTrack* QuestTrack::GetSingleton()
 	{
 		static QuestTrack singleton;
@@ -85,7 +90,7 @@ namespace CIGAR
 		if (!available) {
 			offeredQuest = 0;
 		}
-		track.Update(available, [quest] { return std::format("추적하기: {}", Util::NameOf(quest)); });
+		track.Update(available, [quest] { return std::format("추적하기 (길게): {}", Util::NameOf(quest)); });
 	}
 
 	void QuestTrack::OnAccepted(std::uint16_t a_eventID)

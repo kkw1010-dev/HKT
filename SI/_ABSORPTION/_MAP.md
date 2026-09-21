@@ -180,8 +180,8 @@ SI에서 Observer 활성화 후: (1) 정지 상태에서 5초 대기 후 프롬�
 - **Player-visible behavior:** 새 퀘스트 목표(objective)를 받으면 Track Quest prompt가 뜨고, 수락하면 해당 퀘스트가 활성 추적 상태로 전환됨 [EVIDENCE: OFFICIAL VIDEO — Quantumyilmaz Quest Tracking 공식 영상에서 new objective 수신 직후 Track Quest prompt 확인]
 - **Trigger condition:** 플레이어가 새 quest objective를 수신한 시점 [EVIDENCE: OFFICIAL VIDEO]
 - **Suppression condition:** [UNKNOWN]
-- **Prompt text/type:** "퀘스트 추적 |" [EVIDENCE: TRANSLATIONS — 문자열 존재 확인] / Type: [UNKNOWN — Hold인지 Press인지 영상에서 확정 불가]
-- **Input semantics:** [UNKNOWN]. CIGAR uses a single press [IMPLEMENTATION POLICY].
+- **Prompt text/type:** "퀘스트 추적 |" [EVIDENCE: TRANSLATIONS — 문자열 존재 확인] / Type: Hold [EVIDENCE: USER IN-GAME KNOWLEDGE, 2026-09-21]
+- **Input semantics:** SI uses a hold interaction [EVIDENCE: USER IN-GAME KNOWLEDGE, 2026-09-21]. CIGAR uses `SkyPromptAPI::kHold` [EVIDENCE: CIGAR — build passed, runtime test pending].
 - **Action performed:** 프롬프트 수락 시 해당 퀘스트가 활성 추적 상태로 전환됨 [EVIDENCE: OFFICIAL VIDEO/DOC — player-visible result]. CIGAR는 native Papyrus `Quest.SetActive(true)`를 호출한다 [EVIDENCE: CIGAR — signature verified, build passed, runtime test pending].
 - **State remembered before action:** 이전 추적 퀘스트 [INFERENCE]
 - **State restored after action:** 없음 [INFERENCE]
@@ -192,7 +192,7 @@ SI에서 Observer 활성화 후: (1) 정지 상태에서 5초 대기 후 프롬�
 - **CIGAR에서 재사용 가능한 machinery:** `PromptSlot`, game-thread task marshalling, module gate logging [EVIDENCE: CIGAR]
 - **Save persistence 필요 여부:** 없음 [INFERENCE]
 - **Known edge cases:** 동시에 여러 objective가 갱신될 때 어떤 퀘스트를 제안하는지 [INFERENCE]
-- **구현에 필요한 미확인 정보:** 프롬프트 유형(Hold vs Press)
+- **구현에 필요한 미확인 정보:** 없음. 실제 이벤트 firing과 동시 objective 처리는 런타임 검증 대상이다.
 
 #### IMPLEMENTATION CONTRACT (Quest Tracking)
 
@@ -203,10 +203,10 @@ new objective 수신 직후 Track Quest prompt가 출현하고, 수락 시 해�
 `enabled_track` 설정이 이 기능의 on/off 스위치일 가능성이 높음 [INFERENCE — 설정 이름에서 추론].
 
 ##### Unknown
-- 프롬프트 유형(Hold/Press) [UNKNOWN — 구현을 막지 않음. 기본값으로 시작 후 조정 가능]
+- SI의 정확한 suppression 조건과 동시에 여러 objective가 표시될 때의 선택 규칙 [UNKNOWN]
 
 ##### CIGAR implementation policy
-`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 single press이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — build verified 2026-09-21, runtime test pending].
+`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 hold이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — build verified 2026-09-21, runtime test pending].
 
 ##### Minimal experiment
 SI의 Quest Tracking 활성 상태에서 퀘스트 단계 진행 시 프롬프트가 즉시(이벤트) 뜨는지, 지연 후(polling) 뜨는지 관찰.

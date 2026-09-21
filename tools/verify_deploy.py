@@ -18,6 +18,7 @@ REPO = os.path.dirname(HERE)
 MO2 = r"C:\TAKEALOOK"
 MODS = os.path.join(MO2, "mods")
 MOD_NAME = "CIGAR"
+RELEASE_MOD = "CIGAR 0.2.0"
 MOD = os.path.join(MODS, MOD_NAME)
 SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
 DLL = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.dll")
@@ -636,6 +637,8 @@ def main():
     # Profile registration and priority.
     modlist = read_lines(os.path.join(profile, "modlist.txt"))
     check("+" + MOD_NAME in modlist, "mod enabled in modlist.txt")
+    check("-" + RELEASE_MOD in modlist and "+" + RELEASE_MOD not in modlist,
+          "release mod disabled in modlist.txt")
     if "+" + MOD_NAME in modlist and ("+" + SI_MOD) in modlist:
         # modlist.txt lists the highest priority first.
         check(modlist.index("+" + MOD_NAME) < modlist.index("+" + SI_MOD),

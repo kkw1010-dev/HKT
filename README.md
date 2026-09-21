@@ -64,7 +64,7 @@ Prompts use the player's SkyPrompt default keys, on both keyboard and gamepad:
 | A hostile humanoid within 250 units is guarding, or one perfect-parried in the last 1.5 s (any distance) | 유술: <이름> |
 | Private Needs bladder / bowel at or above the panel's fill (default 50%), out of combat and scenes | 소변 보기 (N%), 대변 보기 (N%) |
 | Health, stamina or magicka at or below the panel's fraction (default 50%), poisoned, diseased, or submerged without water breathing | 마시기: <물약 이름> |
-| A new objective appears for a quest that is not tracked | 추적하기: <퀘스트 이름> (15 seconds) |
+| A new objective appears for a quest that is not tracked | 추적하기 (길게): <퀘스트 이름> (15 seconds) |
 
 Background: `docs/001-bathe-bis-integration.md`, `docs/002-dress.md`, and
 `docs/003-immersive-interactions-analysis.md` (planned `Animals` module), and

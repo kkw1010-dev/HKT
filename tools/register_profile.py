@@ -1,7 +1,7 @@
 """Register CIGAR in the active MO2 profile. Safe to re-run.
 
 - modlist.txt: +CIGAR directly above Streamlined Interactions, so CIGAR's settings.json
-  override wins. The pre-rename SI-Extensions entry is removed.
+  override wins. The pre-rename SI-Extensions entry is removed and CIGAR 0.2.0 is disabled.
 - plugins.txt / loadorder.txt: CIGAR is an ESP-less SKSE DLL, so the plugin entries left by
   the earlier Papyrus builds (CIGAR.esp, SI-Extensions.esp) are removed.
 
@@ -14,6 +14,7 @@ import subprocess
 
 MO2 = r"C:\TAKEALOOK"
 SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
+RELEASE_MOD = "CIGAR 0.2.0"
 STALE_PLUGIN_LINES = {
     "*CIGAR.esp", "CIGAR.esp",
     "*SI-Extensions.esp", "SI-Extensions.esp",
@@ -57,8 +58,11 @@ def rewrite(path, edit, stamp):
 
 
 def enable_mod(rows):
-    rows = [r for r in rows if r not in {"+SI-Extensions", "-SI-Extensions", "+CIGAR", "-CIGAR"}]
-    rows.insert(rows.index("+" + SI_MOD), "+CIGAR")
+    managed = {"+SI-Extensions", "-SI-Extensions", "+CIGAR", "-CIGAR",
+               "+" + RELEASE_MOD, "-" + RELEASE_MOD}
+    rows = [r for r in rows if r not in managed]
+    si_index = rows.index("+" + SI_MOD)
+    rows[si_index:si_index] = ["-" + RELEASE_MOD, "+CIGAR"]
     return rows
 
 

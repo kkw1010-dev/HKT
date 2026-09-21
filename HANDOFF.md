@@ -40,7 +40,7 @@ status.
    found the module showing nothing because the filter required `IsMedicine()`, a flag set on 27
    ALCH records in this whole order and on none of the healing potions; see `docs/015-potion.md`.
 4. **`QuestTrack` starts the SI absorption pass (2026-09-21).** It listens for an objective-state
-   transition to displayed, offers the untracked quest for 15 seconds, and dispatches the native
+   transition to displayed, offers the untracked quest as a 15-second hold prompt, and dispatches the native
    Papyrus `Quest.SetActive(true)` method. The SE+AE+VR build passed. **Not yet tested in game.**
    `QuestActions.enabled_track` is the only new SI switch CIGAR replaces; the rest of QuestActions
    remains enabled. See `docs/017-quest-track.md` and `SI/_ABSORPTION/_MAP.md`.
@@ -223,6 +223,14 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
   preset to Power User (2). `tools/sync_si_settings.py` enforces this on
   deploy, and SI keeps the switches off after its menu is opened.
 - **Untested:** gamepad buttons (the user does not use a pad).
+
+### Prompt input policy
+
+- Non-combat contextual actions default to a hold, matching SI's protection against accidental
+  state changes. Single press is reserved for timing-sensitive combat actions or an explicitly
+  documented exception.
+- `PromptSlot::SetPromptType(kHold)` selects the hold-to-accept interaction. Do not also call
+  `SetHoldMode(true)` unless the module needs live key-down/key-up callbacks during the hold.
 
 ## The user's standing expectations (also in Claude memory)
 
