@@ -5,9 +5,9 @@
 
 namespace CIGAR
 {
-	// Sit or lie down on the ground (SI IdleActions' ground actions): looking at the floor while
-	// standing still offers 앉기 and 눕기; while resting, 일어나기. Uses the vanilla idle events
-	// SI sends. Pass time will build on Resting().
+	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
+	// 앉기 and 눕기; a wall behind, or a table or rail in front, offers 기대기; while resting,
+	// 일어나기. Uses the vanilla idle events SI sends. Pass time will build on Resting().
 	class Rest final :
 		public Module,
 		public RE::BSTEventSink<RE::BSAnimationGraphEvent>
@@ -22,7 +22,7 @@ namespace CIGAR
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
 
-		// True while CIGAR has the player sitting or lying on the ground (game thread).
+		// True while CIGAR has the player sitting, lying or leaning (game thread).
 		bool Resting() const { return pose != Pose::kStanding; }
 
 		// Records the player's animation events around a rest, for the log (any thread).
@@ -37,19 +37,27 @@ namespace CIGAR
 		{
 			kSit = PromptID::kSit,
 			kLie = PromptID::kLieDown,
-			kGetUp = PromptID::kGetUp
+			kGetUp = PromptID::kGetUp,
+			kLean = PromptID::kLean
 		};
 
 		enum class Pose
 		{
 			kStanding,
 			kSitting,
-			kLying
+			kLying,
+			kLeanWall,
+			kLeanTable,
+			kLeanRail
 		};
 
 		using Clock = std::chrono::steady_clock;
 
 		static const char* PoseName(Pose a_pose);
+		static bool IsLean(Pose a_pose)
+		{
+			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanTable || a_pose == Pose::kLeanRail;
+		}
 		void Enter(Pose a_pose);
 		bool SendEnter(RE::PlayerCharacter* a_player, Pose a_pose);
 		void GetUp(std::string_view a_reason);
@@ -62,10 +70,16 @@ namespace CIGAR
 		PromptSlot sit{ this, kSit };
 		PromptSlot lie{ this, kLie };
 		PromptSlot getUp{ this, kGetUp };
+		PromptSlot lean{ this, kLean };
 
 		Pose pose{ Pose::kStanding };
 		Clock::time_point poseSince{};
 		Clock::time_point readySince{};
+		// The lean the last scan found (kStanding for none), rescanned while the player stands ready.
+		Pose leanFound{ Pose::kStanding };
+		Pose leanShown{ Pose::kStanding };
+		std::string leanScan;
+		Clock::time_point leanScannedAt{};
 		// An enter request waiting for the third-person graph after a camera switch.
 		Pose pendingPose{ Pose::kStanding };
 		Clock::time_point pendingUntil{};

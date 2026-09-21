@@ -1,7 +1,7 @@
 # 019 · Rest: sit or lie down on the ground
 
-Status (2026-09-21): floor sit, lie down and get up confirmed in game by the user. Ledge sit
-built and deployed, not yet tested in game.
+Status (2026-09-22): floor sit, lie down, get up and ledge sit confirmed in game by the user.
+Lean (wall, table, rail) built and deployed, not yet tested in game.
 
 Absorbs the ground actions of SI's `IdleActions` (앉기, 눕기, 일어나기). SI's
 `IdleActions.enabled` is off since 2026-09-21; the rest of that module (lean, warm
@@ -30,6 +30,25 @@ units ahead. A drop of 40 units or more at any probe picks the ledge sit. The
 numbers are my choices. Each sit logs `ledge scan: groundZ=.. drop@25=.. ... ->
 ledge|floor`. If the graph refuses the ledge event, CIGAR sits cross-legged.
 
+## Lean
+
+SI has `LeanWall`, `LeanTable` and `LeanEdge` picked by `GetLeanLvL`, sending
+`IdleWallLeanStart`, `IdleLeanTableEnter` and `IdleRailLeanEnter`; its get-up sends
+`IdleRailLeanExit` for the rail.
+
+CIGAR offers 벽에/탁자에/난간에 기대기 (hold) after the same 1 s of standing still,
+without the floor-pitch condition, rescanning every 250 ms:
+
+- In front: at 25, 35 and 45 units ahead, a ray from 140 units above the ground down
+  to 20 units. The first surface 60-95 units high is a table, 95-125 a rail.
+- Behind (only when nothing in front): rays 40 units back at waist (60) and chest
+  (100) height; both hitting is a wall.
+- The numbers are my choices. Accepting logs `lean scan: groundZ=.. front@25=..
+  ... back waist=.. chest=.. -> leaning on ..`.
+- While leaning the prompt reads 그만 기대기. The animation plays where the player
+  stands; the player is not moved to the surface, so a lean from further away may
+  float or clip.
+
 ## CIGAR's gate
 
 - Offered (hold, 앉기 and 눕기) after 1 s of: looking down at least 0.6 rad (about
@@ -54,7 +73,15 @@ ledge|floor`. If the graph refuses the ledge event, CIGAR sits cross-legged.
 - `verify_deploy.py` fails when the winning `0_master.hkx` lacks any of the four
   events, and warns at runtime if SI's `IdleActions.enabled` is on again.
 
-## To check in game
+## To check in game (lean)
+
+1. Back to a wall, standing still: 벽에 기대기. Facing a table or bar counter:
+   탁자에 기대기. Facing a railing: 난간에 기대기.
+2. Hold it, then 그만 기대기.
+3. If the wrong kind or none appears, the `lean scan` line and the gate's `lean=`
+   say why.
+
+## To check in game (sit)
 
 1. Sheathe, stand still, look at the floor: 앉기 / 눕기 appear within about 1 s.
 2. Hold 앉기: the player sits cross-legged; 일어나기 appears; hold it to stand.

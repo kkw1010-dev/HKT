@@ -27,6 +27,11 @@ namespace CIGAR
 		// Sitting on an edge with the legs hanging, which SI picks after a ray scan (RayCollector).
 		constexpr auto kLedgeEvent = "IdleSitLedgeEnter"sv;
 		constexpr auto kLieEvent = "IdleLayDownEnter"sv;
+		// Lean events SI sends (its LeanWall, LeanTable and LeanEdge); the rail has its own exit.
+		constexpr auto kLeanWallEvent = "IdleWallLeanStart"sv;
+		constexpr auto kLeanTableEvent = "IdleLeanTableEnter"sv;
+		constexpr auto kLeanRailEvent = "IdleRailLeanEnter"sv;
+		constexpr auto kRailExitEvent = "IdleRailLeanExit"sv;
 		constexpr auto kExitEvent = "IdleChairExitStart"sv;
 		constexpr auto kStopEvent = "IdleStop"sv;
 		constexpr auto kResetEvent = "IdleForceDefaultState"sv;
@@ -110,6 +115,70 @@ namespace CIGAR
 			return ledge;
 		}
 
+		// Lean test, in game units; my choices, logged on every lean for tuning. In front: the first
+		// surface found looking down at kLeanProbes ahead, kTableMin-kTableMax above the ground a
+		// table, up to kRailMax a rail. Behind: a wall hit within kWallReach at waist and chest.
+		constexpr std::array kLeanProbes{ 25.0f, 35.0f, 45.0f };
+		constexpr float kLeanTop = 140.0f;
+		constexpr float kLeanBottom = 20.0f;
+		constexpr float kTableMin = 60.0f;
+		constexpr float kTableMax = 95.0f;
+		constexpr float kRailMax = 125.0f;
+		constexpr float kWallReach = 40.0f;
+		constexpr float kWallWaist = 60.0f;
+		constexpr float kWallChest = 100.0f;
+		constexpr auto kLeanRescan = 250ms;
+
+		enum class LeanSpot
+		{
+			kNone,
+			kWall,
+			kTable,
+			kRail
+		};
+
+		LeanSpot ScanLean(RE::PlayerCharacter* a_player, std::string& a_scan)
+		{
+			const auto origin = a_player->GetPosition();
+			const float yaw = a_player->GetAngleZ();
+			const RE::NiPoint3 forward{ std::sin(yaw), std::cos(yaw), 0.0f };
+
+			const auto ground = GroundZ(a_player, origin);
+			if (!ground) {
+				a_scan = "no ground under the player";
+				return LeanSpot::kNone;
+			}
+			a_scan = std::format("groundZ={:.0f}", *ground);
+			for (const float distance : kLeanProbes) {
+				const auto at = origin + forward * distance;
+				const RE::NiPoint3 from{ at.x, at.y, *ground + kLeanTop };
+				const RE::NiPoint3 to{ at.x, at.y, *ground + kLeanBottom };
+				const auto hit = Cast(a_player, from, to);
+				if (!hit || *hit <= 0.0f) {
+					a_scan += std::format(" front@{:.0f}={}", distance, hit ? "inside" : "none");
+					continue;
+				}
+				const float height = from.z + (to.z - from.z) * *hit - *ground;
+				a_scan += std::format(" front@{:.0f}={:.0f}", distance, height);
+				if (height >= kTableMin && height < kTableMax) {
+					return LeanSpot::kTable;
+				}
+				if (height >= kTableMax && height <= kRailMax) {
+					return LeanSpot::kRail;
+				}
+			}
+			const auto back = forward * -kWallReach;
+			const RE::NiPoint3 waist{ origin.x, origin.y, *ground + kWallWaist };
+			const RE::NiPoint3 chest{ origin.x, origin.y, *ground + kWallChest };
+			const auto waistHit = Cast(a_player, waist, waist + back);
+			const auto chestHit = Cast(a_player, chest, chest + back);
+			const auto at = [](const std::optional<float>& a_hit) {
+				return a_hit ? std::format("{:.0f}", *a_hit * kWallReach) : "none"s;
+			};
+			a_scan += std::format(" back waist={} chest={}", at(waistHit), at(chestHit));
+			return waistHit && chestHit ? LeanSpot::kWall : LeanSpot::kNone;
+		}
+
 		bool GraphBool(RE::PlayerCharacter* a_player, const char* a_name)
 		{
 			bool value = false;
@@ -142,6 +211,12 @@ namespace CIGAR
 			return "sitting";
 		case Pose::kLying:
 			return "lying";
+		case Pose::kLeanWall:
+			return "leaning on a wall";
+		case Pose::kLeanTable:
+			return "leaning on a table";
+		case Pose::kLeanRail:
+			return "leaning on a rail";
 		default:
 			return "standing";
 		}
@@ -152,7 +227,10 @@ namespace CIGAR
 		sit.Reset();
 		lie.Reset();
 		getUp.Reset();
+		lean.Reset();
 		lastGate.clear();
+		leanFound = Pose::kStanding;
+		leanShown = Pose::kStanding;
 		pose = Pose::kStanding;
 		pendingPose = Pose::kStanding;
 		readySince = Clock::now();
@@ -235,23 +313,59 @@ namespace CIGAR
 		const bool menu = !ui || ui->IsApplicationMenuOpen() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
 		const bool pending = pendingPose != Pose::kStanding;
 
-		const bool can = floor && !moving && !combat && !drawn && !seated && !swimming && !sneaking && !airborne &&
+		const bool can = !moving && !combat && !drawn && !seated && !swimming && !sneaking && !airborne &&
 		                 !mounted && !driven && controlsOn && !menu && !pending && !a_player->IsDead();
 		if (!can) {
 			readySince = now;
 		}
 		const auto still = now - readySince;
-		const bool available = can && still >= kReadyDelay;
+		const bool ready = can && still >= kReadyDelay;
+		const bool available = ready && floor;
+
+		if (!ready) {
+			leanFound = Pose::kStanding;
+		} else if (now - leanScannedAt >= kLeanRescan) {
+			leanScannedAt = now;
+			switch (ScanLean(a_player, leanScan)) {
+			case LeanSpot::kWall:
+				leanFound = Pose::kLeanWall;
+				break;
+			case LeanSpot::kTable:
+				leanFound = Pose::kLeanTable;
+				break;
+			case LeanSpot::kRail:
+				leanFound = Pose::kLeanRail;
+				break;
+			default:
+				leanFound = Pose::kStanding;
+				break;
+			}
+		}
 
 		LogGate(std::format(
-			"pose=standing pitch={:.2f} floor={} moving={} combat={} drawn={} seated={} swim={} sneak={} air={} "
-			"mount={} animDriven={} controls={} menu={} pending={} still={:.1f}s",
-			pitch, floor, moving, combat, drawn, seated, swimming, sneaking, airborne, mounted, driven, controlsOn,
-			menu, pending, std::chrono::duration<float>(still).count()));
+			"pose=standing pitch={:.2f} floor={} lean={} moving={} combat={} drawn={} seated={} swim={} sneak={} "
+			"air={} mount={} animDriven={} controls={} menu={} pending={} ready={}",
+			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound), moving, combat, drawn, seated,
+			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
 
 		getUp.Update(false, {});
 		sit.Update(available, [] { return "앉기 (길게)"s; });
 		lie.Update(available, [] { return "눕기 (길게)"s; });
+		if (leanShown != leanFound) {
+			// The text names the surface, so a different surface is a new prompt.
+			lean.Withdraw();
+			leanShown = leanFound;
+		}
+		lean.Update(leanFound != Pose::kStanding, [this] {
+			switch (leanShown) {
+			case Pose::kLeanTable:
+				return "탁자에 기대기 (길게)"s;
+			case Pose::kLeanRail:
+				return "난간에 기대기 (길게)"s;
+			default:
+				return "벽에 기대기 (길게)"s;
+			}
+		});
 	}
 
 	void Rest::RestingTick(RE::PlayerCharacter* a_player)
@@ -269,6 +383,9 @@ namespace CIGAR
 			PoseName(pose), std::chrono::duration<float>(since).count(), restConfirmed.load(), moving, combat,
 			drawn, driven));
 
+		if (IsLean(pose)) {
+			confirmReported = true;  // No known "pose reached" tag for leans; the recorded events show it.
+		}
 		if (!confirmReported && restConfirmed) {
 			confirmReported = true;
 			Log("{} reached ({} seen)", PoseName(pose), pose == Pose::kSitting ? kSatTag : kLayTag);
@@ -299,7 +416,8 @@ namespace CIGAR
 
 		sit.Update(false, {});
 		lie.Update(false, {});
-		getUp.Update(since >= kGetUpDelay, [] { return "일어나기 (길게)"s; });
+		lean.Update(false, {});
+		getUp.Update(since >= kGetUpDelay, [this] { return IsLean(pose) ? "그만 기대기 (길게)"s : "일어나기 (길게)"s; });
 	}
 
 	void Rest::OnAccepted(std::uint16_t a_eventID)
@@ -313,6 +431,12 @@ namespace CIGAR
 		case kLie:
 			if (pose == Pose::kStanding) {
 				Enter(Pose::kLying);
+			}
+			break;
+		case kLean:
+			if (pose == Pose::kStanding && leanShown != Pose::kStanding) {
+				Log("lean scan: {} -> {}", leanScan, PoseName(leanShown));
+				Enter(leanShown);
 			}
 			break;
 		case kGetUp:
@@ -333,6 +457,8 @@ namespace CIGAR
 		}
 		sit.Withdraw();
 		lie.Withdraw();
+		lean.Withdraw();
+		leanFound = Pose::kStanding;
 		ListenToPlayer(player);
 		restConfirmed = false;
 		confirmReported = false;
@@ -354,7 +480,23 @@ namespace CIGAR
 
 	bool Rest::SendEnter(RE::PlayerCharacter* a_player, Pose a_pose)
 	{
-		auto event = a_pose == Pose::kSitting ? kSitEvent : kLieEvent;
+		auto event = kLieEvent;
+		switch (a_pose) {
+		case Pose::kSitting:
+			event = kSitEvent;
+			break;
+		case Pose::kLeanWall:
+			event = kLeanWallEvent;
+			break;
+		case Pose::kLeanTable:
+			event = kLeanTableEvent;
+			break;
+		case Pose::kLeanRail:
+			event = kLeanRailEvent;
+			break;
+		default:
+			break;
+		}
 		if (a_pose == Pose::kSitting) {
 			std::string scan;
 			const bool ledge = LedgeAhead(a_player, scan);
@@ -387,10 +529,12 @@ namespace CIGAR
 		if (!player) {
 			return;
 		}
-		const bool exit = Notify(player, kExitEvent);
+		// SI's GetUp sends IdleRailLeanExit for the rail and IdleChairExitStart otherwise.
+		const auto exitEvent = was == Pose::kLeanRail ? kRailExitEvent : kExitEvent;
+		const bool exit = Notify(player, exitEvent);
 		const bool stop = !exit && Notify(player, kStopEvent);
 		const bool reset = !exit && !stop && Notify(player, kResetEvent);
-		Log("get up from {} ({}): {}={} {}={} {}={}", PoseName(was), a_reason, kExitEvent, exit, kStopEvent, stop,
+		Log("get up from {} ({}): {}={} {}={} {}={}", PoseName(was), a_reason, exitEvent, exit, kStopEvent, stop,
 			kResetEvent, reset);
 		if (!exit && !stop && !reset) {
 			Util::Notify("CIGAR: 일어나기 실패. 로그 확인");

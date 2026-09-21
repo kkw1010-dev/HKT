@@ -362,7 +362,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
      looking at the floor for a while, then a hold prompt.
    - **Pass time** — after sit/lie. While sitting or lying for `passtime_delay` (5 s), time speeds
      up gradually to `max_timemult` (2x). Never the Wait menu (see `6dd9a7d`, reverted).
-   - **Lean** — wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
+   - **Lean** — built in `Rest`, untested in game. Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
      (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
    - **Warm hands** — near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
      its fire list from `ccqdrsse002-firewood.esl` (installed).
