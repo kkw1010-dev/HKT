@@ -181,13 +181,14 @@ SI에서 Observer 활성화 후: (1) 정지 상태에서 5초 대기 후 프롬�
 - **Trigger condition:** 플레이어가 새 quest objective를 수신한 시점 [EVIDENCE: OFFICIAL VIDEO]
 - **Suppression condition:** [UNKNOWN]
 - **Prompt text/type:** "퀘스트 추적 |" [EVIDENCE: TRANSLATIONS — 문자열 존재 확인] / Type: Hold [EVIDENCE: USER IN-GAME KNOWLEDGE, 2026-09-21]
-- **Input semantics:** SI uses a hold interaction [EVIDENCE: USER IN-GAME KNOWLEDGE, 2026-09-21]. CIGAR uses `SkyPromptAPI::kHold` [EVIDENCE: CIGAR — build passed, runtime test pending].
-- **Action performed:** 프롬프트 수락 시 해당 퀘스트가 활성 추적 상태로 전환됨 [EVIDENCE: OFFICIAL VIDEO/DOC — player-visible result]. CIGAR는 native Papyrus `Quest.SetActive(true)`를 호출한다 [EVIDENCE: CIGAR — signature verified, build passed, runtime test pending].
+- **Input semantics:** SI uses a hold interaction [EVIDENCE: USER IN-GAME KNOWLEDGE, 2026-09-21]. CIGAR uses `SkyPromptAPI::kHold` [EVIDENCE: CIGAR — runtime confirmed 2026-09-21].
+- **Action performed:** 프롬프트 수락 시 해당 퀘스트가 활성 추적 상태로 전환됨 [EVIDENCE: OFFICIAL VIDEO/DOC — player-visible result]. CIGAR는 native Papyrus `Quest.SetActive(true)`를 호출한다 [EVIDENCE: CIGAR — runtime confirmed 2026-09-21].
+- **Displayed label:** QUST `Name`이 있으면 퀘스트 이름을, 이름이 없는 miscellaneous quest는 새 objective의 `DisplayText`를 사용한다. FormID는 플레이어에게 표시하지 않는다 [EVIDENCE: QUST/QuestObjective schema + runtime report; fix build passed, runtime test pending, 2026-09-21].
 - **State remembered before action:** 이전 추적 퀘스트 [INFERENCE]
 - **State restored after action:** 없음 [INFERENCE]
 - **Dependencies:** 없음
-- **Skyrim engine information required:** CIGAR uses `ObjectiveState::Event` to observe a transition to `kDisplayed`, then dispatches the verified native Papyrus method `Quest.SetActive(true)` [EVIDENCE: CIGAR — implementation built 2026-09-21, runtime test pending]. This does not prove SI uses the same path.
-- **Event-driven 가능 여부:** CIGAR implementation is event-driven [EVIDENCE: CIGAR — build verified, runtime firing semantics pending].
+- **Skyrim engine information required:** CIGAR uses `ObjectiveState::Event` to observe a transition to `kDisplayed`, then dispatches the verified native Papyrus method `Quest.SetActive(true)` [EVIDENCE: CIGAR — runtime confirmed 2026-09-21]. This does not prove SI uses the same path.
+- **Event-driven 가능 여부:** CIGAR implementation is event-driven [EVIDENCE: CIGAR — runtime confirmed 2026-09-21].
 - **필요한 최소 polling 주기:** N/A for discovery. CIGAR's existing 100 ms `FastTick()` maintains and expires the prompt [EVIDENCE: CIGAR].
 - **CIGAR에서 재사용 가능한 machinery:** `PromptSlot`, game-thread task marshalling, module gate logging [EVIDENCE: CIGAR]
 - **Save persistence 필요 여부:** 없음 [INFERENCE]
@@ -206,7 +207,7 @@ new objective 수신 직후 Track Quest prompt가 출현하고, 수락 시 해�
 - SI의 정확한 suppression 조건과 동시에 여러 objective가 표시될 때의 선택 규칙 [UNKNOWN]
 
 ##### CIGAR implementation policy
-`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 hold이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — build verified 2026-09-21, runtime test pending].
+`ObjectiveState::Event`의 `oldState -> kDisplayed` 전환을 gate로 사용한다 [IMPLEMENTATION POLICY]. 이벤트 싱크에서는 quest FormID와 objective index만 복사하고, 실제 폼 확인과 프롬프트 상태 변경은 게임 스레드에서 수행한다. 프롬프트는 hold이며 15초 동안 유지한다. 수락 시 `Quest.SetActive(true)`를 호출하고 `TESQuest::IsActive()`로 결과를 확인한다 [EVIDENCE: CIGAR — runtime confirmed 2026-09-21; label fallback runtime test pending].
 
 ##### Minimal experiment
 SI의 Quest Tracking 활성 상태에서 퀘스트 단계 진행 시 프롬프트가 즉시(이벤트) 뜨는지, 지연 후(polling) 뜨는지 관찰.

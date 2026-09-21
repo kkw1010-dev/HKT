@@ -41,7 +41,9 @@ status.
    ALCH records in this whole order and on none of the healing potions; see `docs/015-potion.md`.
 4. **`QuestTrack` starts the SI absorption pass (2026-09-21).** It listens for an objective-state
    transition to displayed, offers the untracked quest as a 15-second hold prompt, and dispatches the native
-   Papyrus `Quest.SetActive(true)` method. The SE+AE+VR build passed. **Not yet tested in game.**
+   Papyrus `Quest.SetActive(true)` method. Hold and tracking are confirmed in game. A nameless
+   miscellaneous QUST now falls back to the new objective text instead of exposing its FormID;
+   that label fix is built but not yet confirmed in game.
    `QuestActions.enabled_track` is the only new SI switch CIGAR replaces; the rest of QuestActions
    remains enabled. See `docs/017-quest-track.md` and `SI/_ABSORPTION/_MAP.md`.
 5. Backlog below.

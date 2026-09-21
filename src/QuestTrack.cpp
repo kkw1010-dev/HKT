@@ -10,6 +10,24 @@ namespace CIGAR
 		constexpr auto kOfferWindow = 15s;
 		constexpr auto kQuestScript = "Quest"sv;
 
+		std::uint64_t PackObjective(RE::FormID a_questID, std::uint16_t a_objectiveIndex)
+		{
+			return (static_cast<std::uint64_t>(a_questID) << 16) | a_objectiveIndex;
+		}
+
+		std::string QuestLabel(RE::TESQuest* a_quest, std::uint16_t a_objectiveIndex)
+		{
+			if (const char* name = a_quest->GetName(); name && *name) {
+				return name;
+			}
+			for (const auto* objective : a_quest->objectives) {
+				if (objective && objective->index == a_objectiveIndex && !objective->displayText.empty()) {
+					return objective->displayText.c_str();
+				}
+			}
+			return "퀘스트";
+		}
+
 		class TrackResult final : public RE::BSScript::IStackCallbackFunctor
 		{
 		public:
@@ -63,8 +81,9 @@ namespace CIGAR
 		track.Reset();
 		lastGate.clear();
 		offeredQuest = 0;
+		offeredLabel.clear();
 		expiresAt = {};
-		pendingQuest = 0;
+		pendingObjective = 0;
 		eventTaskQueued = false;
 		Util::WarnIfSIModuleOn("QuestActions.enabled_track", "/MCP/modules/QuestActions/enabled_track");
 		Log("ready");
@@ -89,8 +108,9 @@ namespace CIGAR
 
 		if (!available) {
 			offeredQuest = 0;
+			offeredLabel.clear();
 		}
-		track.Update(available, [quest] { return std::format("추적하기 (길게): {}", Util::NameOf(quest)); });
+		track.Update(available, [this] { return std::format("추적하기 (길게): {}", offeredLabel); });
 	}
 
 	void QuestTrack::OnAccepted(std::uint16_t a_eventID)
@@ -126,7 +146,8 @@ namespace CIGAR
 	void QuestTrack::OnDisabled()
 	{
 		offeredQuest = 0;
-		pendingQuest = 0;
+		offeredLabel.clear();
+		pendingObjective = 0;
 		expiresAt = {};
 	}
 
@@ -143,21 +164,22 @@ namespace CIGAR
 			return RE::BSEventNotifyControl::kContinue;
 		}
 
-		pendingQuest = a_event->objective->ownerQuest->GetFormID();
+		pendingObjective = PackObjective(a_event->objective->ownerQuest->GetFormID(), a_event->objective->index);
 		if (!eventTaskQueued.exchange(true)) {
 			SKSE::GetTaskInterface()->AddTask([] {
 				auto* self = QuestTrack::GetSingleton();
 				self->eventTaskQueued = false;
-				const auto questID = self->pendingQuest.exchange(0);
-				if (questID != 0) {
-					self->ReceiveDisplayedObjective(questID);
+				const auto pending = self->pendingObjective.exchange(0);
+				if (pending != 0) {
+					self->ReceiveDisplayedObjective(
+						static_cast<RE::FormID>(pending >> 16), static_cast<std::uint16_t>(pending));
 				}
 			});
 		}
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-	void QuestTrack::ReceiveDisplayedObjective(RE::FormID a_questID)
+	void QuestTrack::ReceiveDisplayedObjective(RE::FormID a_questID, std::uint16_t a_objectiveIndex)
 	{
 		if (!Settings::Enabled(Name())) {
 			return;
@@ -173,8 +195,10 @@ namespace CIGAR
 			track.Reset();
 		}
 		offeredQuest = a_questID;
+		offeredLabel = QuestLabel(quest, a_objectiveIndex);
 		expiresAt = Clock::now() + kOfferWindow;
-		Log("new objective: quest={} ({:08X}), offering for {}s", Util::NameOf(quest), a_questID,
+		Log("new objective: quest={} ({:08X}) objective={} label='{}', offering for {}s",
+			Util::NameOf(quest), a_questID, a_objectiveIndex, offeredLabel,
 			std::chrono::duration_cast<std::chrono::seconds>(kOfferWindow).count());
 	}
 }

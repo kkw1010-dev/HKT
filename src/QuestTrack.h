@@ -36,12 +36,13 @@ namespace CIGAR
 
 		using Clock = std::chrono::steady_clock;
 
-		void ReceiveDisplayedObjective(RE::FormID a_questID);
+		void ReceiveDisplayedObjective(RE::FormID a_questID, std::uint16_t a_objectiveIndex);
 
 		PromptSlot track{ this, kTrack };
 		RE::FormID offeredQuest{ 0 };
+		std::string offeredLabel;
 		Clock::time_point expiresAt{};
-		std::atomic<RE::FormID> pendingQuest{ 0 };
+		std::atomic<std::uint64_t> pendingObjective{ 0 };
 		std::atomic_bool eventTaskQueued{ false };
 	};
 }
