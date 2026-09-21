@@ -352,3 +352,22 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    override, so check that first.
 5. **Private Needs.** Done as `Needs` on Private Needs - Orgasm (installed 2026-09-19); see item 2
    above.
+6. **SI IdleActions, absorbed as roleplay actions.** SI's `IdleActions.enabled` is off since
+   2026-09-21 (the user's call), so every action below is gone from the game until CIGAR has it.
+   The user wants each one kept, even where CIGAR has a similar module, because the point is
+   roleplay rather than removing a duplicate. Read from SI's DLL strings; gates are inferred.
+   - **Sit / lie down on the ground** — next. SI sends the vanilla events `IdleSitCrossLeggedEnter`
+     and `IdleLayDownEnter`, and gets up with `IdleChairExitStart` (also `IdleStop`,
+     `IdleForceDefaultState`); it watches `idleChairSitting` and `tailLayDown`. The user's gate:
+     looking at the floor for a while, then a hold prompt.
+   - **Pass time** — after sit/lie. While sitting or lying for `passtime_delay` (5 s), time speeds
+     up gradually to `max_timemult` (2x). Never the Wait menu (see `6dd9a7d`, reverted).
+   - **Lean** — wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
+     (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
+   - **Warm hands** — near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
+     its fire list from `ccqdrsse002-firewood.esl` (installed).
+   - **Eat / drink while seated** — inferred: offered while sitting in a chair, e.g. at an inn.
+     Separate from CIGAR's `Eat`, which is Survival Mode hunger; SI reads
+     `ccQDRSSE001-SurvivalMode.esl` for food too.
+   - **Tidy up (sweeping)** — needs `sweepingOrganizesStuff.esp`, which is not installed, so SI
+     never showed it on this modlist.

@@ -26,6 +26,9 @@ REPLACED = [
     ("DressActions", "enabled_bed"),
     ("DressActions", "enabled_wardrobe"),
     ("QuestActions", "enabled_track"),
+    # One switch for SI's sit, lie down, lean, warm hands, chair eat/drink and tidy-up. Off at the
+    # user's call (2026-09-21) ahead of CIGAR's own sit/lie; the rest is on the backlog.
+    ("IdleActions", "enabled"),
     # ItemUse stays on because recharge, spellbook and make-light are not absorbed yet.
     ("ItemUse", "enabled_equip_weapon"),
     ("ItemUse", "enabled_equip_armor"),
