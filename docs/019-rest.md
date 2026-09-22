@@ -8,8 +8,9 @@ animation, jump out, and no prompt on screen while resting.
 
 ## Pass time (2026-09-22)
 
-In game: offer, hold to speed up, release, getting up while held and "no Wait menu"
-passed. Saving while held was not tried: the user does not load saves (it goes badly
+In game: offer, hold to speed up, release, getting up while held, "no Wait menu", the
+ring with the live ×N text, the immediate offer and hiding it with a double press
+passed. Game speed (below) was added after that and is untested. Saving while held was not tried: the user does not load saves (it goes badly
 in Skyrim) and the kSaveGame restore below covers it by design.
 
 SI's pass time, as the user specified: time speeds up only while a key is held, never
@@ -30,6 +31,14 @@ by itself and never through the Wait menu (the reverted `6dd9a7d` opened it).
   switched off put it back at once. x60 and 3 s are my choices: SI's
   `max_timemult` is 2.0, which barely moves the clock. At the vanilla timescale 20,
   x60 is 20 game minutes per real second.
+- The game itself also speeds up, from x1 to x3 on the same ramp (the global time
+  multiplier, which Surrender uses for slow motion), so NPCs visibly hurry; the user
+  asked for that after the first build left everyone at normal pace. Game speed
+  also advances the clock, so the timescale is divided by it and the clock still
+  totals x60. x3 is the top of the 2-3 range the user accepted: above about 4,
+  physics and pathing break. Everything speeds up, the player's own idle included.
+  A game speed already changed by something else is left alone, and one set by
+  pass time is reset to x1 on stop and at load (it is not saved with the game).
 - Changing the timescale, rather than GameHour, lets the engine advance the day,
   month and days-passed globals together (survival needs follow).
 - The timescale global is saved with the game, so SKSE's kSaveGame (sent before

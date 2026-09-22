@@ -19,6 +19,11 @@ namespace CIGAR
 		// 20 game minutes per real second.
 		constexpr float kPassTimeMax = 60.0f;
 		constexpr float kPassTimeRamp = 3.0f;
+		// The whole game also runs faster, up to x kGameSpeedMax on the same ramp, so NPCs visibly
+		// hurry (the user's request, 2026-09-22). Game speed also speeds the clock, so the timescale
+		// is divided by it and the clock still totals x kPassTimeMax. 3 is the top of the 2-3 range
+		// offered to the user: above about 4 physics and pathing start to break.
+		constexpr float kGameSpeedMax = 3.0f;
 		// A timescale above this at load is reported: it may be an accelerated value that was saved.
 		constexpr float kTimescaleSuspicious = 100.0f;
 		// Stick or key input at least this strong (0-1) counts as wanting to move.
@@ -256,9 +261,17 @@ namespace CIGAR
 		lean.Reset();
 		passTime.Reset();
 		lastGate.clear();
-		// The loaded save carries its own timescale; nothing of ours is left to restore.
+		// The loaded save carries its own timescale; nothing of ours is left to restore. Game speed is
+		// not saved, so one we set before the load must still be put back.
 		passHolding = false;
 		passBase = 0.0f;
+		if (passSpeedSet > 0.0f) {
+			if (auto* timer = RE::BSTimer::GetSingleton()) {
+				timer->SetGlobalTimeMultiplier(1.0f, true);
+			}
+			Log("game speed x{:.1f} from pass time reset to x1 at load", passSpeedSet);
+			passSpeedSet = 0.0f;
+		}
 		if (const auto* calendar = RE::Calendar::GetSingleton(); calendar && calendar->timeScale) {
 			const float timescale = calendar->timeScale->value;
 			if (timescale > kTimescaleSuspicious) {
@@ -642,15 +655,30 @@ namespace CIGAR
 			Util::Notify("CIGAR: 시간 보내기 실패. 로그 확인");
 			return;
 		}
+		auto* timer = RE::BSTimer::GetSingleton();
 		if (passBase <= 0.0f) {
 			passBase = timescale->value;
 			passHoursAtStart = calendar->GetHoursPassed();
-			Log("pass time: key held, timescale {:.1f} rising to x{:.0f} over {:.0f}s", passBase, kPassTimeMax, kPassTimeRamp);
+			const float speed = RE::BSTimer::QGlobalTimeMultiplier();
+			// Game speed is left alone when something else already changed it (Surrender's slow motion).
+			const bool ownSpeed = timer && std::abs(speed - 1.0f) < 0.01f;
+			passSpeedSet = ownSpeed ? 1.0f : 0.0f;
+			Log("pass time: key held, timescale {:.1f}, clock rising to x{:.0f} and game speed to x{:.0f} over {:.0f}s{}",
+				passBase, kPassTimeMax, kGameSpeedMax, kPassTimeRamp,
+				ownSpeed ? "" : std::format(" (game speed x{:.2f} set elsewhere; left alone)", speed));
 		}
 		const float held = std::chrono::duration<float>(Clock::now() - passHeldSince).count();
 		const float ramp = std::min(1.0f, held / kPassTimeRamp);
 		const float multiplier = 1.0f + (kPassTimeMax - 1.0f) * ramp;
-		timescale->value = passBase * multiplier;
+		float speed = 1.0f;
+		if (passSpeedSet > 0.0f && timer) {
+			speed = 1.0f + (kGameSpeedMax - 1.0f) * ramp;
+			if (std::abs(speed - passSpeedSet) > 0.01f) {
+				timer->SetGlobalTimeMultiplier(speed, true);
+				passSpeedSet = speed;
+			}
+		}
+		timescale->value = passBase * multiplier / speed;
 		passTime.SetLive(std::format("시간 보내기 ×{:.0f}", multiplier), ramp);
 	}
 
@@ -659,6 +687,15 @@ namespace CIGAR
 		const bool wasHolding = passHolding;
 		passHolding = false;
 		passTime.SetLive(std::string{ kPassTimeText }, 0.0f);
+		if (passSpeedSet > 0.0f) {
+			const float now = RE::BSTimer::QGlobalTimeMultiplier();
+			if (std::abs(now - passSpeedSet) > 0.01f) {
+				Log("pass time: game speed is x{:.2f}, changed elsewhere; left as is", now);
+			} else if (auto* timer = RE::BSTimer::GetSingleton()) {
+				timer->SetGlobalTimeMultiplier(1.0f, true);
+			}
+			passSpeedSet = 0.0f;
+		}
 		if (passBase <= 0.0f) {
 			if (wasHolding) {
 				Log("pass time: key up before the clock sped up ({})", a_reason);
