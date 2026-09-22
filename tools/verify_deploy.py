@@ -584,6 +584,13 @@ def check_rest(modlist):
         return
     with open(master, "rb") as f:
         data = f.read().lower()
+    mt = winning_file(modlist, "meshes/actors/character/behaviors/mt_behavior.hkx")
+    check(mt is not None, "player behaviour graph mt_behavior.hkx found")
+    if mt is not None:
+        with open(mt, "rb") as f:
+            mt_data = f.read().lower()
+        for event in ["IdleWarmHandsStanding", "IdleWarmHandsCrouched"]:
+            check(event.lower().encode() in mt_data, "mt_behavior.hkx has Rest event %s" % event)
     for event in ["IdleSitCrossLeggedEnter", "IdleSitLedgeEnter", "IdleLayDownEnter", "IdleChairExitStart", "IdleStop",
                   "IdleWallLeanStart", "IdleLeanTableEnter", "IdleRailLeanEnter", "IdleRailLeanExit"]:
         check(event.lower().encode() in data, "0_master.hkx has Rest event %s" % event)

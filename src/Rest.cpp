@@ -49,6 +49,20 @@ namespace CIGAR
 		constexpr auto kLeanTableEvent = "IdleLeanTableEnter"sv;
 		constexpr auto kLeanRailEvent = "IdleRailLeanEnter"sv;
 		constexpr auto kRailExitEvent = "IdleRailLeanExit"sv;
+		// SI's warm-hands idles (Skyrim.esm IDLE 0E8642 / 0E8643); the events are in mt_behavior.hkx.
+		constexpr auto kWarmStandingEvent = "IdleWarmHandsStanding"sv;
+		constexpr auto kWarmCrouchedEvent = "IdleWarmHandsCrouched"sv;
+
+		// Survival Mode finds heat sources with this list (its Survival_HeatSourceLocatorQuest
+		// aliases); on this modlist Embers XD's patch makes it 90 base objects. Reading it keeps
+		// CIGAR in step with whatever the survival mods count as a fire.
+		constexpr RE::FormID kFireListID = 0x8AA;
+		constexpr auto kSurvivalPlugin = "ccqdrsse001-survivalmode.esl"sv;
+		// Warm-hands test, in game units and degrees; my choices, accepted by the user (2026-09-22).
+		constexpr float kFireReach = 200.0f;
+		constexpr float kFireCone = 60.0f;
+		// A fire whose top is below this height above the player's feet is on the ground: crouch.
+		constexpr float kFireCrouchTop = 50.0f;
 		constexpr auto kExitEvent = "IdleChairExitStart"sv;
 		constexpr auto kStopEvent = "IdleStop"sv;
 		constexpr auto kResetEvent = "IdleForceDefaultState"sv;
@@ -223,6 +237,7 @@ namespace CIGAR
 		sit.SetPromptType(SkyPromptAPI::kHold);
 		lie.SetPromptType(SkyPromptAPI::kHold);
 		lean.SetPromptType(SkyPromptAPI::kHold);
+		warm.SetPromptType(SkyPromptAPI::kHold);
 		// The clock runs fast while the key is down (hold mode reports down and up). HoldAndKeep
 		// draws SkyPrompt's ring, and the text and progress show the multiplier live.
 		passTime.SetHoldMode(true);
@@ -248,6 +263,10 @@ namespace CIGAR
 			return "leaning on a table";
 		case Pose::kLeanRail:
 			return "leaning on a rail";
+		case Pose::kWarmStanding:
+			return "warming hands (standing)";
+		case Pose::kWarmCrouched:
+			return "warming hands (crouched)";
 		default:
 			return "standing";
 		}
@@ -258,6 +277,8 @@ namespace CIGAR
 		sit.Reset();
 		lie.Reset();
 		lean.Reset();
+		warm.Reset();
+		warmFound = Pose::kStanding;
 		passTime.Reset();
 		lastGate.clear();
 		// The loaded save carries its own timescale; nothing of ours is left to restore. Game speed is
@@ -293,6 +314,13 @@ namespace CIGAR
 		}
 		if (auto* player = Util::Player()) {
 			ListenToPlayer(player);
+		}
+		auto* handler = RE::TESDataHandler::GetSingleton();
+		fires = handler ? handler->LookupForm<RE::BGSListForm>(kFireListID, kSurvivalPlugin) : nullptr;
+		if (fires) {
+			Log("fire list: {} base objects from {}", fires->forms.size(), kSurvivalPlugin);
+		} else {
+			Log("no fire list ({} or its Survival_WarmUpObjectsList missing): 손 녹이기 is off", kSurvivalPlugin);
 		}
 		Util::WarnIfSIModuleOn("IdleActions.enabled", "/MCP/modules/IdleActions/enabled");
 		Log("ready; floor pitch>={:.2f} rad, still for {}s", kFloorPitch,
@@ -373,8 +401,10 @@ namespace CIGAR
 
 		if (!ready) {
 			leanFound = Pose::kStanding;
+			warmFound = Pose::kStanding;
 		} else if (now - leanScannedAt >= kLeanRescan) {
 			leanScannedAt = now;
+			warmFound = ScanFire(a_player);
 			switch (ScanLean(a_player, leanScan)) {
 			case LeanSpot::kWall:
 				leanFound = Pose::kLeanWall;
@@ -392,9 +422,10 @@ namespace CIGAR
 		}
 
 		LogGate(std::format(
-			"pose=standing pitch={:.2f} floor={} lean={} moving={} combat={} drawn={} seated={} swim={} sneak={} "
+			"pose=standing pitch={:.2f} floor={} lean={} fire={} moving={} combat={} drawn={} seated={} swim={} sneak={} "
 			"air={} mount={} animDriven={} controls={} menu={} pending={} ready={}",
-			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound), moving, combat, drawn, seated,
+			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound),
+			warmFound == Pose::kStanding ? "none" : PoseName(warmFound), moving, combat, drawn, seated,
 			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
 
 		passTime.Update(false, {});
@@ -405,6 +436,7 @@ namespace CIGAR
 			lean.Withdraw();
 			leanShown = leanFound;
 		}
+		warm.Update(warmFound != Pose::kStanding, [] { return "손 녹이기 (길게)"s; });
 		lean.Update(leanFound != Pose::kStanding, [this] {
 			switch (leanShown) {
 			case Pose::kLeanTable:
@@ -415,6 +447,45 @@ namespace CIGAR
 				return "벽에 기대기 (길게)"s;
 			}
 		});
+	}
+
+	Rest::Pose Rest::ScanFire(RE::PlayerCharacter* a_player)
+	{
+		if (!fires) {
+			warmScan = "no fire list";
+			return Pose::kStanding;
+		}
+		const auto origin = a_player->GetPosition();
+		const float yaw = a_player->GetAngleZ();
+		RE::TESObjectREFR* best = nullptr;
+		float bestDistance = kFireReach;
+		float bestAngle = 0.0f;
+		RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, kFireReach, [&](RE::TESObjectREFR* a_ref) {
+			auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
+			if (!base || a_ref->IsDisabled() || a_ref->IsDeleted() || !fires->HasForm(base)) {
+				return RE::BSContainer::ForEachResult::kContinue;
+			}
+			const auto to = a_ref->GetPosition() - origin;
+			const float distance = std::hypot(to.x, to.y);
+			// Skyrim yaw: 0 faces +Y, growing clockwise; atan2(x, y) gives the same convention.
+			float angle = std::abs(RE::rad_to_deg(std::atan2(to.x, to.y) - yaw));
+			angle = std::fmod(angle, 360.0f);
+			angle = angle > 180.0f ? 360.0f - angle : angle;
+			if (angle <= kFireCone && distance <= bestDistance) {
+				best = a_ref;
+				bestDistance = distance;
+				bestAngle = angle;
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		if (!best) {
+			warmScan = "no fire in reach and in front";
+			return Pose::kStanding;
+		}
+		const float top = best->GetPositionZ() + best->GetBoundMax().z * best->GetScale() - origin.z;
+		warmScan = std::format("fire {} ({:08X}) at {:.0f} units, {:.0f} deg off, top {:.0f} above the feet",
+			Util::NameOf(best->GetBaseObject()), best->GetFormID(), bestDistance, bestAngle, top);
+		return top < kFireCrouchTop ? Pose::kWarmCrouched : Pose::kWarmStanding;
 	}
 
 	void Rest::RestingTick(RE::PlayerCharacter* a_player)
@@ -455,6 +526,7 @@ namespace CIGAR
 		sit.Update(false, {});
 		lie.Update(false, {});
 		lean.Update(false, {});
+		warm.Update(false, {});
 
 		if (combat) {
 			GetUp("combat started");
@@ -504,6 +576,17 @@ namespace CIGAR
 				Enter(Pose::kLying);
 			}
 			break;
+		case kWarm:
+			if (pose == Pose::kStanding) {
+				// Re-scan at the press: the fire may have moved out of reach since the offer.
+				if (auto* player = Util::Player(); player && (warmFound = ScanFire(player)) != Pose::kStanding) {
+					Log("fire scan: {} -> {}", warmScan, PoseName(warmFound));
+					Enter(warmFound);
+				} else {
+					Log("warm hands ignored: no fire in reach any more ({})", warmScan);
+				}
+			}
+			break;
 		case kLean:
 			if (pose == Pose::kStanding && leanShown != Pose::kStanding) {
 				Log("lean scan: {} -> {}", leanScan, PoseName(leanShown));
@@ -524,6 +607,8 @@ namespace CIGAR
 		sit.Withdraw();
 		lie.Withdraw();
 		lean.Withdraw();
+		warm.Withdraw();
+		warmFound = Pose::kStanding;
 		leanFound = Pose::kStanding;
 		ListenToPlayer(player);
 		restConfirmed = false;
@@ -561,6 +646,12 @@ namespace CIGAR
 			break;
 		case Pose::kLeanRail:
 			event = kLeanRailEvent;
+			break;
+		case Pose::kWarmStanding:
+			event = kWarmStandingEvent;
+			break;
+		case Pose::kWarmCrouched:
+			event = kWarmCrouchedEvent;
 			break;
 		default:
 			break;

@@ -6,7 +6,8 @@
 namespace CIGAR
 {
 	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
-	// 앉기 and 눕기; a wall, table or rail in front offers 기대기. Movement input gets the player up.
+	// 앉기 and 눕기; a wall, table or rail in front offers 기대기; a fire in front offers 손 녹이기
+	// (the fires are Survival Mode's heat-source list). Movement input gets the player up.
 	// While resting, 시간 보내기 speeds the game clock for as long as its key is held (SI's pass
 	// time). Uses the vanilla idle events SI sends.
 	class Rest final :
@@ -43,7 +44,8 @@ namespace CIGAR
 			kSit = PromptID::kSit,
 			kLie = PromptID::kLieDown,
 			kLean = PromptID::kLean,
-			kPassTime = PromptID::kPassTime
+			kPassTime = PromptID::kPassTime,
+			kWarm = PromptID::kWarmHands
 		};
 
 		enum class Pose
@@ -53,7 +55,9 @@ namespace CIGAR
 			kLying,
 			kLeanWall,  // facing the wall: the enter animation turns the player around
 			kLeanTable,
-			kLeanRail
+			kLeanRail,
+			kWarmStanding,  // a fire at chest height (a brazier, a forge)
+			kWarmCrouched   // a fire on the ground (a campfire)
 		};
 
 		using Clock = std::chrono::steady_clock;
@@ -67,6 +71,8 @@ namespace CIGAR
 		bool SendEnter(RE::PlayerCharacter* a_player, Pose a_pose);
 		void GetUp(std::string_view a_reason);
 		void StandingTick(RE::PlayerCharacter* a_player);
+		// The warm-hands pose for the closest fire in reach and in front, or kStanding.
+		Pose ScanFire(RE::PlayerCharacter* a_player);
 		void RestingTick(RE::PlayerCharacter* a_player);
 		void ListenToPlayer(RE::PlayerCharacter* a_player);
 		void StartRecording(Clock::duration a_for);
@@ -78,6 +84,7 @@ namespace CIGAR
 		PromptSlot lie{ this, kLie };
 		PromptSlot lean{ this, kLean };
 		PromptSlot passTime{ this, kPassTime };
+		PromptSlot warm{ this, kWarm };
 
 		Pose pose{ Pose::kStanding };
 		Clock::time_point poseSince{};
@@ -87,6 +94,10 @@ namespace CIGAR
 		Pose leanShown{ Pose::kStanding };
 		std::string leanScan;
 		Clock::time_point leanScannedAt{};
+		// Survival Mode's heat sources (Survival_WarmUpObjectsList), resolved at load; null without it.
+		RE::BGSListForm* fires{ nullptr };
+		Pose warmFound{ Pose::kStanding };
+		std::string warmScan;
 		// An enter request waiting for the third-person graph after a camera switch.
 		Pose pendingPose{ Pose::kStanding };
 		Clock::time_point pendingUntil{};

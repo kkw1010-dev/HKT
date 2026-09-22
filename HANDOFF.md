@@ -365,7 +365,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
      3) over 3 s, with a ring and a live xN; release restores both. Never the Wait menu.
    - **Lean** — built in `Rest`, passed in game 2026-09-22 (facing wall only, table, rail; clips randomized by OAR patch, install case 016). Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
      (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
-   - **Warm hands** — near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
+   - **Warm hands** — built in `Rest` (`docs/020-warm-hands.md`), untested in game. Near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
      its fire list from `ccqdrsse002-firewood.esl` (installed).
    - **Eat / drink while seated** — inferred: offered while sitting in a chair, e.g. at an inn.
      Separate from CIGAR's `Eat`, which is Survival Mode hunger; SI reads

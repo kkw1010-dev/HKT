@@ -1,6 +1,24 @@
-# 020 · Warm hands (plan)
+# 020 · Warm hands
 
-Status (2026-09-22): researched, not built. The user picked it as the next SI absorption.
+Status (2026-09-22): built into `Rest` and deployed; not yet tested in game. The user picked it
+as the next SI absorption and accepted the defaults below.
+
+## As built
+
+- `Rest::ScanFire`, run with the lean scan every 250 ms while the player stands ready: loaded
+  references within 200 units whose base is in `Survival_WarmUpObjectsList` (a flat list of 90:
+  70 movable statics, 10 furniture, 6 activators, 3 lights, 1 static), not disabled or deleted,
+  within 60° of the player's facing; the closest wins. It is scanned again at the press.
+- Crouched when the fire's top (reference Z + bound max Z x scale) is under 50 units above the
+  player's feet, otherwise standing.
+- Prompt 손 녹이기 (길게), hold. The pose is a `Rest` pose, so movement exits, combat exits, and
+  시간 보내기 appears while warming.
+- Logged: the gate's `fire=` field, and on accept `fire scan: fire <name> (<refid>) at N units,
+  N deg off, top N above the feet -> warming hands (crouched|standing)`. Without the Survival
+  Mode plugin the load log says 손 녹이기 is off.
+- `verify_deploy.py` checks both idle events in the winning `mt_behavior.hkx`.
+- The player is not turned to face the fire; the idle plays along the current facing, up to 60°
+  off.
 
 ## What SI does (DLL strings)
 
