@@ -63,6 +63,7 @@ namespace CIGAR
 		using Clock = std::chrono::steady_clock;
 
 		static const char* PoseName(Pose a_pose);
+		static bool IsWarm(Pose a_pose) { return a_pose == Pose::kWarmStanding || a_pose == Pose::kWarmCrouched; }
 		static bool IsLean(Pose a_pose)
 		{
 			return a_pose == Pose::kLeanWall || a_pose == Pose::kLeanTable || a_pose == Pose::kLeanRail;
@@ -98,6 +99,8 @@ namespace CIGAR
 		RE::BGSListForm* fires{ nullptr };
 		Pose warmFound{ Pose::kStanding };
 		std::string warmScan;
+		// The closest fire-list reference that was turned down, logged when it changes.
+		RE::FormID fireMissLogged{ 0 };
 		// An enter request waiting for the third-person graph after a camera switch.
 		Pose pendingPose{ Pose::kStanding };
 		Clock::time_point pendingUntil{};
@@ -125,5 +128,9 @@ namespace CIGAR
 		Clock::time_point recordUntil{};
 		int recordedCount{ 0 };
 		std::atomic_bool restConfirmed{ false };
+		// A tag that means the player's idle ended (IdleStop, tailMTIdle, tailMTLocomotion) arrived
+		// during the rest; the tag, for the log.
+		std::atomic_bool idleEnded{ false };
+		std::string idleEndedTag;
 	};
 }

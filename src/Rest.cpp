@@ -59,10 +59,18 @@ namespace CIGAR
 		constexpr RE::FormID kFireListID = 0x8AA;
 		constexpr auto kSurvivalPlugin = "ccqdrsse001-survivalmode.esl"sv;
 		// Warm-hands test, in game units and degrees; my choices, accepted by the user (2026-09-22).
+		// A fire counts within kFireReach of its origin or kFireEdgeReach of its horizontal bounds
+		// (a forge's origin sits in its middle, so the player at its front was out of reach).
 		constexpr float kFireReach = 200.0f;
+		constexpr float kFireEdgeReach = 100.0f;
+		constexpr float kFireSearch = 400.0f;
 		constexpr float kFireCone = 60.0f;
-		// A fire whose top is below this height above the player's feet is on the ground: crouch.
-		constexpr float kFireCrouchTop = 50.0f;
+		// Crouch when the fire stands on the player's floor (a campfire, a fire pit, a cooking pot):
+		// its origin less than this above the feet. The first build used the top of the fire's
+		// bounds, which includes the flames and smoke, and every fire came out standing.
+		constexpr float kFireCrouchBase = 25.0f;
+		// Warm hands is a plain idle with no "pose reached" tag; movement may end it after this.
+		constexpr auto kWarmSettle = 1s;
 		constexpr auto kExitEvent = "IdleChairExitStart"sv;
 		constexpr auto kStopEvent = "IdleStop"sv;
 		constexpr auto kResetEvent = "IdleForceDefaultState"sv;
@@ -457,35 +465,66 @@ namespace CIGAR
 		}
 		const auto origin = a_player->GetPosition();
 		const float yaw = a_player->GetAngleZ();
-		RE::TESObjectREFR* best = nullptr;
-		float bestDistance = kFireReach;
-		float bestAngle = 0.0f;
-		RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, kFireReach, [&](RE::TESObjectREFR* a_ref) {
+		struct Candidate
+		{
+			RE::TESObjectREFR* ref{ nullptr };
+			float distance{ 0.0f };
+			float edge{ 0.0f };
+			float angle{ 0.0f };
+		};
+		Candidate best;
+		Candidate nearest;
+		RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, kFireSearch, [&](RE::TESObjectREFR* a_ref) {
 			auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
 			if (!base || a_ref->IsDisabled() || a_ref->IsDeleted() || !fires->HasForm(base)) {
 				return RE::BSContainer::ForEachResult::kContinue;
 			}
 			const auto to = a_ref->GetPosition() - origin;
-			const float distance = std::hypot(to.x, to.y);
+			Candidate c{ a_ref, std::hypot(to.x, to.y) };
+			const auto lo = a_ref->GetBoundMin();
+			const auto hi = a_ref->GetBoundMax();
+			const float radius = std::max({ std::abs(lo.x), std::abs(lo.y), std::abs(hi.x), std::abs(hi.y) }) * a_ref->GetScale();
+			c.edge = std::max(0.0f, c.distance - radius);
 			// Skyrim yaw: 0 faces +Y, growing clockwise; atan2(x, y) gives the same convention.
-			float angle = std::abs(RE::rad_to_deg(std::atan2(to.x, to.y) - yaw));
-			angle = std::fmod(angle, 360.0f);
-			angle = angle > 180.0f ? 360.0f - angle : angle;
-			if (angle <= kFireCone && distance <= bestDistance) {
-				best = a_ref;
-				bestDistance = distance;
-				bestAngle = angle;
+			float angle = std::fmod(std::abs(RE::rad_to_deg(std::atan2(to.x, to.y) - yaw)), 360.0f);
+			c.angle = angle > 180.0f ? 360.0f - angle : angle;
+			if (!nearest.ref || c.edge < nearest.edge) {
+				nearest = c;
+			}
+			const bool inReach = c.distance <= kFireReach || c.edge <= kFireEdgeReach;
+			if (inReach && c.angle <= kFireCone && (!best.ref || c.edge < best.edge)) {
+				best = c;
 			}
 			return RE::BSContainer::ForEachResult::kContinue;
 		});
-		if (!best) {
+		const auto describe = [](const Candidate& a_c) {
+			return std::format("{} ({:08X}) at {:.0f} units (edge {:.0f}), {:.0f} deg off",
+				Util::NameOf(a_c.ref->GetBaseObject()), a_c.ref->GetFormID(), a_c.distance, a_c.edge, a_c.angle);
+		};
+		if (!best.ref) {
 			warmScan = "no fire in reach and in front";
+			// Say once why the closest fire was not offered, so a fire that never prompts is explained.
+			if (nearest.ref && nearest.ref->GetFormID() != fireMissLogged) {
+				fireMissLogged = nearest.ref->GetFormID();
+				Log("closest fire not offered: {} (needs {:.0f} units, or {:.0f} from its edge, and {:.0f} deg)",
+					describe(nearest), kFireReach, kFireEdgeReach, kFireCone);
+			}
 			return Pose::kStanding;
 		}
-		const float top = best->GetPositionZ() + best->GetBoundMax().z * best->GetScale() - origin.z;
-		warmScan = std::format("fire {} ({:08X}) at {:.0f} units, {:.0f} deg off, top {:.0f} above the feet",
-			Util::NameOf(best->GetBaseObject()), best->GetFormID(), bestDistance, bestAngle, top);
-		return top < kFireCrouchTop ? Pose::kWarmCrouched : Pose::kWarmStanding;
+		fireMissLogged = 0;
+		// A forge or smelter stands at waist height whatever its origin says; so does anything
+		// raised off the floor (a brazier). Campfires, fire pits and cooking pots sit on the floor.
+		// Forges and smelters share the "create object" bench type with cooking, so tell them apart by
+		// the workbench keyword.
+		auto* base = best.ref->GetBaseObject();
+		const auto* keywords = base ? base->As<RE::BGSKeywordForm>() : nullptr;
+		const bool forge = keywords && (keywords->HasKeywordString("CraftingSmithingForge") ||
+		                                 keywords->HasKeywordString("CraftingSmithingSkyforge") ||
+		                                 keywords->HasKeywordString("CraftingSmelter"));
+		const float raised = best.ref->GetPositionZ() - origin.z;
+		const bool crouch = !forge && raised < kFireCrouchBase;
+		warmScan = std::format("fire {}, base {:.0f} above the feet{}", describe(best), raised, forge ? ", a forge" : "");
+		return crouch ? Pose::kWarmCrouched : Pose::kWarmStanding;
 	}
 
 	void Rest::RestingTick(RE::PlayerCharacter* a_player)
@@ -504,7 +543,7 @@ namespace CIGAR
 		const bool confirmed = restConfirmed.load();
 		// Until the pose is reached the enter animation is still playing and an exit event could be
 		// refused or cut it short, so a movement exit waits for it (or for kConfirmWait).
-		const bool settled = confirmed || since >= kConfirmWait;
+		const bool settled = confirmed || since >= (IsWarm(pose) ? kWarmSettle : kConfirmWait);
 		const auto tag = pose == Pose::kLying ? kLayTag : kSatTag;
 		seenSeated = seenSeated || seated;
 
@@ -514,6 +553,9 @@ namespace CIGAR
 			PoseName(pose), std::chrono::duration<float>(since).count(), confirmed, settled, moveInput, exitQueued,
 			passHolding, combat, drawn, seated, driven));
 
+		if (IsWarm(pose)) {
+			confirmReported = true;  // A plain idle: no "pose reached" tag to wait for.
+		}
 		if (!confirmReported && confirmed) {
 			confirmReported = true;
 			Log("{} reached ({} seen)", PoseName(pose), tag);
@@ -537,6 +579,20 @@ namespace CIGAR
 			passTime.Withdraw();
 			pose = Pose::kStanding;
 			Log("rest ended: dead or bleeding out");
+			return;
+		}
+		if (idleEnded && IsWarm(pose)) {
+			// The game already ended the idle (a jump, a stagger); send nothing. In game (2026-09-22)
+			// CIGAR sent IdleForceDefaultState to a player already sprinting away from a fire. Only
+			// for warm hands: sit, lie and lean passed with the sit-state check below, and whether
+			// these tags can arrive while entering them has not been checked.
+			StopPassTime("the idle ended");
+			passTime.Withdraw();
+			pose = Pose::kStanding;
+			readySince = now;
+			StartRecording(kRecordAfterGetUp);
+			std::scoped_lock lock(recordLock);
+			Log("rest ended by the game: {} seen", idleEndedTag);
 			return;
 		}
 		if (settled && ((seenSeated && !seated) || drawn)) {
@@ -615,6 +671,7 @@ namespace CIGAR
 		confirmReported = false;
 		exitQueued = false;
 		seenSeated = false;
+		idleEnded = false;
 		StartRecording(Clock::duration::max());
 
 		auto* camera = RE::PlayerCamera::GetSingleton();
@@ -690,8 +747,9 @@ namespace CIGAR
 		if (!player) {
 			return;
 		}
-		// SI's GetUp sends IdleRailLeanExit for the rail and IdleChairExitStart otherwise.
-		const auto exitEvent = was == Pose::kLeanRail ? kRailExitEvent : kExitEvent;
+		// SI's GetUp sends IdleRailLeanExit for the rail and IdleChairExitStart otherwise. Warm hands
+		// is a plain idle: in game the graph refused IdleChairExitStart there, so it gets IdleStop.
+		const auto exitEvent = was == Pose::kLeanRail ? kRailExitEvent : IsWarm(was) ? kStopEvent : kExitEvent;
 		const bool exit = Notify(player, exitEvent);
 		const bool stop = !exit && Notify(player, kStopEvent);
 		const bool reset = !exit && !stop && Notify(player, kResetEvent);
@@ -853,6 +911,13 @@ namespace CIGAR
 			restConfirmed = true;
 		}
 		std::scoped_lock lock(recordLock);
+		// Sent when the player's idle is over (seen in game 2026-09-22 around warm hands).
+		if (!idleEnded && recordUntil == Clock::time_point::max() &&
+			(Util::EqualsNoCase(tag, "IdleStop"sv) || Util::EqualsNoCase(tag, "tailMTIdle"sv) ||
+				Util::EqualsNoCase(tag, "tailMTLocomotion"sv))) {
+			idleEndedTag = std::string{ tag };
+			idleEnded = true;
+		}
 		if (Clock::now() < recordUntil && recordedCount < kRecordCap) {
 			++recordedCount;
 			const std::string_view payload{ a_event->payload.c_str() };

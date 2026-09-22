@@ -1,6 +1,8 @@
 # 020 · Warm hands
 
-Status (2026-09-22): built into `Rest` and deployed; not yet tested in game. The user picked it
+Status (2026-09-22): first in-game test: prompt, braziers and hearths, "not with the back to
+the fire" and pass time passed; crouching never happened, forges never offered, and movement
+did not end it (only a jump did). All three fixed as below, not yet retested. The user picked it
 as the next SI absorption and accepted the defaults below.
 
 ## As built
@@ -69,3 +71,22 @@ as the next SI absorption and accepted the defaults below.
   other poses; the log records which one the graph accepted).
 - Whether it sends `idleChairSitting` like the leans. If not, `WARN not confirmed` appears after
   6 s and the rest counts as settled then; harmless, but worth one look.
+
+## Fixes after the first in-game test (2026-09-22)
+
+- **Always standing.** The crouch test used the top of the fire's bounds, which include flames
+  and smoke (85-317 units in the log), so every fire came out standing. It now uses where the
+  fire stands: its origin under 25 units above the player's feet crouches (campfires, fire pits,
+  cooking pots, floor hearths); a forge or smelter (workbench keyword `CraftingSmithingForge`,
+  `CraftingSmithingSkyforge` or `CraftingSmelter`) and anything raised (a brazier) stands.
+- **Forges never offered.** Forges are in the list (five of them) and Base Object Swapper does not
+  touch them; a forge's origin sits in its middle, so the player at its front was more than 200
+  units away. A fire now counts within 200 units of its origin or 100 of its horizontal bounds,
+  searched to 400. When the closest fire is still turned down, the log says so once with its
+  distance, edge distance and angle.
+- **Movement did not end it.** Warm hands is a plain idle: no `idleChairSitting`, and
+  `IdleChairExitStart` was refused. Movement input waited for the 6 s confirmation, and the
+  player had meanwhile jumped out, so CIGAR sent `IdleForceDefaultState` to a sprinting player.
+  Now warm hands counts as settled after 1 s, gets up with `IdleStop`, and ends without sending
+  anything when the game's own `IdleStop`, `tailMTIdle` or `tailMTLocomotion` arrives (warm
+  hands only; the sit, lie and lean exits passed and are left as they are).
