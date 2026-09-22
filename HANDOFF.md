@@ -372,3 +372,23 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
      `ccQDRSSE001-SurvivalMode.esl` for food too.
    - **Tidy up (sweeping)** — needs `sweepingOrganizesStuff.esp`, which is not installed, so SI
      never showed it on this modlist.
+7. **The rest of SI, surveyed 2026-09-22** (SI switches read from the deployed settings.json;
+   evidence from SI's DLL strings, so triggers are inferred). Absorbing all of it lets SI go.
+   - *Still on in SI, so still in use:*
+     - **ItemUse `enabled_recharge_weapon`** — recharge an enchanted weapon from the best soul gem
+       (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
+     - **ItemUse `enabled_makelight`** — offer a torch or candlelight spell/scroll after
+       `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.
+     - **WeaponSwap** — swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
+       height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's
+       ranged/melee `WeaponSwap`; kept for roleplay.
+     - **QuestActions `enabled`** — quest-specific prompts; the one string found is the Greybeards'
+       "show us your Thu'um" → equip Unrelenting Force.
+   - *Off in SI already (the user's earlier choice; ask before building):* ItemUse
+     `enabled_equip_spellbook`, HelmetToggle (helmet off in safe places, on in unsafe ones),
+     Observer (zoom the camera on something the player stares at: `fov_increment`, `t_observe`),
+     DressActions `enabled_piecewiseoutfitswap`, KillMove (excluded earlier; CIGAR has `Execute`).
+   - *IdleActions leftovers* (item 6): warm hands (`IdleWarmHandsStanding`/`Crouched`, events in
+     `mt_behavior.hkx`, not `0_master.hkx`), chair eat/drink (`ChairEatingStart`,
+     `ChairDrinkingStart` are in `0_master.hkx`), tidy-up (needs a mod that is not installed).
+   - New pose-like actions follow `Rest`'s rules: an entry prompt only, movement exits.
