@@ -88,6 +88,10 @@ namespace CIGAR
 		SkyPromptAPI::EventID ID() const { return id; }
 		// Changes the text colour (ImGui ABGR); an offered prompt is updated in place.
 		void SetColor(std::uint32_t a_color);
+		// Updates an offered prompt's text and progress (0-1) in place, re-sending only on a change.
+		void SetLive(std::string a_text, float a_progress);
+		// The keyboard key listed for this prompt while offered (SKSE key code), or 0.
+		std::uint32_t Key() const { return offered ? key : 0; }
 		// kHold shows SkyPrompt's progress ring and accepts only after a full hold.
 		void SetPromptType(SkyPromptAPI::PromptType a_type) { promptType = a_type; }
 
@@ -108,6 +112,8 @@ namespace CIGAR
 		bool repeat{ false };
 		std::chrono::steady_clock::time_point lastSent{};
 		std::uint32_t color{ 0xFFFFFFFF };
+		float progress{ 0.0f };
+		std::uint32_t key{ 0 };
 		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
 	};
 }

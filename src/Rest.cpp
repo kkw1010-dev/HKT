@@ -11,8 +11,8 @@ namespace CIGAR
 		constexpr float kFloorPitch = 0.6f;
 		// SI's IdleActions.t_threshold: seconds of standing still before the prompts appear.
 		constexpr auto kReadyDelay = 1s;
-		// Pass time. SI's IdleActions.passtime_delay: seconds settled in a pose before the prompt.
-		constexpr auto kPassTimeDelay = 5s;
+		// Pass time. SI waits passtime_delay (5 s) before its prompt; the user wants it at once.
+		constexpr auto kPassTimeText = "시간 보내기 (누르고 있기)"sv;
 		// While the key is held the timescale climbs from x1 to x kPassTimeMax over kPassTimeRamp
 		// (SI reaches its maximum gradually too). Both numbers are my choice, not SI's: SI's
 		// max_timemult is 2.0, which barely moves the clock. At the vanilla timescale 20, x60 is
@@ -193,6 +193,15 @@ namespace CIGAR
 			return waistHit && chestHit ? LeanSpot::kWall : LeanSpot::kNone;
 		}
 
+		// Whether a keyboard key (DirectInput scan code, as SKSE and SkyPrompt use) is held now.
+		// Read through Win32: CommonLib's keyboard device class does not link into this plugin.
+		bool KeyDown(std::uint32_t a_scanCode)
+		{
+			const UINT scan = a_scanCode >= 0x80 ? (0xE000 | (a_scanCode & 0x7F)) : a_scanCode;
+			const UINT vk = ::MapVirtualKeyW(scan, MAPVK_VSC_TO_VK_EX);
+			return vk != 0 && (::GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
+		}
+
 		bool GraphBool(RE::PlayerCharacter* a_player, const char* a_name)
 		{
 			bool value = false;
@@ -210,8 +219,10 @@ namespace CIGAR
 		sit.SetPromptType(SkyPromptAPI::kHold);
 		lie.SetPromptType(SkyPromptAPI::kHold);
 		lean.SetPromptType(SkyPromptAPI::kHold);
-		// Held, not a ring: the clock runs fast while the key is down.
+		// The clock runs fast while the key is down (hold mode reports down and up). HoldAndKeep
+		// draws SkyPrompt's ring, and the text and progress show the multiplier live.
 		passTime.SetHoldMode(true);
+		passTime.SetPromptType(SkyPromptAPI::kHoldAndKeep);
 	}
 
 	Rest* Rest::GetSingleton()
@@ -248,7 +259,6 @@ namespace CIGAR
 		// The loaded save carries its own timescale; nothing of ours is left to restore.
 		passHolding = false;
 		passBase = 0.0f;
-		settledAt = {};
 		if (const auto* calendar = RE::Calendar::GetSingleton(); calendar && calendar->timeScale) {
 			const float timescale = calendar->timeScale->value;
 			if (timescale > kTimescaleSuspicious) {
@@ -414,9 +424,6 @@ namespace CIGAR
 		const bool settled = confirmed || since >= kConfirmWait;
 		const auto tag = pose == Pose::kLying ? kLayTag : kSatTag;
 		seenSeated = seenSeated || seated;
-		if (settled && settledAt == Clock::time_point{}) {
-			settledAt = now;
-		}
 
 		LogGate(std::format(
 			"pose={} for={:.0f}s confirmed={} settled={} moveInput={} exitQueued={} passTime={} combat={} drawn={} "
@@ -467,8 +474,8 @@ namespace CIGAR
 			return;
 		}
 
-		const bool offerPassTime = settled && !exitQueued && now - settledAt >= kPassTimeDelay;
-		passTime.Update(offerPassTime, [] { return "시간 보내기 (누르고 있기)"s; });
+		// Offered as soon as the pose is entered (the user's call, 2026-09-22); a double press hides it.
+		passTime.Update(!exitQueued, [] { return std::string{ kPassTimeText }; });
 		PassTimeTick();
 	}
 
@@ -511,7 +518,6 @@ namespace CIGAR
 		confirmReported = false;
 		exitQueued = false;
 		seenSeated = false;
-		settledAt = {};
 		StartRecording(Clock::duration::max());
 
 		auto* camera = RE::PlayerCamera::GetSingleton();
@@ -623,6 +629,11 @@ namespace CIGAR
 		if (!passHolding) {
 			return;
 		}
+		// Key up may not be reported for every prompt type; the key's own state is the backstop.
+		if (const auto key = passTime.Key(); key != 0 && !KeyDown(key) && Clock::now() - passHeldSince > 300ms) {
+			StopPassTime("key no longer down");
+			return;
+		}
 		auto* calendar = RE::Calendar::GetSingleton();
 		auto* timescale = calendar ? calendar->timeScale : nullptr;
 		if (!timescale) {
@@ -637,14 +648,17 @@ namespace CIGAR
 			Log("pass time: key held, timescale {:.1f} rising to x{:.0f} over {:.0f}s", passBase, kPassTimeMax, kPassTimeRamp);
 		}
 		const float held = std::chrono::duration<float>(Clock::now() - passHeldSince).count();
-		const float multiplier = 1.0f + (kPassTimeMax - 1.0f) * std::min(1.0f, held / kPassTimeRamp);
+		const float ramp = std::min(1.0f, held / kPassTimeRamp);
+		const float multiplier = 1.0f + (kPassTimeMax - 1.0f) * ramp;
 		timescale->value = passBase * multiplier;
+		passTime.SetLive(std::format("시간 보내기 ×{:.0f}", multiplier), ramp);
 	}
 
 	void Rest::StopPassTime(std::string_view a_reason)
 	{
 		const bool wasHolding = passHolding;
 		passHolding = false;
+		passTime.SetLive(std::string{ kPassTimeText }, 0.0f);
 		if (passBase <= 0.0f) {
 			if (wasHolding) {
 				Log("pass time: key up before the clock sped up ({})", a_reason);

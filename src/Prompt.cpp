@@ -157,7 +157,8 @@ namespace CIGAR
 		// so the slot is held until the prompt is withdrawn.
 		const int slot = AcquireKeySlot(id);
 		std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>> keys;
-		std::uint32_t key = 0;
+		key = 0;
+		progress = 0.0f;
 		if (slot >= 0) {
 			key = Settings::PromptKeys()[slot];
 			buttons[0] = { RE::INPUT_DEVICE::kKeyboard, key };
@@ -192,6 +193,20 @@ namespace CIGAR
 			lastSent = std::chrono::steady_clock::now();
 			static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
 		}
+	}
+
+	void PromptSlot::SetLive(std::string a_text, float a_progress)
+	{
+		if (!offered || !Prompts::Available() || (a_text == text && a_progress == progress)) {
+			return;
+		}
+		// SkyPrompt reads the text through GetPrompts() later, so it lives in the member.
+		text = std::move(a_text);
+		progress = a_progress;
+		prompts[0].text = text;
+		prompts[0].progress = progress;
+		lastSent = std::chrono::steady_clock::now();
+		static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
 	}
 
 	void PromptSlot::Withdraw()

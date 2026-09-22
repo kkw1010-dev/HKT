@@ -96,8 +96,6 @@ namespace CIGAR
 		// The game's sit state was on during this rest; it going off means the game stood the
 		// player up (a jump, a drawn weapon, a script).
 		bool seenSeated{ false };
-		// When the rest settled (pose reached, or kConfirmWait passed); zero before that.
-		Clock::time_point settledAt{};
 
 		// Pass time: the key is down, since when, and the timescale to restore (0 while the clock
 		// runs at its own speed).

@@ -6,14 +6,25 @@ random clips passed. The movement exit (see "Getting up") passed in game the sam
 for every pose: wall, table and rail leans, sit, lie, input queued during the enter
 animation, jump out, and no prompt on screen while resting.
 
-## Pass time (2026-09-22, not yet tested in game)
+## Pass time (2026-09-22)
+
+In game: offer, hold to speed up, release, getting up while held and "no Wait menu"
+passed. Saving while held was not tried: the user does not load saves (it goes badly
+in Skyrim) and the kSaveGame restore below covers it by design.
 
 SI's pass time, as the user specified: time speeds up only while a key is held, never
 by itself and never through the Wait menu (the reverted `6dd9a7d` opened it).
 
-- Five seconds after a rest settles (SI's `passtime_delay`), any pose, 시간 보내기
-  (누르고 있기) appears. It is a hold-mode prompt without a ring: key down and key
-  up go to `Rest::OnHold`.
+- 시간 보내기 (누르고 있기) appears as soon as a pose is entered, in any pose. SI
+  waits `passtime_delay` (5 s); the user wanted it at once, since a double press
+  hides a prompt. It is a hold-mode prompt (key down and up go to `Rest::OnHold`) of
+  type `kHoldAndKeep`, so SkyPrompt draws its ring; while held the text reads
+  시간 보내기 ×N and the prompt's progress follows the ramp, so it is visibly working
+  (the user asked for that). The first build had no ring.
+- SkyPrompt's key-up report for `kHoldAndKeep` is not documented, so while held the
+  listed keyboard key is also read directly (Win32 `GetAsyncKeyState`; CommonLib's
+  keyboard device class does not link here); once it is up (after 0.3 s) pass time
+  stops.
 - While the key is down the game clock's timescale global climbs from x1 to x60
   over 3 s; release, getting up, combat, the rest ending or the module being
   switched off put it back at once. x60 and 3 s are my choices: SI's
