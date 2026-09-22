@@ -31,6 +31,18 @@ namespace CIGAR::Settings
 		float jujutsuReach = Jujutsu::kReachDefault;
 		JujutsuTuning jujutsuTuning;
 		PotionTuning potionTuning;
+		float restGameSpeed = kRestGameSpeedDefault;
+
+		float SnappedGameSpeed(float a_speed)
+		{
+			float best = kRestGameSpeedSteps.front();
+			for (const float step : kRestGameSpeedSteps) {
+				if (std::abs(step - a_speed) < std::abs(best - a_speed)) {
+					best = step;
+				}
+			}
+			return best;
+		}
 
 		JujutsuTuning Clamped(JujutsuTuning a_t)
 		{
@@ -80,6 +92,7 @@ namespace CIGAR::Settings
 			j["weaponSwap"]["range"] = swapRange;
 			j["jujutsu"]["reach"] = jujutsuReach;
 			j["jujutsu"]["guardStun"] = jujutsuTuning.guardStun;
+			j["rest"]["gameSpeedMax"] = restGameSpeed;
 			j["potion"]["health"] = potionTuning.health;
 			j["potion"]["stamina"] = potionTuning.stamina;
 			j["potion"]["magicka"] = potionTuning.magicka;
@@ -125,6 +138,7 @@ namespace CIGAR::Settings
 		jujutsuReach = Jujutsu::kReachDefault;
 		jujutsuTuning = {};
 		potionTuning = {};
+		restGameSpeed = kRestGameSpeedDefault;
 		ResetPromptOnly();
 
 		std::ifstream in(kPath, std::ios::binary);
@@ -160,6 +174,9 @@ namespace CIGAR::Settings
 			}
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
+			}
+			if (const auto it = j.find("rest"); it != j.end() && it->is_object()) {
+				restGameSpeed = SnappedGameSpeed(it->value("gameSpeedMax", kRestGameSpeedDefault));
 			}
 			if (const auto it = j.find("needs"); it != j.end() && it->is_object()) {
 				needsMinPercent = std::clamp(it->value("minPercent", Needs::kMinPercentDefault), Needs::kMinPercentLow, Needs::kMinPercentHigh);
@@ -215,6 +232,7 @@ namespace CIGAR::Settings
 		}
 		logs::info("settings: eat from hunger stage {}", eatMinStage);
 		logs::info("settings: needs from {}%", needsMinPercent);
+		logs::info("settings: pass time game speed up to x{:.1f}{}", restGameSpeed, restGameSpeed <= 1.0f ? " (off)" : "");
 		logs::info("settings: weapon swap range {:.0f}", swapRange);
 		logs::info("settings: jujutsu reach {:.0f}", jujutsuReach);
 		logs::info("settings: jujutsu stun share {:.2f}", jujutsuTuning.guardStun);
@@ -295,6 +313,18 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		eatMinStage = std::clamp(a_stage, Eat::kMinStageLow, Eat::kMinStageHigh);
+	}
+
+	float RestGameSpeed()
+	{
+		std::scoped_lock guard(lock);
+		return restGameSpeed;
+	}
+
+	void SetRestGameSpeed(float a_speed)
+	{
+		std::scoped_lock guard(lock);
+		restGameSpeed = SnappedGameSpeed(a_speed);
 	}
 
 	int NeedsMinPercent()

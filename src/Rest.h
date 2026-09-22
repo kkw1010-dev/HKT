@@ -103,8 +103,10 @@ namespace CIGAR
 		Clock::time_point passHeldSince{};
 		float passBase{ 0.0f };
 		float passHoursAtStart{ 0.0f };
-		// Game speed (the global time multiplier) CIGAR set for pass time, 0 when it owns none.
+		// Game speed (the global time multiplier) CIGAR set for pass time, 0 when it owns none, and
+		// the ceiling read from the control panel when the key went down.
 		float passSpeedSet{ 0.0f };
+		float passSpeedMax{ 1.0f };
 
 		// Animation events arrive on animation threads; FastTick() writes them to the log.
 		std::mutex recordLock;

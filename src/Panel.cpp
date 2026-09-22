@@ -438,6 +438,27 @@ namespace CIGAR::Panel
 			}
 			ImGui::TextColored(kDim, "기본 15%%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
 
+			ImGui::SeparatorText("시간 보내기");
+			{
+				const auto& steps = Settings::kRestGameSpeedSteps;
+				const float current = Settings::RestGameSpeed();
+				int step = 0;
+				for (int i = 0; i < static_cast<int>(steps.size()); ++i) {
+					if (std::abs(steps[i] - current) < 0.01f) {
+						step = i;
+					}
+				}
+				// No %d in the format: ImGui shows the text as the value.
+				const std::string shown = step == 0 ? "끔"s : std::format("x{:.1f}", steps[step]);
+				if (ImGui::SliderInt("게임 속도", &step, 0, static_cast<int>(steps.size()) - 1, shown.c_str())) {
+					Settings::SetRestGameSpeed(steps[step]);
+				}
+				if (ImGui::IsItemDeactivatedAfterEdit()) {
+					Settings::Save();
+				}
+				ImGui::TextColored(kDim, "기본 x3.0. 시간 보내기 중 게임 전체(NPC 포함) 속도 최대치. 시간 흐름은 항상 최대 x60");
+			}
+
 			ImGui::SeparatorText("탈의·착용");
 			float range = Settings::PlaceRange();
 			if (ImGui::SliderFloat("침대·옷장 유효 거리", &range, Settings::kPlaceRangeMin, Settings::kPlaceRangeMax, "%.0f")) {

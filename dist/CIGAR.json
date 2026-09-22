@@ -21,6 +21,9 @@
       "manualKey": -1
     }
   },
+  "rest": {
+    "gameSpeedMax": 3.0
+  },
   "eat": {
     "minStage": 3
   }

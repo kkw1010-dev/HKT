@@ -1,5 +1,6 @@
 #include "Rest.h"
 
+#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR
@@ -19,11 +20,9 @@ namespace CIGAR
 		// 20 game minutes per real second.
 		constexpr float kPassTimeMax = 60.0f;
 		constexpr float kPassTimeRamp = 3.0f;
-		// The whole game also runs faster, up to x kGameSpeedMax on the same ramp, so NPCs visibly
-		// hurry (the user's request, 2026-09-22). Game speed also speeds the clock, so the timescale
-		// is divided by it and the clock still totals x kPassTimeMax. 3 is the top of the 2-3 range
-		// offered to the user: above about 4 physics and pathing start to break.
-		constexpr float kGameSpeedMax = 3.0f;
+		// The whole game also runs faster, up to Settings::RestGameSpeed() on the same ramp, so NPCs
+		// visibly hurry (the user's request, 2026-09-22). Game speed also speeds the clock, so the
+		// timescale is divided by it and the clock still totals x kPassTimeMax.
 		// A timescale above this at load is reported: it may be an accelerated value that was saved.
 		constexpr float kTimescaleSuspicious = 100.0f;
 		// Stick or key input at least this strong (0-1) counts as wanting to move.
@@ -660,19 +659,24 @@ namespace CIGAR
 			passBase = timescale->value;
 			passHoursAtStart = calendar->GetHoursPassed();
 			const float speed = RE::BSTimer::QGlobalTimeMultiplier();
-			// Game speed is left alone when something else already changed it (Surrender's slow motion).
-			const bool ownSpeed = timer && std::abs(speed - 1.0f) < 0.01f;
+			passSpeedMax = Settings::RestGameSpeed();
+			// Game speed is left alone when the panel has it off, or when something else already
+			// changed it (Surrender's slow motion).
+			const bool elsewhere = std::abs(speed - 1.0f) >= 0.01f;
+			const bool ownSpeed = timer && passSpeedMax > 1.0f && !elsewhere;
 			passSpeedSet = ownSpeed ? 1.0f : 0.0f;
-			Log("pass time: key held, timescale {:.1f}, clock rising to x{:.0f} and game speed to x{:.0f} over {:.0f}s{}",
-				passBase, kPassTimeMax, kGameSpeedMax, kPassTimeRamp,
-				ownSpeed ? "" : std::format(" (game speed x{:.2f} set elsewhere; left alone)", speed));
+			Log("pass time: key held, timescale {:.1f}, clock rising to x{:.0f} over {:.0f}s, game speed {}", passBase,
+				kPassTimeMax, kPassTimeRamp,
+				ownSpeed    ? std::format("to x{:.1f}", passSpeedMax) :
+				elsewhere   ? std::format("x{:.2f} set elsewhere; left alone", speed) :
+				              "off in the panel"s);
 		}
 		const float held = std::chrono::duration<float>(Clock::now() - passHeldSince).count();
 		const float ramp = std::min(1.0f, held / kPassTimeRamp);
 		const float multiplier = 1.0f + (kPassTimeMax - 1.0f) * ramp;
 		float speed = 1.0f;
 		if (passSpeedSet > 0.0f && timer) {
-			speed = 1.0f + (kGameSpeedMax - 1.0f) * ramp;
+			speed = 1.0f + (passSpeedMax - 1.0f) * ramp;
 			if (std::abs(speed - passSpeedSet) > 0.01f) {
 				timer->SetGlobalTimeMultiplier(speed, true);
 				passSpeedSet = speed;

@@ -85,6 +85,14 @@ namespace CIGAR::Settings
 	PotionTuning PotionTune();
 	void SetPotionTune(const PotionTuning& a_tuning);
 
+	// The game speed pass time climbs to while its key is held (Rest). The user chose the steps,
+	// off (1) / 1.5 / 2 / 2.5 / 3, and adopted 3 as the default (2026-09-22).
+	inline constexpr std::array kRestGameSpeedSteps{ 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
+	inline constexpr float kRestGameSpeedDefault = 3.0f;
+	float RestGameSpeed();
+	// Snaps to the nearest step.
+	void SetRestGameSpeed(float a_speed);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 
