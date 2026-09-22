@@ -360,9 +360,9 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
      and `IdleLayDownEnter`, and gets up with `IdleChairExitStart` (also `IdleStop`,
      `IdleForceDefaultState`); it watches `idleChairSitting` and `tailLayDown`. The user's gate:
      looking at the floor for a while, then a hold prompt.
-   - **Pass time** — built in `Rest` (`docs/019-rest.md`), untested in game: hold 시간 보내기
-     while resting and the timescale climbs to x60 over 3 s; release restores it. Never the Wait
-     menu (see `6dd9a7d`, reverted).
+   - **Pass time** — done in `Rest` (`docs/019-rest.md`), passed in game 2026-09-22: hold
+     시간 보내기 while resting; clock to x60 and game speed to the panel's ceiling (off-3, default
+     3) over 3 s, with a ring and a live xN; release restores both. Never the Wait menu.
    - **Lean** — built in `Rest`, passed in game 2026-09-22 (facing wall only, table, rail; clips randomized by OAR patch, install case 016). Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
      (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
    - **Warm hands** — near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads

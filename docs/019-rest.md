@@ -10,7 +10,8 @@ animation, jump out, and no prompt on screen while resting.
 
 In game: offer, hold to speed up, release, getting up while held, "no Wait menu", the
 ring with the live ×N text, the immediate offer and hiding it with a double press
-passed. Game speed (below) passed and was adopted; its panel slider is untested. Saving while held was not tried: the user does not load saves (it goes badly
+passed. Game speed (below) passed and was adopted; its panel slider passed in game the
+same day (steps shown, off, x1.5, value kept across restarts). Saving while held was not tried: the user does not load saves (it goes badly
 in Skyrim) and the kSaveGame restore below covers it by design.
 
 SI's pass time, as the user specified: time speeds up only while a key is held, never
