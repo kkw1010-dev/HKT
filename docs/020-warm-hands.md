@@ -101,3 +101,11 @@ rotated bounds seen from above (the bounds turned by the reference's Z angle, wi
 clockwise convention as the player's facing); standing within the bounds counts as touching it.
 The transform was checked against a brute-force search over 20 000 random boxes (no mismatch);
 the rotation convention itself is assumed, not yet confirmed in game.
+
+## Result (2026-09-22)
+
+Forges now offer from any face and not from behind: every warm-hands check has passed in game
+(crouching at floor fires, standing at braziers, hearths and forges, the facing cone, pass time,
+the movement exit, jumping out). The warm-hands clips come from Dynamic Female Hand Warming,
+which picked one pair by body armor; they are now random through the lean-variety OAR patch
+(install case 016), which brings its other crouched clips, a kneel among them, into play.
