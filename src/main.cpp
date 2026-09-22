@@ -140,6 +140,10 @@ namespace
 			Jujutsu::InstallHook();
 			StartTicker();
 			break;
+		case SKSE::MessagingInterface::kSaveGame:
+			// Sent before the save is written, on the thread that saves.
+			Rest::GetSingleton()->BeforeSave();
+			break;
 		case SKSE::MessagingInterface::kPreLoadGame:
 			gameReady = false;
 			break;

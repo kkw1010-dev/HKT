@@ -6,6 +6,28 @@ random clips passed. The movement exit (see "Getting up") passed in game the sam
 for every pose: wall, table and rail leans, sit, lie, input queued during the enter
 animation, jump out, and no prompt on screen while resting.
 
+## Pass time (2026-09-22, not yet tested in game)
+
+SI's pass time, as the user specified: time speeds up only while a key is held, never
+by itself and never through the Wait menu (the reverted `6dd9a7d` opened it).
+
+- Five seconds after a rest settles (SI's `passtime_delay`), any pose, 시간 보내기
+  (누르고 있기) appears. It is a hold-mode prompt without a ring: key down and key
+  up go to `Rest::OnHold`.
+- While the key is down the game clock's timescale global climbs from x1 to x60
+  over 3 s; release, getting up, combat, the rest ending or the module being
+  switched off put it back at once. x60 and 3 s are my choices: SI's
+  `max_timemult` is 2.0, which barely moves the clock. At the vanilla timescale 20,
+  x60 is 20 game minutes per real second.
+- Changing the timescale, rather than GameHour, lets the engine advance the day,
+  month and days-passed globals together (survival needs follow).
+- The timescale global is saved with the game, so SKSE's kSaveGame (sent before
+  the file is written) restores the real value first; the next tick speeds up again
+  if the key is still down. A timescale above 100 at load is logged and notified,
+  in case an accelerated value was saved anyway.
+- Logged: the base timescale when the clock speeds up, and on stop the reason, how
+  long the key was held, how many game hours passed, and the restored value.
+
 ## Getting up (redesigned 2026-09-22)
 
 There is no 일어나기 / 그만 기대기 prompt. The user dropped it: these poses are for

@@ -11,6 +11,16 @@ namespace CIGAR
 		constexpr float kFloorPitch = 0.6f;
 		// SI's IdleActions.t_threshold: seconds of standing still before the prompts appear.
 		constexpr auto kReadyDelay = 1s;
+		// Pass time. SI's IdleActions.passtime_delay: seconds settled in a pose before the prompt.
+		constexpr auto kPassTimeDelay = 5s;
+		// While the key is held the timescale climbs from x1 to x kPassTimeMax over kPassTimeRamp
+		// (SI reaches its maximum gradually too). Both numbers are my choice, not SI's: SI's
+		// max_timemult is 2.0, which barely moves the clock. At the vanilla timescale 20, x60 is
+		// 20 game minutes per real second.
+		constexpr float kPassTimeMax = 60.0f;
+		constexpr float kPassTimeRamp = 3.0f;
+		// A timescale above this at load is reported: it may be an accelerated value that was saved.
+		constexpr float kTimescaleSuspicious = 100.0f;
 		// Stick or key input at least this strong (0-1) counts as wanting to move.
 		constexpr float kMoveInput = 0.2f;
 		// A pending enter waits this long for the third-person graph after a camera switch.
@@ -200,6 +210,8 @@ namespace CIGAR
 		sit.SetPromptType(SkyPromptAPI::kHold);
 		lie.SetPromptType(SkyPromptAPI::kHold);
 		lean.SetPromptType(SkyPromptAPI::kHold);
+		// Held, not a ring: the clock runs fast while the key is down.
+		passTime.SetHoldMode(true);
 	}
 
 	Rest* Rest::GetSingleton()
@@ -231,7 +243,19 @@ namespace CIGAR
 		sit.Reset();
 		lie.Reset();
 		lean.Reset();
+		passTime.Reset();
 		lastGate.clear();
+		// The loaded save carries its own timescale; nothing of ours is left to restore.
+		passHolding = false;
+		passBase = 0.0f;
+		settledAt = {};
+		if (const auto* calendar = RE::Calendar::GetSingleton(); calendar && calendar->timeScale) {
+			const float timescale = calendar->timeScale->value;
+			if (timescale > kTimescaleSuspicious) {
+				Log("WARN timescale {:.0f} at load; an accelerated pass time may have been saved", timescale);
+				Util::Notify(std::format("CIGAR: 시간 배율 비정상 ({:.0f}). 로그 확인", timescale));
+			}
+		}
 		leanFound = Pose::kStanding;
 		leanShown = Pose::kStanding;
 		pose = Pose::kStanding;
@@ -351,6 +375,7 @@ namespace CIGAR
 			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound), moving, combat, drawn, seated,
 			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
 
+		passTime.Update(false, {});
 		sit.Update(available, [] { return "앉기 (길게)"s; });
 		lie.Update(available, [] { return "눕기 (길게)"s; });
 		if (leanShown != leanFound) {
@@ -389,12 +414,15 @@ namespace CIGAR
 		const bool settled = confirmed || since >= kConfirmWait;
 		const auto tag = pose == Pose::kLying ? kLayTag : kSatTag;
 		seenSeated = seenSeated || seated;
+		if (settled && settledAt == Clock::time_point{}) {
+			settledAt = now;
+		}
 
 		LogGate(std::format(
-			"pose={} for={:.0f}s confirmed={} settled={} moveInput={} exitQueued={} combat={} drawn={} seated={} "
-			"animDriven={}",
+			"pose={} for={:.0f}s confirmed={} settled={} moveInput={} exitQueued={} passTime={} combat={} drawn={} "
+			"seated={} animDriven={}",
 			PoseName(pose), std::chrono::duration<float>(since).count(), confirmed, settled, moveInput, exitQueued,
-			combat, drawn, seated, driven));
+			passHolding, combat, drawn, seated, driven));
 
 		if (!confirmReported && confirmed) {
 			confirmReported = true;
@@ -414,12 +442,16 @@ namespace CIGAR
 			return;
 		}
 		if (dead) {
+			StopPassTime("dead or bleeding out");
+			passTime.Withdraw();
 			pose = Pose::kStanding;
 			Log("rest ended: dead or bleeding out");
 			return;
 		}
 		if (settled && ((seenSeated && !seated) || drawn)) {
 			// The game already stood the player up (a jump exits at once); send nothing.
+			StopPassTime("rest ended by the game");
+			passTime.Withdraw();
 			pose = Pose::kStanding;
 			readySince = now;
 			StartRecording(kRecordAfterGetUp);
@@ -432,7 +464,12 @@ namespace CIGAR
 		}
 		if (exitQueued && settled) {
 			GetUp("movement input");
+			return;
 		}
+
+		const bool offerPassTime = settled && !exitQueued && now - settledAt >= kPassTimeDelay;
+		passTime.Update(offerPassTime, [] { return "시간 보내기 (누르고 있기)"s; });
+		PassTimeTick();
 	}
 
 	void Rest::OnAccepted(std::uint16_t a_eventID)
@@ -474,6 +511,7 @@ namespace CIGAR
 		confirmReported = false;
 		exitQueued = false;
 		seenSeated = false;
+		settledAt = {};
 		StartRecording(Clock::duration::max());
 
 		auto* camera = RE::PlayerCamera::GetSingleton();
@@ -534,6 +572,8 @@ namespace CIGAR
 	{
 		auto* player = Util::Player();
 		const auto was = pose;
+		StopPassTime(a_reason);
+		passTime.Withdraw();
 		pose = Pose::kStanding;
 		readySince = Clock::now();
 		exitQueued = false;
@@ -555,10 +595,84 @@ namespace CIGAR
 
 	void Rest::OnDisabled()
 	{
+		StopPassTime("module switched off");
 		pendingPose = Pose::kStanding;
 		if (pose != Pose::kStanding) {
 			GetUp("module switched off");
 		}
+	}
+
+	void Rest::OnHold(std::uint16_t a_eventID, bool a_down)
+	{
+		if (a_eventID != kPassTime) {
+			return;
+		}
+		if (!a_down) {
+			StopPassTime("key released");
+			return;
+		}
+		if (pose == Pose::kStanding || passHolding) {
+			return;
+		}
+		passHolding = true;
+		passHeldSince = Clock::now();
+	}
+
+	void Rest::PassTimeTick()
+	{
+		if (!passHolding) {
+			return;
+		}
+		auto* calendar = RE::Calendar::GetSingleton();
+		auto* timescale = calendar ? calendar->timeScale : nullptr;
+		if (!timescale) {
+			passHolding = false;
+			Log("WARN pass time: the calendar timescale global is unavailable");
+			Util::Notify("CIGAR: 시간 보내기 실패. 로그 확인");
+			return;
+		}
+		if (passBase <= 0.0f) {
+			passBase = timescale->value;
+			passHoursAtStart = calendar->GetHoursPassed();
+			Log("pass time: key held, timescale {:.1f} rising to x{:.0f} over {:.0f}s", passBase, kPassTimeMax, kPassTimeRamp);
+		}
+		const float held = std::chrono::duration<float>(Clock::now() - passHeldSince).count();
+		const float multiplier = 1.0f + (kPassTimeMax - 1.0f) * std::min(1.0f, held / kPassTimeRamp);
+		timescale->value = passBase * multiplier;
+	}
+
+	void Rest::StopPassTime(std::string_view a_reason)
+	{
+		const bool wasHolding = passHolding;
+		passHolding = false;
+		if (passBase <= 0.0f) {
+			if (wasHolding) {
+				Log("pass time: key up before the clock sped up ({})", a_reason);
+			}
+			return;
+		}
+		auto* calendar = RE::Calendar::GetSingleton();
+		if (calendar && calendar->timeScale) {
+			calendar->timeScale->value = passBase;
+			Log("pass time stopped ({}): held {:.1f}s, {:.1f} game hours passed, timescale back to {:.1f}", a_reason,
+				std::chrono::duration<float>(Clock::now() - passHeldSince).count(),
+				calendar->GetHoursPassed() - passHoursAtStart, passBase);
+		}
+		passBase = 0.0f;
+	}
+
+	void Rest::BeforeSave()
+	{
+		if (passBase <= 0.0f) {
+			return;
+		}
+		auto* calendar = RE::Calendar::GetSingleton();
+		if (calendar && calendar->timeScale) {
+			calendar->timeScale->value = passBase;
+			Log("save while passing time: timescale {:.1f} restored before writing", passBase);
+		}
+		// Still held: the next tick takes this as the base and speeds up again.
+		passBase = 0.0f;
 	}
 
 	void Rest::StartRecording(Clock::duration a_for)

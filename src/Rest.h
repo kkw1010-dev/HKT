@@ -6,9 +6,9 @@
 namespace CIGAR
 {
 	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
-	// 앉기 and 눕기; a wall, table or rail in front offers 기대기. There is no prompt while resting:
-	// movement input gets the player up. Uses the vanilla idle events SI sends. Pass time will
-	// build on Resting().
+	// 앉기 and 눕기; a wall, table or rail in front offers 기대기. Movement input gets the player up.
+	// While resting, 시간 보내기 speeds the game clock for as long as its key is held (SI's pass
+	// time). Uses the vanilla idle events SI sends.
 	class Rest final :
 		public Module,
 		public RE::BSTEventSink<RE::BSAnimationGraphEvent>
@@ -22,6 +22,10 @@ namespace CIGAR
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
+		void OnHold(std::uint16_t a_eventID, bool a_down) override;
+		// SKSE kSaveGame, before the file is written: puts the real timescale back so an
+		// accelerated one is never saved.
+		void BeforeSave();
 
 		// True while CIGAR has the player sitting, lying or leaning (game thread).
 		bool Resting() const { return pose != Pose::kStanding; }
@@ -38,7 +42,8 @@ namespace CIGAR
 		{
 			kSit = PromptID::kSit,
 			kLie = PromptID::kLieDown,
-			kLean = PromptID::kLean
+			kLean = PromptID::kLean,
+			kPassTime = PromptID::kPassTime
 		};
 
 		enum class Pose
@@ -66,10 +71,13 @@ namespace CIGAR
 		void ListenToPlayer(RE::PlayerCharacter* a_player);
 		void StartRecording(Clock::duration a_for);
 		void FlushRecorded();
+		void PassTimeTick();
+		void StopPassTime(std::string_view a_reason);
 
 		PromptSlot sit{ this, kSit };
 		PromptSlot lie{ this, kLie };
 		PromptSlot lean{ this, kLean };
+		PromptSlot passTime{ this, kPassTime };
 
 		Pose pose{ Pose::kStanding };
 		Clock::time_point poseSince{};
@@ -88,6 +96,15 @@ namespace CIGAR
 		// The game's sit state was on during this rest; it going off means the game stood the
 		// player up (a jump, a drawn weapon, a script).
 		bool seenSeated{ false };
+		// When the rest settled (pose reached, or kConfirmWait passed); zero before that.
+		Clock::time_point settledAt{};
+
+		// Pass time: the key is down, since when, and the timescale to restore (0 while the clock
+		// runs at its own speed).
+		bool passHolding{ false };
+		Clock::time_point passHeldSince{};
+		float passBase{ 0.0f };
+		float passHoursAtStart{ 0.0f };
 
 		// Animation events arrive on animation threads; FastTick() writes them to the log.
 		std::mutex recordLock;
