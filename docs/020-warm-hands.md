@@ -2,7 +2,8 @@
 
 Status (2026-09-22): first in-game test: prompt, braziers and hearths, "not with the back to
 the fire" and pass time passed; crouching never happened, forges never offered, and movement
-did not end it (only a jump did). All three fixed as below, not yet retested. The user picked it
+did not end it (only a jump did). Second test: crouching, braziers, movement exit and jumping out
+passed; forges still did not offer (fixed below, not yet retested). The user picked it
 as the next SI absorption and accepted the defaults below.
 
 ## As built
@@ -90,3 +91,13 @@ as the next SI absorption and accepted the defaults below.
   Now warm hands counts as settled after 1 s, gets up with `IdleStop`, and ends without sending
   anything when the game's own `IdleStop`, `tailMTIdle` or `tailMTLocomotion` arrives (warm
   hands only; the sit, lie and lean exits passed and are left as they are).
+
+## Forges, second attempt (2026-09-22)
+
+The log explained it: `closest fire not offered: 대장간의 화로 (000C430A) at 63 units (edge 0),
+113 deg off`. Reach passed; the angle was taken to the forge's origin, which from its front sits
+off to the side. Distance and angle are now taken to the closest point of the reference's
+rotated bounds seen from above (the bounds turned by the reference's Z angle, with the same
+clockwise convention as the player's facing); standing within the bounds counts as touching it.
+The transform was checked against a brute-force search over 20 000 random boxes (no mismatch);
+the rotation convention itself is assumed, not yet confirmed in game.

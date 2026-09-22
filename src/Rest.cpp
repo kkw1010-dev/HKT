@@ -479,15 +479,32 @@ namespace CIGAR
 			if (!base || a_ref->IsDisabled() || a_ref->IsDeleted() || !fires->HasForm(base)) {
 				return RE::BSContainer::ForEachResult::kContinue;
 			}
-			const auto to = a_ref->GetPosition() - origin;
-			Candidate c{ a_ref, std::hypot(to.x, to.y) };
+			const auto center = a_ref->GetPosition() - origin;
+			Candidate c{ a_ref, std::hypot(center.x, center.y) };
+			// The closest point of the reference's rotated bounds, seen from above. Distance and angle
+			// are taken to it: a forge's origin is in its middle, and at its front the angle to the
+			// origin read 113 deg in game (2026-09-22).
+			const float rot = a_ref->GetAngleZ();
+			const float cs = std::cos(rot);
+			const float sn = std::sin(rot);
+			const float scale = a_ref->GetScale();
 			const auto lo = a_ref->GetBoundMin();
 			const auto hi = a_ref->GetBoundMax();
-			const float radius = std::max({ std::abs(lo.x), std::abs(lo.y), std::abs(hi.x), std::abs(hi.y) }) * a_ref->GetScale();
-			c.edge = std::max(0.0f, c.distance - radius);
-			// Skyrim yaw: 0 faces +Y, growing clockwise; atan2(x, y) gives the same convention.
-			float angle = std::fmod(std::abs(RE::rad_to_deg(std::atan2(to.x, to.y) - yaw)), 360.0f);
-			c.angle = angle > 180.0f ? 360.0f - angle : angle;
+			// Skyrim yaw turns clockwise: local +Y is world (sin, cos), local +X is world (cos, -sin).
+			const float dx = -center.x;
+			const float dy = -center.y;
+			const float lx = std::clamp(dx * cs - dy * sn, lo.x * scale, hi.x * scale);
+			const float ly = std::clamp(dx * sn + dy * cs, lo.y * scale, hi.y * scale);
+			const float tx = center.x + lx * cs + ly * sn;
+			const float ty = center.y - lx * sn + ly * cs;
+			c.edge = std::hypot(tx, ty);
+			if (c.edge < 1.0f) {
+				c.angle = 0.0f;  // standing within its bounds: touching it
+			} else {
+				// Skyrim yaw: 0 faces +Y, growing clockwise; atan2(x, y) gives the same convention.
+				float angle = std::fmod(std::abs(RE::rad_to_deg(std::atan2(tx, ty) - yaw)), 360.0f);
+				c.angle = angle > 180.0f ? 360.0f - angle : angle;
+			}
 			if (!nearest.ref || c.edge < nearest.edge) {
 				nearest = c;
 			}
