@@ -1,6 +1,7 @@
 # 021 · Make light (plan)
 
-Status (2026-09-24): researched, not built. Recommended as the next SI absorption.
+Status (2026-09-24): researched, not built. The user picked it as the next SI absorption and
+chose prompt-only for TCL's hotkey.
 
 ## What SI does (settings and DLL strings)
 
@@ -36,14 +37,30 @@ pressing TCL's own hotkey rather than re-implementing light. Checked on 2026-09-
   player, so the value means what the game's conditions mean. Log the level (by stepping a few
   thresholds) when the prompt state changes.
 - Already lit: a torch or other light in either hand, a Candlelight-type active effect (light
-  archetype), or a TCL lantern worn. The lantern test needs TCL's lantern forms or keyword, to be
-  read from `TorchesCandlelightLanterns.esp` before building.
-- Prompt-only: CIGAR's standing rule is that its prompts replace other mods' hotkeys
-  (`Settings::PromptOnly`, keys moved to F13/F14 so the real key is free). TCL is on mouse 4 now;
-  ask the user whether TCL joins prompt-only mode or keeps its key as well.
+  archetype; TCL also tags its candlelight spells with keyword `i329IsCandlelightSpell`
+  00931), or a lit TCL lantern worn.
+- TCL lanterns (read from `TorchesCandlelightLanterns.esp`, 2026-09-24): each lantern is two
+  armors in slot 55, lit (`i329DarkElfLantern` 0807 ...) and unlit (`...Off` 090C ...), with no
+  keyword telling them apart (only `MagicDisallowEnchanting`, plus `i329LanternUsesOil` on some
+  lit ones). The lit sets are FormLists: `i329ListHand` 0865 (SMP variants `i329ListHandSMP` 086D,
+  `i329ListHandSMPRotate` 086E, winners in `TorchesCandlelightLanterns SMP.esp`) and
+  `i329ListHip` 086A; `i329ListHipOff` 08EA holds the unlit hip ones. A worn slot-55 armor in a
+  lit list means lit. Global `i329IsLanternHandOn` 086F is TCL's own hand-lantern flag, a
+  cross-check for the log.
+- TCL has no player auto-light option (its MCM: hotkey, toggle item, hand/hip, drop, fuel, SMP,
+  hide unlit). Globals `i329LightLevelOn` 40 / `i329LightLevelOff` 60 look like NPC lantern
+  thresholds; not used.
+- Prompt-only (the user's choice, 2026-09-24): TCL joins `Settings::PromptOnly` like Grapple,
+  Surrender and Valhalla. Its key (`iTCLHotkey`, now 259 = mouse 4 in
+  `MCM/Settings/TorchesCandlelightLanterns.ini`) is moved to an unused key so only CIGAR's prompt
+  lights, and switching prompt-only off in the panel restores it. The accept presses whichever key
+  TCL listens to at that moment. TCL reads the key through MCM Helper at load
+  (`OnSettingChange`/`Maintenance`), so a changed key takes effect after the INI is written and
+  the game reloaded; how Grapple's and Surrender's prompt-only handled the same timing is the
+  pattern to copy.
 
 ## Open before building
 
 - The two SI numbers (5 s, level 14) are SI's; confirm the light level reads the same scale.
-- The lantern forms or keyword in TCL.
-- The user's answer on TCL's hotkey.
+- How the existing prompt-only targets write another mod's key and when the mod picks it up
+  (`Surrender`, `Grapple`, `Execute` for Valhalla); TCL goes through MCM Helper.
