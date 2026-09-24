@@ -7,9 +7,8 @@
 - The user's decisions the same day: **CIGAR's lighting work is abandoned** (`docs/021`), TCL comes
   back on its own hotkey. `Light` is removed from CIGAR (built and deployed); `ItemEquip` hides
   TCL lanterns again.
-- **Pending, blocked on MO2 being open:** re-enabling TCL in `profiles\TKL - MUNG ADDON`. The only
-  differences from `modlist.txt/plugins.txt/loadorder.txt.bak_20260925_tcl-removal` are the TCL
-  lines, so with MO2 closed those three backups can be copied back.
+- TCL is enabled again in `profiles\TKL - MUNG ADDON` (the removal backups copied back with MO2
+  closed, 2026-09-25).
 - Outside CIGAR (Installation and Modification, case 030):
   - The ~ key really did run `smp reset`: GT Softbody's `SoftbodySmpReset` registers key 41 when its
     reset-key option is on (default on). `TKL - MCM Setting.esp` now sets `SoftbodyGlobalQuest`'s
