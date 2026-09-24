@@ -16,7 +16,8 @@
   globals `Condiexp_HKPause` 0857 default 0, `Condiexp_HKRegisterFollowers` 0858 set to 1 = Esc by
   the user's `TKL - MCM Setting.esp`), so a new game registers none; which key reacts in game was
   asked and not yet answered.
-- SI still to absorb: ItemUse recharge, WeaponSwap (tools), QuestActions, chair eat/drink (item 7).
+- Built on 2026-09-24 after that, untested: `Recharge` (`docs/023-recharge.md`), SI's weapon recharge.
+- SI still to absorb: WeaponSwap (tools), QuestActions, chair eat/drink (item 7).
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`).
 
@@ -161,6 +162,9 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 | `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
+| `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
+| `Light` | 불 밝히기 | Torches Candlelight and Lanterns | `021` |
+| `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -395,7 +399,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 7. **The rest of SI, surveyed 2026-09-22** (SI switches read from the deployed settings.json;
    evidence from SI's DLL strings, so triggers are inferred). Absorbing all of it lets SI go.
    - *Still on in SI, so still in use:*
-     - **ItemUse `enabled_recharge_weapon`** — recharge an enchanted weapon from the best soul gem
+     - **ItemUse `enabled_recharge_weapon`** — built as `Recharge` (`docs/023-recharge.md`), untested in game. Recharge an enchanted weapon from the best soul gem
        (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
      - **ItemUse `enabled_makelight`** — built as `Light` (`docs/021-make-light.md`), untested in game. Offer a torch or candlelight spell/scroll after
        `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.

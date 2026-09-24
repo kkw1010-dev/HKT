@@ -29,7 +29,8 @@ REPLACED = [
     # One switch for SI's sit, lie down, lean, warm hands, chair eat/drink and tidy-up. Off at the
     # user's call (2026-09-21) ahead of CIGAR's own sit/lie; the rest is on the backlog.
     ("IdleActions", "enabled"),
-    # ItemUse stays on because recharge and spellbook are not absorbed yet.
+    # Every ItemUse action SI turns on by default is CIGAR's now (spellbook equip was off by the
+    # user's choice); ItemUse.enabled itself is left alone.
     ("ItemUse", "enabled_equip_weapon"),
     ("ItemUse", "enabled_equip_armor"),
     ("ItemUse", "enabled_hp_pot"),
@@ -39,6 +40,7 @@ REPLACED = [
     ("ItemUse", "enabled_curepoison_potion"),
     ("ItemUse", "enabled_waterbreath_potion"),
     ("ItemUse", "enabled_makelight"),
+    ("ItemUse", "enabled_recharge_weapon"),
 ]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2

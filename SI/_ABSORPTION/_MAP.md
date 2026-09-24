@@ -18,7 +18,7 @@
 
 - **Quest Tracking:** implemented as `QuestTrack` on 2026-09-21; hold, tracking, and objective-text label fallback confirmed in game.
 - **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
-- SI overlap disabled by CIGAR for ItemUse: `enabled_equip_weapon` and `enabled_equip_armor`. Recharge, spellbook equip, and make-light remain owned by SI.
+- SI overlap disabled by CIGAR for ItemUse: equip weapon/armor, the six potion actions, make-light (`Light`, 2026-09-24) and recharge weapon (`Recharge`, 2026-09-24, `docs/023-recharge.md`). Spellbook equip stays off by the user's choice.
 - SI overlap disabled by CIGAR: `QuestActions.enabled_track` only. Other `QuestActions` behavior remains owned by SI.
 - Runtime implementation uses `ObjectiveState::Event` for the new-objective gate and the verified native
   Papyrus call `Quest.SetActive(true)` for the action. This is CIGAR implementation policy, not evidence
