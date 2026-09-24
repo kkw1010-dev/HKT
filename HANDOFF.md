@@ -20,8 +20,13 @@
   `ToolSwap` (`docs/024-tool-swap.md`), SI's pickaxe/axe swap. SI's fishing-rod swap was not rebuilt
   because Streamlined Fishing equips the rod itself; the user has not confirmed that call yet;
   `QuestAction` (`docs/025-quest-action.md`), SI's Greybeards shout prompt.
-- SI still to absorb: chair eat/drink (item 7). Every SI switch except that one (inside
-  `IdleActions`, already off) is now CIGAR's or off by the user's choice.
+- SI still to absorb: chair eat/drink (item 7), **waiting on the user**: SI's only evidence is the
+  vanilla idles `ChairEatingStart` / `ChairDrinkingStart` (`GetSitting == 3`, `0_master.hkx`), so
+  whether it should also eat or drink an item from the inventory (and feed Survival hunger through
+  `Eat`) or only play the animation was asked on 2026-09-24. Every other SI switch is now CIGAR's or
+  off by the user's choice.
+- In-game test list for the three new modules is in each doc's `Open` section; read `CIGAR.log`
+  (`[Recharge] ready`, `[ToolSwap] gate`, `[QuestAction] gate`) before asking anything.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`).
 
