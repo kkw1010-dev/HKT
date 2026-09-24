@@ -9,7 +9,7 @@
 #include "ItemEquip.h"
 #include "Light.h"
 #include "Recharge.h"
-#include "ToolSwap.h"
+#include "ChairDrink.h"
 #include "QuestAction.h"
 #include "LockOn.h"
 #include "Module.h"
@@ -35,7 +35,7 @@ namespace CIGAR
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
-			Rest::GetSingleton(), Light::GetSingleton(), Recharge::GetSingleton(), ToolSwap::GetSingleton(),
+			Rest::GetSingleton(), Light::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 			QuestAction::GetSingleton()
 		};
 		return modules;

@@ -108,3 +108,8 @@ mouse 4 no longer reaching TCL under prompt-only, and the panel switch restoring
   the item count before adding the toggle item. (Call lists read from the compiled
   `i329tcl_mcmconfig_script.pex` with a small PEX reader in the session scratchpad.) To settle it,
   each press now logs every TCL item whose count changed 3 s later.
+
+## Not in water (2026-09-24)
+
+The user saw 불 밝히기 while swimming: water reads dark to `GetLightLevel`. The gate now also
+requires not swimming and a submerge level below 0.5, and logs `water=`.

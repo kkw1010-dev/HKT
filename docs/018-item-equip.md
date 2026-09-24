@@ -41,3 +41,9 @@ current offer.
 Items from TorchesCandlelightLanterns plugins are not offered: 불 밝히기 (Light) lights and puts
 lanterns away through TCL, and TCL swaps lit and unlit lantern armors in and out of the inventory,
 which would otherwise raise an equip prompt each time. The user's request.
+
+## No fishing rods (2026-09-24)
+
+At the user's request, a weapon with `ccBGSSSE001_FishingPoleKW` (every Creation Club fishing rod)
+is not offered: the fishing itself equips the rod (Streamlined Fishing, when the supplies are
+activated).

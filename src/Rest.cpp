@@ -438,7 +438,15 @@ namespace CIGAR
 
 		// Pass time also works in a chair the player sat in by the game's own activate (the user's
 		// request, 2026-09-24); getting up out of the chair ends it.
-		const bool chair = InChair(a_player) && !combat;
+		std::string notChair;
+		const bool chair = InChair(a_player, &notChair) && !combat;
+		// Say once per piece of furniture why it is not offered, so a missing prompt is explained.
+		if (notChair != chairRejectLogged) {
+			chairRejectLogged = notChair;
+			if (!notChair.empty()) {
+				Log("pass time not offered: {}", notChair);
+			}
+		}
 		if (!chair && passHolding) {
 			StopPassTime("left the chair");
 		}
@@ -817,10 +825,32 @@ namespace CIGAR
 		passHeldSince = Clock::now();
 	}
 
-	bool Rest::InChair(RE::PlayerCharacter* a_player)
+	bool Rest::InChair(RE::PlayerCharacter* a_player, std::string* a_why)
 	{
 		const auto* state = a_player ? a_player->AsActorState() : nullptr;
-		return state && state->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSitting && !a_player->IsOnMount();
+		if (!state || state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kIsSitting || a_player->IsOnMount()) {
+			return false;
+		}
+		const auto handle = a_player->GetOccupiedFurniture();
+		const auto ref = handle.get();
+		auto* base = ref ? ref->GetBaseObject() : nullptr;
+		auto* furniture = base ? base->As<RE::TESFurniture>() : nullptr;
+		if (!furniture) {
+			if (a_why) {
+				*a_why = "sitting, but in no furniture";
+			}
+			return false;
+		}
+		const bool special = furniture->HasKeywordString("FurnitureSpecial");
+		const bool bench = furniture->workBenchData.benchType.get() != RE::TESFurniture::WorkBenchData::BenchType::kNone;
+		if (special || bench) {
+			if (a_why) {
+				*a_why = std::format("{} ({:08X}) is a work station{}{}", Util::NameOf(furniture), furniture->GetFormID(),
+					special ? " [FurnitureSpecial]" : "", bench ? " [workbench]" : "");
+			}
+			return false;
+		}
+		return true;
 	}
 
 	void Rest::PassTimeTick()

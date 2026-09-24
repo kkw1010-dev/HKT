@@ -24,6 +24,12 @@ namespace CIGAR
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
+
+		// Sitting in a chair or bench the player activated: the game's sitting state in furniture
+		// that is not a work station. The chopping block, the sawmill, the grain mill and the like
+		// also put the player in the sitting state; they carry FurnitureSpecial or a workbench type.
+		// a_why, when given, names what was rejected.
+		static bool InChair(RE::PlayerCharacter* a_player, std::string* a_why = nullptr);
 		// SKSE kSaveGame, before the file is written: puts the real timescale back so an
 		// accelerated one is never saved.
 		void BeforeSave();
@@ -63,8 +69,6 @@ namespace CIGAR
 		using Clock = std::chrono::steady_clock;
 
 		static const char* PoseName(Pose a_pose);
-		// Sitting in a chair or bench (the game's furniture state), not a mount, which shares the value.
-		static bool InChair(RE::PlayerCharacter* a_player);
 		static bool IsWarm(Pose a_pose) { return a_pose == Pose::kWarmStanding || a_pose == Pose::kWarmCrouched; }
 		static bool IsLean(Pose a_pose)
 		{
@@ -87,6 +91,7 @@ namespace CIGAR
 		PromptSlot lie{ this, kLie };
 		PromptSlot lean{ this, kLean };
 		PromptSlot passTime{ this, kPassTime };
+		std::string chairRejectLogged;
 		PromptSlot warm{ this, kWarm };
 
 		Pose pose{ Pose::kStanding };

@@ -41,8 +41,8 @@ REPLACED = [
     ("ItemUse", "enabled_waterbreath_potion"),
     ("ItemUse", "enabled_makelight"),
     ("ItemUse", "enabled_recharge_weapon"),
-    # Tree and ore-vein tool swaps are ToolSwap; the fishing-rod swap is covered by Streamlined
-    # Fishing, which equips the rod when the supplies are activated (docs/024-tool-swap.md).
+    # Not rebuilt (docs/024-tool-swap.md): vanilla mines a vein and Woodcutting Tweaks harvests a
+    # tree with one E press, and Streamlined Fishing equips the rod. SI is being retired.
     ("WeaponSwap", "enabled"),
     # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
     # tracking was already QuestTrack (docs/025-quest-action.md).

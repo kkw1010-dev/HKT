@@ -9,6 +9,8 @@ namespace CIGAR
 	{
 		constexpr auto kOfferWindow = 15s;
 		constexpr RE::FormID kPlayerRef = 0x14;
+		// ccBGSSSE001_FishingPoleKW (ccbgssse001-fish.esm), on every Creation Club fishing rod.
+		constexpr auto kFishingRodKeyword = "ccBGSSSE001_FishingPoleKW"sv;
 	}
 
 	ItemEquip::ItemEquip()
@@ -174,6 +176,15 @@ namespace CIGAR
 		if (!item || !item->GetPlayable() ||
 			(!item->Is(RE::FormType::Weapon) && !item->Is(RE::FormType::Armor))) {
 			return;
+		}
+		// Fishing rods are equipped by the fishing itself (Streamlined Fishing, when the supplies are
+		// activated); a prompt for them is noise (the user, 2026-09-24).
+		if (item->Is(RE::FormType::Weapon)) {
+			const auto* keywords = item->As<RE::BGSKeywordForm>();
+			if (keywords && keywords->HasKeywordString(kFishingRodKeyword)) {
+				Log("acquired {} ({:08X}), a fishing rod: not offered", Util::NameOf(item), a_itemID);
+				return;
+			}
 		}
 		// Lanterns are lit and put away through TCL by 불 밝히기 (Light); TCL also swaps lit and unlit
 		// lantern armors in and out of the inventory, which would offer them here every time.

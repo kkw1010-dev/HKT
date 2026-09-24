@@ -175,3 +175,12 @@ without the floor-pitch condition, rescanning every 250 ms:
 3. Same with 눕기.
 4. Read `CIGAR.log` for `[Rest]`: the accepted flags, `reached` or `WARN not
    confirmed`, and the recorded events.
+
+## Chairs only, not work stations (2026-09-24)
+
+The user saw 시간 보내기 at a chopping block and at Riverwood's sawmill: the game puts the player
+in the same sitting state there. `Rest::InChair` now also requires the occupied furniture to carry
+neither `FurnitureSpecial` nor a workbench type. On this order the chopping blocks, the sawmill
+(`ResourceObjectSawmill`), grain mills and executioner blocks all carry `FurnitureSpecial`; plain
+chairs and benches carry no keyword. The rejection is logged once per piece of furniture
+(`pass time not offered: ... is a work station`).

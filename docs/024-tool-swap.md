@@ -1,8 +1,22 @@
 # 024 · Tool swap (pickaxe at a vein, axe at a tree)
 
-Status (2026-09-24): built as module `ToolSwap` and deployed; not yet tested in game. SI's
-`WeaponSwap.enabled` is now in the replaced list. The module name keeps clear of CIGAR's own
-`WeaponSwap` (ranged/melee in combat, `docs/010`).
+Status (2026-09-24): **removed the same day**, after one in-game run. SI's `WeaponSwap.enabled`
+stays off (SI is being retired, so nothing of it is kept on).
+
+## Why it was removed (the user, 2026-09-24)
+
+- It breaks CIGAR's philosophy: a prompt should perform the action, not hand the player a tool
+  for it. Vanilla already mines a vein with one E press (the pickaxe only has to be carried).
+- Trees: `Woodcutting Tweaks` (Nexus 53538, with `Trees patches for Woodcutting Tweaks`) gives
+  every tree it patches a harvest item, `ANDR_TreeLog_MISC` 통나무, with the harvest sound
+  `WPNSwingBlunt1Hand`. E on such a tree with a woodcutter's axe carried yields a log, and a
+  chopping block turns logs into firewood. So "stand at a tree, chop, get wood" is already one E
+  press on this order.
+- The in-game run (the tree prompt worked, but many trees never showed) is explained by the same
+  mod: `ToolSwap` skipped any TREE with a harvest item as flora, and Woodcutting Tweaks puts the log
+  on every tree it patches, so only unpatched trees were offered.
+
+The rest of this file is the record of what was built.
 
 ## What SI does (settings, MCM text and DLL strings only)
 

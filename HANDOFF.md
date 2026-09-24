@@ -1,34 +1,30 @@
 # CIGAR — session handoff (updated 2026-09-21)
 
-## Resume here (2026-09-24, end of a long session)
+## Resume here (2026-09-24, late)
 
-- Deployed and waiting for an in-game test: pass time in a chair (`docs/019-rest.md`), no equip
-  prompt for TCL lanterns (`docs/018-item-equip.md`). Everything else below passed in game.
-- Done this stretch: `Rest` (sit, ledge, lie, lean, warm hands, pass time with ring and game-speed
-  slider), `Light` (make light through TCL, prompt-only key, instant), prompts hidden over game
-  menus and SKSE Menu Framework windows (`docs/022`).
-- Waiting on the user: how 불 끄기 should work (`docs/021-make-light.md` has no section yet; two
-  ideas were offered on 2026-09-24: a brightness baseline recorded right after lighting, with
-  불 끄기 offered while the level stays well above it; and, while sneaking with a hostile nearby,
-  TCL's own sneak-press that drops the lit lantern as 등불 내려놓기).
-- Outside CIGAR, open: the user asked to unbind Conditional Expressions Extended's hotkey. CEE
-  registers keys only from its MCM (`condiexp_MCM.OnOptionKeyMapChange` -> `Go.RegisterForKey`;
-  globals `Condiexp_HKPause` 0857 default 0, `Condiexp_HKRegisterFollowers` 0858 set to 1 = Esc by
-  the user's `TKL - MCM Setting.esp`), so a new game registers none; which key reacts in game was
-  asked and not yet answered.
-- Built on 2026-09-24 after that, untested: `Recharge` (`docs/023-recharge.md`), SI's weapon recharge;
-  `ToolSwap` (`docs/024-tool-swap.md`), SI's pickaxe/axe swap. SI's fishing-rod swap was not rebuilt
-  because Streamlined Fishing equips the rod itself; the user has not confirmed that call yet;
-  `QuestAction` (`docs/025-quest-action.md`), SI's Greybeards shout prompt.
-- SI still to absorb: chair eat/drink (item 7), **waiting on the user**: SI's only evidence is the
-  vanilla idles `ChairEatingStart` / `ChairDrinkingStart` (`GetSitting == 3`, `0_master.hkx`), so
-  whether it should also eat or drink an item from the inventory (and feed Survival hunger through
-  `Eat`) or only play the animation was asked on 2026-09-24. Every other SI switch is now CIGAR's or
-  off by the user's choice.
-- In-game test list for the three new modules is in each doc's `Open` section; read `CIGAR.log`
-  (`[Recharge] ready`, `[ToolSwap] gate`, `[QuestAction] gate`) before asking anything.
+- In-game results reported on 2026-09-24: `Recharge` passed; pass time in a chair and no equip
+  prompt for TCL lanterns passed; `QuestAction` not reached yet (High Hrothgar).
+- Changed after that report, deployed, **untested in game**:
+  - `ToolSwap` removed (`docs/024-tool-swap.md` says why: vanilla E mines, and Woodcutting Tweaks'
+    E harvests a log from a tree; a prompt must do the action, not hand over a tool).
+  - `ChairDrink` built (`docs/026-chair-drink.md`): inns and houses, alcohol only, really drunk.
+  - Pass time no longer offered at work furniture (chopping block, sawmill): `Rest::InChair`
+    rejects `FurnitureSpecial` and workbench furniture (`docs/019-rest.md`).
+  - 불 밝히기 not offered in water (`docs/021-make-light.md`).
+  - No equip prompt for fishing rods (`docs/018-item-equip.md`).
+- Outside CIGAR, done: CEE's pause and follower hotkey globals set to 0 (no key) in
+  `TKL - MCM Setting.esp` (Installation and Modification, Case 028); a new game verifies it.
+- Waiting on the user:
+  - Dropping Torches Candlelight and Lanterns from the load order and making `Light` equip a
+    vanilla torch itself (the user's idea, 2026-09-24; reported TCL defects: lanterns duplicated,
+    and repeated draw/sheathe lagged TCL's scripts until weapons would not sheathe). An opinion was
+    given; nothing is removed yet. It would also settle 불 끄기 (give the left hand back).
+  - Streamlined Fishing is to be absorbed into CIGAR next, after the current problems.
+- SI: every switch CIGAR needed is off, and the user no longer weighs SI integration (SI is being
+  retired). Chair eat/drink became `ChairDrink`.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
-  UX sacrosanct; no player-authored rule framework (`docs/022`).
+  UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
+  and nothing vanilla already does in one press is duplicated.
 
 Read this first, then `README.md`. The design rationale and the test history of
 each module are in `docs/`, one file per module, and each file starts with its
@@ -174,8 +170,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
 | `Light` | 불 밝히기 | Torches Candlelight and Lanterns | `021` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
-| `ToolSwap` | 곡괭이 들기, 도끼 들기, 무기 되돌리기 | — (replaces SI WeaponSwap) | `024` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
+| `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -414,7 +410,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
        (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
      - **ItemUse `enabled_makelight`** — built as `Light` (`docs/021-make-light.md`), untested in game. Offer a torch or candlelight spell/scroll after
        `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.
-     - **WeaponSwap** — built as `ToolSwap` (`docs/024-tool-swap.md`), untested in game. Swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
+     - **WeaponSwap** — built as `ToolSwap`, then removed (`docs/024-tool-swap.md`). Swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
        height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's
        ranged/melee `WeaponSwap`; kept for roleplay.
      - **QuestActions `enabled`** — built as `QuestAction` (`docs/025-quest-action.md`), untested in game. Quest-specific prompts; the one string found is the Greybeards'

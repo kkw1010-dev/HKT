@@ -37,6 +37,8 @@ namespace CIGAR
 		constexpr auto kDarkDelay = 300ms;
 		// After the press, TCL (Papyrus) gets this long to light something before the log says it did not.
 		constexpr auto kLitCheck = 3s;
+		// Submerge level (0 dry, 1 fully under) from which the player is in water, not at its edge.
+		constexpr float kInWater = 0.5f;
 
 		// The engine's own GetLightLevel condition on the player, so the number means what the
 		// game's conditions mean. CommonLib has no direct accessor.
@@ -278,14 +280,19 @@ namespace CIGAR
 		const bool combat = player->IsInCombat();
 		const bool menu = !ui || ui->IsApplicationMenuOpen() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
 		const bool keyKnown = tclKey.load() >= 0;
-		const bool can = dark && !lit && !combat && !menu && keyKnown && !player->IsDead();
+		// Water reads dark to GetLightLevel, and a torch or lantern cannot be lit in it (the user,
+		// 2026-09-24: the prompt showed while swimming). Waist-deep wading counts as in water.
+		const auto* state = player->AsActorState();
+		const bool water = (state && state->IsSwimming()) ||
+		                   player->GetSubmergeLevel(player->GetPositionZ(), player->GetParentCell()) >= kInWater;
+		const bool can = dark && !lit && !combat && !menu && !water && keyKnown && !player->IsDead();
 		if (!can) {
 			darkSince = now;
 		}
 		const bool available = can && now - darkSince >= kDarkDelay;
 
-		LogGate(std::format("dark={} light{} lit={}{} combat={} menu={} tclKey={} ready={}", dark, LightBand(player), lit,
-			lit ? " (" + how + ")" : "", combat, menu, tclKey.load(), available));
+		LogGate(std::format("dark={} light{} lit={}{} combat={} menu={} water={} tclKey={} ready={}", dark, LightBand(player), lit,
+			lit ? " (" + how + ")" : "", combat, menu, water, tclKey.load(), available));
 
 		if (checkAfterAccept && now - acceptedAt >= kLitCheck) {
 			checkAfterAccept = false;
