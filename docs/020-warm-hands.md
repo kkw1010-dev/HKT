@@ -109,3 +109,5 @@ Forges now offer from any face and not from behind: every warm-hands check has p
 the movement exit, jumping out). The warm-hands clips come from Dynamic Female Hand Warming,
 which picked one pair by body armor; they are now random through the lean-variety OAR patch
 (install case 016), which brings its other crouched clips, a kneel among them, into play.
+
+Random hand-warming clips (a kneel among them) passed in game on 2026-09-24.
