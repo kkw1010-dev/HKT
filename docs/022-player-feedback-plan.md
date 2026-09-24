@@ -109,3 +109,10 @@ the "hold pass time, then open a menu" test. Not explained yet: Skyrim Party She
 the last trigger and hides the vanilla bars, so standing still anywhere would fade them too.
 `RunTick` now logs every change of the HUD menu's visibility to tell the vanilla HUD apart from
 Party Sheet's widgets and CIGAR's prompts.
+
+### Follow-up (2026-09-24, same day)
+
+SKSE Menu Framework windows now hide the prompts (passed in game). Standing still did not make the
+HUD vanish, and the log shows the vanilla HUD menu stayed visible through two sits, so what
+disappears while resting is an overlay (Party Sheet's widgets or another ImGui/HUD mod), not the
+vanilla HUD and not CIGAR's prompts. Not pursued further.

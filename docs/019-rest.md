@@ -51,6 +51,13 @@ by itself and never through the Wait menu (the reverted `6dd9a7d` opened it).
 - Logged: the base timescale when the clock speeds up, and on stop the reason, how
   long the key was held, how many game hours passed, and the restored value.
 
+## Pass time in a chair (2026-09-24, not yet tested in game)
+
+At the user's request 시간 보내기 is also offered while the player sits in furniture the game's
+own way (activate a chair or bench): sit state `kIsSitting`, not on a mount (the game reuses that
+value for riding), out of combat. Standing up out of the chair stops it. The same hold, ring and
+game-speed ceiling apply.
+
 ## Getting up (redesigned 2026-09-22)
 
 There is no 일어나기 / 그만 기대기 prompt. The user dropped it: these poses are for

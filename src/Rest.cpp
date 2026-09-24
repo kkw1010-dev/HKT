@@ -436,7 +436,16 @@ namespace CIGAR
 			warmFound == Pose::kStanding ? "none" : PoseName(warmFound), moving, combat, drawn, seated,
 			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
 
-		passTime.Update(false, {});
+		// Pass time also works in a chair the player sat in by the game's own activate (the user's
+		// request, 2026-09-24); getting up out of the chair ends it.
+		const bool chair = InChair(a_player) && !combat;
+		if (!chair && passHolding) {
+			StopPassTime("left the chair");
+		}
+		passTime.Update(chair, [] { return std::string{ kPassTimeText }; });
+		if (chair) {
+			PassTimeTick();
+		}
 		sit.Update(available, [] { return "앉기 (길게)"s; });
 		lie.Update(available, [] { return "눕기 (길게)"s; });
 		if (leanShown != leanFound) {
@@ -795,11 +804,23 @@ namespace CIGAR
 			StopPassTime("key released");
 			return;
 		}
-		if (pose == Pose::kStanding || passHolding) {
+		if (passHolding) {
 			return;
+		}
+		if (pose == Pose::kStanding) {
+			auto* player = Util::Player();
+			if (!player || !InChair(player)) {
+				return;
+			}
 		}
 		passHolding = true;
 		passHeldSince = Clock::now();
+	}
+
+	bool Rest::InChair(RE::PlayerCharacter* a_player)
+	{
+		const auto* state = a_player ? a_player->AsActorState() : nullptr;
+		return state && state->GetSitSleepState() == RE::SIT_SLEEP_STATE::kIsSitting && !a_player->IsOnMount();
 	}
 
 	void Rest::PassTimeTick()

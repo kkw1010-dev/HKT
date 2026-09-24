@@ -63,6 +63,8 @@ namespace CIGAR
 		using Clock = std::chrono::steady_clock;
 
 		static const char* PoseName(Pose a_pose);
+		// Sitting in a chair or bench (the game's furniture state), not a mount, which shares the value.
+		static bool InChair(RE::PlayerCharacter* a_player);
 		static bool IsWarm(Pose a_pose) { return a_pose == Pose::kWarmStanding || a_pose == Pose::kWarmCrouched; }
 		static bool IsLean(Pose a_pose)
 		{

@@ -175,6 +175,12 @@ namespace CIGAR
 			(!item->Is(RE::FormType::Weapon) && !item->Is(RE::FormType::Armor))) {
 			return;
 		}
+		// Lanterns are lit and put away through TCL by 불 밝히기 (Light); TCL also swaps lit and unlit
+		// lantern armors in and out of the inventory, which would offer them here every time.
+		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "TorchesCandlelightLanterns")) {
+			Log("acquired {} ({:08X}) from TCL: left to 불 밝히기, not offered", Util::NameOf(item), a_itemID);
+			return;
+		}
 		if (offeredItem != a_itemID) {
 			equip.Withdraw();
 			equip.Reset();

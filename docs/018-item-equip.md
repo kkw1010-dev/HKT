@@ -35,3 +35,9 @@ current offer.
 5. Acquire gear in combat. No prompt should be visible until combat ends; it may appear if the
    15-second offer window has not expired.
 6. Drop the offered item or equip it manually. The prompt should disappear without acting.
+
+## Lanterns excluded (2026-09-24)
+
+Items from TorchesCandlelightLanterns plugins are not offered: 불 밝히기 (Light) lights and puts
+lanterns away through TCL, and TCL swaps lit and unlit lantern armors in and out of the inventory,
+which would otherwise raise an equip prompt each time. The user's request.
