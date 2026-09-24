@@ -16,7 +16,11 @@
   widgets during exploration" system) set to 0 in `Skyrim Party Sheet FHD Preset\SKSE\Plugins\PartySheet.ini`,
   or the same switch in Party Sheet's in-game settings.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
-- Next, the user's plan: absorb Streamlined Fishing into CIGAR.
+- Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
+  on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,
+  and Fishing Preview's overrides SFO's animations. The module waits on the decisions listed there.
+- `ItemEquip`, from the 03:47 log of 2026-09-25: 긴 활 offered, held, accepted and equipped.
+  Armor was offered (종자의 투구) but no armor accept was exercised.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
