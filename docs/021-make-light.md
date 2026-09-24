@@ -1,7 +1,8 @@
-# 021 · Make light (plan)
+# 021 · Make light
 
-Status (2026-09-24): researched, not built. The user picked it as the next SI absorption and
-chose prompt-only for TCL's hotkey.
+Status (2026-09-24): built as module `Light` and deployed; not yet tested in game. The user
+picked it as the next SI absorption and chose prompt-only for TCL's hotkey. SI's
+`ItemUse.enabled_makelight` is now in the replaced list (turned off by the deploy sync).
 
 ## What SI does (settings and DLL strings)
 
@@ -64,3 +65,29 @@ pressing TCL's own hotkey rather than re-implementing light. Checked on 2026-09-
 - The two SI numbers (5 s, level 14) are SI's; confirm the light level reads the same scale.
 - How the existing prompt-only targets write another mod's key and when the mod picks it up
   (`Surrender`, `Grapple`, `Execute` for Valhalla); TCL goes through MCM Helper.
+
+## As built (2026-09-24)
+
+- `src/Light.cpp`. TCL forms resolved at load: quest `i329TCL_MCM` 089F with
+  `i329TCL_MCMConfig_Script`, global `i329Hotkey` 08E7 (the key TCL registered; `OnKeyUp`
+  compares against it), `i329IsLanternHandOn` 086F, the four lit-lantern lists, keyword
+  `i329IsCandlelightSpell`. Any of the first three missing: notify once, module idle.
+- Darkness: a `TESConditionItem` running `GetLightLevel < 14` on the player (engine evaluation).
+  The gate logs a band (`<5`, `<14`, `<30`, `<60`, `<100`, `>=100`) for tuning.
+- Lit: a light in either hand, an active light-archetype effect or one with TCL's candlelight
+  keyword, TCL's hand-lantern flag, or a worn armor from the lit-lantern lists.
+- Offered (hold) after 5 s dark, not lit, out of combat, no menu or dialogue. Accepting presses the
+  key in `i329Hotkey`; 3 s later the log says whether something is lit.
+- Prompt-only (panel target `tcl`, hidden key 0x67): the key is read from the MCM user INI, then
+  the default INI; the player's key is remembered as the manual key. Changing it dispatches
+  `SetModSettingInt("iTCLHotkey:Controls", key)` on TCL's MCM script (MCM Helper, which also
+  writes its user INI), then `OnSettingChange("iTCLHotkey:Controls")`, which re-registers the key
+  in-session. The log then compares `i329Hotkey` with the key sent and notifies on a mismatch.
+  The panel's 모드 키 다시 확인 button and the load re-run the check.
+
+## Found on the way
+
+`verify_deploy.py` failed on Grapple: `FH_Grapple_Plugin.ini` read `kbKey=-1`, written by Grapple
+itself at 19:26 after CIGAR had set the hidden key at 19:25 (log). With prompt-only on, CIGAR sets
+the hidden key whatever the INI says, so the check now requires a valid INI key only when
+Grapple's prompt-only is off.

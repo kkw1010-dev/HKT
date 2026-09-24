@@ -67,7 +67,7 @@ namespace CIGAR::Settings
 			// Targets with several keys keep them by name.
 			std::map<std::string, std::int32_t, std::less<>> manualKeys;
 		};
-		constexpr std::array kPromptOnlyTargets{ "grapple"sv, "surrender"sv, "valhalla"sv, "privateneeds"sv };
+		constexpr std::array kPromptOnlyTargets{ "grapple"sv, "surrender"sv, "valhalla"sv, "privateneeds"sv, "tcl"sv };
 		std::map<std::string, PromptOnlyState, std::less<>> promptOnly;
 
 		void ResetPromptOnly()

@@ -33,7 +33,7 @@ REPLACED = [
     # One switch for SI's sit, lie down, lean, warm hands, chair eat/drink and tidy-up. Off at the
     # user's call (2026-09-21) ahead of CIGAR's own sit/lie; the rest is on the backlog.
     ("IdleActions", "enabled"),
-    # ItemUse stays on because recharge, spellbook and make-light are not absorbed yet.
+    # ItemUse stays on because recharge and spellbook are not absorbed yet.
     ("ItemUse", "enabled_equip_weapon"),
     ("ItemUse", "enabled_equip_armor"),
     ("ItemUse", "enabled_hp_pot"),
@@ -42,6 +42,7 @@ REPLACED = [
     ("ItemUse", "enabled_curedisease_potion"),
     ("ItemUse", "enabled_curepoison_potion"),
     ("ItemUse", "enabled_waterbreath_potion"),
+    ("ItemUse", "enabled_makelight"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 # SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
@@ -50,7 +51,6 @@ REPLACED = [
 KEPT = [
     ("ItemUse", "enabled"),
     ("ItemUse", "enabled_recharge_weapon"),
-    ("ItemUse", "enabled_makelight"),
     ("WeaponSwap", "enabled"),
     ("QuestActions", "enabled"),
 ]
@@ -365,10 +365,20 @@ def check_grapple(modlist):
         kb = ini_int(grapple_ini, "Keys", "kbKey")
         mod = ini_int(grapple_ini, "Keys", "kbModifier")
         note("Grapple keys: hotkey=%s modifier=%s lock=%s (CIGAR syncs lock to TDM's at load when TDM is present)" % (kb, mod, lock))
-        # A new game starts Grapple's MCM with no hotkey; CIGAR restores the key from this INI, so
-        # an unset key here leaves the grapple prompt off in every new game.
-        check(kb is not None and 0 <= kb < 264,
-              "Grapple INI kbKey is a keyboard/mouse key CIGAR can restore on a new game: %s" % kb)
+        # A new game starts Grapple's MCM with no hotkey. With prompt-only on, CIGAR sets its hidden
+        # key whatever the INI says (log 2026-09-24: "Grapple Hotkey -1 -> hidden key 100", usable),
+        # and Grapple itself was seen writing kbKey=-1 back afterwards. With prompt-only off, CIGAR
+        # restores the key from this INI, so an unset key would leave the prompt off in a new game.
+        prompt_only = True
+        cigar_json = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.json")
+        if os.path.isfile(cigar_json):
+            with open(cigar_json, encoding="utf-8") as f:
+                prompt_only = json.load(f).get("promptOnly", {}).get("grapple", {}).get("enabled", True)
+        if prompt_only:
+            note("Grapple INI kbKey=%s; prompt-only is on, so CIGAR sets its hidden key at load" % kb)
+        else:
+            check(kb is not None and 0 <= kb < 264,
+                  "Grapple INI kbKey is a keyboard/mouse key CIGAR can restore on a new game: %s" % kb)
     else:
         check(False, "Grapple INI present: %s" % grapple_ini)
 

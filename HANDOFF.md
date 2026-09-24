@@ -377,7 +377,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    - *Still on in SI, so still in use:*
      - **ItemUse `enabled_recharge_weapon`** — recharge an enchanted weapon from the best soul gem
        (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
-     - **ItemUse `enabled_makelight`** — offer a torch or candlelight spell/scroll after
+     - **ItemUse `enabled_makelight`** — built as `Light` (`docs/021-make-light.md`), untested in game. Offer a torch or candlelight spell/scroll after
        `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.
      - **WeaponSwap** — swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
        height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's

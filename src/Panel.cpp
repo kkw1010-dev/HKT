@@ -5,6 +5,7 @@
 #include "Grapple.h"
 #include "Jujutsu.h"
 #include "ItemEquip.h"
+#include "Light.h"
 #include "Module.h"
 #include "Needs.h"
 #include "Potion.h"
@@ -78,6 +79,8 @@ namespace CIGAR::Panel
 				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
 			Label{ "ItemEquip", "획득 장비 착용", "",
 				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
+			Label{ "Light", "불 밝히기", "Torches Candlelight and Lanterns",
+				"어두운 곳에 5초 머물면 불 밝히기 프롬프트가 뜹니다. 누르면 TCL이 랜턴, 횃불, 촛불 마법 순으로 불을 밝힙니다. 이미 불이 있거나 전투 중이면 뜨지 않습니다." },
 			Label{ "Rest", "앉기·눕기·기대기", "",
 				"무기를 넣고 가만히 서서 바닥을 내려다보면 앉기·눕기가, 앞에 벽·탁자·난간이 있으면 기대기가, 앞에 불이 있으면 손 녹이기가 뜹니다. 쉬는 동안 시간 보내기 키를 누르고 있으면 시간이 빨리 흐릅니다. 움직이면 천천히 일어납니다." },
 		};
@@ -173,6 +176,8 @@ namespace CIGAR::Panel
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
 			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
 				[] { Execute::GetSingleton()->CheckKey(); });
+			RenderPromptOnlyItem("tcl", "TCL 조명: 프롬프트 전용##po-tcl", "코드 103",
+				[] { Light::GetSingleton()->ApplyKeyMode(); });
 			{
 				bool on = Settings::PromptOnly("privateneeds");
 				if (ImGui::Checkbox("Private Needs: 프롬프트 전용##po-privateneeds", &on)) {
@@ -194,14 +199,16 @@ namespace CIGAR::Panel
 					Surrender::GetSingleton()->CheckKey();
 					Execute::GetSingleton()->CheckKey();
 					Needs::GetSingleton()->ApplyKeyMode();
+					Light::GetSingleton()->ApplyKeyMode();
 				});
 			}
 			const auto grapple = Grapple::GetSingleton()->Key();
 			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
 			const auto execution = Execute::GetSingleton()->ExecutionKey();
-			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s",
+			const auto tcl = Light::GetSingleton()->Key();
+			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s, TCL 조명 %s",
 				grapple >= 0 ? NameOf(grapple).c_str() : "없음", surrender >= 0 ? NameOf(surrender).c_str() : "없음",
-				execution >= 0 ? NameOf(execution).c_str() : "없음");
+				execution >= 0 ? NameOf(execution).c_str() : "없음", tcl >= 0 ? NameOf(tcl).c_str() : "없음");
 			ImGui::PushTextWrapPos(0.0f);
 			ImGui::TextColored(kDim, "키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림");
 			ImGui::PopTextWrapPos();
