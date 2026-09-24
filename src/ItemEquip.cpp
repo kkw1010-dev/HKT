@@ -11,6 +11,7 @@ namespace CIGAR
 		constexpr RE::FormID kPlayerRef = 0x14;
 		// ccBGSSSE001_FishingPoleKW (ccbgssse001-fish.esm), on every Creation Club fishing rod.
 		constexpr auto kFishingRodKeyword = "ccBGSSSE001_FishingPoleKW"sv;
+		constexpr RE::FormID kWoodAxesID = 0x10ACCC;  // woodChoppingAxes, Skyrim.esm
 	}
 
 	ItemEquip::ItemEquip()
@@ -41,9 +42,10 @@ namespace CIGAR
 		lastGate.clear();
 		offeredItem = 0;
 		expiresAt = {};
+		woodAxes = RE::TESForm::LookupByID<RE::BGSListForm>(kWoodAxesID);
 		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_weapon", "/MCP/modules/ItemUse/enabled_equip_weapon");
 		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_armor", "/MCP/modules/ItemUse/enabled_equip_armor");
-		Log("ready");
+		Log("ready: woodChoppingAxes={}", woodAxes != nullptr);
 	}
 
 	void ItemEquip::Tick()
@@ -186,10 +188,10 @@ namespace CIGAR
 				return;
 			}
 		}
-		// Lanterns are lit and put away through TCL by 불 밝히기 (Light); TCL also swaps lit and unlit
-		// lantern armors in and out of the inventory, which would offer them here every time.
-		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "TorchesCandlelightLanterns")) {
-			Log("acquired {} ({:08X}) from TCL: left to 불 밝히기, not offered", Util::NameOf(item), a_itemID);
+		// A woodcutter's axe is a tool carried for Woodcutting Tweaks' tree harvest and the chopping
+		// block, never wielded (the user, 2026-09-24).
+		if (woodAxes && woodAxes->HasForm(item)) {
+			Log("acquired {} ({:08X}), a woodcutter's axe: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
 		if (offeredItem != a_itemID) {

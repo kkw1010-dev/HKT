@@ -5,10 +5,11 @@
 
 namespace CIGAR
 {
-	// SI's ItemUse make-light action: in the dark for a while, out of combat and not already lit,
-	// 불 밝히기 presses Torches Candlelight and Lanterns' own hotkey, so TCL picks the lantern, torch
-	// or Candlelight and handles fuel, sneaking and weapons itself. In prompt-only mode TCL's key is
-	// moved to a key no keyboard sends, through MCM Helper, and given back when switched off.
+	// SI's ItemUse make-light action, without Torches Candlelight and Lanterns (dropped from the
+	// order on 2026-09-24 for its defects). In the dark, out of combat and not already lit, 불 밝히기
+	// takes a torch from the pack into the left hand (what the hand held is remembered), or, with no
+	// torch, casts a light spell the player knows (Candlelight first). With neither, no prompt.
+	// Once it is bright again, 불 끄기 gives the left hand back.
 	class Light final : public Module
 	{
 	public:
@@ -19,40 +20,54 @@ namespace CIGAR
 		void Tick() override;
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
-
-		// Moves TCL's key to or from the hidden key to match the panel (game thread).
-		void ApplyKeyMode();
-		// The key TCL listens to now (its i329Hotkey global), or -1.
-		std::int32_t Key() const { return tclKey.load(); }
+		void OnDisabled() override;
 
 	private:
 		Light();
 
 		enum : std::uint16_t
 		{
-			kLight = PromptID::kMakeLight
+			kLight = PromptID::kMakeLight,
+			kPutOut = PromptID::kPutOutLight
 		};
 
 		using Clock = std::chrono::steady_clock;
 
+		struct Source
+		{
+			RE::TESObjectLIGH* torch{ nullptr };
+			RE::SpellItem* spell{ nullptr };
+			float cost{ 0.0f };
+			// Spells known but not castable now (too little magicka), for the log.
+			std::size_t unaffordable{ 0 };
+		};
+
 		bool Dark(RE::PlayerCharacter* a_player) const;
 		// A few thresholds, for the log only: the engine gives a comparison, not the level.
 		std::string LightBand(RE::PlayerCharacter* a_player) const;
-		bool Lit(RE::PlayerCharacter* a_player, std::string& a_how) const;
-		void SetTCLKey(std::int32_t a_key);
+		static bool Lit(RE::PlayerCharacter* a_player, std::string& a_how);
+		static bool InWater(RE::PlayerCharacter* a_player);
+		// A torch carried (the one with the most light), else the cheapest light spell known.
+		static Source FindSource(RE::PlayerCharacter* a_player);
+		static bool IsLightSpell(const RE::SpellItem* a_spell, bool& a_self);
+		void PutOut(RE::PlayerCharacter* a_player);
 
 		PromptSlot prompt{ this, kLight };
+		PromptSlot putOut{ this, kPutOut };
 
-		RE::TESQuest* mcmQuest{ nullptr };
-		RE::TESGlobal* hotkeyGlobal{ nullptr };
-		RE::TESGlobal* lanternHandOn{ nullptr };
-		std::vector<RE::BGSListForm*> litLanterns;
-		RE::BGSKeyword* candlelightKeyword{ nullptr };
-		std::atomic<std::int32_t> tclKey{ -1 };
+		RE::BGSEquipSlot* leftSlot{ nullptr };
 
 		Clock::time_point darkSince{};
-		Clock::time_point acceptedAt{};
+		Clock::time_point brightSince{};
+		bool bright{ false };
+
+		// The torch CIGAR put in the left hand and what the hand held before (null: empty).
+		RE::TESObjectLIGH* heldTorch{ nullptr };
+		RE::TESForm* savedLeft{ nullptr };
+		bool torchOut{ false };
+
 		bool checkAfterAccept{ false };
-		std::map<RE::FormID, std::int32_t> itemsBefore;
+		Clock::time_point acceptedAt{};
+		std::string lastNoSource;
 	};
 }

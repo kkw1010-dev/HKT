@@ -42,5 +42,6 @@ namespace CIGAR
 		PromptSlot equip{ this, kEquip };
 		RE::FormID offeredItem{ 0 };
 		Clock::time_point expiresAt{};
+		RE::BGSListForm* woodAxes{ nullptr };
 	};
 }

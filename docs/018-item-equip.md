@@ -47,3 +47,9 @@ which would otherwise raise an equip prompt each time. The user's request.
 At the user's request, a weapon with `ccBGSSSE001_FishingPoleKW` (every Creation Club fishing rod)
 is not offered: the fishing itself equips the rod (Streamlined Fishing, when the supplies are
 activated).
+
+## No woodcutter's axes (2026-09-25)
+
+At the user's request, anything in `woodChoppingAxes` (`10ACCC:Skyrim.esm`: the woodcutter's axe,
+the Poacher's Axe) is not offered: it is carried for Woodcutting Tweaks' tree harvest and the
+chopping block, not wielded. The TCL lantern filter is gone with TCL.

@@ -1,42 +1,21 @@
 #include "Light.h"
 
-#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR
 {
 	namespace
 	{
-		constexpr auto kTCLPlugin = "TorchesCandlelightLanterns.esp"sv;
-		// i329TCL_MCM, which carries i329TCL_MCMConfig_Script (an MCM Helper MCM_ConfigBase). Its
-		// OnSettingChange re-reads iTCLHotkey:Controls and re-registers the key (read from the
-		// script's string table, 2026-09-24).
-		constexpr RE::FormID kMCMQuestID = 0x89F;
-		constexpr auto kMCMScript = "i329TCL_MCMConfig_Script"sv;
-		constexpr auto kHotkeySetting = "iTCLHotkey:Controls"sv;
-		// i329Hotkey: the key TCL registered, which OnKeyUp compares against.
-		constexpr RE::FormID kHotkeyGlobalID = 0x8E7;
-		constexpr RE::FormID kLanternHandOnID = 0x86F;
-		// Lit lanterns: i329ListHand, i329ListHandSMP, i329ListHandSMPRotate, i329ListHip. The unlit
-		// ones are separate armors ("...Off") in other lists, with no keyword to tell them apart.
-		constexpr std::array kLitListIDs{ RE::FormID{ 0x865 }, RE::FormID{ 0x86D }, RE::FormID{ 0x86E }, RE::FormID{ 0x86A } };
-		constexpr RE::FormID kCandlelightKeywordID = 0x931;  // i329IsCandlelightSpell
-		// MCM Helper's user file wins over the mod's default file.
-		constexpr auto kUserIni = "Data/MCM/Settings/TorchesCandlelightLanterns.ini"sv;
-		constexpr auto kDefaultIni = "Data/MCM/Config/TorchesCandlelightLanterns/settings.ini"sv;
-
-		// Prompt-only moves TCL's key here: a scan code no keyboard sends. F13-F15 (0x64-0x66) are
-		// Grapple's, Surrender's and Valhalla's.
-		constexpr std::int32_t kHiddenKey = 0x67;
-		constexpr auto kPromptOnlyTarget = "tcl"sv;
-
 		// SI's ItemUse values: darkness_threshold 14, dont_show_in_combat_makelight on. SI waits
 		// time_till_makelight_prompt (5 s); the user wants the prompt as soon as it is dark
 		// (2026-09-24), so only a short debounce is left against flicker at the edge of a light.
 		constexpr float kDarkLevel = 14.0f;
 		constexpr auto kDarkDelay = 300ms;
-		// After the press, TCL (Papyrus) gets this long to light something before the log says it did not.
-		constexpr auto kLitCheck = 3s;
+		// 불 끄기 waits for the light to hold this long above the dark line, so walking past a
+		// brazier does not offer it.
+		constexpr float kBrightLevel = 30.0f;
+		constexpr auto kBrightDelay = 3s;
+		constexpr auto kLitCheck = 1500ms;
 		// Submerge level (0 dry, 1 fully under) from which the player is in water, not at its edge.
 		constexpr float kInWater = 0.5f;
 
@@ -52,47 +31,12 @@ namespace CIGAR
 			RE::ConditionCheckParams params(a_player, nullptr);
 			return item.IsTrue(params);
 		}
-
-		// Every TCL item the player carries (lanterns lit and unlit, the toggle item, oil), by form,
-		// for the duplicate check around a press.
-		std::map<RE::FormID, std::int32_t> TCLItems(RE::PlayerCharacter* a_player)
-		{
-			std::map<RE::FormID, std::int32_t> out;
-			const auto inventory = a_player->GetInventory([](RE::TESBoundObject& a_object) {
-				const auto* file = a_object.GetFile(0);
-				return file && Util::EqualsNoCase(file->GetFilename(), kTCLPlugin);
-			});
-			for (const auto& [object, data] : inventory) {
-				if (data.first > 0) {
-					out[object->GetFormID()] = data.first;
-				}
-			}
-			return out;
-		}
-
-		class ResultThen final : public RE::BSScript::IStackCallbackFunctor
-		{
-		public:
-			explicit ResultThen(std::function<void()> a_then) :
-				then(std::move(a_then)) {}
-
-			void operator()(RE::BSScript::Variable) override
-			{
-				if (then) {
-					SKSE::GetTaskInterface()->AddTask(then);
-				}
-			}
-
-			void SetObject(const RE::BSTSmartPointer<RE::BSScript::Object>&) override {}
-
-		private:
-			std::function<void()> then;
-		};
 	}
 
 	Light::Light()
 	{
 		prompt.SetPromptType(SkyPromptAPI::kHold);
+		putOut.SetPromptType(SkyPromptAPI::kHold);
 	}
 
 	Light* Light::GetSingleton()
@@ -104,109 +48,24 @@ namespace CIGAR
 	void Light::OnGameLoaded()
 	{
 		prompt.Reset();
+		putOut.Reset();
 		lastGate.clear();
 		darkSince = Clock::now();
+		bright = false;
 		checkAfterAccept = false;
-		mcmQuest = nullptr;
-		hotkeyGlobal = nullptr;
-		lanternHandOn = nullptr;
-		litLanterns.clear();
-		candlelightKeyword = nullptr;
-		tclKey = -1;
-
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		if (!handler || !handler->LookupModByName(kTCLPlugin)) {
-			Log("{} not loaded: 불 밝히기 is off", kTCLPlugin);
-			return;
-		}
-		mcmQuest = handler->LookupForm<RE::TESQuest>(kMCMQuestID, kTCLPlugin);
-		hotkeyGlobal = handler->LookupForm<RE::TESGlobal>(kHotkeyGlobalID, kTCLPlugin);
-		lanternHandOn = handler->LookupForm<RE::TESGlobal>(kLanternHandOnID, kTCLPlugin);
-		candlelightKeyword = handler->LookupForm<RE::BGSKeyword>(kCandlelightKeywordID, kTCLPlugin);
-		for (const auto id : kLitListIDs) {
-			if (auto* list = handler->LookupForm<RE::BGSListForm>(id, kTCLPlugin)) {
-				litLanterns.push_back(list);
-			}
-		}
-		const bool script = mcmQuest && Util::ScriptObject(mcmQuest, kMCMScript.data());
-		Log("TCL: quest={} script={} hotkey global={} lit lantern lists={}/{} candlelight keyword={}",
-			mcmQuest != nullptr, script, hotkeyGlobal != nullptr, litLanterns.size(), kLitListIDs.size(),
-			candlelightKeyword != nullptr);
-		if (!mcmQuest || !script || !hotkeyGlobal) {
-			Log("WARN TCL forms or script missing: 불 밝히기 is off");
-			Util::Notify("CIGAR: TCL 연동 실패. 로그 확인");
-			mcmQuest = nullptr;
-			return;
-		}
+		heldTorch = nullptr;
+		savedLeft = nullptr;
+		torchOut = false;
+		lastNoSource.clear();
+		auto* defaults = RE::BGSDefaultObjectManager::GetSingleton();
+		leftSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kLeftHandEquip) : nullptr;
 		Util::WarnIfSIModuleOn("ItemUse.enabled_makelight", "/MCP/modules/ItemUse/enabled_makelight");
-		ApplyKeyMode();
+		Log("ready: torches from the pack, then known light spells");
 	}
 
 	void Light::Tick()
 	{
 		Util::WarnIfSIModuleOn("ItemUse.enabled_makelight", "/MCP/modules/ItemUse/enabled_makelight");
-		if (hotkeyGlobal) {
-			tclKey = static_cast<std::int32_t>(hotkeyGlobal->value);
-		}
-	}
-
-	void Light::ApplyKeyMode()
-	{
-		if (!mcmQuest) {
-			return;
-		}
-		auto current = Util::IniInt(std::filesystem::path{ kUserIni }, "Controls", "iTCLHotkey");
-		if (!current) {
-			current = Util::IniInt(std::filesystem::path{ kDefaultIni }, "Controls", "iTCLHotkey");
-		}
-		const auto have = static_cast<std::int32_t>(current.value_or(-1));
-		const bool promptOnly = Settings::PromptOnly(kPromptOnlyTarget);
-		auto wanted = have;
-		if (promptOnly) {
-			if (have != kHiddenKey) {
-				// Remember the player's key so switching prompt-only off gives it back.
-				if (have >= 0 && have < 264) {
-					Settings::SetManualKey(kPromptOnlyTarget, have);
-				}
-				wanted = kHiddenKey;
-			}
-		} else if (have == kHiddenKey) {
-			wanted = Settings::ManualKey(kPromptOnlyTarget);
-		}
-		const auto registered = hotkeyGlobal ? static_cast<std::int32_t>(hotkeyGlobal->value) : -1;
-		Log("TCL key: ini {} registered {} -> wanted {} (prompt-only={})", have, registered, wanted, promptOnly);
-		if (wanted >= 0 && (wanted != have || wanted != registered)) {
-			SetTCLKey(wanted);
-		}
-	}
-
-	void Light::SetTCLKey(std::int32_t a_key)
-	{
-		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-		if (!vm || !mcmQuest) {
-			return;
-		}
-		const auto handle = Util::Handle(mcmQuest);
-		// MCM Helper stores the value (and writes its user INI); OnSettingChange makes TCL re-read it
-		// and re-register the key, so no reload is needed. Chained so the second call sees the first.
-		auto* setArgs = RE::MakeFunctionArguments(RE::BSFixedString{ kHotkeySetting }, static_cast<std::int32_t>(a_key));
-		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> afterSet{ new ResultThen([handle, a_key] {
-			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-			auto* changeArgs = RE::MakeFunctionArguments(RE::BSFixedString{ kHotkeySetting });
-			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> afterChange{ new ResultThen([a_key] {
-				auto* self = Light::GetSingleton();
-				const auto registered = self->hotkeyGlobal ? static_cast<std::int32_t>(self->hotkeyGlobal->value) : -1;
-				self->tclKey = registered;
-				self->Log("{}TCL key set to {}: TCL registered {}", registered == a_key ? "" : "WARN ", a_key, registered);
-				if (registered != a_key) {
-					Util::Notify("CIGAR: TCL 단축키 변경 실패. 로그 확인");
-				}
-			}) };
-			const bool queued = vm && vm->DispatchMethodCall2(handle, kMCMScript, "OnSettingChange", changeArgs, afterChange);
-			Light::GetSingleton()->Log("TCL OnSettingChange({}) queued={}", kHotkeySetting, queued);
-		}) };
-		const bool queued = vm->DispatchMethodCall2(handle, kMCMScript, "SetModSettingInt", setArgs, afterSet);
-		Log("TCL SetModSettingInt({}, {}) queued={}", kHotkeySetting, a_key, queued);
 	}
 
 	bool Light::Dark(RE::PlayerCharacter* a_player) const
@@ -225,7 +84,7 @@ namespace CIGAR
 		return ">=100";
 	}
 
-	bool Light::Lit(RE::PlayerCharacter* a_player, std::string& a_how) const
+	bool Light::Lit(RE::PlayerCharacter* a_player, std::string& a_how)
 	{
 		for (const bool left : { true, false }) {
 			if (auto* object = a_player->GetEquippedObject(left); object && object->Is(RE::FormType::Light)) {
@@ -239,39 +98,93 @@ namespace CIGAR
 				if (!base || effect->flags.any(RE::ActiveEffect::Flag::kInactive, RE::ActiveEffect::Flag::kDispelled)) {
 					continue;
 				}
-				if (base->GetArchetype() == RE::EffectArchetypes::ArchetypeID::kLight ||
-					(candlelightKeyword && base->HasKeyword(candlelightKeyword))) {
+				if (base->GetArchetype() == RE::EffectArchetypes::ArchetypeID::kLight) {
 					a_how = "light effect";
 					return true;
 				}
 			}
 		}
-		if (lanternHandOn && lanternHandOn->value >= 1.0f) {
-			a_how = "TCL hand lantern on";
-			return true;
+		return false;
+	}
+
+	bool Light::InWater(RE::PlayerCharacter* a_player)
+	{
+		// Water reads dark to GetLightLevel, and a torch cannot burn in it (the user, 2026-09-24).
+		const auto* state = a_player->AsActorState();
+		return (state && state->IsSwimming()) ||
+		       a_player->GetSubmergeLevel(a_player->GetPositionZ(), a_player->GetParentCell()) >= kInWater;
+	}
+
+	bool Light::IsLightSpell(const RE::SpellItem* a_spell, bool& a_self)
+	{
+		a_self = false;
+		if (!a_spell || a_spell->GetSpellType() != RE::MagicSystem::SpellType::kSpell) {
+			return false;
 		}
-		for (auto* list : litLanterns) {
-			bool worn = false;
-			list->ForEachForm([&](RE::TESForm* a_form) {
-				auto* armor = a_form ? a_form->As<RE::TESObjectARMO>() : nullptr;
-				worn = armor && a_player->GetWornArmor(armor->GetFormID()) != nullptr;
-				return worn ? RE::BSContainer::ForEachResult::kStop : RE::BSContainer::ForEachResult::kContinue;
-			});
-			if (worn) {
-				a_how = "lit TCL lantern worn";
+		for (const auto* effect : a_spell->effects) {
+			const auto* base = effect ? effect->baseEffect : nullptr;
+			if (base && base->GetArchetype() == RE::EffectArchetypes::ArchetypeID::kLight) {
+				a_self = a_spell->GetDelivery() == RE::MagicSystem::Delivery::kSelf;
 				return true;
 			}
 		}
 		return false;
 	}
 
+	Light::Source Light::FindSource(RE::PlayerCharacter* a_player)
+	{
+		Source source;
+		std::uint32_t bestRadius = 0;
+		const auto inventory = a_player->GetInventory([](RE::TESBoundObject& a_obj) { return a_obj.Is(RE::FormType::Light); });
+		for (const auto& [object, data] : inventory) {
+			auto* torch = object ? object->As<RE::TESObjectLIGH>() : nullptr;
+			if (!torch || data.first <= 0 || !torch->CanBeCarried()) {
+				continue;
+			}
+			if (!source.torch || torch->data.radius > bestRadius) {
+				source.torch = torch;
+				bestRadius = torch->data.radius;
+			}
+		}
+		if (source.torch) {
+			return source;
+		}
+
+		// Spells the player learned, and the ones the character starts with.
+		std::vector<RE::SpellItem*> known;
+		for (auto* spell : a_player->GetActorRuntimeData().addedSpells) {
+			known.push_back(spell);
+		}
+		if (auto* base = a_player->GetActorBase(); base && base->actorEffects) {
+			for (std::uint32_t i = 0; i < base->actorEffects->numSpells; ++i) {
+				known.push_back(base->actorEffects->spells[i]);
+			}
+		}
+		const float magicka = a_player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka);
+		bool bestSelf = false;
+		for (auto* spell : known) {
+			bool self = false;
+			if (!IsLightSpell(spell, self)) {
+				continue;
+			}
+			const float cost = spell->CalculateMagickaCost(a_player);
+			if (cost > magicka) {
+				++source.unaffordable;
+				continue;
+			}
+			// A light that follows the player (Candlelight) before one that is thrown (Magelight).
+			if (!source.spell || (self && !bestSelf) || (self == bestSelf && cost < source.cost)) {
+				source.spell = spell;
+				source.cost = cost;
+				bestSelf = self;
+			}
+		}
+		return source;
+	}
+
 	void Light::FastTick()
 	{
 		auto* player = Util::Player();
-		if (!player || !mcmQuest) {
-			prompt.Update(false, {});
-			return;
-		}
 		const auto now = Clock::now();
 		auto* ui = RE::UI::GetSingleton();
 		std::string how;
@@ -279,66 +192,152 @@ namespace CIGAR
 		const bool lit = Lit(player, how);
 		const bool combat = player->IsInCombat();
 		const bool menu = !ui || ui->IsApplicationMenuOpen() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
-		const bool keyKnown = tclKey.load() >= 0;
-		// Water reads dark to GetLightLevel, and a torch or lantern cannot be lit in it (the user,
-		// 2026-09-24: the prompt showed while swimming). Waist-deep wading counts as in water.
-		const auto* state = player->AsActorState();
-		const bool water = (state && state->IsSwimming()) ||
-		                   player->GetSubmergeLevel(player->GetPositionZ(), player->GetParentCell()) >= kInWater;
-		const bool can = dark && !lit && !combat && !menu && !water && keyKnown && !player->IsDead();
-		if (!can) {
+		const bool water = InWater(player);
+
+		// The torch CIGAR handed over is gone from the hand (put away, dropped, swapped): nothing to give back.
+		if (torchOut && player->GetEquippedObject(true) != heldTorch && !checkAfterAccept) {
+			Log("left hand no longer holds {}; forgetting {}", heldTorch ? Util::NameOf(heldTorch) : "-"s,
+				savedLeft ? Util::NameOf(savedLeft) : "empty hand"s);
+			torchOut = false;
+			heldTorch = nullptr;
+			savedLeft = nullptr;
+		}
+
+		const bool want = dark && !lit && !combat && !menu && !water && !player->IsDead();
+		const auto source = want ? FindSource(player) : Source{};
+		const bool has = source.torch || source.spell;
+		if (!want || !has) {
 			darkSince = now;
 		}
-		const bool available = can && now - darkSince >= kDarkDelay;
+		const bool available = want && has && now - darkSince >= kDarkDelay;
 
-		LogGate(std::format("dark={} light{} lit={}{} combat={} menu={} water={} tclKey={} ready={}", dark, LightBand(player), lit,
-			lit ? " (" + how + ")" : "", combat, menu, water, tclKey.load(), available));
+		// Bright enough, for a while, with CIGAR's torch still in hand: offer to put it out.
+		const bool isBright = !LightBelow(player, kBrightLevel);
+		if (!isBright) {
+			bright = false;
+		} else if (!bright) {
+			bright = true;
+			brightSince = now;
+		}
+		const bool canPutOut = torchOut && bright && now - brightSince >= kBrightDelay && !combat && !menu;
+
+		LogGate(std::format("dark={} light{} lit={}{} combat={} menu={} water={} torch={} spell={}{} ready={} torchOut={} putOut={}",
+			dark, LightBand(player), lit, lit ? " (" + how + ")" : "", combat, menu, water,
+			source.torch ? Util::NameOf(source.torch) : "-"s, source.spell ? Util::NameOf(source.spell) : "-"s,
+			source.unaffordable ? std::format(" ({} light spells short of magicka)", source.unaffordable) : ""s,
+			available, torchOut, canPutOut));
+
+		// Dark and unlit with nothing to light: said once per situation, so a missing prompt is explained.
+		const auto noSource = want && !has ? "dark, but no torch carried and no light spell known or affordable"s : ""s;
+		if (noSource != lastNoSource) {
+			lastNoSource = noSource;
+			if (!noSource.empty()) {
+				Log("{}", noSource);
+			}
+		}
 
 		if (checkAfterAccept && now - acceptedAt >= kLitCheck) {
 			checkAfterAccept = false;
-			// TCL's own changelog (v1.35) mentions a random duplicate on toggling off; say when a
-			// press left more TCL items than it found.
-			const auto after = TCLItems(player);
-			std::string changes;
-			for (const auto& [id, count] : after) {
-				const auto it = itemsBefore.find(id);
-				const auto before = it == itemsBefore.end() ? 0 : it->second;
-				if (count != before) {
-					changes += std::format(" {} ({:08X}) {}->{}", Util::NameOf(RE::TESForm::LookupByID(id)), id, before, count);
-				}
-			}
-			for (const auto& [id, count] : itemsBefore) {
-				if (!after.contains(id)) {
-					changes += std::format(" {} ({:08X}) {}->0", Util::NameOf(RE::TESForm::LookupByID(id)), id, count);
-				}
-			}
-			Log("TCL items after the press:{}", changes.empty() ? " unchanged" : changes);
 			if (lit) {
-				Log("lit after the press ({})", how);
+				Log("lit after the accept ({})", how);
 			} else {
-				Log("still not lit {}s after the press: TCL found nothing to light (no lantern, torch or Candlelight?) or ignored the key",
-					std::chrono::duration_cast<std::chrono::seconds>(kLitCheck).count());
+				Log("WARN still not lit {}ms after the accept", std::chrono::duration_cast<std::chrono::milliseconds>(kLitCheck).count());
+				Util::Notify("CIGAR: 불 밝히기 실패. 로그 확인");
 			}
 		}
-		prompt.Update(available, [] { return "불 밝히기 (길게)"s; });
+
+		auto* torch = source.torch;
+		auto* spell = source.spell;
+		if (prompt.Offered() && !available) {
+			prompt.Withdraw();
+			prompt.Reset();
+		}
+		prompt.Update(available, [torch, spell] {
+			return std::format("불 밝히기 (길게): {}", Util::NameOf(torch ? static_cast<RE::TESForm*>(torch) : spell));
+		});
+		putOut.Update(canPutOut, [] { return "불 끄기 (길게)"s; });
 	}
 
 	void Light::OnAccepted(std::uint16_t a_eventID)
 	{
+		auto* player = Util::Player();
+		if (a_eventID == kPutOut) {
+			PutOut(player);
+			return;
+		}
 		if (a_eventID != kLight) {
 			return;
 		}
-		const auto key = hotkeyGlobal ? static_cast<std::int32_t>(hotkeyGlobal->value) : tclKey.load();
-		const bool pressed = key >= 0 && Util::PressKey(key);
-		Log("불 밝히기: pressed TCL key {} ok={}", key, pressed);
-		if (!pressed) {
-			Util::Notify("CIGAR: TCL 단축키 입력 실패. 로그 확인");
+		const auto source = FindSource(player);
+		if (source.torch) {
+			if (!torchOut) {
+				auto* left = player->GetEquippedObject(true);
+				auto* right = player->GetEquippedObject(false);
+				// A two-handed weapon or a bow fills both hands; the right hand keeps it only if it is
+				// one-handed, so what comes back is the left hand as it was.
+				savedLeft = left && left != right ? left : nullptr;
+			}
+			RE::ActorEquipManager::GetSingleton()->EquipObject(player, source.torch, nullptr, 1, leftSlot);
+			heldTorch = source.torch;
+			torchOut = true;
+			Log("took {} ({:08X}) into the left hand; saved {}", Util::NameOf(source.torch), source.torch->GetFormID(),
+				savedLeft ? Util::NameOf(savedLeft) : "empty hand"s);
+		} else if (source.spell) {
+			bool self = false;
+			IsLightSpell(source.spell, self);
+			auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+			if (!caster) {
+				Log("WARN no instant caster for {}", Util::NameOf(source.spell));
+				return;
+			}
+			caster->CastSpellImmediate(source.spell, false, self ? player : nullptr, 1.0f, false, 0.0f, player);
+			player->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kMagicka, source.cost);
+			Log("cast {} ({:08X}, {}, cost {:.0f})", Util::NameOf(source.spell), source.spell->GetFormID(), self ? "self" : "aimed", source.cost);
+		} else {
+			Log("accept ignored: no torch or light spell any more");
 			return;
 		}
 		acceptedAt = Clock::now();
 		checkAfterAccept = true;
-		if (auto* player = Util::Player()) {
-			itemsBefore = TCLItems(player);
+	}
+
+	void Light::PutOut(RE::PlayerCharacter* a_player)
+	{
+		if (!torchOut) {
+			Log("put out ignored: no torch of CIGAR's in hand");
+			return;
 		}
+		auto* manager = RE::ActorEquipManager::GetSingleton();
+		auto* saved = std::exchange(savedLeft, nullptr);
+		bool restored = false;
+		if (auto* spell = saved ? saved->As<RE::SpellItem>() : nullptr) {
+			if (a_player->HasSpell(spell)) {
+				manager->EquipSpell(a_player, spell, leftSlot);
+				restored = true;
+			}
+		} else if (auto* item = saved ? saved->As<RE::TESBoundObject>() : nullptr) {
+			if (Util::ItemCount(a_player, item) > 0) {
+				// A shield uses its own slot; a weapon is sent to the left hand.
+				manager->EquipObject(a_player, item, nullptr, 1, item->Is(RE::FormType::Weapon) ? leftSlot : nullptr);
+				restored = true;
+			}
+		}
+		if (!restored && heldTorch) {
+			manager->UnequipObject(a_player, heldTorch, nullptr, 1, leftSlot);
+		}
+		Log("put out {}: left hand back to {}", heldTorch ? Util::NameOf(heldTorch) : "-"s,
+			restored ? Util::NameOf(saved) : (saved ? Util::NameOf(saved) + " (gone; hand emptied)" : "empty hand"s));
+		torchOut = false;
+		heldTorch = nullptr;
+		putOut.Withdraw();
+		putOut.Reset();
+	}
+
+	void Light::OnDisabled()
+	{
+		torchOut = false;
+		heldTorch = nullptr;
+		savedLeft = nullptr;
+		checkAfterAccept = false;
 	}
 }

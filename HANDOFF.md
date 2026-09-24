@@ -1,27 +1,25 @@
 # CIGAR — session handoff (updated 2026-09-21)
 
-## Resume here (2026-09-24, late)
+## Resume here (2026-09-25)
 
-- In-game results reported on 2026-09-24: `Recharge` passed; pass time in a chair and no equip
-  prompt for TCL lanterns passed; `QuestAction` not reached yet (High Hrothgar).
-- Changed after that report, deployed, **untested in game**:
-  - `ToolSwap` removed (`docs/024-tool-swap.md` says why: vanilla E mines, and Woodcutting Tweaks'
-    E harvests a log from a tree; a prompt must do the action, not hand over a tool).
-  - `ChairDrink` built (`docs/026-chair-drink.md`): inns and houses, alcohol only, really drunk.
-  - Pass time no longer offered at work furniture (chopping block, sawmill): `Rest::InChair`
-    rejects `FurnitureSpecial` and workbench furniture (`docs/019-rest.md`).
-  - 불 밝히기 not offered in water (`docs/021-make-light.md`).
-  - No equip prompt for fishing rods (`docs/018-item-equip.md`).
-- Outside CIGAR, done: CEE's pause and follower hotkey globals set to 0 (no key) in
-  `TKL - MCM Setting.esp` (Installation and Modification, Case 028); a new game verifies it.
-- Waiting on the user:
-  - Dropping Torches Candlelight and Lanterns from the load order and making `Light` equip a
-    vanilla torch itself (the user's idea, 2026-09-24; reported TCL defects: lanterns duplicated,
-    and repeated draw/sheathe lagged TCL's scripts until weapons would not sheathe). An opinion was
-    given; nothing is removed yet. It would also settle 불 끄기 (give the left hand back).
-  - Streamlined Fishing is to be absorbed into CIGAR next, after the current problems.
+- In-game on 2026-09-24/25, passed: `Recharge`; pass time in a chair, and not at work furniture;
+  `ChairDrink`; no 불 밝히기 in water; no fishing-rod equip prompt. `QuestAction` not reached yet.
+- Changed after that, deployed, **untested in game**:
+  - `Light` rebuilt without TCL (`docs/021-make-light.md`, last section): torch into the left hand,
+    else a light spell; no prompt without either; 불 끄기 gives the left hand back once bright.
+  - `ItemEquip` skips woodcutter's axes (`docs/018-item-equip.md`).
+- Outside CIGAR (Installation and Modification, cases 028-029), done 2026-09-25, all need a game
+  run:
+  - CEE Esc: MCM Memory restored the follower key as 1 (Esc) on every game; its profile now holds
+    0, on top of the `TKL - MCM Setting.esp` globals.
+  - Torches Candlelight and Lanterns disabled in `TKL - MUNG ADDON` (both mods, both plugins).
+  - Skyrim Party Sheet player HUD `Mode` 1 -> 0 (it faded when full, idle and not battle-ready,
+    which sitting always is).
+  - Auto Physics Reset logging on: "running full smp reset" in the console is FSMP answering its
+    automatic resets (furniture, sync animations, riding), not the ~ key.
+- Next, the user's plan: absorb Streamlined Fishing into CIGAR.
 - SI: every switch CIGAR needed is off, and the user no longer weighs SI integration (SI is being
-  retired). Chair eat/drink became `ChairDrink`.
+  retired).
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
@@ -168,7 +166,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 | `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
-| `Light` | 불 밝히기 | Torches Candlelight and Lanterns | `021` |
+| `Light` | 불 밝히기, 불 끄기 | — (vanilla torches, light spells) | `021` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |

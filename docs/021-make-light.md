@@ -1,8 +1,9 @@
 # 021 · Make light
 
-Status (2026-09-24): built as module `Light` and deployed; not yet tested in game. The user
-picked it as the next SI absorption and chose prompt-only for TCL's hotkey. SI's
-`ItemUse.enabled_makelight` is now in the replaced list (turned off by the deploy sync).
+Status (2026-09-25): **rebuilt without TCL** and deployed; not yet tested in game. The user
+dropped Torches Candlelight and Lanterns from the order on 2026-09-24 (lanterns duplicated, and
+repeated draw/sheathe lagged its scripts until weapons would not sheathe), so the TCL design below
+is history; the current design is the last section. SI's `ItemUse.enabled_makelight` stays off.
 
 ## What SI does (settings and DLL strings)
 
@@ -113,3 +114,25 @@ mouse 4 no longer reaching TCL under prompt-only, and the panel switch restoring
 
 The user saw 불 밝히기 while swimming: water reads dark to `GetLightLevel`. The gate now also
 requires not swimming and a submerge level below 0.5, and logs `water=`.
+
+## Without TCL (2026-09-25)
+
+The user's rules: vanilla torches and light spells only, and **no prompt when the player has
+neither** (a lantern prompt with nothing to light was the complaint).
+
+- Gate (100 ms): `GetLightLevel < 14` for 300 ms, not lit (a light in either hand or an active
+  light-archetype effect), not in combat, no menu or dialogue, not in water, and a source.
+- Source: a carryable torch (LIGH with `CanBeCarried`) in the pack, the brightest one; else a
+  known light spell (effect archetype `Light`, from the player's added spells and the base's spell
+  list) that magicka covers, self-delivered ones (Candlelight) before aimed ones (Magelight), then
+  the cheapest. The gate line lists the torch, the spell and how many light spells are short of
+  magicka; "dark, but no torch ... or light spell" is logged once when that blocks the prompt.
+- 불 밝히기 (길게): <횃불 또는 마법>. A torch goes into the left hand and what the left hand held
+  (weapon, shield or spell; not the other half of a two-hander) is remembered. A spell is cast
+  through the instant caster (self-target for Candlelight) and its magicka cost is taken.
+  1.5 s later the log says whether the player is lit, with a notification if not.
+- 불 끄기 (길게) — the open question from 2026-09-24, settled by CIGAR's choice: offered while
+  CIGAR's torch is in hand and the light has held at 30 or brighter for 3 s, out of combat. It gives
+  the left hand back (or empties it when the saved item is gone). A spell light is left to expire.
+- If the player changes the left hand themselves, the saved item is forgotten.
+- TCL's prompt-only target (`tcl`) and its panel line are gone.
