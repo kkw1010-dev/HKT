@@ -25,7 +25,7 @@ namespace CIGAR::Settings
 	// Saves the file and takes every prompt off the screen, so each is offered again with its new key.
 	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key);
 
-	// Prompt-only mode for another mod's own key ("grapple", "surrender", "valhalla"): the module moves that
+	// Prompt-only mode for another mod's own key ("grapple", "surrender", "valhalla", "fillherup"): the module moves that
 	// mod's key to a key no keyboard sends (F13/F14), so only CIGAR's prompt triggers it and the
 	// real key is free for prompts. ManualKey is the key it had before, restored when switched off.
 	// Default: on.

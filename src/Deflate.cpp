@@ -1,11 +1,16 @@
 #include "Deflate.h"
 
+#include "Settings.h"
+
 #include "Util.h"
 
 namespace CIGAR
 {
 	namespace
 	{
+		constexpr auto kPromptOnlyTarget = "fillherup"sv;
+		// SkyUI's value for an unmapped key; FHU's ability registers only keys >= 0.
+		constexpr std::int32_t kNoKey = -1;
 		constexpr auto kFHUPlugin = "sr_FillHerUp.esp"sv;
 		constexpr RE::FormID kInflateQuestID = 0xD63;  // sr_inflateQuest
 		constexpr std::uint32_t kPlayerAliasID = 1;     // "Player", script sr_infDeflateAbility
@@ -124,6 +129,41 @@ namespace CIGAR
 			return;
 		}
 		Log("ready");
+		ApplyKeyMode();
+	}
+
+	void Deflate::ApplyKeyMode()
+	{
+		const auto object = Util::ScriptObject(config, kConfigScript);
+		auto* var = object ? object->GetProperty("defKey") : nullptr;
+		if (!var || !var->IsInt()) {
+			return;
+		}
+		const auto current = var->GetSInt();
+		if (Settings::PromptOnly(kPromptOnlyTarget)) {
+			if (current == kNoKey) {
+				return;
+			}
+			// Remember the player's key so switching prompt-only off gives it back.
+			if (current >= 0 && current < 264) {
+				Settings::SetManualKey(kPromptOnlyTarget, current);
+			}
+			var->SetSInt(kNoKey);
+			Log("prompt-only: FHU deflate key {} -> none (defKey {})", current, DeflateKey());
+		} else if (current == kNoKey) {
+			const auto manual = Settings::ManualKey(kPromptOnlyTarget);
+			if (manual < 0) {
+				Log("WARN FHU deflate key is unset and no earlier key is known; set one in FHU's MCM");
+				return;
+			}
+			var->SetSInt(manual);
+			// The ability registered no key while defKey was -1 (it registers only a key >= 0).
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			auto* args = RE::MakeFunctionArguments(static_cast<std::int32_t>(manual));
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			const bool queued = vm && vm->DispatchMethodCall2(Util::Handle(playerAlias), kAbilityScript, "RegisterForKey", args, none);
+			Log("restored FHU deflate key {} (register queued={})", manual, queued);
+		}
 	}
 
 	void Deflate::QueryInflationType()

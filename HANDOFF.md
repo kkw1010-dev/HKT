@@ -1,25 +1,21 @@
 # CIGAR — session handoff (updated 2026-09-21)
 
-## Resume here (2026-09-25, later)
+## Resume here (2026-09-25, end of session)
 
-- In-game on 2026-09-25: woodcutter's axes are no longer offered (passed). CEE's Esc no longer
-  fires but its MCM still showed Esc; the Party Sheet HUD still vanished while sitting.
-- The user's decisions the same day: **CIGAR's lighting work is abandoned** (`docs/021`), TCL comes
-  back on its own hotkey. `Light` is removed from CIGAR (built and deployed); `ItemEquip` hides
-  TCL lanterns again.
-- TCL is enabled again in `profiles\TKL - MUNG ADDON` (the removal backups copied back with MO2
-  closed, 2026-09-25).
-- Outside CIGAR (Installation and Modification, case 029):
-  - The ~ key really did run `smp reset`: GT Softbody's `SoftbodySmpReset` registers key 41 when its
-    reset-key option is on (default on). `TKL - MCM Setting.esp` now sets `SoftbodyGlobalQuest`'s
-    `ResetKeyEnabled` to false.
-  - MCM Memory stores Esc (1) for a keymap when a remap dialog is cancelled with Esc
-    (`valueSource: menu.selectedKeyCode`); that is how CEE and TCL got Esc. CEE's two keys are now
-    -1 in the plugin and the profile; TCL's key is 259 in the profile and its MCM INI.
-  - MCM Memory's restore "failure" on new games is SexLab Eager NPCs: its `OnConfigClose` starts
-    `SLENControllerQuest`, which ran past the 30 s call limit; the limit is now 90 s.
-  - Party Sheet `[PlayerHUD] Mode` went back to 1 (0 did not help). CIGAR now logs the vanilla HUD
-    mode and alpha (`HUD mode ...` lines) so the next sit shows whether the HUD mode changes.
+- In-game on 2026-09-25, passed: ~ no longer runs `smp reset`; CEE's MCM keys empty; TCL on mouse 4;
+  MCM Memory restore without failures.
+- Built and deployed after that, **untested in game**: Fill Her Up in the prompt-only list
+  (`docs/006-deflate.md`, last section). Panel checkbox, default on.
+- The user's standing rule (2026-09-25, `docs/000-adding-a-module.md` 3a): a hotkey CIGAR takes over
+  is removed from the mod **and** from MCM Memory's profile. Applied now to FHU (82 -> -1), Acheron's
+  surrender key (37 -> 101, CIGAR's hidden F14) and PNO's urinate key (51 -> -1); `verify_deploy.py`
+  checks these rows and fails on a cancelled-remap Esc.
+- Party Sheet HUD while sitting: the `HUD mode` log lines show the vanilla HUD stayed in `All` at
+  alpha 100 through three chair sits (04:00:34, 04:00:55, 04:01:04), so the vanishing is Party
+  Sheet's own logic, not the game HUD. Not yet tried: its `[HUDVisibility] Enabled` (the "hide
+  widgets during exploration" system) set to 0 in `Skyrim Party Sheet FHD Preset\SKSE\Plugins\PartySheet.ini`,
+  or the same switch in Party Sheet's in-game settings.
+- CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,

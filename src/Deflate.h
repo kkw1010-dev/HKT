@@ -20,6 +20,14 @@ namespace CIGAR
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
 		void OnDisabled() override;
 
+		// Prompt-only: FHU's deflate key (sr_inflateConfig.defKey) is set to -1, so no keyboard key
+		// triggers it; the prompt still works, because the ability only compares the code it is
+		// sent with defKey and CIGAR sends defKey. Switching prompt-only off gives the key back.
+		// Game thread.
+		void ApplyKeyMode();
+		// The key FHU listens to now, or -1.
+		std::int32_t Key() const { return inflater ? DeflateKey() : -1; }
+
 		// Result of FHU's GetMostRecentInflationType(player), from a VM thread.
 		void SetInflationType(std::int32_t a_type);
 

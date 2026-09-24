@@ -1,6 +1,7 @@
 #include "Panel.h"
 
 #include "Eat.h"
+#include "Deflate.h"
 #include "Execute.h"
 #include "Grapple.h"
 #include "Jujutsu.h"
@@ -180,6 +181,21 @@ namespace CIGAR::Panel
 			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
 				[] { Execute::GetSingleton()->CheckKey(); });
 			{
+				bool on = Settings::PromptOnly("fillherup");
+				if (ImGui::Checkbox("Fill Her Up 배출: 프롬프트 전용##po-fillherup", &on)) {
+					Settings::SetPromptOnly("fillherup", on);
+					SKSE::GetTaskInterface()->AddTask([] { Deflate::GetSingleton()->ApplyKeyMode(); });
+				}
+				ImGui::Indent();
+				const auto key = Deflate::GetSingleton()->Key();
+				if (on) {
+					ImGui::TextColored(kDim, "FHU 배출 키 해제(키 없음). 배출은 프롬프트로만");
+				} else {
+					ImGui::TextColored(kDim, "FHU 자체 키 사용. 현재 키: %s", key >= 0 ? NameOf(key).c_str() : "없음");
+				}
+				ImGui::Unindent();
+			}
+			{
 				bool on = Settings::PromptOnly("privateneeds");
 				if (ImGui::Checkbox("Private Needs: 프롬프트 전용##po-privateneeds", &on)) {
 					Settings::SetPromptOnly("privateneeds", on);
@@ -200,6 +216,7 @@ namespace CIGAR::Panel
 					Surrender::GetSingleton()->CheckKey();
 					Execute::GetSingleton()->CheckKey();
 					Needs::GetSingleton()->ApplyKeyMode();
+					Deflate::GetSingleton()->ApplyKeyMode();
 				});
 			}
 			const auto grapple = Grapple::GetSingleton()->Key();

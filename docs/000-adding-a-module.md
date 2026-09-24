@@ -77,6 +77,22 @@ When the module replaces SI switches, add them to `REPLACED` in both
 with `Util::WarnIfSIModuleOn`. SI re-applies preset switches when its menu opens
 unless the preset is Power User (2), which the sync tool pins.
 
+## 3a. Taking over another mod's hotkey (the user's rule, 2026-09-25)
+
+When a module takes over, moves or unbinds another mod's hotkey (prompt-only), do both:
+
+1. **Remove it from the mod itself**: whatever the mod reads the key from (its MCM Helper INI, a
+   global, a script property, its own settings file). "No key" is -1, SkyUI's value; 0 can still
+   show as Esc in an MCM.
+2. **Change it in MCM Memory's profile**,
+   `mods\TAKEALOOK - MCM Memory Profile\SKSE\Plugins\MCMMemory\Profiles\Default.json` (the
+   keymap row for that mod and option). MCM Memory auto-restores its stored keys on every new game,
+   after CIGAR's load-time change, so a stored key silently brings the mod's hotkey back. A row with
+   value 1 and `valueSource: menu.selectedKeyCode` is Esc recorded from a cancelled remap dialog.
+
+Back up both files first. Add the row to `PROMPT_ONLY_PROFILE_KEYS` in `tools/verify_deploy.py`,
+which fails the build when the profile would restore a taken-over key or holds a cancelled-remap Esc.
+
 ## 4. Build, deploy, verify
 
 ```powershell

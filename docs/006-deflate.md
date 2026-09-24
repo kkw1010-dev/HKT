@@ -78,3 +78,15 @@ its animating faction, so the release still reaches CIGAR.
   `gate` lines. Each forwarded key event is logged, and so is its return.
 - `tools/verify_deploy.py` checks that the FHU scripts still contain the names
   read above.
+
+## Prompt-only (2026-09-25)
+
+At the user's request FHU joins the prompt-only list (panel: "Fill Her Up 배출: 프롬프트 전용",
+default on). `Deflate::ApplyKeyMode` (at load and from the panel's key check button) sets
+`sr_inflateConfig.defKey` to -1 and remembers the old key in `CIGAR.json`
+(`promptOnly.fillherup.manualKey`, seeded with 82, the key MCM Memory had stored). This works
+because `sr_infDeflateAbility.OnKeyDown/OnKeyUp` only compare the code they receive with `defKey`,
+and CIGAR sends `defKey`, so -1 still matches; a physical key no longer does, and the ability
+registers no key while `defKey` is below 0. Switching prompt-only off writes the remembered key back
+and asks the ability to `RegisterForKey` it. MCM Memory's FHU row is -1 as well (see `docs/000`,
+the hotkey rule).

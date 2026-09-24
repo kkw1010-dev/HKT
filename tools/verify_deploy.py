@@ -589,6 +589,45 @@ def winning_file(modlist, relative):
     return None
 
 
+MCM_MEMORY_PROFILE = os.path.join(MODS, "TAKEALOOK - MCM Memory Profile", "SKSE", "Plugins", "MCMMemory",
+                                  "Profiles", "Default.json")
+CIGAR_SETTINGS = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.json")
+# (prompt-only target, MCM Memory modID, option label, allowed values). MCM Memory re-applies its
+# stored keys on every new game, after CIGAR's load-time change, so a stored real key silently
+# brings the mod's own hotkey back. The user's rule (2026-09-25): a hotkey CIGAR takes over is
+# removed from the mod and from the MCM Memory profile.
+PROMPT_ONLY_PROFILE_KEYS = [
+    ("fillherup", "sr_inflateconfig::Fill Her Up", "$FHU_DEF_ABILITY", {-1}),
+    ("surrender", "AcheronMCM:: Acheron", "$Achr_SurrenderKey", {0x65}),
+    ("privateneeds", "pno_configscript::Private Needs - Orgasm", None, {-1}),
+    ("grapple", "FH_Grapple::Grapple", "Grapple Hotkey", {-1, 0x64}),
+]
+
+
+def check_mcm_memory_keys():
+    """MCM Memory must not restore a hotkey CIGAR took over, nor Esc recorded from a cancelled
+    remap (valueSource menu.selectedKeyCode with value 1)."""
+    if not os.path.isfile(MCM_MEMORY_PROFILE):
+        note("MCM Memory profile absent: nothing restores mod hotkeys")
+        return
+    with open(MCM_MEMORY_PROFILE, encoding="utf-8") as f:
+        settings = json.load(f).get("settings", [])
+    prompt_only = {}
+    if os.path.isfile(CIGAR_SETTINGS):
+        with open(CIGAR_SETTINGS, encoding="utf-8") as f:
+            prompt_only = json.load(f).get("promptOnly", {})
+    keymaps = [x for x in settings if x.get("controlType") == "keymap"]
+    for target, mod_id, label, allowed in PROMPT_ONLY_PROFILE_KEYS:
+        if not prompt_only.get(target, {}).get("enabled", True):
+            continue
+        rows = [x for x in keymaps if x.get("modID") == mod_id and (label is None or x.get("optionLabel") == label)]
+        bad = [(x.get("optionLabel"), x.get("value")) for x in rows if x.get("value") not in allowed]
+        check(not bad, "MCM Memory keeps %s's key off (prompt-only)%s" % (target, " - stored: %s" % bad if bad else ""))
+    esc = [(x.get("modID"), x.get("optionLabel")) for x in keymaps
+           if x.get("value") == 1 and x.get("valueSource") == "menu.selectedKeyCode"]
+    check(not esc, "MCM Memory stores no Esc from a cancelled key remap%s" % (" - found: %s" % esc if esc else ""))
+
+
 def check_rest(modlist):
     """Rest sends vanilla idle events to the player's graph; a behaviour build without them makes
     the prompt do nothing in game. Case-insensitive, as the game matches event names."""
@@ -718,6 +757,7 @@ def main():
     check_valhalla(modlist)
     check_jujutsu(modlist)
     check_rest(modlist)
+    check_mcm_memory_keys()
     check_behaviour(modlist, accept_behaviour)
 
     # Replaced SI modules must be off, or both prompts appear.
