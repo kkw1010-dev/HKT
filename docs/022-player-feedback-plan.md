@@ -1,6 +1,7 @@
-# 022 · Player feedback: prompts in menus, and custom rules (plan)
+# 022 · Player feedback: prompts in menus, and custom rules
 
-Status (2026-09-24): plan only. Feedback from another player, relayed by the user with a
+Status (2026-09-24): part 1 built (option B only) and deployed, not yet tested in game; part 2
+declined by the user (see the end). Feedback from another player, relayed by the user with a
 screenshot: CIGAR's 탈의하기 prompt stays on screen over the Journal (System tab). The player asked
 whether that is unavoidable, and whether players could make their own rules and keys, "like
 Scratch or Arduino".
@@ -62,3 +63,32 @@ An idea to scope, not a commitment: players write their own prompts as data, wit
 - **Risks.** Condition parameters need parsing and validation (a wrong one must say so, never fail
   silently); console commands are powerful, so they stay opt-in; dozens of rules at 10 ticks a
   second is cheap, hundreds may need throttling.
+
+## Outcome (2026-09-24)
+
+### Part 1: built as option B only
+
+`main.cpp` listens to `MenuOpenCloseEvent`. A menu blocks when its own flags include
+`kPausesGame`, `kUsesCursor`, `kUpdateUsesCursor` or `kModal` (CommonLib's per-menu flag notes:
+Inventory, Journal, Map, Dialogue, Barter, Container, Crafting, Lockpicking, Book, Sleep/Wait,
+Console, MessageBox all qualify; HUD, Cursor, Fader and Mist do not). On the first blocking
+menu CIGAR calls `Prompts::WithdrawEverything()` and stops ticking modules; on the last close the
+prompts are offered again on the next tick. The log names each menu that turns prompts off and
+back on. A backstop in `RunTick` drops any recorded menu the UI no longer reports open, so a
+missed close event cannot leave prompts off.
+
+Option A (a CIGAR SkyPrompt theme with `hide_in_menu`) was dropped: it would copy the default
+theme's values, so a later change to the player's default theme would leave CIGAR's prompts
+looking different, and the installed default theme names a Korean font
+(`NanumSquareR.ttf`) other players may not have. B alone takes the prompts down when the menu
+opens.
+
+### Part 2: declined
+
+The user's answer: letting players write conditions would turn CIGAR into a framework and cost it
+its identity. CIGAR is a hotkey terminator, a one-button interaction mod, and its UX is treated
+as sacrosanct: every interaction is designed, not configured. 유술 is the model: the endless NPC
+block loop was solved by game design (the Tekken logic that a solid guard is broken by a
+throw), not by capping NPC blocking, which would strip shield NPCs down to reckless attackers.
+A rule engine also grows the development cost with every condition, action, parser and editor
+that must be validated and supported.

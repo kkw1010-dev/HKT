@@ -21,6 +21,8 @@
 #include "Util.h"
 #include "WeaponSwap.h"
 
+#include <set>
+
 namespace CIGAR
 {
 	std::span<Module* const> Modules()
@@ -48,6 +50,61 @@ namespace
 	std::atomic_bool tickQueued{ false };
 	std::atomic_bool fullTickDue{ false };
 
+	// Menus that take the screen or the input: while any is open CIGAR's prompts are off and the
+	// modules do not run. Another player saw 탈의하기 over the Journal: ticks stopped when the game
+	// paused, but the prompts already queued stayed drawn. Decided by the menu's own flags, so
+	// menus added by other mods count too, and HUD-type overlays (HUD, cursor, fader, QuickLoot's
+	// LootMenu) do not.
+	std::set<std::string, std::less<>> blockingMenus;  // game thread
+	std::atomic_bool menuBlocked{ false };
+
+	bool Blocks(const RE::IMenu& a_menu)
+	{
+		using Flag = RE::UI_MENU_FLAGS;
+		return a_menu.menuFlags.any(Flag::kPausesGame, Flag::kUsesCursor, Flag::kUpdateUsesCursor, Flag::kModal);
+	}
+
+	void MenuChanged(const std::string& a_name, bool a_opening)
+	{
+		if (a_opening) {
+			auto* ui = RE::UI::GetSingleton();
+			const auto menu = ui ? ui->GetMenu(a_name) : nullptr;
+			if (!menu || !Blocks(*menu)) {
+				return;
+			}
+			const bool first = blockingMenus.empty();
+			blockingMenus.emplace(a_name);
+			if (first) {
+				menuBlocked = true;
+				Prompts::WithdrawEverything();
+				logs::info("menu '{}' opened: prompts off", a_name);
+			}
+		} else if (blockingMenus.erase(a_name) != 0 && blockingMenus.empty()) {
+			menuBlocked = false;
+			logs::info("menu '{}' closed: prompts back", a_name);
+		}
+	}
+
+	class MenuWatch final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
+	{
+	public:
+		static MenuWatch* GetSingleton()
+		{
+			static MenuWatch singleton;
+			return &singleton;
+		}
+
+		RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
+		{
+			if (a_event) {
+				std::string name{ a_event->menuName.c_str() };
+				const bool opening = a_event->opening;
+				SKSE::GetTaskInterface()->AddTask([name, opening] { MenuChanged(name, opening); });
+			}
+			return RE::BSEventNotifyControl::kContinue;
+		}
+	};
+
 	void InitializeLog()
 	{
 		auto path = logs::log_directory();
@@ -72,7 +129,19 @@ namespace
 		}
 		auto* ui = RE::UI::GetSingleton();
 		const auto* player = Util::Player();
-		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused())) {
+		if (menuBlocked && ui) {
+			// Backstop for a close event that never came: drop menus the UI no longer has open.
+			for (auto it = blockingMenus.begin(); it != blockingMenus.end();) {
+				if (ui->IsMenuOpen(*it)) {
+					++it;
+				} else {
+					logs::info("menu '{}' is no longer open (missed close): dropped", *it);
+					it = blockingMenus.erase(it);
+				}
+			}
+			menuBlocked = !blockingMenus.empty();
+		}
+		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused()) || menuBlocked) {
 			return;
 		}
 		for (auto* module : Modules()) {
@@ -133,6 +202,12 @@ namespace
 			break;
 		case SKSE::MessagingInterface::kDataLoaded:
 			Prompts::Init();
+			if (auto* ui = RE::UI::GetSingleton()) {
+				ui->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatch::GetSingleton());
+				logs::info("menu watch registered");
+			} else {
+				logs::error("UI unavailable: prompts will stay on screen over menus");
+			}
 			Dress::GetSingleton()->RegisterEvents();
 			Needs::GetSingleton()->RegisterEvents();
 			QuestTrack::GetSingleton()->RegisterEvents();
