@@ -188,6 +188,13 @@ namespace CIGAR
 				return;
 			}
 		}
+		// Torches Candlelight and Lanterns swaps lit and unlit lantern armors in and out of the
+		// inventory on every toggle, which would offer them here each time. TCL is run by its own
+		// hotkey (the user, 2026-09-25).
+		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "TorchesCandlelightLanterns")) {
+			Log("acquired {} ({:08X}) from TCL: not offered", Util::NameOf(item), a_itemID);
+			return;
+		}
 		// A woodcutter's axe is a tool carried for Woodcutting Tweaks' tree harvest and the chopping
 		// block, never wielded (the user, 2026-09-24).
 		if (woodAxes && woodAxes->HasForm(item)) {

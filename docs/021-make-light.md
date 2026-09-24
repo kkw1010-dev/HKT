@@ -1,9 +1,9 @@
 # 021 · Make light
 
-Status (2026-09-25): **rebuilt without TCL** and deployed; not yet tested in game. The user
-dropped Torches Candlelight and Lanterns from the order on 2026-09-24 (lanterns duplicated, and
-repeated draw/sheathe lagged its scripts until weapons would not sheathe), so the TCL design below
-is history; the current design is the last section. SI's `ItemUse.enabled_makelight` stays off.
+Status (2026-09-25): **abandoned; the module is removed.** The user ended CIGAR's lighting work
+("횃불 랜턴 CIGAR 편입 프로젝트는 전면 폐기, 그냥 단축키로 관리하는게 낫겠다"). Torches Candlelight
+and Lanterns is restored and runs on its own hotkey (259, mouse button 4). CIGAR keeps only the
+`ItemEquip` filter that hides TCL's lantern armors. Everything below is history.
 
 ## What SI does (settings and DLL strings)
 

@@ -7,7 +7,6 @@
 #include "Grapple.h"
 #include "Jujutsu.h"
 #include "ItemEquip.h"
-#include "Light.h"
 #include "Recharge.h"
 #include "ChairDrink.h"
 #include "QuestAction.h"
@@ -30,12 +29,12 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 20> modules{
+		static const std::array<Module*, 19> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
-			Rest::GetSingleton(), Light::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
+			Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 			QuestAction::GetSingleton()
 		};
 		return modules;
@@ -114,6 +113,30 @@ namespace
 		if (now != last) {
 			logs::info("HUD menu movie {}", now == 1 ? "visible" : now == 0 ? "hidden" : "absent");
 			last = now;
+		}
+		// The vanilla HUD's mode stack (the top entry is the mode in force, such as "All" or
+		// "MovementDisabled") and its root alpha. Skyrim Party Sheet hides its overlay while the
+		// player sits (reported 2026-09-24/25) and its DLL knows a "HUD Mode"; this tells whether
+		// sitting changes the mode it may be reading.
+		if (!hud || !hud->uiMovie) {
+			return;
+		}
+		static std::string lastMode;
+		RE::GFxValue modes;
+		std::string mode = "?";
+		if (hud->uiMovie->GetVariable(&modes, "_root.HUDMovieBaseInstance.HUDModes") && modes.IsArray() && modes.GetArraySize() > 0) {
+			RE::GFxValue top;
+			if (modes.GetElement(modes.GetArraySize() - 1, &top) && top.IsString()) {
+				mode = std::format("{} (depth {})", top.GetString(), modes.GetArraySize());
+			}
+		}
+		RE::GFxValue alpha;
+		if (hud->uiMovie->GetVariable(&alpha, "_root.HUDMovieBaseInstance._alpha") && alpha.IsNumber()) {
+			mode += std::format(" alpha {:.0f}", alpha.GetNumber());
+		}
+		if (mode != lastMode) {
+			logs::info("HUD mode {}", mode);
+			lastMode = std::move(mode);
 		}
 	}
 

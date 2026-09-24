@@ -53,3 +53,8 @@ activated).
 At the user's request, anything in `woodChoppingAxes` (`10ACCC:Skyrim.esm`: the woodcutter's axe,
 the Poacher's Axe) is not offered: it is carried for Woodcutting Tweaks' tree harvest and the
 chopping block, not wielded. The TCL lantern filter is gone with TCL.
+
+## TCL filter back (2026-09-25)
+
+TCL was restored after CIGAR's `Light` was abandoned, so the TCL lantern filter is back (the
+2026-09-24 test of it passed). The woodcutter's axe filter stays.

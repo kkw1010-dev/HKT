@@ -1,25 +1,27 @@
 # CIGAR — session handoff (updated 2026-09-21)
 
-## Resume here (2026-09-25)
+## Resume here (2026-09-25, later)
 
-- In-game on 2026-09-24/25, passed: `Recharge`; pass time in a chair, and not at work furniture;
-  `ChairDrink`; no 불 밝히기 in water; no fishing-rod equip prompt. `QuestAction` not reached yet.
-- Changed after that, deployed, **untested in game**:
-  - `Light` rebuilt without TCL (`docs/021-make-light.md`, last section): torch into the left hand,
-    else a light spell; no prompt without either; 불 끄기 gives the left hand back once bright.
-  - `ItemEquip` skips woodcutter's axes (`docs/018-item-equip.md`).
-- Outside CIGAR (Installation and Modification, cases 028-029), done 2026-09-25, all need a game
-  run:
-  - CEE Esc: MCM Memory restored the follower key as 1 (Esc) on every game; its profile now holds
-    0, on top of the `TKL - MCM Setting.esp` globals.
-  - Torches Candlelight and Lanterns disabled in `TKL - MUNG ADDON` (both mods, both plugins).
-  - Skyrim Party Sheet player HUD `Mode` 1 -> 0 (it faded when full, idle and not battle-ready,
-    which sitting always is).
-  - Auto Physics Reset logging on: "running full smp reset" in the console is FSMP answering its
-    automatic resets (furniture, sync animations, riding), not the ~ key.
+- In-game on 2026-09-25: woodcutter's axes are no longer offered (passed). CEE's Esc no longer
+  fires but its MCM still showed Esc; the Party Sheet HUD still vanished while sitting.
+- The user's decisions the same day: **CIGAR's lighting work is abandoned** (`docs/021`), TCL comes
+  back on its own hotkey. `Light` is removed from CIGAR (built and deployed); `ItemEquip` hides
+  TCL lanterns again.
+- **Pending, blocked on MO2 being open:** re-enabling TCL in `profiles\TKL - MUNG ADDON`. The only
+  differences from `modlist.txt/plugins.txt/loadorder.txt.bak_20260925_tcl-removal` are the TCL
+  lines, so with MO2 closed those three backups can be copied back.
+- Outside CIGAR (Installation and Modification, case 030):
+  - The ~ key really did run `smp reset`: GT Softbody's `SoftbodySmpReset` registers key 41 when its
+    reset-key option is on (default on). `TKL - MCM Setting.esp` now sets `SoftbodyGlobalQuest`'s
+    `ResetKeyEnabled` to false.
+  - MCM Memory stores Esc (1) for a keymap when a remap dialog is cancelled with Esc
+    (`valueSource: menu.selectedKeyCode`); that is how CEE and TCL got Esc. CEE's two keys are now
+    -1 in the plugin and the profile; TCL's key is 259 in the profile and its MCM INI.
+  - MCM Memory's restore "failure" on new games is SexLab Eager NPCs: its `OnConfigClose` starts
+    `SLENControllerQuest`, which ran past the 30 s call limit; the limit is now 90 s.
+  - Party Sheet `[PlayerHUD] Mode` went back to 1 (0 did not help). CIGAR now logs the vanilla HUD
+    mode and alpha (`HUD mode ...` lines) so the next sit shows whether the HUD mode changes.
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR.
-- SI: every switch CIGAR needed is off, and the user no longer weighs SI integration (SI is being
-  retired).
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
@@ -166,7 +168,6 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 | `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
-| `Light` | 불 밝히기, 불 끄기 | — (vanilla torches, light spells) | `021` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |

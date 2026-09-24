@@ -5,7 +5,6 @@
 #include "Grapple.h"
 #include "Jujutsu.h"
 #include "ItemEquip.h"
-#include "Light.h"
 #include "Module.h"
 #include "Needs.h"
 #include "Potion.h"
@@ -79,8 +78,6 @@ namespace CIGAR::Panel
 				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
 			Label{ "ItemEquip", "획득 장비 착용", "",
 				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
-			Label{ "Light", "불 밝히기", "",
-				"어두운 곳에서 횃불을 가지고 있거나 조명 마법을 알면 불 밝히기 프롬프트가 뜹니다. 횃불이 있으면 왼손에 들고, 없으면 조명 마법을 씁니다. 다시 밝은 곳에 오면 불 끄기로 원래 왼손 장비를 되돌립니다." },
 			Label{ "Recharge", "무기 충전", "",
 				"전투 밖에서 손에 든 마법 무기의 충전량이 25% 이하로 떨어지면 충전 프롬프트가 뜹니다. 채워진 소울젬 중 부족분을 채우는 가장 작은 것을 씁니다. 아즈라의 별처럼 재사용하는 젬은 빈 젬으로 돌아옵니다." },
 			Label{ "ChairDrink", "의자에서 마시기", "",
