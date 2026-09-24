@@ -1,5 +1,25 @@
 # CIGAR — session handoff (updated 2026-09-21)
 
+## Resume here (2026-09-24, end of a long session)
+
+- Deployed and waiting for an in-game test: pass time in a chair (`docs/019-rest.md`), no equip
+  prompt for TCL lanterns (`docs/018-item-equip.md`). Everything else below passed in game.
+- Done this stretch: `Rest` (sit, ledge, lie, lean, warm hands, pass time with ring and game-speed
+  slider), `Light` (make light through TCL, prompt-only key, instant), prompts hidden over game
+  menus and SKSE Menu Framework windows (`docs/022`).
+- Waiting on the user: how 불 끄기 should work (`docs/021-make-light.md` has no section yet; two
+  ideas were offered on 2026-09-24: a brightness baseline recorded right after lighting, with
+  불 끄기 offered while the level stays well above it; and, while sneaking with a hostile nearby,
+  TCL's own sneak-press that drops the lit lantern as 등불 내려놓기).
+- Outside CIGAR, open: the user asked to unbind Conditional Expressions Extended's hotkey. CEE
+  registers keys only from its MCM (`condiexp_MCM.OnOptionKeyMapChange` -> `Go.RegisterForKey`;
+  globals `Condiexp_HKPause` 0857 default 0, `Condiexp_HKRegisterFollowers` 0858 set to 1 = Esc by
+  the user's `TKL - MCM Setting.esp`), so a new game registers none; which key reacts in game was
+  asked and not yet answered.
+- SI still to absorb: ItemUse recharge, WeaponSwap (tools), QuestActions, chair eat/drink (item 7).
+- CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
+  UX sacrosanct; no player-authored rule framework (`docs/022`).
+
 Read this first, then `README.md`. The design rationale and the test history of
 each module are in `docs/`, one file per module, and each file starts with its
 status.
