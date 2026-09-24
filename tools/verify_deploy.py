@@ -45,13 +45,15 @@ REPLACED = [
     ("ItemUse", "enabled_waterbreath_potion"),
     ("ItemUse", "enabled_makelight"),
     ("ItemUse", "enabled_recharge_weapon"),
+    # Tree and ore-vein tool swaps are ToolSwap; the fishing-rod swap is covered by Streamlined
+    # Fishing, which equips the rod when the supplies are activated (docs/024-tool-swap.md).
+    ("WeaponSwap", "enabled"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 # SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
 # leaves its switch off in the deployed settings, and the feature then vanishes from the game
 # silently (this happened with pass time on 2026-09-21).
 KEPT = [
-    ("WeaponSwap", "enabled"),
     ("QuestActions", "enabled"),
 ]
 BABO_SCRIPTS = {
@@ -585,6 +587,24 @@ def winning_file(modlist, relative):
     return None
 
 
+def check_toolswap(modlist):
+    """ToolSwap finds veins by their MineOreScript, reads mineOreToolsList and ResourceCountCurrent,
+    and relies on OnHit mining with a listed tool; a replacement script without them leaves the
+    prompt absent or the pickaxe useless, silently. The fishing-rod swap SI's WeaponSwap also did is
+    left to Streamlined Fishing."""
+    pex = winning_file(modlist, "scripts/MineOreScript.pex")
+    if pex is None:
+        note("MineOreScript.pex not loose: the BSA copy (vanilla names) is assumed")
+    else:
+        with open(pex, "rb") as f:
+            data = f.read().lower()
+        needles = ["mineOreToolsList", "ResourceCountCurrent", "OnHit", "proccessAttackStrikes"]
+        missing = [n for n in needles if n.lower().encode() not in data]
+        check(not missing, "MineOreScript.pex (%s) still has %s%s" % (os.path.basename(os.path.dirname(os.path.dirname(pex))),
+              ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+    check("+Streamlined Fishing" in modlist, "Streamlined Fishing enabled (it equips the rod SI's WeaponSwap used to offer)")
+
+
 def check_rest(modlist):
     """Rest sends vanilla idle events to the player's graph; a behaviour build without them makes
     the prompt do nothing in game. Case-insensitive, as the game matches event names."""
@@ -713,6 +733,7 @@ def main():
     check_valhalla(modlist)
     check_jujutsu(modlist)
     check_rest(modlist)
+    check_toolswap(modlist)
     check_behaviour(modlist, accept_behaviour)
 
     # Replaced SI modules must be off, or both prompts appear.

@@ -41,6 +41,9 @@ REPLACED = [
     ("ItemUse", "enabled_waterbreath_potion"),
     ("ItemUse", "enabled_makelight"),
     ("ItemUse", "enabled_recharge_weapon"),
+    # Tree and ore-vein tool swaps are ToolSwap; the fishing-rod swap is covered by Streamlined
+    # Fishing, which equips the rod when the supplies are activated (docs/024-tool-swap.md).
+    ("WeaponSwap", "enabled"),
 ]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2

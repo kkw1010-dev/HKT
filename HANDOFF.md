@@ -16,8 +16,10 @@
   globals `Condiexp_HKPause` 0857 default 0, `Condiexp_HKRegisterFollowers` 0858 set to 1 = Esc by
   the user's `TKL - MCM Setting.esp`), so a new game registers none; which key reacts in game was
   asked and not yet answered.
-- Built on 2026-09-24 after that, untested: `Recharge` (`docs/023-recharge.md`), SI's weapon recharge.
-- SI still to absorb: WeaponSwap (tools), QuestActions, chair eat/drink (item 7).
+- Built on 2026-09-24 after that, untested: `Recharge` (`docs/023-recharge.md`), SI's weapon recharge;
+  `ToolSwap` (`docs/024-tool-swap.md`), SI's pickaxe/axe swap. SI's fishing-rod swap was not rebuilt
+  because Streamlined Fishing equips the rod itself; the user has not confirmed that call yet.
+- SI still to absorb: QuestActions, chair eat/drink (item 7).
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`).
 
@@ -165,6 +167,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
 | `Light` | 불 밝히기 | Torches Candlelight and Lanterns | `021` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
+| `ToolSwap` | 곡괭이 들기, 도끼 들기, 무기 되돌리기 | — (replaces SI WeaponSwap) | `024` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -403,7 +406,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
        (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
      - **ItemUse `enabled_makelight`** — built as `Light` (`docs/021-make-light.md`), untested in game. Offer a torch or candlelight spell/scroll after
        `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.
-     - **WeaponSwap** — swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
+     - **WeaponSwap** — built as `ToolSwap` (`docs/024-tool-swap.md`), untested in game. Swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
        height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's
        ranged/melee `WeaponSwap`; kept for roleplay.
      - **QuestActions `enabled`** — quest-specific prompts; the one string found is the Greybeards'
