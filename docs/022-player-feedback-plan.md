@@ -92,3 +92,20 @@ block loop was solved by game design (the Tekken logic that a solid guard is bro
 throw), not by capping NPC blocking, which would strip shield NPCs down to reckless attackers.
 A rule engine also grows the development cost with every condition, action, parser and editor
 that must be validated and supported.
+
+### Part 1, in game (2026-09-24)
+
+Passed: Journal, inventory, map, magic menu and MCM hide the prompts; closing brings them back;
+dialogue, containers, barter and crafting hide them; QuickLoot's window leaves them.
+
+Not covered: SKSE Menu Framework windows (CIGAR's own panel among them) are ImGui, not game
+menus. Its DLL exports `IsAnyBlockingWindowOpened` (the bundled header is older and lacks it);
+`RunTick` now asks it every tick, withdraws the prompts when a blocking window opens and suspends
+the modules until it closes, logging both.
+
+The same session reported the HUD vanishing while sitting or lying for pass time, which blocked
+the "hold pass time, then open a menu" test. Not explained yet: Skyrim Party Sheet 3.5 (installed
+2026-09-23) has no sitting logic in its DLL, but its `[HUDVisibility]` fades its widgets 3 s after
+the last trigger and hides the vanilla bars, so standing still anywhere would fade them too.
+`RunTick` now logs every change of the HUD menu's visibility to tell the vanilla HUD apart from
+Party Sheet's widgets and CIGAR's prompts.

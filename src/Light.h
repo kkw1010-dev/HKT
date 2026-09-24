@@ -53,5 +53,6 @@ namespace CIGAR
 		Clock::time_point darkSince{};
 		Clock::time_point acceptedAt{};
 		bool checkAfterAccept{ false };
+		std::map<RE::FormID, std::int32_t> itemsBefore;
 	};
 }

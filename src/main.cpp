@@ -85,6 +85,34 @@ namespace
 		}
 	}
 
+	// SKSE Menu Framework draws its windows with ImGui, not as game menus, so the menu events never
+	// see it (a player saw prompts over its window, 2026-09-24). Its DLL exports
+	// IsAnyBlockingWindowOpened, which the bundled header predates; looked up by name.
+	bool FrameworkWindowOpen()
+	{
+		using func_t = bool (*)();
+		static const auto func = [] {
+			const auto module = GetModuleHandleW(L"SKSEMenuFramework");
+			return module ? reinterpret_cast<func_t>(GetProcAddress(module, "IsAnyBlockingWindowOpened")) : nullptr;
+		}();
+		return func && func();
+	}
+
+	std::atomic_bool frameworkBlocked{ false };
+
+	// Logs when the HUD menu's movie is shown or hidden, so a report of a vanishing HUD can be told
+	// apart from CIGAR's own prompts going away.
+	void LogHudVisibility(RE::UI* a_ui)
+	{
+		static int last = -1;
+		const auto hud = a_ui ? a_ui->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr;
+		const int now = hud && hud->uiMovie ? (hud->uiMovie->GetVisible() ? 1 : 0) : -1;
+		if (now != last) {
+			logs::info("HUD menu movie {}", now == 1 ? "visible" : now == 0 ? "hidden" : "absent");
+			last = now;
+		}
+	}
+
 	class MenuWatch final : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 	{
 	public:
@@ -129,6 +157,14 @@ namespace
 		}
 		auto* ui = RE::UI::GetSingleton();
 		const auto* player = Util::Player();
+		if (const bool open = FrameworkWindowOpen(); open != frameworkBlocked) {
+			frameworkBlocked = open;
+			if (open) {
+				Prompts::WithdrawEverything();
+			}
+			logs::info("SKSE Menu Framework window {}: prompts {}", open ? "opened" : "closed", open ? "off" : "back");
+		}
+		LogHudVisibility(ui);
 		if (menuBlocked && ui) {
 			// Backstop for a close event that never came: drop menus the UI no longer has open.
 			for (auto it = blockingMenus.begin(); it != blockingMenus.end();) {
@@ -141,7 +177,7 @@ namespace
 			}
 			menuBlocked = !blockingMenus.empty();
 		}
-		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused()) || menuBlocked) {
+		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused()) || menuBlocked || frameworkBlocked) {
 			return;
 		}
 		for (auto* module : Modules()) {

@@ -30,10 +30,11 @@ namespace CIGAR
 		constexpr std::int32_t kHiddenKey = 0x67;
 		constexpr auto kPromptOnlyTarget = "tcl"sv;
 
-		// SI's ItemUse values: darkness_threshold 14, time_till_makelight_prompt 5 s,
-		// dont_show_in_combat_makelight on.
+		// SI's ItemUse values: darkness_threshold 14, dont_show_in_combat_makelight on. SI waits
+		// time_till_makelight_prompt (5 s); the user wants the prompt as soon as it is dark
+		// (2026-09-24), so only a short debounce is left against flicker at the edge of a light.
 		constexpr float kDarkLevel = 14.0f;
-		constexpr auto kDarkDelay = 5s;
+		constexpr auto kDarkDelay = 300ms;
 		// After the press, TCL (Papyrus) gets this long to light something before the log says it did not.
 		constexpr auto kLitCheck = 3s;
 
@@ -48,6 +49,23 @@ namespace CIGAR
 			item.data.comparisonValue.f = a_level;
 			RE::ConditionCheckParams params(a_player, nullptr);
 			return item.IsTrue(params);
+		}
+
+		// Every TCL item the player carries (lanterns lit and unlit, the toggle item, oil), by form,
+		// for the duplicate check around a press.
+		std::map<RE::FormID, std::int32_t> TCLItems(RE::PlayerCharacter* a_player)
+		{
+			std::map<RE::FormID, std::int32_t> out;
+			const auto inventory = a_player->GetInventory([](RE::TESBoundObject& a_object) {
+				const auto* file = a_object.GetFile(0);
+				return file && Util::EqualsNoCase(file->GetFilename(), kTCLPlugin);
+			});
+			for (const auto& [object, data] : inventory) {
+				if (data.first > 0) {
+					out[object->GetFormID()] = data.first;
+				}
+			}
+			return out;
 		}
 
 		class ResultThen final : public RE::BSScript::IStackCallbackFunctor
@@ -271,6 +289,23 @@ namespace CIGAR
 
 		if (checkAfterAccept && now - acceptedAt >= kLitCheck) {
 			checkAfterAccept = false;
+			// TCL's own changelog (v1.35) mentions a random duplicate on toggling off; say when a
+			// press left more TCL items than it found.
+			const auto after = TCLItems(player);
+			std::string changes;
+			for (const auto& [id, count] : after) {
+				const auto it = itemsBefore.find(id);
+				const auto before = it == itemsBefore.end() ? 0 : it->second;
+				if (count != before) {
+					changes += std::format(" {} ({:08X}) {}->{}", Util::NameOf(RE::TESForm::LookupByID(id)), id, before, count);
+				}
+			}
+			for (const auto& [id, count] : itemsBefore) {
+				if (!after.contains(id)) {
+					changes += std::format(" {} ({:08X}) {}->0", Util::NameOf(RE::TESForm::LookupByID(id)), id, count);
+				}
+			}
+			Log("TCL items after the press:{}", changes.empty() ? " unchanged" : changes);
 			if (lit) {
 				Log("lit after the press ({})", how);
 			} else {
@@ -295,5 +330,8 @@ namespace CIGAR
 		}
 		acceptedAt = Clock::now();
 		checkAfterAccept = true;
+		if (auto* player = Util::Player()) {
+			itemsBefore = TCLItems(player);
+		}
 	}
 }

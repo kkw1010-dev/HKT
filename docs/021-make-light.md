@@ -91,3 +91,20 @@ pressing TCL's own hotkey rather than re-implementing light. Checked on 2026-09-
 itself at 19:26 after CIGAR had set the hidden key at 19:25 (log). With prompt-only on, CIGAR sets
 the hidden key whatever the INI says, so the check now requires a valid INI key only when
 Grapple's prompt-only is off.
+
+## In game (2026-09-24) and changes
+
+Passed: the prompt in the dark, lighting through TCL, no prompt when lit, bright or in combat,
+mouse 4 no longer reaching TCL under prompt-only, and the panel switch restoring it.
+
+- **At once.** The user wants the prompt as soon as it is dark; SI's 5 s wait is replaced by a
+  300 ms debounce (the user's choice; the 300 ms is mine, against flicker at a light's edge). The
+  engine's `GetLightLevel` is enough: Community Shaders changes rendering, not the value the
+  engine's conditions read.
+- **Duplicated lanterns.** Reported by the user. TCL's own changelog, v1.35: "hopefully fix random
+  dupe on toggle off"; installed is 1.58 (2026-02-01), newest 1.60. CIGAR's press reaches the same
+  `OnKeyUp` -> `PlayerLanternToggle` path as TCL's own key. CIGAR's `OnSettingChange` calls (load
+  and panel only; three in the first session's log) also run `AddLanternToggleOnce`, which checks
+  the item count before adding the toggle item. (Call lists read from the compiled
+  `i329tcl_mcmconfig_script.pex` with a small PEX reader in the session scratchpad.) To settle it,
+  each press now logs every TCL item whose count changed 3 s later.
