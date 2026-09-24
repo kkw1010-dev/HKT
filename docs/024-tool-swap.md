@@ -44,6 +44,8 @@ The rest of this file is the record of what was built.
   Supplies are activated (a menu when several rods are carried), and offers Cast Line after each
   round. SI's fishing swap would only have equipped the rod earlier, so it is not rebuilt;
   `verify_deploy.py` fails if Streamlined Fishing is disabled.
+  2026-09-25: only the Cast Line half is live here; the rod equip is overridden by Fish Anywhere
+  With Water's loose script (`027-fishing.md`).
 
 ## As built
 

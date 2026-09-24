@@ -48,6 +48,10 @@ At the user's request, a weapon with `ccBGSSSE001_FishingPoleKW` (every Creation
 is not offered: the fishing itself equips the rod (Streamlined Fishing, when the supplies are
 activated).
 
+> 2026-09-25: on this modlist that is not true. Fish Anywhere With Water's loose
+> `ccbgssse001_fishingactscript.pex` overrides Streamlined Fishing's, so the supplies equip no rod;
+> see `027-fishing.md`.
+
 ## No woodcutter's axes (2026-09-25)
 
 At the user's request, anything in `woodChoppingAxes` (`10ACCC:Skyrim.esm`: the woodcutter's axe,
