@@ -9,7 +9,7 @@
   TCL lanterns again.
 - TCL is enabled again in `profiles\TKL - MUNG ADDON` (the removal backups copied back with MO2
   closed, 2026-09-25).
-- Outside CIGAR (Installation and Modification, case 030):
+- Outside CIGAR (Installation and Modification, case 029):
   - The ~ key really did run `smp reset`: GT Softbody's `SoftbodySmpReset` registers key 41 when its
     reset-key option is on (default on). `TKL - MCM Setting.esp` now sets `SoftbodyGlobalQuest`'s
     `ResetKeyEnabled` to false.
