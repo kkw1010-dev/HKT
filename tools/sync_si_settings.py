@@ -44,6 +44,9 @@ REPLACED = [
     # Tree and ore-vein tool swaps are ToolSwap; the fishing-rod swap is covered by Streamlined
     # Fishing, which equips the rod when the supplies are activated (docs/024-tool-swap.md).
     ("WeaponSwap", "enabled"),
+    # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
+    # tracking was already QuestTrack (docs/025-quest-action.md).
+    ("QuestActions", "enabled"),
 ]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2

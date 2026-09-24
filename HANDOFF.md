@@ -18,8 +18,10 @@
   asked and not yet answered.
 - Built on 2026-09-24 after that, untested: `Recharge` (`docs/023-recharge.md`), SI's weapon recharge;
   `ToolSwap` (`docs/024-tool-swap.md`), SI's pickaxe/axe swap. SI's fishing-rod swap was not rebuilt
-  because Streamlined Fishing equips the rod itself; the user has not confirmed that call yet.
-- SI still to absorb: QuestActions, chair eat/drink (item 7).
+  because Streamlined Fishing equips the rod itself; the user has not confirmed that call yet;
+  `QuestAction` (`docs/025-quest-action.md`), SI's Greybeards shout prompt.
+- SI still to absorb: chair eat/drink (item 7). Every SI switch except that one (inside
+  `IdleActions`, already off) is now CIGAR's or off by the user's choice.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`).
 
@@ -168,6 +170,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Light` | 불 밝히기 | Torches Candlelight and Lanterns | `021` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `ToolSwap` | 곡괭이 들기, 도끼 들기, 무기 되돌리기 | — (replaces SI WeaponSwap) | `024` |
+| `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -409,7 +412,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
      - **WeaponSwap** — built as `ToolSwap` (`docs/024-tool-swap.md`), untested in game. Swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
        height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's
        ranged/melee `WeaponSwap`; kept for roleplay.
-     - **QuestActions `enabled`** — quest-specific prompts; the one string found is the Greybeards'
+     - **QuestActions `enabled`** — built as `QuestAction` (`docs/025-quest-action.md`), untested in game. Quest-specific prompts; the one string found is the Greybeards'
        "show us your Thu'um" → equip Unrelenting Force.
    - *Off in SI already (the user's earlier choice; ask before building):* ItemUse
      `enabled_equip_spellbook`, HelmetToggle (helmet off in safe places, on in unsafe ones),

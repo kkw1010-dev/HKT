@@ -20,6 +20,7 @@
 - **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
 - SI overlap disabled by CIGAR for ItemUse: equip weapon/armor, the six potion actions, make-light (`Light`, 2026-09-24) and recharge weapon (`Recharge`, 2026-09-24, `docs/023-recharge.md`). Spellbook equip stays off by the user's choice.
 - WeaponSwap: implemented as `ToolSwap` on 2026-09-24 (vein and tree; `docs/024-tool-swap.md`). SI's fishing-rod scene is left to Streamlined Fishing. `WeaponSwap.enabled` is off.
+- QuestActions: the Greybeards shout prompt is `QuestAction` (2026-09-24, `docs/025-quest-action.md`); `QuestActions.enabled` is off. 4b/4c below stay unconfirmed for SI 1.0.6.
 - SI overlap disabled by CIGAR: `QuestActions.enabled_track` only. Other `QuestActions` behavior remains owned by SI.
 - Runtime implementation uses `ObjectiveState::Event` for the new-objective gate and the verified native
   Papyrus call `Quest.SetActive(true)` for the action. This is CIGAR implementation policy, not evidence

@@ -48,13 +48,15 @@ REPLACED = [
     # Tree and ore-vein tool swaps are ToolSwap; the fishing-rod swap is covered by Streamlined
     # Fishing, which equips the rod when the supplies are activated (docs/024-tool-swap.md).
     ("WeaponSwap", "enabled"),
+    # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
+    # tracking was already QuestTrack (docs/025-quest-action.md).
+    ("QuestActions", "enabled"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 # SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
 # leaves its switch off in the deployed settings, and the feature then vanishes from the game
 # silently (this happened with pass time on 2026-09-21).
 KEPT = [
-    ("QuestActions", "enabled"),
 ]
 BABO_SCRIPTS = {
     "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
