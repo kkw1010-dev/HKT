@@ -70,5 +70,10 @@ namespace CIGAR
 		bool pressedTwice{ false };
 		Clock::time_point checkAt{};
 		bool warnedType{ false };
+		// Helmet Toggle hides headgear with a Dynamic Armor Variants swap, so SMP hair stays without
+		// physics until the next physics reset (the user, 2026-09-25). After a change CIGAR presses
+		// Auto Physics Reset's manual reset key, read from its INI; 0 when that mod is absent.
+		std::int64_t resetKey{ 0 };
+		Clock::time_point resetAt{};
 	};
 }

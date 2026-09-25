@@ -29,6 +29,10 @@ namespace CIGAR
 		constexpr RE::FormID kClothingHeadID = 0x10CD11;
 		constexpr RE::FormID kClothingCircletID = 0x10CD08;
 		constexpr auto kCheckDelay = 3s;
+		// Helmet Toggle's own sequence ends about 2.6 s after the press (HT_PlayerAlias waits), so the
+		// physics reset goes after it.
+		constexpr auto kResetDelay = 1500ms;
+		constexpr auto kPhysicsIni = "Data/SKSE/Plugins/AutoPhysicsReset.ini";
 
 		class PressResult final : public RE::BSScript::IStackCallbackFunctor
 		{
@@ -83,6 +87,9 @@ namespace CIGAR
 		location = 0;
 		warnedType = false;
 		headgearKeywords.clear();
+		resetAt = {};
+		resetKey = Util::IniInt(std::filesystem::path{ kPhysicsIni }, "Main", "uManualResetKey").value_or(0);
+		Log("Auto Physics Reset manual key: {}", resetKey > 0 ? std::to_string(resetKey) : "none (hair physics is not reset after a toggle)"s);
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		if (!handler || !handler->LookupModByName(kPlugin)) {
@@ -227,6 +234,9 @@ namespace CIGAR
 			if (nowOn == wantOn) {
 				pending = false;
 				Log("helmet {} (state {})", wantOn ? "on" : "off", Value(helmetState));
+				if (resetKey > 0) {
+					resetAt = Clock::now() + kResetDelay;
+				}
 			} else if (!pressedTwice) {
 				pressedTwice = true;
 				checkAt = Clock::now() + kCheckDelay;
@@ -240,6 +250,12 @@ namespace CIGAR
 					Value(helmetState), wantOn ? "on" : "off");
 				Util::Notify("CIGAR: 투구 전환 확인 실패. 로그 확인");
 			}
+		}
+
+		if (resetAt != Clock::time_point{} && Clock::now() >= resetAt) {
+			resetAt = {};
+			const bool pressed = Util::PressKey(resetKey);
+			Log("physics reset: pressed Auto Physics Reset key {} ({})", resetKey, pressed ? "sent" : "not sent");
 		}
 
 		LogGate(std::format("type={} state={} worn={} loc={} safe={} ({}) combat={} movable={} dismissed={} pending={}",

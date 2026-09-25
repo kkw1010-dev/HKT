@@ -34,7 +34,12 @@
   and Party Sheet hides on that; nothing in CIGAR causes it. **Out of CIGAR's scope** (the user,
   2026-09-25): recorded as Installation and Modification case 032, to be fixed in Party Sheet in
   another session.
-- **Built 2026-09-25, untested in game: `Helmet`** (`docs/028-helmet.md`): SI's HelmetToggle on
+- **`Helmet` passed in game 2026-09-25** (`docs/028-helmet.md`); an SMP hair physics reset after
+  each toggle was added afterwards, untested.
+- **유술 0 of 26 on 2026-09-25** (`docs/012`, test 20); lead: Cinematic Clash 1.0.2 (live since
+  09-20 18:10, just before the rate first fell). A/B test with its master switch off is pending the
+  user's go-ahead.
+- Built 2026-09-25: `Helmet`: SI's HelmetToggle on
   Helmet Toggle 2. 투구 벗기 in a safe place with headgear on, 투구 쓰기 in an unsafe place while it is
   hidden; accepting calls `HT_MCM.PressHotkey()`; the safe/unsafe lists are Helmet Toggle's own (FLM).
   Its B key was removed from MCM Helper's `keybinds.json` (no MCM Memory row exists).

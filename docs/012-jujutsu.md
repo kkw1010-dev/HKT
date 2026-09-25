@@ -479,3 +479,26 @@ After re-running Pandora and re-testing 유술, record the new file with
 ```
 python tools/verify_deploy.py --accept-behaviour
 ```
+
+## Test 20 (2026-09-25 14:21-14:22): 0 of 26
+
+The user reported that 유술 no longer fires at all. The log agrees: 26 presses, 130 tries, every
+`SetupSpecialIdle` false, including tries at distance 43-51 with the victim blocking and standing
+still (Speed 0), the state test 12 played 20 of 20 in. Valhalla's own execution played on the same
+day (14:32:45), so the paired-idle system itself works.
+
+Ruled out: `Jujutsu.cpp` is unchanged since the rollback (c5ef4b1); every behaviour file that wins
+(`0_Master`, `mt_behavior`, `1hm_behavior`, the character files) is still the 2026-09-19 15:39/15:40
+Pandora output, and `mt_behavior.hkx` still has the baseline md5.
+
+**Lead: Cinematic Clash 1.0.2.** Between test 12 (09-20 02:59, 20 of 20) and the guard run of
+09-20 18:24 (11 of 20), the only change recorded anywhere is Installation and Modification UP-13
+(09-20 18:10): Cinematic Clash 1.0.2 had been installed but shadowed by the enabled 1.0.0 folder, and
+disabling the old folder made 1.0.2 live. Its INI is dated 18:03 the same day. 1.0.2 adds blade
+contact solving, weapon-clipping turns and an OAR "Shield To Weapon Block" swap, and its log shows it
+re-entering the player's block hold during clashes. Since then many more mods arrived (SPVS 21:45,
+Serana Dialogue Add-On, and others; the player now carries 2 SPVS effects and 5 Smooth Moveset
+effects against 0 and 2 in test 12), so today's 0 of 26 may have more than one cause.
+
+Decisive test offered to the user: `[General] bEnabled = 0` in `CinematicClash.ini` for one run of
+10 presses.

@@ -57,3 +57,26 @@ off).
 
 Known limit (read from the source, not seen in game): with the key gone, the helmet cannot be put on inside a safe place or taken off in an
 unsafe one (equipping a helmet from the inventory is undone by Helmet Toggle's own state).
+
+## Test 1 (2026-09-25): passed
+
+All five steps passed (the user; log 14:17-14:25): 투구 쓰기 in 황량한 폭포 무덤 → `helmet on
+(state 0)`, 투구 벗기 in 화이트런 → `helmet off (state 1)`, B does nothing, decline until the next
+location, no prompt in combat.
+
+## SMP hair after the toggle (reported 2026-09-25)
+
+The user: after Helmet Toggle takes the helmet off (a Dynamic Armor Variants swap to a hidden
+variant, not an unequip; `ApplyHiddenVariant` in `HT_PlayerAlias`), SMP hair has no physics. Taking
+the helmet off and on for real makes the hair physics work, even in Helmet Toggle's hidden state.
+
+First fix, built the same day and untested: once the state has changed, CIGAR waits 1.5 s more
+(Helmet Toggle's own sequence runs about 2.6 s after the press) and presses Auto Physics Reset's
+manual reset key (`uManualResetKey`, 88 = F12, read from its INI at load), i.e. a full SMP reset.
+Log: `physics reset: pressed Auto Physics Reset key 88 (sent)`; Auto Physics Reset's own log should
+show the reset.
+
+If that is not enough, the alternative the user asked about is a real unequip by CIGAR with Helmet
+Toggle's clips (its OAR folders `Helmet Equip`/`Helmet Unequip` etc., driven by the graph variable
+`iGPMAAnimationType` and the event `OffsetGPMA`) and its IED placement on the pelvis node
+`ExtraPelvisArmorHelmet1`. That replaces Helmet Toggle's logic instead of pressing its key.
