@@ -211,6 +211,7 @@ namespace CIGAR
 		jujutsu.Reset();
 		lastGate.clear();
 		seenActors.clear();
+		firstDeathLogged = false;
 		scannedSinceLoad = false;
 		inCombat = false;
 		combatIndex = 0;
@@ -302,12 +303,22 @@ namespace CIGAR
 		}
 		const bool atLoad = !scannedSinceLoad;
 		int added = 0;
+		RE::Actor* firstDead = nullptr;
 		lists->ForEachHighActor([&](RE::Actor* a_actor) {
 			if (a_actor && a_actor != player && seenActors.try_emplace(a_actor->GetFormID(), Seen{ atLoad, Clock::now() }).second) {
 				++added;
 			}
+			if (!atLoad && !firstDeathLogged && !firstDead && a_actor && a_actor != player && a_actor->IsDead() &&
+				seenActors[a_actor->GetFormID()].atLoad == false) {
+				firstDead = a_actor;
+			}
 			return RE::BSContainer::ForEachResult::kContinue;
 		});
+		if (firstDead) {
+			firstDeathLogged = true;
+			Log("first death this session: {} ({:08X}) in combat #{}; player flags now {}", Util::NameOf(firstDead), firstDead->GetFormID(),
+				combatIndex, DescribeFlags(player));
+		}
 		if (atLoad) {
 			scannedSinceLoad = true;
 			Log("first actor scan after load: {} actors present at load", added);
@@ -391,6 +402,19 @@ namespace CIGAR
 		return out;
 	}
 
+	std::string Jujutsu::DescribeFlags(RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			return "-";
+		}
+		const auto& data = a_actor->GetActorRuntimeData();
+		const auto* state = a_actor->AsActorState();
+		return std::format("boolBits={:08X} boolFlags={:08X} lifeState={} knock={} sitSleep={} flyState={}", data.boolBits.underlying(),
+			data.boolFlags.underlying(), state ? static_cast<int>(state->GetLifeState()) : -1,
+			state ? static_cast<int>(state->GetKnockState()) : -1, state ? static_cast<int>(state->GetSitSleepState()) : -1,
+			state ? static_cast<int>(state->GetFlyState()) : -1);
+	}
+
 	std::string Jujutsu::DescribeVats()
 	{
 		const auto* vats = RE::VATS::GetSingleton();
@@ -430,6 +454,7 @@ namespace CIGAR
 			tally.first, tally.second, Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()),
 			Settings::JujutsuReach(), DescribeVictim(target));
 		Log("graphs: victim {} | player {}", DescribeGraph(target), DescribeGraph(player));
+		Log("flags: victim {} | player {} | first death seen={}", DescribeFlags(target), DescribeFlags(player), firstDeathLogged);
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();

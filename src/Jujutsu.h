@@ -64,6 +64,10 @@ namespace CIGAR
 		// Test 27: the first actor spawned in a session refuses every press for its whole life while the
 		// next ones play at once. The lead is its animation graph; this prints what the graph manager holds.
 		static std::string DescribeGraph(RE::Actor* a_actor);
+		// Test 28: refusals last until the session's first death. The raw engine flags of both actors,
+		// logged at each press and at that first death, show what the death changes.
+		static std::string DescribeFlags(RE::Actor* a_actor);
+		bool firstDeathLogged{ false };
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
 		void Sample(RE::Actor* a_victim, float a_time);

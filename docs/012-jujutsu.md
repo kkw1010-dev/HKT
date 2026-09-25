@@ -645,3 +645,21 @@ graph instance was built while the character behaviour project was still loading
 and never takes paired idles. Built, untested: each press logs `graphs: victim ... | player ...`
 (graph count, active index, project name, whether its project DB data is present, the holder, and
 whether `bIsSynced` exists) and how many seconds ago the victim arrived.
+
+## Test 28 (2026-09-25 22:41-22:43): refused until the session's first death
+
+Two orcs spawned together (`FF000BBA`, `FF000E1B`, both "arrived 12 s ago" at the first press, both
+`DefaultMale db=true`, graphs identical to the orcs that play later). Both refused every press, 6
+presses and 3 automatic retries, 22:41:59-22:42:23. The user then killed `E1B` with the console;
+the automatic retry pending on `BBA` fired as the console closed and **played at once** (0.09 s), and
+`BBA` played every press after. (That retry is what the user saw fire "without a press".)
+
+So the graph lead is out, and so is "the first enemy is broken": a state that lasts from the load
+**until the first enemy death** blocks the paired idle on every victim. Every run since test 24 fits:
+the first victim refused until it died, and after the first death the next victims played (test 26,
+where that death came before any press, had a single refusal after it). Cinematic Clash logged no
+standoff in that window, only hit checks.
+
+Built, untested: each press logs both actors' raw `boolBits` / `boolFlags`, life, knock, sit and fly
+states, and whether the first death has happened; the first death of a spawned actor is logged with
+the player's flags at that moment. The next run compares the player's flags before and after it.
