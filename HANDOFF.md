@@ -48,7 +48,11 @@
   Helmet Toggle 2. 투구 벗기 in a safe place with headgear on, 투구 쓰기 in an unsafe place while it is
   hidden; accepting calls `HT_MCM.PressHotkey()`; the safe/unsafe lists are Helmet Toggle's own (FLM).
   Its B key was removed from MCM Helper's `keybinds.json` (no MCM Memory row exists).
-- **Next: the remaining SI features** (all already off in SI's settings; SI does nothing else now).
+- **All of SI absorbed, 2026-09-25, untested** (`docs/029-si-leftovers.md`): `Poison` (독 바르기, the
+  user's addition), `Observe`, `GearSwap`, `PartyOutfit`, and books in `ItemEquip`; the helmet-on-belt
+  IED entry added to the user's IED default config. TidyUp (mod not installed) and KillMove (excluded)
+  are not built. SI itself now does nothing and could be disabled (not done; the user's call).
+- **Superseded: the remaining SI features** (all already off in SI's settings; SI does nothing else now).
   Listed with evidence in `SI/_ABSORPTION/_MAP.md`; the user picks which to build (HelmetToggle is
   done as `Helmet`): Observer, piecewise outfit swap, spellbook equip, quest note/book equip (4b), quest outfit swap
   (4c). KillMove is covered by `Execute`; TidyUp needs a mod that is not installed. Once none is
@@ -207,6 +211,10 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
 | `Helmet` | 투구 벗기, 투구 쓰기 | — (SI HelmetToggle; clips from `CIGAR - Helmet Motions`) | `028` |
+| `Poison` | 독 바르기: <독> | — | `029` |
+| `Observe` | 살펴보기: <대상> | — (SI Observer) | `029` |
+| `GearSwap` | <부위> 장비 교체: <장비> | — (SI piecewise outfit swap) | `029` |
+| `PartyOutfit` | 파티 의상 입기, 원래 장비로 | — (SI quest outfit, MQ201) | `029` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

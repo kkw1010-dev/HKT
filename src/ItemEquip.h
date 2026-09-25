@@ -42,6 +42,7 @@ namespace CIGAR
 		PromptSlot equip{ this, kEquip };
 		RE::FormID offeredItem{ 0 };
 		Clock::time_point expiresAt{};
+		void ReadBook(RE::PlayerCharacter* a_player, RE::TESObjectBOOK* a_book);
 		RE::BGSListForm* woodAxes{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };
 	};

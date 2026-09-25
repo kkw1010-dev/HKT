@@ -11,6 +11,10 @@
 #include "ChairDrink.h"
 #include "QuestAction.h"
 #include "Helmet.h"
+#include "Poison.h"
+#include "Observe.h"
+#include "GearSwap.h"
+#include "PartyOutfit.h"
 #include "LockOn.h"
 #include "Module.h"
 #include "Needs.h"
@@ -30,13 +34,14 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 20> modules{
+		static const std::array<Module*, 24> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
 			Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
-			QuestAction::GetSingleton(), Helmet::GetSingleton()
+			QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
+			GearSwap::GetSingleton(), PartyOutfit::GetSingleton()
 		};
 		return modules;
 	}
@@ -312,6 +317,7 @@ namespace
 	{
 		Dress::GetSingleton()->Save(a_intfc);
 		Helmet::GetSingleton()->Save(a_intfc);
+		PartyOutfit::GetSingleton()->Save(a_intfc);
 	}
 
 	void OnLoad(SKSE::SerializationInterface* a_intfc)
@@ -324,6 +330,8 @@ namespace
 				Dress::GetSingleton()->Load(a_intfc, version);
 			} else if (type == 'HELM' && version == 1) {
 				Helmet::GetSingleton()->Load(a_intfc, version);
+			} else if (type == 'QOUT' && version == 1) {
+				PartyOutfit::GetSingleton()->Load(a_intfc, version);
 			} else {
 				logs::warn("skipping unknown co-save record {:08X} v{}", type, version);
 			}
@@ -335,6 +343,7 @@ namespace
 		gameReady = false;
 		Dress::GetSingleton()->Revert();
 		Helmet::GetSingleton()->Revert();
+		PartyOutfit::GetSingleton()->Revert();
 	}
 }
 

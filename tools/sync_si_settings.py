@@ -49,6 +49,10 @@ REPLACED = [
     ("QuestActions", "enabled"),
     # Helmet Toggle 2 prompts (docs/028-helmet.md).
     ("HelmetToggle", "enabled"),
+    # The rest of SI, absorbed on 2026-09-25 (docs/029-si-leftovers.md).
+    ("Observer", "enabled"),
+    ("DressActions", "enabled_piecewiseoutfitswap"),
+    ("ItemUse", "enabled_equip_spellbook"),
 ]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2

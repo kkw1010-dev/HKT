@@ -25,7 +25,8 @@
   - Observer: scene `Observe`; settings Idle Timer, FOV Increment, FOV Offset, Observe Time, `moving_exits_observe`; the help texts for these three FOV keys are not present as strings.
   - Spellbook equip: `Equipper::ReadBook` ("Failed to read book", "Book not found", "Book Menu"), and an Immersive Spell Learning integration (`ModSupport::ImmersiveSpellLearning::Install`, "Spell notes formid is null", needs po3).
 - **HelmetToggle:** `Helmet` (2026-09-25, `docs/028-helmet.md`), built on Helmet Toggle 2's own hotkey function and location lists.
-- **Remaining, all off in SI (2026-09-25):** Observer (3), piecewise outfit swap (1), spellbook equip (6), quest note/book equip (4b), quest outfit swap (4c), TidyUp (4d, mod not installed), KillMove (covered by `Execute`). `IdleActions.enabled_passtime` reads true but its module is off.
+- **Everything else absorbed on 2026-09-25** (`docs/029-si-leftovers.md`): Observer → `Observe`, piecewise swap → `GearSwap`, spellbook and quest-book equip → `ItemEquip`, quest outfit → `PartyOutfit`; TidyUp and KillMove not built.
+- **Was remaining, all off in SI (2026-09-25):** Observer (3), piecewise outfit swap (1), spellbook equip (6), quest note/book equip (4b), quest outfit swap (4c), TidyUp (4d, mod not installed), KillMove (covered by `Execute`). `IdleActions.enabled_passtime` reads true but its module is off.
 - SI overlap disabled by CIGAR for ItemUse: equip weapon/armor, the six potion actions, make-light (`Light`, 2026-09-24) and recharge weapon (`Recharge`, 2026-09-24, `docs/023-recharge.md`). Spellbook equip stays off by the user's choice.
 - WeaponSwap: built as `ToolSwap` and removed the same day at the user's call (`docs/024-tool-swap.md`); `WeaponSwap.enabled` stays off.
 - IdleActions chair eat/drink: `ChairDrink` (inns and houses, alcohol only; `docs/026-chair-drink.md`).

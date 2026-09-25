@@ -53,6 +53,10 @@ REPLACED = [
     ("QuestActions", "enabled"),
     # Helmet Toggle 2 prompts (docs/028-helmet.md).
     ("HelmetToggle", "enabled"),
+    # The rest of SI, absorbed on 2026-09-25 (docs/029-si-leftovers.md).
+    ("Observer", "enabled"),
+    ("DressActions", "enabled_piecewiseoutfitswap"),
+    ("ItemUse", "enabled_equip_spellbook"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 # SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git

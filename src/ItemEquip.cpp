@@ -62,6 +62,11 @@ namespace CIGAR
 
 	bool ItemEquip::AlreadyEquipped(RE::PlayerCharacter* a_player, RE::TESBoundObject* a_item)
 	{
+		if (auto* book = a_item->As<RE::TESObjectBOOK>()) {
+			// A spell tome is "done" once the spell is known; a quest note once it has been read.
+			auto* spell = book->TeachesSpell() ? book->GetSpell() : nullptr;
+			return spell ? a_player->HasSpell(spell) : book->IsRead();
+		}
 		if (a_item->Is(RE::FormType::Weapon)) {
 			return a_player->GetEquippedObject(false) == a_item || a_player->GetEquippedObject(true) == a_item;
 		}
@@ -81,8 +86,8 @@ namespace CIGAR
 			a_reason = "not playable";
 			return false;
 		}
-		if (!a_item->Is(RE::FormType::Weapon) && !a_item->Is(RE::FormType::Armor)) {
-			a_reason = "not weapon/armor";
+		if (!a_item->Is(RE::FormType::Weapon) && !a_item->Is(RE::FormType::Armor) && !a_item->Is(RE::FormType::Book)) {
+			a_reason = "not weapon/armor/book";
 			return false;
 		}
 		if (Clock::now() >= expiresAt) {
@@ -122,10 +127,12 @@ namespace CIGAR
 			item ? Util::NameOf(item) : "-"s, reason));
 
 		if (!available && (reason == "expired" || reason == "not carried" || reason == "already equipped" ||
-				reason == "missing player/item" || reason == "not playable" || reason == "not weapon/armor")) {
+				reason == "missing player/item" || reason == "not playable" || reason == "not weapon/armor/book")) {
 			offeredItem = 0;
 		}
-		equip.Update(available, [item] { return std::format("장착하기 (길게): {}", Util::NameOf(item)); });
+		equip.Update(available, [item] {
+			return std::format("{} (길게): {}", item && item->Is(RE::FormType::Book) ? "읽기" : "장착하기", Util::NameOf(item));
+		});
 	}
 
 	void ItemEquip::OnAccepted(std::uint16_t a_eventID)
@@ -144,6 +151,10 @@ namespace CIGAR
 		const auto itemID = offeredItem;
 		offeredItem = 0;
 		equip.Withdraw();
+		if (auto* book = item->As<RE::TESObjectBOOK>()) {
+			ReadBook(player, book);
+			return;
+		}
 		if (auto* manager = RE::ActorEquipManager::GetSingleton()) {
 			manager->EquipObject(player, item);
 			Log("equipped {} ({:08X})", Util::NameOf(item), itemID);
@@ -151,6 +162,29 @@ namespace CIGAR
 			Log("equip failed: ActorEquipManager unavailable for {:08X}", itemID);
 			Util::Notify("CIGAR: 장착 호출 실패. 로그 확인");
 		}
+	}
+
+	void ItemEquip::ReadBook(RE::PlayerCharacter* a_player, RE::TESObjectBOOK* a_book)
+	{
+		// SI's Equipper::ReadBook, rebuilt: a spell tome teaches its spell and is used up, as when
+		// read from the inventory; any other book (a quest note) is read and its page opened.
+		if (auto* spell = a_book->TeachesSpell() ? a_book->GetSpell() : nullptr) {
+			const bool read = a_book->Read(a_player);
+			if (!a_player->HasSpell(spell)) {
+				a_player->AddSpell(spell);
+			}
+			const bool known = a_player->HasSpell(spell);
+			if (known) {
+				a_player->RemoveItem(a_book, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				Util::Notify(std::format("{} 습득", Util::NameOf(spell)));
+			}
+			Log("spell tome {} ({:08X}): Read={} spell {} known={}", Util::NameOf(a_book), a_book->GetFormID(), read,
+				Util::NameOf(spell), known);
+			return;
+		}
+		const bool read = a_book->Read(a_player);
+		RE::BookMenu::OpenMenuFromBaseForm(a_book);
+		Log("read {} ({:08X}): Read={} page opened", Util::NameOf(a_book), a_book->GetFormID(), read);
 	}
 
 	void ItemEquip::OnDisabled()
@@ -181,6 +215,30 @@ namespace CIGAR
 			return;
 		}
 		auto* item = RE::TESForm::LookupByID<RE::TESBoundObject>(a_itemID);
+		if (auto* book = item ? item->As<RE::TESObjectBOOK>() : nullptr) {
+			// Books: a spell tome whose spell is not known yet, or a quest item (SI's quest note
+			// prompt, docs/029-si-leftovers.md). Other books are loot.
+			auto* player = Util::Player();
+			auto* spell = book->TeachesSpell() ? book->GetSpell() : nullptr;
+			bool quest = false;
+			if (player && !spell) {
+				for (const auto& [object, data] : player->GetInventory([book](RE::TESBoundObject& a_object) { return &a_object == book; })) {
+					quest = data.second && data.second->IsQuestObject();
+				}
+			}
+			if (!(spell && player && !player->HasSpell(spell)) && !quest) {
+				return;
+			}
+			if (offeredItem != a_itemID) {
+				equip.Withdraw();
+				equip.Reset();
+			}
+			offeredItem = a_itemID;
+			expiresAt = Clock::now() + kOfferWindow;
+			Log("acquired {} ({:08X}), a {}: offering to read for {}s", Util::NameOf(book), a_itemID,
+				spell ? "spell tome" : "quest book", std::chrono::duration_cast<std::chrono::seconds>(kOfferWindow).count());
+			return;
+		}
 		if (!item || !item->GetPlayable() ||
 			(!item->Is(RE::FormType::Weapon) && !item->Is(RE::FormType::Armor))) {
 			return;
