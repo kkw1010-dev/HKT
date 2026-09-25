@@ -428,6 +428,11 @@ namespace CIGAR::Panel
 				ImGui::PushTextWrapPos(0.0f);
 				ImGui::TextColored(kDim, "물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
 				ImGui::PopTextWrapPos();
+				if constexpr (!kRelease) {
+					if (ImGui::Button("시험: 독 10초 걸기##pot-test-poison")) {
+						SKSE::GetTaskInterface()->AddTask([] { Potion::GetSingleton()->ApplyTestPoison(); });
+					}
+				}
 			}
 
 			ImGui::SeparatorText("무기 전환");

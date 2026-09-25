@@ -362,9 +362,54 @@ namespace CIGAR
 		}
 	}
 
+	void Potion::LogPoisonLike(RE::Actor* a_actor)
+	{
+		auto* target = a_actor ? a_actor->AsMagicTarget() : nullptr;
+		auto* effects = target ? target->GetActiveEffectList() : nullptr;
+		std::set<std::uint16_t> present;
+		if (effects) {
+			for (auto* active : *effects) {
+				if (!active || !active->spell || !active->effect || !active->effect->baseEffect) {
+					continue;
+				}
+				const auto* base = active->effect->baseEffect;
+				const auto* alchemy = active->spell->As<RE::AlchemyItem>();
+				const bool poisonType = active->spell->GetSpellType() == RE::MagicSystem::SpellType::kPoison;
+				const bool alchPoison = alchemy && alchemy->IsPoison();
+				const bool resistsPoison = base->data.resistVariable == RE::ActorValue::kPoisonResist;
+				if (!poisonType && !alchPoison && !resistsPoison) {
+					continue;
+				}
+				present.insert(active->usUniqueID);
+				if (poisonLogged.insert(active->usUniqueID).second) {
+					Log("poison-like effect: spell={} ({:08X}) type={} alchPoison={} effect={} resistPoison={} duration={:.1f}s dispelled={} counted={}",
+						Util::NameOf(active->spell), active->spell->GetFormID(),
+						static_cast<int>(active->spell->GetSpellType()), alchPoison, Util::NameOf(base),
+						resistsPoison, active->duration, active->flags.all(RE::ActiveEffect::Flag::kDispelled),
+						(poisonType || alchPoison) && !active->flags.all(RE::ActiveEffect::Flag::kDispelled));
+				}
+			}
+		}
+		std::erase_if(poisonLogged, [&present](std::uint16_t a_id) { return !present.contains(a_id); });
+	}
+
+	void Potion::ApplyTestPoison()
+	{
+		auto* player = Util::Player();
+		auto* spell = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x020E92, "Dragonborn.esm");
+		auto* caster = player ? player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant) : nullptr;
+		if (!spell || !caster) {
+			Log("test poison: spell={} caster={}", spell != nullptr, caster != nullptr);
+			return;
+		}
+		caster->CastSpellImmediate(spell, false, player, 1.0f, false, 0.0f, nullptr);
+		Log("test poison: cast {} ({:08X}) on the player", Util::NameOf(spell), spell->GetFormID());
+	}
+
 	void Potion::FastTick()
 	{
 		auto* player = Util::Player();
+		LogPoisonLike(player);
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
 		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);

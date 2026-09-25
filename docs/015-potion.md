@@ -183,3 +183,18 @@ Passed (the user; the log shows `drank 물약 - 수중 호흡 하급 ... for wat
   Mode is off here, so its Stage02/03 effects are inactive too. `MAG_DiseaseRattlesTrap`
   (`0010A24E`, 경련) has a non-survival effect with no random condition. The potion is
   `000AE723` (물약 - 질병 치료).
+
+Results the same day (log 09:56-10:24):
+
+- **질병 치료 passed**: `player.addspell 0010A24E` → `need=curedisease ... pick=물약 - 질병 치료`,
+  held, `drank 물약 - 질병 치료`, and `need is now -` after it.
+- **해독 not reached.** Brewing the two ingredients gave a 해독 potion, but no poison state was ever
+  seen: `player.cast 000638B2 player` (also with 7 and 14 as the target) applied nothing, since a
+  console cast of a Touch spell does not reach the caster, and every poison-type spell on this
+  modlist is Touch. In a fight with a summoned 설원 거미 the Potion gate never left `need=-`. The
+  frostbite spiders' poison is only on their power bites (`crSpider02PoisonBite`, 30-35% of attacks)
+  and lasts 3 s. Whether a bite landed is unknown, because nothing logged it.
+- **Added for the retest:** every poison-like effect on the player (poison spell type, a poison
+  `AlchemyItem`, or an effect resisted by PoisonResist) now logs once as `poison-like effect: ...
+  counted=<bool>`; and the author build's panel (3. 세부 설정 → 물약) has **시험: 독 10초 걸기**,
+  which casts `DLC2crScribPoisonBite` (`04020E92`, 10 s) on the player with `CastSpellImmediate`.

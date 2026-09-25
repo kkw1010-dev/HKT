@@ -52,3 +52,8 @@ Expected gate line: `mq105=10 objective=20 shout=거침없는 힘 known=true equ
 the same with `0002F7BA` / word `0002F7BB` and `setobjectivedisplayed MQ105 60 1`. If
 `player.addshout` is not accepted by the console, `player.psb` grants every shout. Afterwards
 `setobjectivecompleted MQ105 20 1` must take the prompt away.
+
+Result (2026-09-25): not reached. After the console lines the gate still read `mq105=0 objective=0`,
+so MQ105 never started (the user also could not absorb a dragon soul to reach it the normal way).
+Deferred by the user; the module loads (`ready: MQ105=true unrelentingForce=거침없는 힘
+whirlwindSprint=회오리의 질주`) but its prompt has never been offered in game.

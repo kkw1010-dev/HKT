@@ -82,6 +82,15 @@ namespace CIGAR
 		static bool HasActiveValue(RE::Actor* a_actor, RE::ActorValue a_value);
 		static bool Diseased(RE::Actor* a_actor);
 		static bool Poisoned(RE::Actor* a_actor);
+		// Logs each poison-like effect on the player once, with whether Poisoned() counts it, so a
+		// bite that never raised 해독 tells whether it landed (2026-09-25: a frostbite spider fight
+		// left no trace either way).
+		void LogPoisonLike(RE::Actor* a_actor);
+	public:
+		// Author build: puts a 10 s poison (DLC2crScribPoisonBite) on the player for the 해독 test;
+		// console casts of touch spells do not reach the player.
+		void ApplyTestPoison();
+	private:
 
 		PromptSlot drink{ this, kDrink };
 
@@ -97,5 +106,6 @@ namespace CIGAR
 		bool warnedNoChange{ false };
 		// The needs whose empty-handed scan has already been explained, once per session each.
 		std::set<Need> explained;
+		std::set<std::uint16_t> poisonLogged;
 	};
 }

@@ -15,8 +15,11 @@
   ChairDrink, pass time in a chair, warm hands at a forge, prompts hidden over menus.
 - Also passed (the user, 2026-09-25): Fill Her Up prompt-only (`docs/006`), Potion's 수중 호흡 and
   체력 위급 pick.
-- **Still to test in game**, with console setups written down: Potion's 해독 and 질병 치료
-  (`docs/015`, test 3), QuestAction (MQ105 objective 20/60; see `docs/025`, "Console setup").
+- Passed 2026-09-25 (log 09:56-10:24): 질병 치료; 시간 보내기 hidden after a decline and back after
+  standing (`pass time declined` 10:19:46, `offered again` 10:19:50); no equip prompt in a SexLab scene.
+- **Still to test in game:** Potion's 해독 (`docs/015`, results: no poison state was ever reached;
+  the author panel now has 시험: 독 10초 걸기 and poison effects are logged). **Deferred by the
+  user:** QuestAction (`startquest MQ105` did not start the quest; `docs/025`).
 - Built and deployed 2026-09-25 (after the tests): 시간 보내기 stays hidden after a decline until the
   next sit (`docs/019`); ItemEquip ignores nameless items, SexLab-scene items and FHU armors
   (`docs/018`); the `HUD mode` line also logs the four control flags Party Sheet gates on.
@@ -25,8 +28,11 @@
   Sheet's own logic, not the game HUD. `[HUDVisibility] Enabled = 0` did not help (the user,
   2026-09-25) and was reverted. Party Sheet 3.5's DLL has a hard gate,
   `MenuUtils::AreFightingControlsDisabled` / `[HUDGate] fighting= movement= looking= menusShowing=`
-  (debug level, never written), with no ini key found for it. CIGAR's `HUD mode` line now logs the
-  same four flags, so the next chair sit shows which one turns off.
+  (debug level, never written), with no ini key found for it. **Confirmed 2026-09-25:** sitting in a
+  chair turns `fighting` off (`HUD mode All ... fighting=false` at 10:19:44, back to true on standing
+  at 10:19:51); movement, looking and menus stay on. So the game's own sit disables fighting controls
+  and Party Sheet hides on that; nothing in CIGAR causes it. Open: the user's choice among leaving it,
+  asking Party Sheet's author for an option, or forcing the flag on while seated (not recommended).
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
   on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,
