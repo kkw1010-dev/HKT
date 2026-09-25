@@ -18,8 +18,11 @@ history of each module are in `docs/`, one file per module, and each file starts
   English/Korean). All builds have Korean/English text (`src/Text.*`) and adjustable 유술
   stamina/health damage; the standard `CIGAR 2.0.1` package was rebuilt with them. Copies live in
   `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`, both disabled.
-- **The author build is back in the load order** (2026-09-26): `+CIGAR`, `-CIGAR 2.0.1`,
-  `-CIGAR 2.0.1 Nexus` (backup `modlist.txt.bak_20260926_back-to-author`).
+- **The Nexus build is in the load order** (2026-09-26, for the user's video): `+CIGAR 2.0.1 Nexus`,
+  `-CIGAR`, `-CIGAR 2.0.1` (backup `modlist.txt.bak_20260926_nexus-video`). `Build.ps1 -Deploy` fails
+  `verify_deploy.py` until `+CIGAR` / `-CIGAR 2.0.1 Nexus` are set back with MO2 closed.
+- **GitHub:** branch `nexus` and tag `v2.0.1-nexus` mark the Nexus edition's source (build it with
+  `tools\Build.ps1 -Nexus`); the tag's GitHub release carries `CIGAR 2.0.1 Nexus.7z`.
 - **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
   are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
 - **CIGAR is a standalone system (2026-09-26).** It reads, writes and checks nothing of any other
