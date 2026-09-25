@@ -432,6 +432,60 @@ def check_helmet(modlist):
               "%s has the OffsetGPMA event and iGPMAAnimationType (the clips' trigger)" % rel)
 
 
+IED_BELT_ENTRY = "CIGAR - Helmet on Belt"
+
+
+def loaded_plugins(profile):
+    """Lower-cased names of every plugin the game loads: the ticked plugins.txt lines, plus the
+    loadorder.txt entries plugins.txt does not list (base masters and Creation Club, force-loaded)."""
+    listed = [l for l in read_lines(os.path.join(profile, "plugins.txt")) if l and not l.startswith("#")]
+    loaded = {l[1:].lower() for l in listed if l.startswith("*")}
+    known = {l.lstrip("*").lower() for l in listed}
+    for line in read_lines(os.path.join(profile, "loadorder.txt")):
+        if line and not line.startswith("#") and line.lower() not in known:
+            loaded.add(line.lower())
+    return loaded
+
+
+def ied_missing_plugins(node, loaded, found):
+    if isinstance(node, dict):
+        plugin = node.get("plugin")
+        if isinstance(plugin, str) and "id" in node and plugin.lower() not in loaded:
+            found.add(plugin)
+        for value in node.values():
+            ied_missing_plugins(value, loaded, found)
+    elif isinstance(node, list):
+        for value in node:
+            ied_missing_plugins(value, loaded, found)
+
+
+def check_ied(modlist, profile):
+    """IED rejects a whole config file when one form in it names a plugin that is not loaded: on
+    2026-09-25 Helmet Toggle's four entries (Helmet Toggle 2.esp, disabled for Helmet) made the
+    default config and the user's KKW1/KKW2 exports fail to parse, so the belt entry never applied.
+    Silent in game apart from IED's own log, hence checked here."""
+    overwrite = os.path.join(MO2, "overwrite", "SKSE", "Plugins", "IED")
+    default = os.path.join(overwrite, "DefaultConfigUser.json")
+    if not os.path.isfile(default):
+        default = winning_file(modlist, "SKSE/Plugins/IED/DefaultConfigUser.json")
+    files = [default] if default else []
+    exports = os.path.join(overwrite, "Exports")
+    if os.path.isdir(exports):
+        files += [os.path.join(exports, n) for n in sorted(os.listdir(exports)) if n.lower().endswith(".json")]
+    check(bool(default), "IED DefaultConfigUser.json found")
+    loaded = loaded_plugins(profile)
+    for path in files:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        missing = set()
+        ied_missing_plugins(data, loaded, missing)
+        check(not missing, "IED %s names only loaded plugins%s"
+              % (os.path.basename(path), ": missing " + ", ".join(sorted(missing)) if missing else ""))
+        if path == default:
+            player = data.get("data", {}).get("custom", {}).get("data", {}).get("default_player", {}).get("data", {})
+            check(IED_BELT_ENTRY in player, "IED default config has '%s'" % IED_BELT_ENTRY)
+
+
 def check_pno(modlist):
     """Needs reads PNO's fill levels and keys and calls UrinateAndDefecate by name; a renamed
     variable leaves the prompts absent or the keys bound without an error."""
@@ -782,6 +836,7 @@ def main():
     check_fhu(modlist)
     check_pno(modlist)
     check_helmet(modlist)
+    check_ied(modlist, profile)
     check_surrender(modlist)
     check_valhalla(modlist)
     check_jujutsu(modlist)

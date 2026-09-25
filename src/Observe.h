@@ -5,10 +5,12 @@
 
 namespace CIGAR
 {
-	// SI's Observer (살펴보기): after the player has stood still for 5 s looking at something within
-	// 5000 units, hold the key to narrow the field of view by up to 40 degrees at 20 degrees a second
-	// (SI's defaults idle_timer 5, max_distance 5000, fov_offset 40, fov_increment 20). Releasing the
-	// key or moving restores it. docs/029-si-leftovers.md.
+	// SI's Observer, shown as 주시하기 (renamed from 살펴보기 on 2026-09-25: the user found that it
+	// read like turning a 3D model around). After the player has stood still for 5 s looking at
+	// something within 5000 units (never furniture), holding the key narrows the field of view by up
+	// to 40 degrees (SI's defaults idle_timer 5, max_distance 5000, fov_offset 40). The zoom is eased
+	// every frame, in and out (the user, 2026-09-25: smoother than SI's fixed rate on a 100 ms
+	// tick). Releasing the key or moving eases it back. docs/029-si-leftovers.md.
 	class Observe final : public Module
 	{
 	public:
@@ -32,7 +34,20 @@ namespace CIGAR
 
 		using Clock = std::chrono::steady_clock;
 
+		// The FOV glides from `from` to `to` over `length`, on a smootherstep curve.
+		struct Ease
+		{
+			float             from{ 0.0f };
+			float             to{ 0.0f };
+			Clock::time_point start{};
+			float             length{ 0.0f };
+		};
+
 		void Restore(std::string_view a_reason);
+		void StartEase(float a_to, float a_seconds);
+		void Frame();  // game thread, once a frame while an ease runs
+		static void StartFrameDriver();
+		void SetFOV(float a_fov) const;
 
 		PromptSlot look{ this, kLook };
 		Clock::time_point stillSince{};
@@ -43,6 +58,8 @@ namespace CIGAR
 		bool firstPerson{ false };
 		float baseFOV{ 0.0f };
 		float currentFOV{ 0.0f };
-		Clock::time_point lastStep{};
+		Ease ease;
+		std::atomic_bool easing{ false };
+		std::atomic_bool frameQueued{ false };
 	};
 }

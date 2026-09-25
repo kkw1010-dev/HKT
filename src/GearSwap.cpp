@@ -37,9 +37,15 @@ namespace CIGAR
 		Log("ready");
 	}
 
-	float GearSwap::Rating(const RE::TESObjectARMO* a_armor)
+	// The armor rating the inventory menu shows: tempering (the entry's extra data) and armor perks
+	// included. A loose piece in the world has no entry and is rated as untempered.
+	float GearSwap::Rating(RE::PlayerCharacter* a_player, RE::TESObjectARMO* a_armor, RE::InventoryEntryData* a_entry)
 	{
-		return a_armor ? static_cast<float>(a_armor->armorRating) / 100.0f : 0.0f;
+		if (a_entry) {
+			return a_player->GetArmorValue(a_entry);
+		}
+		RE::InventoryEntryData loose{ a_armor, 1 };
+		return a_player->GetArmorValue(&loose);
 	}
 
 	bool GearSwap::SameClass(const RE::TESObjectARMO* a_a, const RE::TESObjectARMO* a_b)
@@ -47,7 +53,8 @@ namespace CIGAR
 		return a_a->IsHeavyArmor() == a_b->IsHeavyArmor() && a_a->IsLightArmor() == a_b->IsLightArmor();
 	}
 
-	void GearSwap::Consider(RE::PlayerCharacter* a_player, RE::TESObjectARMO* a_armor, Offer& a_best) const
+	void GearSwap::Consider(RE::PlayerCharacter* a_player, const RE::TESObjectREFR::InventoryItemMap& a_mine,
+		RE::TESObjectARMO* a_armor, RE::InventoryEntryData* a_entry, Offer& a_best) const
 	{
 		if (!a_armor || !a_armor->GetPlayable()) {
 			return;
@@ -66,10 +73,20 @@ namespace CIGAR
 			if (!worn || worn == a_armor) {
 				return;
 			}
-			float gain = 0.0f;
-			if (SameClass(worn, a_armor) && Rating(a_armor) > Rating(worn)) {
-				gain = Rating(a_armor) - Rating(worn);
+			const auto it = a_mine.find(worn);
+			auto* wornEntry = it != a_mine.end() ? it->second.second.get() : nullptr;
+			// An enchanted piece is kept whatever its rating (the user, 2026-09-25): the enchantment
+			// is what it is worn for, and a bare rating cannot weigh it.
+			if (wornEntry && wornEntry->IsEnchanted()) {
+				if (a_best.why.empty()) {
+					a_best.why = std::format("worn {} enchanted", Util::NameOf(worn));
+				}
+				return;
 			}
+			if (!SameClass(worn, a_armor)) {
+				return;
+			}
+			const float gain = Rating(a_player, a_armor, a_entry) - Rating(a_player, worn, wornEntry);
 			if (gain > a_best.gain) {
 				a_best.armor = a_armor;
 				a_best.part = part.name;
@@ -102,8 +119,9 @@ namespace CIGAR
 			return best;
 		}
 		best.source = aimed;
+		const auto mine = a_player->GetInventory([](RE::TESBoundObject& a_object) { return a_object.IsArmor(); });
 		if (auto* armor = base ? base->As<RE::TESObjectARMO>() : nullptr) {
-			Consider(a_player, armor, best);
+			Consider(a_player, mine, armor, nullptr, best);
 		} else if (actor || (base && base->Is(RE::FormType::Container))) {
 			if (ref->IsLocked()) {
 				best.why = "locked";
@@ -111,14 +129,14 @@ namespace CIGAR
 			}
 			for (const auto& [object, data] : ref->GetInventory()) {
 				if (data.first > 0 && object && data.second && !data.second->IsQuestObject()) {
-					Consider(a_player, object->As<RE::TESObjectARMO>(), best);
+					Consider(a_player, mine, object->As<RE::TESObjectARMO>(), data.second.get(), best);
 				}
 			}
 		} else {
 			best.why = "not armor or a container";
 			return best;
 		}
-		best.why = best.armor ? "better piece" : "nothing better";
+		best.why = best.armor ? "better piece" : best.why.empty() ? "nothing better" : best.why;
 		return best;
 	}
 

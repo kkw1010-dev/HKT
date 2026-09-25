@@ -97,9 +97,14 @@ namespace CIGAR
 			Log("accept ignored: {}", pick.why);
 			return;
 		}
-		// Concentrated Poison and similar perks raise the doses through this entry point.
+		// Concentrated Poison and similar perks raise the doses through this entry point. The engine
+		// reads one form per condition tab after the owner before the result pointer, and this entry
+		// point has three tabs (every PERK in the order says PerkConditionTabCount = 3): owner,
+		// weapon, poison. Passing only &doses made it read the float as a form and crash
+		// (crash-2026-09-25-16-10-16, inside PerkEntryPointExtender's condition hook).
 		float doses = 1.0f;
-		RE::BGSEntryPoint::HandleEntryPoint(RE::BGSEntryPoint::ENTRY_POINTS::kModPoisonDoseCount, player, &doses);
+		RE::BGSEntryPoint::HandleEntryPoint(RE::BGSEntryPoint::ENTRY_POINTS::kModPoisonDoseCount, player,
+			static_cast<RE::TESForm*>(pick.weapon), static_cast<RE::TESForm*>(pick.poison), &doses);
 		const auto count = static_cast<std::uint32_t>(std::max(1.0f, doses));
 		pick.entry->PoisonObject(pick.poison, count);
 		player->RemoveItem(pick.poison, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);

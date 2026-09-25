@@ -1,7 +1,9 @@
 # 028 · Helmet (off by default, so the face shows)
 
-Status (2026-09-25, second design): rebuilt without Helmet Toggle 2 and deployed; not yet tested in
-game. The first design (pressing Helmet Toggle's hotkey) passed its five tests but was replaced the
+Status (2026-09-25, second design): rebuilt without Helmet Toggle 2 and deployed. **투구 벗기 with the
+take-off clip passed in game (the user, 2026-09-25).** The hip display failed because IED rejected the
+whole default config over Helmet Toggle's leftover entries; fixed, untested (`docs/029`, test run 1).
+투구 쓰기 in combat is not tested yet. The first design (pressing Helmet Toggle's hotkey) passed its five tests but was replaced the
 same day; its record is kept below under "First design".
 
 ## The user's decision (2026-09-25, second)

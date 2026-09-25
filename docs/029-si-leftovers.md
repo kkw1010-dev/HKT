@@ -1,8 +1,41 @@
 # 029 · The rest of SI, plus 독 바르기, in one pass
 
-Status (2026-09-25): built and deployed; not yet tested in game. The user asked to absorb every
-remaining Streamlined Interactions feature at once, with poison application added, and to test it
-in one run.
+Status (2026-09-25): built and deployed. The user asked to absorb every remaining Streamlined
+Interactions feature at once, with poison application added, and to test it in one run.
+
+## Test run 1 (2026-09-25, the user's report; crash log `crash-2026-09-25-16-10-16.log`)
+
+| # | Test | Result |
+|---|---|---|
+| 1 | 읽기 on a spell tome (염력) | passed |
+| 2 | 투구 벗기 + helmet on the hip | the take-off passed; **the hip display did not appear** (IED, below) |
+| 3 | 몸 장비 교체 on a loose cuirass | passed; the user then set the enchantment rule (GearSwap, below) |
+| 4 | 살펴보기 | worked; the user asked for a smoother zoom and a new name, and it showed on furniture (Observe, below) |
+| 5 | 독 바르기 | **crashed to desktop on accept** (Poison, below) |
+| 6-9 | helmet in combat, 유술, PartyOutfit, quest letter | not reached (the crash ended the run) |
+
+Fixes built and deployed the same day (untested in game):
+
+- **Poison CTD.** `HandleEntryPoint(kModPoisonDoseCount, player, &doses)` passed no filter forms. That
+  entry point has three condition tabs (every PERK carrying it says `PerkConditionTabCount = 3`: perk
+  owner, weapon, poison), so the engine read `&doses` as the weapon and the next stack word as the
+  poison and the result pointer; the crash is inside PerkEntryPointExtender's condition hook, one frame
+  above `Poison::OnAccepted`. Now called with the weapon and the poison. `Recharge` already passed its
+  filter forms.
+- **IED hip display.** Not a fault of the belt entry: IED rejected the whole of `DefaultConfigUser.json`
+  (`LoadConfigStore ... parse failed`), and the user's exports `KKW1.json` / `KKW2.json` the same way,
+  because Helmet Toggle's four custom entries (`Helmet Toggle - DAV Config / Helmets / Masks / Masks
+  Belt`) name forms in `Helmet Toggle 2.esp`, which is disabled. Their IED log lines were the only
+  sign. The four entries were removed from all three files (backups `*.bak_20260925_drop-helmettoggle`)
+  and `CIGAR - Helmet on Belt` was added to both exports. `verify_deploy.py` now fails when an IED
+  config names a plugin that is not loaded or the belt entry is missing. The note below that called
+  the Helmet Toggle entries "inert" was wrong.
+- **GearSwap.** The user's rule: a worn enchanted piece is never offered a replacement; otherwise only
+  the armor rating decides. The rating is now the one the inventory shows (`GetArmorValue`, tempering
+  and perks included) instead of the base record's.
+- **Observe → 주시하기.** Renamed (살펴보기 read like turning a 3D model around). The zoom is eased on a
+  smootherstep curve every frame (2 s in, 0.7 s out) instead of stepping on the 100 ms tick, the way
+  back is eased too, and furniture is never a target.
 
 What SI still had (all already off in its settings; evidence in `SI/_ABSORPTION/_MAP.md`) and where it
 went:
@@ -32,14 +65,14 @@ actions are off.
   `InventoryEntryData::PoisonObject` on the equipped entry, one poison removed. Logs
   `applied ... poisoned after=<bool>` and notifies if the weapon is not poisoned afterwards.
 
-## Observe (살펴보기)
+## Observe (주시하기, first built as 살펴보기)
 
-- SI's defaults: idle 5 s, distance 5000, FOV offset 40, 20 degrees a second.
+- SI's defaults: idle 5 s, distance 5000, FOV offset 40.
 - Gate (100 ms): weapon sheathed, no movement input and out of combat for 5 s, a named crosshair target
-  within 5000 units, looking and movement controls on.
+  within 5000 units that is not furniture, looking and movement controls on, no zoom still easing out.
 - Hold-mode prompt (like 시간 보내기): while held, `PlayerCamera` `worldFOV` (or `firstPersonFOV` in
-  first person) drops toward base - 40 (at least 15) at 20/s. Release, movement or combat puts the
-  base value back at once.
+  first person) glides to base - 40 (at least 15) over 2 s on a smootherstep curve. Release, movement or
+  combat glides it back over 0.7 s. A small thread posts one task a frame while an ease runs.
 
 ## GearSwap (부위별 장비 교체)
 
@@ -48,6 +81,9 @@ actions are off.
 - Parts: head (30), body (32), hands (33), feet (37). A piece replaces a worn one of the same weight
   class (heavy / light / clothing) with a higher armor rating. Empty parts are left alone (the helmet
   is off by the user's choice, and a player undressed at home should not be offered the chest).
+- A worn enchanted piece (base or player enchantment, `InventoryEntryData::IsEnchanted`) blocks its
+  part: nothing is offered for it (the user, 2026-09-25). Ratings are `PlayerCharacter::GetArmorValue`
+  on the inventory entry, so tempering and perks count; a loose piece in the world is rated untempered.
 - The best gain wins; the prompt reads `<부위> 장비 교체 (길게): <이름>`. Accepting picks the loose item
   up or moves it out of the container, then equips it; the old piece stays in the inventory.
 
@@ -83,5 +119,6 @@ compared after writing: identical apart from the new entry). Decoded against the
   guess on the right hip, to be tuned in IED's own editor; base flags 4560 (hide lying down, equip
   sound, reference mode, synced transform, drop on death).
 
-IED's default config applies to games without IED data (a new game). Helmet Toggle's own IED entries
-in the same file point at its hidden-variant node and are inert with Helmet Toggle off.
+IED's default config applies to games without IED data (a new game). The claim first written here, that
+Helmet Toggle's own entries were inert with Helmet Toggle off, was wrong: they made IED reject the whole
+file. They are removed; see test run 1 above.

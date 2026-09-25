@@ -1,32 +1,36 @@
 # CIGAR — session handoff (updated 2026-09-25)
 
-## Start here (2026-09-25, end of session; nothing below has been tested in game)
+## Start here (2026-09-25, after test run 1)
 
-Built, deployed and committed, **untested**: `Helmet` second design (`docs/028`), `Poison`, `Observe`,
-`GearSwap`, `PartyOutfit`, books in `ItemEquip`, the IED helmet-on-belt entry (`docs/029`). The user
-runs the whole test in the next session on a **new game** (Helmet Toggle 2.esp was removed; IED's
-default config and the new co-save records `HELM`/`QOUT` apply to new games).
+**Roadmap (the user, 2026-09-25):** CIGAR **2.0 = the SI absorption**; focus stays there until it
+passes. **MannequinSwap and later features are 3.0**, started on a new branch once the current tests
+are done. Plan: `docs/030-mannequin-swap.md` (it replaced GPT's `claude.md`, deleted with the user's
+permission).
+
+Test run 1 (the user's report, `docs/029`, section "Test run 1"): 1 spell tome **passed**, 2 helmet
+take-off **passed** (hip display failed), 3 GearSwap **passed**, 4 Observe worked (changes asked),
+5 독 바르기 **crashed** (CTD on accept). Tests 6-9 were not reached.
+
+Fixed, built and deployed afterwards (DLL plus IED config; **untested in game**):
+- Poison CTD: `HandleEntryPoint(kModPoisonDoseCount)` now gets its weapon and poison filter forms.
+- IED: Helmet Toggle's four entries (forms in the disabled `Helmet Toggle 2.esp`) made IED reject the
+  whole `DefaultConfigUser.json` and the user's `KKW1/KKW2.json` exports. Removed from all three;
+  the belt entry added to both exports. `verify_deploy.py` now guards this.
+- GearSwap: worn enchanted piece → no prompt; otherwise the inventory armor rating decides.
+- Observe renamed **주시하기**, eased zoom in and out every frame, never on furniture.
+
+Next run, on a **new game** (IED's default config applies only to games without IED data; or import
+KKW2 in IED's UI), reading `SKSE\CIGAR.log` and `ImmersiveEquipmentDisplays.log` first:
+1. 투구 벗기 → helmet on the right hip (IED; position a first guess).
+2. `player.additem 0003A5A4 2`, draw the weapon → 독 바르기 (길게) → no crash, `applied ... doses=`.
+3. 주시하기 on an NPC → smooth zoom in and out; nothing on a chair or a workbench.
+4. GearSwap with an enchanted worn cuirass → no prompt (gate `worn ... enchanted`).
+5-8. The old tests 6-9: helmet on in combat (wolf `00023ABE`), 유술 ×10 at Bleak Falls Barrow
+   (Cinematic Clash still off), PartyOutfit (MQ201 objective 40), Faendal's letter.
 
 Open experiment: **Cinematic Clash is switched off** for the 유술 A/B test
 (`CinematicClash.ini` `[General] bEnabled = 0`, backup `CinematicClash.ini.bak_20260925_jujutsu-ab`).
 Read the 유술 result, then restore the INI (or keep it off if it fixes 유술 and the user agrees).
-
-After the user's run, read `SKSE\CIGAR.log` for every item below before asking anything. The test
-list given to the user (console IDs checked against the load order):
-
-1. `player.additem 000A26E5 1` → 읽기 (길게): 주문서 - 염력 → hold → "염력 습득", tome gone.
-2. `coc Riverwood`, `player.additem 00012E4D 1`, `player.equipitem 00012E4D` → 투구 벗기 (길게) →
-   take-off clip, helmet on the right hip (IED; position is a first guess).
-3. `player.additem 00012E49 1`, `player.equipitem 00012E49`, `player.placeatme 00013952 1` → aim at
-   the dropped steel cuirass → 몸 장비 교체 (길게) → picked up and worn.
-4. Weapon sheathed, look at a Riverwood NPC for 5 s → 살펴보기 (누르고 있기) → zoom while held.
-5. `player.additem 0003A5A4 2`, draw the weapon → 독 바르기 (길게) → prompt gone (weapon poisoned).
-6. `player.placeatme 00023ABE 1` (wolf) → 투구 쓰기 (one press) in combat → helmet on, hip display gone.
-7. `coc BleakFallsBarrow01` → 유술 ×10 on blocking bandits (Cinematic Clash off).
-8. Test save: `startquest MQ201`, `setobjectivedisplayed MQ201 40 1`, `player.additem 000E40DF 1`,
-   `player.additem 000E40DE 1` → 파티 의상 입기; `setobjectivedisplayed MQ201 40 0` → 원래 장비로.
-   `startquest` may fail as it did for MQ105 (gate would read `mq201=-`).
-9. Quest note: take Faendal's "A Lovely Letter" in Riverwood → 읽기 prompt on receiving the letter.
 
 Also open: whether to disable the SI mod itself (it now does nothing); TidyUp and KillMove are not
 built (`docs/029`).
@@ -244,7 +248,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
 | `Helmet` | 투구 벗기, 투구 쓰기 | — (SI HelmetToggle; clips from `CIGAR - Helmet Motions`) | `028` |
 | `Poison` | 독 바르기: <독> | — | `029` |
-| `Observe` | 살펴보기: <대상> | — (SI Observer) | `029` |
+| `Observe` | 주시하기: <대상> | — (SI Observer) | `029` |
 | `GearSwap` | <부위> 장비 교체: <장비> | — (SI piecewise outfit swap) | `029` |
 | `PartyOutfit` | 파티 의상 입기, 원래 장비로 | — (SI quest outfit, MQ201) | `029` |
 
@@ -428,6 +432,12 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
   `OnKeyDown`. Alias scripts need the alias VM handle (`Util::Handle(alias)`).
   An auto property is read with `Object::GetProperty`, not
   `VirtualMachine::GetPropertyValue`.
+- **Perk entry points.** `BGSEntryPoint::HandleEntryPoint(ep, owner, ...)` takes one form per
+  condition tab after the owner, then the result pointer. Read the tab count from a PERK that uses the
+  entry point (`PerkConditionTabCount`); passing only the result pointer crashed the game
+  (`kModPoisonDoseCount` has 3 tabs: owner, weapon, poison).
+- **IED configs.** One form from a plugin that is not loaded makes IED reject the whole config file,
+  with nothing on screen. `verify_deploy.py` checks the default config and the overwrite exports.
 - **Worn state.** Unequip and equip are queued, so ignore the worn state for a
   few ticks after a change (`kSettleTicks`).
 - **Pausing.** `RE::UI::GameIsPaused()` is non-const, and ticks do not run
