@@ -192,11 +192,14 @@ namespace CIGAR
 		if (step == Step::kUnequip) {
 			auto* manager = RE::ActorEquipManager::GetSingleton();
 			for (auto* armor : removing) {
-				const bool done = manager && manager->UnequipObject(player, armor);
+				// The unequip is queued: the call returns false for a queued request, so the result is
+				// the next gate's worn= field, not this value.
+				const bool returned = manager && manager->UnequipObject(player, armor);
 				if (std::ranges::find(stowed, armor->GetFormID()) == stowed.end() && stowed.size() < kMaxStowed) {
 					stowed.push_back(armor->GetFormID());
 				}
-				Log("took off {} ({:08X}) unequip={}", Util::NameOf(armor), armor->GetFormID(), done);
+				Log("took off {} ({:08X}): unequip queued (call returned {}; see worn= on the next gate)", Util::NameOf(armor),
+					armor->GetFormID(), returned);
 			}
 			removing.clear();
 			if (clipRunning) {

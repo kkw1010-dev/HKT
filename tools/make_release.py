@@ -34,7 +34,7 @@ NEXUS_FORBIDDEN = [
     "Acheron", "YameteKudasai", "Kudasai", "BaboInteractiveDia", "BaboDialogue", "sr_FillHerUp",
     "Fill Her Up", "FH_Grapple", "Private Needs", "PNO_", "Bathing in Skyrim", "mzin",
     "TorchesCandlelightLanterns", "Helmet Toggle", "SurvivalModeImproved", "Gourmet", "MAG_FoodType",
-    "OCF_", "_SH_Alcohol", "bIsDodging", "bInIframe",
+    "OCF_", "_SH_Alcohol", "bIsDodging", "bInIframe", "valhalla=", "tdm=",
 ]
 
 

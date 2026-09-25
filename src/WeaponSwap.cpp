@@ -92,8 +92,12 @@ namespace CIGAR
 		auto* defaults = RE::BGSDefaultObjectManager::GetSingleton();
 		rightSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kRightHandEquip) : nullptr;
 		leftSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kLeftHandEquip) : nullptr;
+#ifdef CIGAR_NEXUS
+		Log("rightSlot={} leftSlot={} range={:.0f}", rightSlot != nullptr, leftSlot != nullptr, Settings::WeaponSwapRange());
+#else
 		Log("tdm={}{} rightSlot={} leftSlot={} range={:.0f}", tdm != nullptr, Util::DescribeScenes(),
 			rightSlot != nullptr, leftSlot != nullptr, Settings::WeaponSwapRange());
+#endif
 		if (!rightSlot || !leftSlot) {
 			Log("WARN hand equip slots did not resolve; one-handed weapons use their default hand");
 		}

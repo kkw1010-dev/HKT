@@ -38,7 +38,7 @@ reported every item passed** (see "Test 1" at the end for what the log shows).
   Survival Mode Creation Club file that ships free with the current game (without it only warm hands
   is off). `ItemEquip` still skips the Creation Club fishing rod. SkyPrompt is the requirement and
   SKSE Menu Framework the optional panel.
-- **Self-check.** `make_release.py --nexus` refuses a DLL that still contains any of 28 other-mod
+- **Self-check.** `make_release.py --nexus` refuses a DLL that still contains any of 30 other-mod
   strings (plugin names, keyword editor IDs, graph variables) or lacks the edition marker. On
   2026-09-26 the author DLL showed 27 of them and the Nexus DLL none. The load line in `CIGAR.log`
   names the edition: `loaded (Nexus edition, base game only; runtime ...)`.
@@ -90,3 +90,8 @@ The user reported all nine test items passed. The log of the last launch shows:
   titles after a relaunch in English. `CIGAR.json` was left on `"language": "en"`.
 - Other mods named in the log: only the field names `tdm=false` (WeaponSwap) and `valhalla=false`
   (Jujutsu) in two ready lines.
+
+After test 1 (the user's go-ahead): the Nexus edition's ready lines drop those two fields, `tdm=` and
+`valhalla=` joined the forbidden strings (30), and Helmet's line now reads `unequip queued (call
+returned ...)` in every edition. Both packages were rebuilt; the Nexus upload is
+`Downloads\CIGAR 2.0.1 Nexus.7z` (DLL sha256 3950258b...).

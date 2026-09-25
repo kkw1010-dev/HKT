@@ -262,7 +262,11 @@ namespace CIGAR
 		valhalla = GetModuleHandleW(L"ValhallaCombat.dll") ? VAL_API::RequestPluginAPI() : nullptr;
 #endif
 		const bool hooked = originalKillActor && originalKillMoveStart && originalKillMoveEnd;
+#ifdef CIGAR_NEXUS
+		Log("idles from {}:{}; hooks={}", idleSource, found, hooked);
+#else
 		Log("idles from {}:{}; hooks={} valhalla={}{}", idleSource, found, hooked, valhalla != nullptr, Util::DescribeScenes());
+#endif
 		if (idles.empty() || !hooked) {
 			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the anim-handler hooks are not installed");
 			return;
