@@ -37,6 +37,12 @@ page stores them in its database, collection `results`, one document per item id
 `ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
 anything.
 
+**Temporary, 2026-09-25 (the user: NPC grapples ruined the 유술 test):** Grapple's NPC grapples are
+off (`mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`, backup
+`.bak_20260925_npc-off`), and CIGAR's `Grapple` module is switched off in `CIGAR.json` (backup
+`CIGAR.json.bak_20260925_grapple-off`). Restore both when the user says so. The next 유술 run doubles as
+an A/B for the "refused until the first death" block (`docs/012`, test 28) with NPC grapples off.
+
 **CIGAR 2.0 final test: 44 of 44 passed** (retest 2026-09-25 21:04-21:11: 무기 전환 with a bow, chair
 drink decline, 퀘스트 추적, 그레이비어드 샤우트). Built after it, untested: 주시하기 hidden after a
 decline until the player leaves the spot (300 units); the 유술 first-use experiment (`docs/012`, test
