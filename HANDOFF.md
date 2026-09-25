@@ -14,16 +14,15 @@ Built, deployed, **untested**: IED hip display (Helmet Toggle entries removed fr
 GearSwap's enchantment rule, Observe as 주시하기 (eased zoom, no furniture), **SI disabled** in the
 profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost its press to an SI prompt).
 
-**Waiting on the user:** the neck break. After it the victim gets up and plays a from-behind
-kill move by itself (a second KillMoveStart on the victim, `docs/012` test 22). Make the neck break
-lethal, or drop it. Cinematic Clash stays on (it was not the cause).
+Decided 2026-09-25: no helmet hip display (IED entry removed); the neck break kills. Cinematic
+Clash stays on (it was not the cause of test 20).
 
-Next run (new game, or import KKW2 in IED's UI):
-1. 투구 벗기 → helmet on the right hip, now on IED's `ExtraPelvisArmorHelmet1` node.
-2. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, then `player.additem 00013952 1` → no
-   장착하기 (gate `worn ... enchanted`). Unequip the enchanted cuirass, equip `00012E49` (iron),
-   `player.additem 00013952 1` → 장착하기 offered (steel beats iron).
-3. 유술 ×10 without the suplex and the sleeper hold.
+Next run (no new game needed):
+1. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, `player.additem 00013952 1` → no
+   장착하기 (gate `worn ... enchanted`).
+2. `player.additem 00012E49 1`, `player.equipitem 00012E49` (iron, 25), `player.additem 00013952 1`
+   (steel, 32) → 장착하기 offered.
+3. 유술 ×10: no suplex or sleeper hold; a neck break kills the victim (log `passed through (lethal)`).
 
 SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
 `verify_deploy.py` fails on it.

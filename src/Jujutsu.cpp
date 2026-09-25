@@ -19,6 +19,7 @@ namespace CIGAR
 			const char* name;
 			RE::FormID id;
 			std::string_view plugin;
+			bool lethal{ false };  // the victim dies, as in vanilla; no knock-down, no stun
 		};
 		//
 		// 2026-09-25, the user: every other vanilla hand-to-hand paired kill move was tried (every IDLE
@@ -26,19 +27,21 @@ namespace CIGAR
 		// seeing them the user kept only the neck break: the suplex (Valhalla 9700AA84) and the sleeper
 		// hold (Update.esm 0816) looked awkward from the front. The neck break's only condition is
 		// GetRandomPercent <= 50, which a retry re-rolls. docs/012, test 22.
+		// The neck break kills (the user, 2026-09-25): kept alive, its victim got up and replayed a
+		// kill move on its own (test 22), and a broken neck is not something to stand up from.
 		constexpr std::array kValhallaIdles{
 			IdleRef{ "KneeThrow", 0xAA3A, "ValhallaCombat.esp"sv },
 			IdleRef{ "BodySlam", 0xAA3B, "ValhallaCombat.esp"sv },
 			IdleRef{ "ComboA", 0xAA3C, "ValhallaCombat.esp"sv },
 			IdleRef{ "SlamA", 0xAA3D, "ValhallaCombat.esp"sv },
-			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },        // KillMoveSneakH2HNeckBreak
+			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv, true },  // KillMoveSneakH2HNeckBreak
 		};
 		constexpr std::array kVanillaIdles{
 			IdleRef{ "KneeThrow", 0x821, "Update.esm"sv },     // H2HKillMoveKneeThrow
 			IdleRef{ "BodySlam", 0x820, "Update.esm"sv },      // H2HKillMoveBodySlam
 			IdleRef{ "ComboA", 0x0F9958, "Skyrim.esm"sv },     // pa_KillMoveH2HComboA
 			IdleRef{ "SlamA", 0x100EF8, "Skyrim.esm"sv },      // H2HKillMoveSlamA00
-			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },     // KillMoveSneakH2HNeckBreak
+			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv, true },  // KillMoveSneakH2HNeckBreak
 		};
 
 		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
@@ -88,6 +91,8 @@ namespace CIGAR
 
 		// Written by the game thread, read by the hooks (which run wherever graph events are delivered).
 		std::atomic<RE::Actor*> armedVictim{ nullptr };
+		// A lethal move lets KillActor and KillMoveEnd through, so the engine kills the victim itself.
+		std::atomic_bool armedLethal{ false };
 		std::atomic<std::int64_t> armedAtMs{ 0 };
 		// Milliseconds after arming at which each victim event arrived, or -1; the game thread logs them.
 		std::atomic<std::int64_t> killActorAt{ -1 };
@@ -111,11 +116,11 @@ namespace CIGAR
 			if (auto* v = armedVictim.load(); v) {
 				if (&a_actor == v) {
 					Stamp(killActorAt);
-					return true;
+					return armedLethal ? originalKillActor(a_this, a_actor, a_parameter) : true;
 				}
 				if (&a_actor == RE::PlayerCharacter::GetSingleton()) {
 					Stamp(playerKillActorAt);
-					return true;
+					return armedLethal ? originalKillActor(a_this, a_actor, a_parameter) : true;
 				}
 			}
 			return originalKillActor(a_this, a_actor, a_parameter);
@@ -131,6 +136,10 @@ namespace CIGAR
 
 		bool KillMoveEndHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
 		{
+			if (&a_actor == armedVictim.load() && armedLethal) {
+				Stamp(killMoveEndAt);
+				return originalKillMoveEnd(a_this, a_actor, a_parameter);
+			}
 			if (&a_actor == armedVictim.load()) {
 				// This is the event that kills a kill-move victim. Test 3: knocking it down when the player's
 				// side ended left it standing up for 0.5-2.5 s first, so it goes down now, on the next frame.
@@ -200,6 +209,7 @@ namespace CIGAR
 		lastBlocker = {};
 		idles.clear();
 		idleNames.clear();
+		idleLethal.clear();
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		const bool valhallaEsp = handler && handler->LookupModByName("ValhallaCombat.esp"sv);
@@ -212,6 +222,7 @@ namespace CIGAR
 			if (idle) {
 				idles.push_back(idle);
 				idleNames.push_back(ref.name);
+				idleLethal.push_back(ref.lethal);
 			}
 		}
 		valhalla = GetModuleHandleW(L"ValhallaCombat.dll") ? VAL_API::RequestPluginAPI() : nullptr;
@@ -310,6 +321,7 @@ namespace CIGAR
 		static std::mt19937 rng{ std::random_device{}() };
 		const auto pick = std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng);
 		playing = idles[pick];
+		lethal = idleLethal[pick];
 		victim = target->GetHandle();
 		payoffDone = false;
 		knocked = false;
@@ -353,6 +365,7 @@ namespace CIGAR
 		killMoveStartAt = -1;
 		killMoveEndAt = -1;
 		armedAtMs = NowMs();
+		armedLethal = lethal;
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
@@ -569,11 +582,12 @@ namespace CIGAR
 			}
 			return false;
 		};
+		const char* fate = lethal ? "passed through (lethal)" : "swallowed";
 		report(killMoveStartAt, "victim KillMoveStart (passed through)");
-		const bool killActor = report(killActorAt, "victim KillActor swallowed");
-		report(playerKillActorAt, "player KillActor swallowed");
-		report(killMoveEndAt, "victim KillMoveEnd swallowed");
-		if (killActor && !payoffDone) {
+		const bool killActor = report(killActorAt, std::format("victim KillActor {}", fate).c_str());
+		report(playerKillActorAt, std::format("player KillActor {}", fate).c_str());
+		report(killMoveEndAt, std::format("victim KillMoveEnd {}", fate).c_str());
+		if (killActor && !payoffDone && !lethal) {
 			ApplyPayoff(a_player, v);
 		}
 
@@ -608,12 +622,14 @@ namespace CIGAR
 		case Phase::kRunning:
 			// The victim's own kill-move flag stays set (its KillMoveEnd was swallowed); the player's side ends the pair.
 			if (!synced && !a_player->IsInKillMove()) {
-				if (!payoffDone) {
+				if (!payoffDone && !lethal) {
 					Log("pair ended without a KillActor event; payoff applied at the end");
 					ApplyPayoff(a_player, v);
 				}
 				Log("pair ended after {:.2f} s; victim: {}", t, DescribeVictim(v));
-				EndKillMove(a_player, v);
+				if (!lethal) {
+					EndKillMove(a_player, v);
+				}
 				phase = Phase::kSettling;
 				settleUntil = now + kSettle;
 			} else if (now - phaseStart >= kPairTimeout) {
@@ -624,7 +640,12 @@ namespace CIGAR
 		case Phase::kSettling:
 			if (now >= settleUntil) {
 				Log("2 s after the pair: victim: {}", DescribeVictim(v));
-				if (v && v->IsDead() && !warnedDied) {
+				if (lethal) {
+					// The move is meant to kill; say so when it did not (an essential victim bleeds out).
+					if (v && !v->IsDead()) {
+						Log("WARN the lethal move left the victim alive (essential={})", v->IsEssential());
+					}
+				} else if (v && v->IsDead() && !warnedDied) {
 					warnedDied = true;
 					Log("WARN the victim died although KillActor and KillMoveEnd were swallowed");
 					Util::Notify("CIGAR: 유술 대상 사망. 로그 확인");

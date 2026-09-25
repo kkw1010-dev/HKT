@@ -74,6 +74,8 @@ namespace CIGAR
 
 		std::vector<RE::TESIdleForm*> idles;
 		std::vector<const char*> idleNames;  // parallel to idles, for the log
+		std::vector<bool> idleLethal;        // parallel to idles
+		bool lethal{ false };                // the move being played kills
 		const char* idleSource{ "-" };
 		VAL_API::IVVAL2* valhalla{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };

@@ -106,6 +106,12 @@ After run 3:
   retired.
 - 유술: the suplex and the sleeper hold are out; the neck break stays for now (see `docs/012`).
 
+Decided after run 3 (the user, 2026-09-25):
+- **No hip display.** 투구 벗기 / 쓰기 is enough; `CIGAR - Helmet on Belt` is removed from the default
+  config and both exports (backups `*.bak_20260925_drop-belt`), and `verify_deploy.py` now checks it
+  stays out. Helmet Toggle's entries stay removed too.
+- **The neck break kills** (`docs/012`).
+
 ## Observe (주시하기, first built as 살펴보기)
 
 - SI's defaults: idle 5 s, distance 5000, FOV offset 40.

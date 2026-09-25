@@ -558,3 +558,8 @@ With Clash back on, 44 presses played 30: KneeThrow 5/6, BodySlam 4/4, ComboA 4/
   resume the paired state after the getup. Its other six presses were refused (the 50% condition plus
   the usual guard refusals). **Open, the user's call:** let the neck break kill (pass KillActor
   through, no knock-down) or drop it.
+
+**Decided (the user, 2026-09-25): the neck break kills.** For it alone, KillActor (victim and player)
+and the victim's KillMoveEnd pass through to the engine, so the victim dies as in vanilla; no stun
+payoff, no knock-down. The log says `passed through (lethal)`, and after the settle warns if the victim
+is still alive (an essential NPC bleeds out instead). The other four moves are unchanged.
