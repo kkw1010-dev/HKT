@@ -5,13 +5,13 @@
 
 namespace CIGAR
 {
-	// SI's ItemUse recharge-weapon action: out of combat, an equipped enchanted weapon (staves
+	// Weapon recharge: out of combat, an equipped enchanted weapon (staves
 	// included) whose charge has run low is offered 충전하기, which spends a filled soul gem from the
 	// inventory on it. The gem's worth is the game's own iSoulLevelValue* setting (a magic overhaul
 	// changes it) passed through the perk entry point Mod Soul Gem Recharge, so enchanting perks count
 	// as they do in the inventory's own recharge.
 	//
-	// The charge is written the way SI's DLL names it (RestoreAV<TESSoulGem>): the hand's item-charge
+	// The charge is written as an actor-value restore: the hand's item-charge
 	// actor value is restored, and the equipped instance's ExtraCharge is set to match. A reusable
 	// gem (Azura's Star, the Black Star) is given back empty.
 	class Recharge final : public Module

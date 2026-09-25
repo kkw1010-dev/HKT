@@ -7,8 +7,8 @@ namespace CIGAR
 {
 	// Undressing and dressing by the player's current state: at any bed or wardrobe/dresser the
 	// prompt is 탈의하기 when dressed and 착용하기 when naked; in water it is 탈의하기 (bathing
-	// follows), and 착용하기 comes after leaving the water. Replaces Streamlined Interactions'
-	// Water, Bed and Wardrobe Undress, which strip the Softbody SMP collision carrier.
+	// follows), and 착용하기 comes after leaving the water. The Softbody SMP collision carrier and
+	// no-strip items stay on.
 	class Dress final :
 		public Module,
 		public RE::BSTEventSink<SKSE::CrosshairRefEvent>

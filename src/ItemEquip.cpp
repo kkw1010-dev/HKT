@@ -60,16 +60,10 @@ namespace CIGAR
 		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin)
 		                      ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin)
 		                      : nullptr;
-		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_weapon", "/MCP/modules/ItemUse/enabled_equip_weapon");
-		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_armor", "/MCP/modules/ItemUse/enabled_equip_armor");
 		Log("ready: woodChoppingAxes={} sexlab={}", woodAxes != nullptr, sexlabAnimating != nullptr);
 	}
 
-	void ItemEquip::Tick()
-	{
-		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_weapon", "/MCP/modules/ItemUse/enabled_equip_weapon");
-		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_armor", "/MCP/modules/ItemUse/enabled_equip_armor");
-	}
+	void ItemEquip::Tick() {}
 
 	bool ItemEquip::AlreadyEquipped(RE::PlayerCharacter* a_player, RE::TESBoundObject* a_item)
 	{

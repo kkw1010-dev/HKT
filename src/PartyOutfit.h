@@ -5,10 +5,9 @@
 
 namespace CIGAR
 {
-	// SI's quest outfit swap (its Quest Interactions video: "Party Clothes", then back to the previous
-	// gear). Diplomatic Immunity (MQ201): while the party objectives are shown and the player carries
+	// A quest outfit swap: party clothes, then back to the previous gear. Diplomatic Immunity (MQ201): while the party objectives are shown and the player carries
 	// the party clothes, 파티 의상 입기 stores the worn armor and puts the clothes and boots on; once the
-	// party is over, 원래 장비로 puts back what is still carried. docs/029-si-leftovers.md.
+	// party is over, 원래 장비로 puts back what is still carried. docs/032-party-outfit.md.
 	class PartyOutfit final : public Module
 	{
 	public:

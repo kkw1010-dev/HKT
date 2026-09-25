@@ -75,7 +75,7 @@ namespace CIGAR
 			Log("Bathing in Skyrim - Renewed not found or not bound; bathing prompts are off");
 			return;
 		}
-		Log("ready; SI Bathe={}", Util::SISetting("/MCP/modules/Bathe/enabled"));
+		Log("ready");
 	}
 
 	bool Bathe::UnderWaterfall(RE::PlayerCharacter* a_player) const
@@ -139,7 +139,6 @@ namespace CIGAR
 				Log("WARN Bathing in Skyrim is disabled in its MCM; no bathe prompt is offered");
 				Util::Notify("CIGAR: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시");
 			}
-			Util::WarnIfSIModuleOn("Bathe", "/MCP/modules/Bathe/enabled");
 		}
 		wasInWater = inWater;
 

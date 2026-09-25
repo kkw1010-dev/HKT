@@ -1,16 +1,11 @@
 #include "Util.h"
 
-#include <nlohmann/json.hpp>
-
 namespace CIGAR::Util
 {
 	namespace
 	{
 		constexpr std::array kKeptSlots{ 31u, 40u, 41u, 43u, 50u, 51u };
 		constexpr std::array kNoStripKeywords{ "SexLabNoStrip"sv, "OStimNoStrip"sv, "zad_Lockable"sv, "zad_QuestItem"sv };
-		constexpr auto kSISettings = "Data/SKSE/Plugins/StreamlinedInteractions/settings.json"sv;
-
-		bool warnedSIModule = false;
 
 		RE::BGSBipedObjectForm::BipedObjectSlot SlotMask(std::uint32_t a_slot)
 		{
@@ -345,38 +340,4 @@ namespace CIGAR::Util
 		RE::free(up);
 		return true;
 	}
-
-	int SISetting(std::string_view a_jsonPointer)
-	{
-		std::ifstream file{ std::filesystem::path{ kSISettings } };
-		if (!file) {
-			return -1;
-		}
-		try {
-			const auto json = nlohmann::json::parse(file);
-			const nlohmann::json::json_pointer pointer{ std::string{ a_jsonPointer } };
-			if (!json.contains(pointer)) {
-				return -1;
-			}
-			const auto& value = json.at(pointer);
-			if (value.is_boolean()) {
-				return value.get<bool>() ? 1 : 0;
-			}
-			return -1;
-		} catch (const std::exception& e) {
-			logs::warn("could not read {}: {}", kSISettings, e.what());
-			return -1;
-		}
-	}
-
-	void WarnIfSIModuleOn(std::string_view a_label, std::string_view a_jsonPointer)
-	{
-		if (SISetting(a_jsonPointer) == 1 && !warnedSIModule) {
-			warnedSIModule = true;
-			logs::warn("Streamlined Interactions {} is on; its prompt will duplicate CIGAR's", a_label);
-			Notify(std::format("CIGAR: SI 중복 모듈 켜짐 - {}", a_label));
-		}
-	}
-
-	void ResetSIWarning() { warnedSIModule = false; }
 }

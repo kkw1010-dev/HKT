@@ -42,8 +42,7 @@ namespace CIGAR
 		// Offered below this health fraction. The value is the user's choice (first 20%, then 40%); it is
 		// not derived from Acheron's knockdown threshold (fKdHealthThresh).
 		constexpr float kLowHealth = 0.40f;
-		// Slow motion on the moment the prompt appears; Streamlined Interactions' low-health potion
-		// prompt uses 3 s on this modlist.
+		// Slow motion on the moment the prompt appears.
 		constexpr float kSlowMultiplier = 0.3f;
 		constexpr auto kSlowDuration = 3s;
 		// Text pulse between white and gold (ImGui colours are ABGR).

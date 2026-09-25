@@ -6,9 +6,8 @@
 namespace CIGAR
 {
 	// 책 읽기: a newly acquired spell tome whose spell is not known, or a book that is a quest item
-	// (SI's spellbook equip and quest note prompts), gets a 15 s hold prompt. Split out of ItemEquip
-	// on 2026-09-25 (the user) so each has its own switch and its own prompt.
-	// docs/029-si-leftovers.md.
+	// gets a 15 s hold prompt. Split out of ItemEquip on 2026-09-25 (the user) so each has its own
+	// switch and its own prompt. docs/034-book-read.md.
 	class BookRead final :
 		public Module,
 		public RE::BSTEventSink<RE::TESContainerChangedEvent>

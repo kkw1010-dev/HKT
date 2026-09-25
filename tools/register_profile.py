@@ -1,24 +1,20 @@
 """Register CIGAR in the active MO2 profile. Safe to re-run.
 
-- modlist.txt: +CIGAR directly above Streamlined Interactions, so CIGAR's settings.json
-  override wins. The pre-rename SI-Extensions entry is removed and CIGAR 0.2.0 is disabled.
-- plugins.txt / loadorder.txt: CIGAR is an ESP-less SKSE DLL, so the plugin entries left by
-  the earlier Papyrus builds (CIGAR.esp, SI-Extensions.esp) are removed.
+- modlist.txt: +CIGAR, and every release copy ("CIGAR <version>", e.g. CIGAR 2.0.0) disabled so
+  only the author build loads. An existing CIGAR entry keeps its place; a new one goes to the top
+  (highest priority). CIGAR ships no files another mod provides, so its place does not matter.
 
 Refuses to run while Mod Organizer is open, because MO2 rewrites these files from memory.
-Each changed file is backed up first.
+The file is backed up first when it changes.
 """
 import datetime
 import os
+import re
 import subprocess
 
 MO2 = r"C:\TAKEALOOK"
-SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
-RELEASE_MOD = "CIGAR 0.2.0"
-STALE_PLUGIN_LINES = {
-    "*CIGAR.esp", "CIGAR.esp",
-    "*SI-Extensions.esp", "SI-Extensions.esp",
-}
+AUTHOR_MOD = "CIGAR"
+RELEASE_COPY = re.compile(r"^[+-]CIGAR \d+\.\d+\.\d+$")
 
 
 def active_profile():
@@ -58,16 +54,14 @@ def rewrite(path, edit, stamp):
 
 
 def enable_mod(rows):
-    managed = {"+SI-Extensions", "-SI-Extensions", "+CIGAR", "-CIGAR",
-               "+" + RELEASE_MOD, "-" + RELEASE_MOD}
-    rows = [r for r in rows if r not in managed]
-    si_index = rows.index("+" + SI_MOD)
-    rows[si_index:si_index] = ["-" + RELEASE_MOD, "+CIGAR"]
+    rows = ["-" + r[1:] if RELEASE_COPY.match(r) else r for r in rows]
+    for i, row in enumerate(rows):
+        if row in ("+" + AUTHOR_MOD, "-" + AUTHOR_MOD):
+            rows[i] = "+" + AUTHOR_MOD
+            return rows
+    top = next((i for i, row in enumerate(rows) if not row.startswith("#")), len(rows))
+    rows.insert(top, "+" + AUTHOR_MOD)
     return rows
-
-
-def drop_stale_plugins(rows):
-    return [r for r in rows if r not in STALE_PLUGIN_LINES]
 
 
 def main():
@@ -76,8 +70,6 @@ def main():
     profile = os.path.join(MO2, "profiles", active_profile())
     stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     rewrite(os.path.join(profile, "modlist.txt"), enable_mod, stamp)
-    rewrite(os.path.join(profile, "plugins.txt"), drop_stale_plugins, stamp)
-    rewrite(os.path.join(profile, "loadorder.txt"), drop_stale_plugins, stamp)
 
 
 if __name__ == "__main__":

@@ -5,10 +5,10 @@
 
 namespace CIGAR
 {
-	// 독 바르기 (the user, 2026-09-25, with the SI absorption): with a weapon drawn whose right-hand
+	// 독 바르기 (the user, 2026-09-25): with a weapon drawn whose right-hand
 	// entry carries no poison, offer the most valuable poison carried and apply it the way the
 	// inventory does (InventoryEntryData::PoisonObject, doses through the Mod Poison Dose Count perk
-	// entry point). docs/029-si-leftovers.md.
+	// entry point). docs/033-poison.md.
 	class Poison final : public Module
 	{
 	public:

@@ -1,9 +1,8 @@
 """Deployment checks for CIGAR. Exit 1 on any failure.
 
 Encodes the failure modes that are silent in game (no error, no prompt):
-the mod not enabled, a stale DLL, leftovers of the earlier Papyrus/ESP builds
-(which would run alongside the DLL and double every prompt), a replaced SI
-module still on (double prompts), the override losing to SI's original, or a
+the mod not enabled, a stale DLL, plugin or Papyrus files in the mod folder
+(CIGAR is ESP-less), an enabled release copy beside the author build, or a
 missing hard dependency. Optional integrations (Bathing in Skyrim) are reported,
 never required.
 """
@@ -19,52 +18,10 @@ REPO = os.path.dirname(HERE)
 MO2 = r"C:\TAKEALOOK"
 MODS = os.path.join(MO2, "mods")
 MOD_NAME = "CIGAR"
-RELEASE_MOD = "CIGAR 0.2.0"
 MOD = os.path.join(MODS, MOD_NAME)
-SI_MOD = "[NoDelete] 0008 StreamlinedInteractions"
 DLL = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.dll")
 BUILT_DLL = os.path.join(REPO, "build", "release", "CIGAR.dll")
-SI_SETTINGS = os.path.join(MOD, "SKSE", "Plugins", "StreamlinedInteractions", "settings.json")
-REPLACED = [
-    ("Bathe", "enabled"),
-    ("DressActions", "enabled_water"),
-    ("DressActions", "enabled_bed"),
-    ("DressActions", "enabled_wardrobe"),
-    ("QuestActions", "enabled_track"),
-    # One switch for SI's sit, lie down, lean, warm hands, chair eat/drink and tidy-up. Off at the
-    # user's call (2026-09-21) ahead of CIGAR's own sit/lie; the rest is on the backlog.
-    ("IdleActions", "enabled"),
-    # Every ItemUse action SI turns on by default is CIGAR's now (spellbook equip was off by the
-    # user's choice); ItemUse.enabled itself is left alone.
-    ("ItemUse", "enabled_equip_weapon"),
-    ("ItemUse", "enabled_equip_armor"),
-    ("ItemUse", "enabled_hp_pot"),
-    ("ItemUse", "enabled_stamina_potion"),
-    ("ItemUse", "enabled_magicka_potion"),
-    ("ItemUse", "enabled_curedisease_potion"),
-    ("ItemUse", "enabled_curepoison_potion"),
-    ("ItemUse", "enabled_waterbreath_potion"),
-    ("ItemUse", "enabled_makelight"),
-    ("ItemUse", "enabled_recharge_weapon"),
-    # Not rebuilt (docs/024-tool-swap.md): vanilla mines a vein and Woodcutting Tweaks harvests a
-    # tree with one E press, and Streamlined Fishing equips the rod. SI is being retired.
-    ("WeaponSwap", "enabled"),
-    # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
-    # tracking was already QuestTrack (docs/025-quest-action.md).
-    ("QuestActions", "enabled"),
-    # Helmet Toggle 2 prompts (docs/028-helmet.md).
-    ("HelmetToggle", "enabled"),
-    # The rest of SI, absorbed on 2026-09-25 (docs/029-si-leftovers.md).
-    ("Observer", "enabled"),
-    ("DressActions", "enabled_piecewiseoutfitswap"),
-    ("ItemUse", "enabled_equip_spellbook"),
-]
 # Names src/BaboKey.cpp reads from BaboDialogue.
-# SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
-# leaves its switch off in the deployed settings, and the feature then vanishes from the game
-# silently (this happened with pass time on 2026-09-21).
-KEPT = [
-]
 BABO_SCRIPTS = {
     "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
     "BaboDialogueConfigMenu": ["NotificationKey"],
@@ -797,7 +754,7 @@ def main():
         exports = dll_exports(DLL)
         check(REQUIRED_EXPORTS <= exports, "DLL exports %s" % ", ".join(sorted(e.decode() for e in REQUIRED_EXPORTS)))
 
-    # No ESP and no Papyrus scripts from the earlier builds.
+    # CIGAR is ESP-less: no plugin and no Papyrus script belongs in its mod folder.
     leftovers = []
     for root, _, files in os.walk(MOD):
         for name in files:
@@ -805,7 +762,6 @@ def main():
             if low.endswith((".esp", ".esl", ".esm", ".pex", ".psc", ".seq")):
                 leftovers.append(os.path.relpath(os.path.join(root, name), MOD))
     check(not leftovers, "no plugin or Papyrus leftovers in the mod folder%s" % (": " + ", ".join(leftovers) if leftovers else ""))
-    check(not os.path.exists(os.path.join(MODS, "SI-Extensions")), "pre-rename SI-Extensions mod folder is gone")
 
     # Profile registration and priority.
     modlist = read_lines(os.path.join(profile, "modlist.txt"))
@@ -814,16 +770,6 @@ def main():
     releases = [l for l in modlist if re.match(r"^[+-]CIGAR \d", l)]
     enabled = [l[1:] for l in releases if l.startswith("+")]
     check(not enabled, "release copies disabled in modlist.txt%s" % (": enabled " + ", ".join(enabled) if enabled else ""))
-    # CIGAR absorbed all of SI; on 2026-09-25 an SI prompt still overlapped CIGAR's book prompt and took
-    # the key, and the user had SI switched off. The override below stays for players who keep SI.
-    check("+" + SI_MOD not in modlist, "Streamlined Interactions disabled (fully absorbed by CIGAR)")
-    if "+" + MOD_NAME in modlist and ("+" + SI_MOD) in modlist:
-        # modlist.txt lists the highest priority first.
-        check(modlist.index("+" + MOD_NAME) < modlist.index("+" + SI_MOD),
-              "CIGAR outranks Streamlined Interactions (settings override wins)")
-    plugins = read_lines(os.path.join(profile, "plugins.txt"))
-    stale = [p for p in plugins if p.lstrip("*") in ("CIGAR.esp", "SI-Extensions.esp")]
-    check(not stale, "no CIGAR/SI-Extensions plugin listed in plugins.txt%s" % (": " + ", ".join(stale) if stale else ""))
 
     # Hard dependencies.
     for rel in (
@@ -851,17 +797,6 @@ def main():
     check_mcm_memory_keys()
     check_behaviour(modlist, accept_behaviour)
 
-    # Replaced SI modules must be off, or both prompts appear.
-    check(os.path.isfile(SI_SETTINGS), "SI settings override exists")
-    if os.path.isfile(SI_SETTINGS):
-        with open(SI_SETTINGS, encoding="utf-8") as f:
-            settings = json.load(f)
-        for module, switch in REPLACED:
-            check(settings["MCP"]["modules"][module][switch] is False, "SI %s.%s disabled" % (module, switch))
-        for module, switch in KEPT:
-            check(settings["MCP"]["modules"][module][switch] is True,
-                  "SI %s.%s still on (not absorbed by CIGAR)" % (module, switch))
-        check(settings["MCP"].get("preset") == 2, "SI preset is Power User (menu keeps module switches)")
 
     if failures:
         print("\n%d check(s) failed" % len(failures))

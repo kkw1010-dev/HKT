@@ -39,7 +39,6 @@ namespace CIGAR
 		lastGate.clear();
 		offeredBook = 0;
 		expiresAt = {};
-		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_spellbook", "/MCP/modules/ItemUse/enabled_equip_spellbook");
 		Log("ready");
 	}
 
@@ -117,7 +116,7 @@ namespace CIGAR
 
 	void BookRead::Read(RE::PlayerCharacter* a_player, RE::TESObjectBOOK* a_book)
 	{
-		// SI's Equipper::ReadBook, rebuilt: a spell tome teaches its spell and is used up, as when
+		// A spell tome teaches its spell and is used up, as when
 		// read from the inventory; any other book (a quest note) is read and its page opened.
 		if (auto* spell = a_book->TeachesSpell() ? a_book->GetSpell() : nullptr) {
 			const bool read = a_book->Read(a_player);
@@ -167,7 +166,7 @@ namespace CIGAR
 		if (!book || !player) {
 			return;
 		}
-		// A spell tome whose spell is not known yet, or a quest item (SI's quest note prompt). Other
+		// A spell tome whose spell is not known yet, or a quest item. Other
 		// books are loot.
 		auto* spell = book->TeachesSpell() ? book->GetSpell() : nullptr;
 		bool quest = false;

@@ -5,10 +5,9 @@
 
 namespace CIGAR
 {
-	// SI's QuestActions action. The one SI's menu lists is "Greybeards: Dragonborn, show us your
-	// Thu'um." -> "Quest Action Prompt: Equip Unrelenting Force": while The Way of the Voice (MQ105)
+	// Quest-specific equip prompts. While The Way of the Voice (MQ105)
 	// asks the player to demonstrate Unrelenting Force, 장착하기 puts that shout in the voice slot.
-	// CIGAR adds the same for the quest's Whirlwind Sprint demonstration (docs/025-quest-action.md).
+	// The same is offered for the quest's Whirlwind Sprint demonstration (docs/025-quest-action.md).
 	class QuestAction final : public Module
 	{
 	public:

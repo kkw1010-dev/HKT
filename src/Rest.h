@@ -5,11 +5,11 @@
 
 namespace CIGAR
 {
-	// SI IdleActions' ground and lean actions. Looking at the floor while standing still offers
+	// Ground and lean poses. Looking at the floor while standing still offers
 	// 앉기 and 눕기; a wall, table or rail in front offers 기대기; a fire in front offers 손 녹이기
 	// (the fires are Survival Mode's heat-source list). Movement input gets the player up.
-	// While resting, 시간 보내기 speeds the game clock for as long as its key is held (SI's pass
-	// time). Uses the vanilla idle events SI sends.
+	// While resting, 시간 보내기 speeds the game clock for as long as its key is held. Uses vanilla
+	// idle events.
 	class Rest final :
 		public Module,
 		public RE::BSTEventSink<RE::BSAnimationGraphEvent>

@@ -6,7 +6,7 @@ namespace CIGAR
 {
 	namespace
 	{
-		// SI's Observer defaults (settings.json, Modules/Observer).
+		// Stand still this long, within this distance; zoom by up to this many degrees.
 		constexpr auto kIdleTime = 5s;
 		constexpr float kMaxDistance = 5000.0f;
 		constexpr float kFOVOffset = 40.0f;
@@ -20,7 +20,7 @@ namespace CIGAR
 		{
 			return a_name.empty() ? "주시하기 (누르고 있기)"s : std::format("주시하기 (누르고 있기): {}", a_name);
 		}
-		// A full zoom in takes 2 s, as SI's 20 degrees a second over 40 did; the way back is quicker.
+		// A full zoom in takes 2 s (20 degrees a second over 40); the way back is quicker.
 		// A partial zoom takes its share of the time.
 		constexpr float kZoomInSeconds = 2.0f;
 		constexpr float kZoomOutSeconds = 0.7f;

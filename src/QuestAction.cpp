@@ -35,7 +35,6 @@ namespace CIGAR
 		wayOfTheVoice = RE::TESForm::LookupByID<RE::TESQuest>(kMQ105ID);
 		unrelentingForce = RE::TESForm::LookupByID<RE::TESShout>(kUnrelentingForceID);
 		whirlwindSprint = RE::TESForm::LookupByID<RE::TESShout>(kWhirlwindSprintID);
-		Util::WarnIfSIModuleOn("QuestActions.enabled", "/MCP/modules/QuestActions/enabled");
 		Log("ready: MQ105={} unrelentingForce={} whirlwindSprint={}", wayOfTheVoice != nullptr,
 			unrelentingForce ? Util::NameOf(unrelentingForce) : "-"s, whirlwindSprint ? Util::NameOf(whirlwindSprint) : "-"s);
 	}
@@ -64,7 +63,6 @@ namespace CIGAR
 
 	void QuestAction::Tick()
 	{
-		Util::WarnIfSIModuleOn("QuestActions.enabled", "/MCP/modules/QuestActions/enabled");
 		auto* player = Util::Player();
 		std::uint16_t objective = 0;
 		auto* shout = Wanted(objective);

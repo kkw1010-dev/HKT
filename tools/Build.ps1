@@ -78,9 +78,6 @@ if (Test-Path $pdb) { Copy-Item $pdb $plugins -Force }
 $settings = Join-Path $plugins 'CIGAR.json'
 if (-not (Test-Path $settings)) { Copy-Item (Join-Path $Repo 'dist\CIGAR.json') $settings }
 
-& python (Join-Path $PSScriptRoot 'sync_si_settings.py')
-if ($LASTEXITCODE -ne 0) { throw 'SI settings override failed.' }
-
 & python (Join-Path $PSScriptRoot 'verify_deploy.py')
 if ($LASTEXITCODE -ne 0) { throw 'Deployment checks failed.' }
 Write-Host 'deploy OK'

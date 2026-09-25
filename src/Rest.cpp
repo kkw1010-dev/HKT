@@ -10,14 +10,13 @@ namespace CIGAR
 		// How far down the player must look for the ground prompts, in radians (Skyrim pitch is
 		// positive looking down). About 35 degrees; my choice, logged in the gate for tuning.
 		constexpr float kFloorPitch = 0.6f;
-		// SI's IdleActions.t_threshold: seconds of standing still before the prompts appear.
+		// Seconds of standing still before the prompts appear.
 		constexpr auto kReadyDelay = 1s;
-		// Pass time. SI waits passtime_delay (5 s) before its prompt; the user wants it at once.
+		// Pass time is offered at once (the user's choice).
 		constexpr auto kPassTimeText = "시간 보내기 (누르고 있기)"sv;
-		// While the key is held the timescale climbs from x1 to x kPassTimeMax over kPassTimeRamp
-		// (SI reaches its maximum gradually too). Both numbers are my choice, not SI's: SI's
-		// max_timemult is 2.0, which barely moves the clock. At the vanilla timescale 20, x60 is
-		// 20 game minutes per real second.
+		// While the key is held the timescale climbs from x1 to x kPassTimeMax over kPassTimeRamp.
+		// Both numbers are my choice. At the vanilla timescale 20, x60 is 20 game minutes per real
+		// second.
 		constexpr float kPassTimeMax = 60.0f;
 		constexpr float kPassTimeRamp = 3.0f;
 		// The whole game also runs faster, up to Settings::RestGameSpeed() on the same ramp, so NPCs
@@ -32,24 +31,24 @@ namespace CIGAR
 		// Animation events logged from entering until this long after getting up.
 		constexpr auto kRecordAfterGetUp = 5s;
 		constexpr int kRecordCap = 80;
-		// SI waits for these tags to know the pose is reached (read from its DLL). In game (2026-09-22)
+		// These tags tell that the pose is reached. In game (2026-09-22)
 		// idleChairSitting also arrives for the wall and table leans, about 2-3 s after the enter event.
 		constexpr auto kSatTag = "idleChairSitting"sv;
 		constexpr auto kLayTag = "tailLayDown"sv;
 		constexpr auto kConfirmWait = 6s;
 
 		constexpr auto kSitEvent = "IdleSitCrossLeggedEnter"sv;
-		// Sitting on an edge with the legs hanging, which SI picks after a ray scan (RayCollector).
+		// Sitting on an edge with the legs hanging.
 		constexpr auto kLedgeEvent = "IdleSitLedgeEnter"sv;
 		constexpr auto kLieEvent = "IdleLayDownEnter"sv;
-		// Lean events SI sends (its LeanWall, LeanTable and LeanEdge); the rail has its own exit.
+		// Lean events for a wall, a table and a rail or edge; the rail has its own exit.
 		// IdleWallLeanStart turns the actor around before leaning back, so the wall lean is offered only
 		// facing a wall. The user chose that over a back-to-wall lean (2026-09-22).
 		constexpr auto kLeanWallEvent = "IdleWallLeanStart"sv;
 		constexpr auto kLeanTableEvent = "IdleLeanTableEnter"sv;
 		constexpr auto kLeanRailEvent = "IdleRailLeanEnter"sv;
 		constexpr auto kRailExitEvent = "IdleRailLeanExit"sv;
-		// SI's warm-hands idles (Skyrim.esm IDLE 0E8642 / 0E8643); the events are in mt_behavior.hkx.
+		// Warm-hands idles (Skyrim.esm IDLE 0E8642 / 0E8643); the events are in mt_behavior.hkx.
 		constexpr auto kWarmStandingEvent = "IdleWarmHandsStanding"sv;
 		constexpr auto kWarmCrouchedEvent = "IdleWarmHandsCrouched"sv;
 
@@ -331,15 +330,11 @@ namespace CIGAR
 		} else {
 			Log("no fire list ({} or its Survival_WarmUpObjectsList missing): 손 녹이기 is off", kSurvivalPlugin);
 		}
-		Util::WarnIfSIModuleOn("IdleActions.enabled", "/MCP/modules/IdleActions/enabled");
 		Log("ready; floor pitch>={:.2f} rad, still for {}s", kFloorPitch,
 			std::chrono::duration_cast<std::chrono::seconds>(kReadyDelay).count());
 	}
 
-	void Rest::Tick()
-	{
-		Util::WarnIfSIModuleOn("IdleActions.enabled", "/MCP/modules/IdleActions/enabled");
-	}
+	void Rest::Tick() {}
 
 	void Rest::ListenToPlayer(RE::PlayerCharacter* a_player)
 	{
@@ -787,7 +782,7 @@ namespace CIGAR
 		if (!player) {
 			return;
 		}
-		// SI's GetUp sends IdleRailLeanExit for the rail and IdleChairExitStart otherwise. Warm hands
+		// Getting up sends IdleRailLeanExit for the rail and IdleChairExitStart otherwise. Warm hands
 		// is a plain idle: in game the graph refused IdleChairExitStart there, so it gets IdleStop.
 		const auto exitEvent = was == Pose::kLeanRail ? kRailExitEvent : IsWarm(was) ? kStopEvent : kExitEvent;
 		const bool exit = Notify(player, exitEvent);

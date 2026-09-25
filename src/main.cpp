@@ -254,7 +254,6 @@ namespace
 	void OnGameLoaded()
 	{
 		SKSE::GetTaskInterface()->AddTask([] {
-			Util::ResetSIWarning();
 			if (!Prompts::Available()) {
 				logs::error("SkyPrompt is missing or incompatible; CIGAR shows no prompts");
 				Util::Notify("CIGAR: SkyPrompt 없음 또는 버전 불일치. 프롬프트 비활성");

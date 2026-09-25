@@ -6,11 +6,9 @@ namespace CIGAR
 {
 	namespace
 	{
-		// SI offers the prompt when "the player has a weapon with low charge" (its MCM text); its
-		// number is not in the settings or the strings. A quarter is CIGAR's choice.
+		// "Low charge" is a quarter of the full charge (CIGAR's choice).
 		constexpr float kLowCharge = 0.25f;
-		// SI's recharge_weapon_oooc ("only prompt ... when the player is out of combat") is on.
-		// The engine applies the restore at once; the check waits a moment all the same.
+		// The prompt is offered out of combat only. The engine applies the restore at once; the check waits a moment all the same.
 		constexpr auto kCheckAfter = 1s;
 		constexpr RE::FormID kReusableKeywordID = 0x0ED2F1;  // ReusableSoulGem, Skyrim.esm
 
@@ -90,7 +88,6 @@ namespace CIGAR
 			auto* setting = settings ? settings->GetSetting(SoulSetting(soul)) : nullptr;
 			values += std::format("{}{}", values.empty() ? "" : "/", setting ? std::to_string(setting->GetInteger()) : "?"s);
 		}
-		Util::WarnIfSIModuleOn("ItemUse.enabled_recharge_weapon", "/MCP/modules/ItemUse/enabled_recharge_weapon");
 		Log("ready: soul values {} reusableKeyword={} perk entry point tabs [{}] -> {}", values, reusableKeyword != nullptr, names,
 			perkArgument == 0 ? "owner only" : perkArgument == 1 ? "soul gem" : perkArgument == 2 ? "weapon" : "not understood, perks skipped");
 	}
@@ -283,7 +280,6 @@ namespace CIGAR
 
 	void Recharge::Tick()
 	{
-		Util::WarnIfSIModuleOn("ItemUse.enabled_recharge_weapon", "/MCP/modules/ItemUse/enabled_recharge_weapon");
 		auto* player = Util::Player();
 
 		if (checkAfterAccept && Clock::now() - acceptedAt >= kCheckAfter) {

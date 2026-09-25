@@ -64,8 +64,7 @@ namespace CIGAR::Settings
 	JujutsuTuning JujutsuTune();
 	void SetJujutsuTune(const JujutsuTuning& a_tuning);
 
-	// Which potions the Potion module offers and when. The defaults are the values the user was
-	// running in Streamlined Interactions' ItemUse module, whose potion actions CIGAR replaces.
+	// Which potions the Potion module offers and when. The defaults are the user's values.
 	// Each threshold is a fraction of the full bar.
 	struct PotionTuning
 	{

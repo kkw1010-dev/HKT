@@ -8,8 +8,7 @@
 namespace CIGAR
 {
 	// Drinks a potion from the inventory when the player needs one: low health, stamina or magicka,
-	// a disease, a poison, or swimming with the head under water. It replaces Streamlined
-	// Interactions' ItemUse potion actions, which CIGAR's SI override turns off.
+	// a disease, a poison, or swimming with the head under water.
 	//
 	// Potions are recognised by what their effects do — the actor value they modify, or their
 	// archetype — never by form ID, so an alchemy overhaul's potions (Apothecary here) work with no

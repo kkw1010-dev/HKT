@@ -12,8 +12,7 @@ namespace CIGAR
 
 		// The equip and the effect need a moment before the gate is read again, so the same prompt
 		// is not offered for a second bottle. This is the settle time `Eat` uses, for the same
-		// reason; SI's own `cooldown` value was not carried over, because what it covers in SI is
-		// not documented and its DLL was not disassembled.
+		// reason.
 		constexpr auto kQuietAfterDrink = 3s;
 		// The inventory is only re-read this often, because the gate itself runs ten times a second.
 		constexpr auto kScanInterval = 1s;

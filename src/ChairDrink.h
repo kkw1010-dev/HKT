@@ -5,7 +5,7 @@
 
 namespace CIGAR
 {
-	// SI's chair drink, as the user set it for CIGAR (2026-09-24): roleplay in inns and houses only.
+	// Chair drinking, as the user set it (2026-09-24): roleplay in inns and houses only.
 	// Seated in a chair there with a drink of alcohol in the pack, 마시기 plays the vanilla chair
 	// drinking idle (ChairDrinkingStart, which brings its own tankard) and really drinks one bottle,
 	// so its effects apply. Moving gets up, as from any chair. A declined prompt stays hidden until

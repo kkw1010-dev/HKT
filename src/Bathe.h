@@ -6,7 +6,7 @@
 namespace CIGAR
 {
 	// Bathing and showering through Bathing in Skyrim - Renewed (optional; the module stays idle
-	// when BiS is not installed). Replaces Streamlined Interactions' animation-only Bathe.
+	// when BiS is not installed).
 	class Bathe final : public Module
 	{
 	public:

@@ -42,10 +42,7 @@ namespace CIGAR
 		lastLoggedFurniture = {};
 		settleTicks = 0;
 		ready = true;
-		Log("ready; outfit={} undressedByCIGAR={} SI water={} bed={} wardrobe={}", outfit.size(), undressedByCIGAR,
-			Util::SISetting("/MCP/modules/DressActions/enabled_water"),
-			Util::SISetting("/MCP/modules/DressActions/enabled_bed"),
-			Util::SISetting("/MCP/modules/DressActions/enabled_wardrobe"));
+		Log("ready; outfit={} undressedByCIGAR={}", outfit.size(), undressedByCIGAR);
 	}
 
 	RE::BSEventNotifyControl Dress::ProcessEvent(const SKSE::CrosshairRefEvent* a_event, RE::BSTEventSource<SKSE::CrosshairRefEvent>*)
@@ -177,13 +174,6 @@ namespace CIGAR
 			dress.Update(false, {});
 			if (!context.empty()) {
 				Log("entered {}; worn:{}", context, Util::DescribeWorn(player));
-				if (context == "water") {
-					Util::WarnIfSIModuleOn("Water Undress", "/MCP/modules/DressActions/enabled_water");
-				} else if (context == "bed") {
-					Util::WarnIfSIModuleOn("Bed Undress", "/MCP/modules/DressActions/enabled_bed");
-				} else {
-					Util::WarnIfSIModuleOn("Wardrobe Undress", "/MCP/modules/DressActions/enabled_wardrobe");
-				}
 			}
 			lastContext = context;
 		}

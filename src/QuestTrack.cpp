@@ -85,14 +85,10 @@ namespace CIGAR
 		expiresAt = {};
 		pendingObjective = 0;
 		eventTaskQueued = false;
-		Util::WarnIfSIModuleOn("QuestActions.enabled_track", "/MCP/modules/QuestActions/enabled_track");
 		Log("ready");
 	}
 
-	void QuestTrack::Tick()
-	{
-		Util::WarnIfSIModuleOn("QuestActions.enabled_track", "/MCP/modules/QuestActions/enabled_track");
-	}
+	void QuestTrack::Tick() {}
 
 	void QuestTrack::FastTick()
 	{

@@ -66,7 +66,6 @@ namespace CIGAR
 				dungeonKeywords.push_back(keyword);
 			}
 		}
-		Util::WarnIfSIModuleOn("HelmetToggle.enabled", "/MCP/modules/HelmetToggle/enabled");
 		if (auto* handler = RE::TESDataHandler::GetSingleton(); handler && handler->LookupModByName("Helmet Toggle 2.esp")) {
 			Log("WARN Helmet Toggle 2 is loaded: its scripts re-hide or re-equip headgear on every change");
 			Util::Notify("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음");
@@ -208,7 +207,6 @@ namespace CIGAR
 
 	void Helmet::Tick()
 	{
-		Util::WarnIfSIModuleOn("HelmetToggle.enabled", "/MCP/modules/HelmetToggle/enabled");
 		auto* player = Util::Player();
 		if (!player) {
 			return;
