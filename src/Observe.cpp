@@ -28,6 +28,9 @@ namespace CIGAR
 		constexpr auto kFramePoll = 4ms;
 		// A declined prompt returns once the player is this far from where it was declined.
 		constexpr float kLeaveDistance = 300.0f;
+		// A press shorter than this is a tap; two taps this close together are a double tap (decline).
+		constexpr auto kTapLength = 250ms;
+		constexpr auto kDoubleTapGap = 600ms;
 
 		float Smootherstep(float a_t)
 		{
@@ -171,7 +174,10 @@ namespace CIGAR
 		const auto* controlMap = RE::ControlMap::GetSingleton();
 		const bool looking = controlMap && controlMap->IsLookingControlsEnabled() && controlMap->IsMovementControlsEnabled();
 		const bool still = now - stillSince >= kIdleTime;
-		const bool ready = still && (actorOK || sceneryOK) && looking && !easing && !dismissed;
+		// Between the two taps of a double tap the view is still easing back: keep the prompt up so the
+		// second tap reaches it.
+		const bool tapWindow = now - lastTapAt < kDoubleTapGap;
+		const bool ready = !dismissed && ((still && (actorOK || sceneryOK) && looking && !easing) || tapWindow);
 
 		LogGate(std::format("kind={} target={} pitch={:.2f} still5s={} drawn={} combat={} looking={} easing={} dismissed={} ready={}",
 			kind, actor ? targetName : "-"s, pitch, still, drawn, combat, looking, easing.load(), dismissed, ready));
@@ -184,10 +190,23 @@ namespace CIGAR
 		if (a_eventID != kLook) {
 			return;
 		}
+		const auto now = Clock::now();
 		if (!a_down) {
 			if (zooming) {
 				Restore("key released");
 			}
+			if (now - downAt < kTapLength) {
+				if (now - lastTapAt < kDoubleTapGap) {
+					lastTapAt = {};
+					Dismiss("double tap");
+				} else {
+					lastTapAt = now;
+				}
+			}
+			return;
+		}
+		downAt = now;
+		if (dismissed) {
 			return;
 		}
 		auto* camera = RE::PlayerCamera::GetSingleton();
@@ -211,16 +230,20 @@ namespace CIGAR
 
 	void Observe::OnDeclined(std::uint16_t a_eventID)
 	{
-		if (a_eventID != kLook) {
-			return;
+		if (a_eventID == kLook) {
+			Dismiss("declined");
 		}
-		Restore("declined");
+	}
+
+	void Observe::Dismiss(std::string_view a_how)
+	{
+		Restore(a_how);
 		dismissed = true;
 		if (auto* player = Util::Player()) {
 			dismissedAt = player->GetPosition();
 		}
 		look.Withdraw();
-		Log("주시하기 declined: hidden until the player moves {:.0f} units away", kLeaveDistance);
+		Log("주시하기 dismissed ({}): hidden until the player moves {:.0f} units away", a_how, kLeaveDistance);
 	}
 
 	void Observe::Restore(std::string_view a_reason)

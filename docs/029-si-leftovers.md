@@ -128,7 +128,9 @@ Decided after run 3 (the user, 2026-09-25):
   주시하기 never share a moment). Objects and furniture under the crosshair are not watched. Scenery
   reads `주시하기 (누르고 있기)` with no name.
 - Declined (a double tap; the user, 2026-09-25): hidden until the player is 300 units away from where
-  it was declined.
+  it was declined. SkyPrompt's hold-and-keep type sends no decline event (test: the double tap only
+  zoomed), so CIGAR reads it: two presses shorter than 250 ms within 600 ms. The prompt stays up during
+  that window so the second tap lands.
 - Hold-mode prompt (like 시간 보내기): while held, `PlayerCamera` `worldFOV` (or `firstPersonFOV` in
   first person) glides to base - 40 (at least 15) over 2 s on a smootherstep curve. Release, movement or
   combat glides it back over 0.7 s. A small thread posts one task a frame while an ease runs.

@@ -3,6 +3,7 @@
 #include "Module.h"
 #include "Prompt.h"
 
+#include <unordered_map>
 #include <unordered_set>
 
 namespace VAL_API
@@ -28,7 +29,7 @@ namespace CIGAR
 
 		const char* Name() const override { return "Jujutsu"; }
 		void OnGameLoaded() override;
-		void Tick() override {}
+		void Tick() override;
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
@@ -81,6 +82,14 @@ namespace CIGAR
 		// Moves that have started a pair since the game started (the process, not the save): the
 		// first-use experiment's memory. Not cleared on load, as loaded animations are not.
 		std::unordered_set<RE::FormID> playedThisSession;
+		// Test 25 split (the user: the first fight of every test is poor). Test 24 ruled out a move's
+		// first use; the first fight and an actor already there when the save loaded are still
+		// confounded, so each press logs both. Actors seen in the first scan after a load are "at load".
+		std::unordered_map<RE::FormID, bool> seenActors;  // FormID -> present at load
+		bool scannedSinceLoad{ false };
+		bool inCombat{ false };
+		int combatIndex{ 0 };
+		std::unordered_map<RE::FormID, std::pair<int, int>> victimTally;  // played, refused
 		bool firstUse{ false };
 		std::chrono::milliseconds prepareWindow{ 300 };
 		const char* idleSource{ "-" };

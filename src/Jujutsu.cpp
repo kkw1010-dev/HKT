@@ -208,6 +208,11 @@ namespace CIGAR
 	{
 		jujutsu.Reset();
 		lastGate.clear();
+		seenActors.clear();
+		scannedSinceLoad = false;
+		inCombat = false;
+		combatIndex = 0;
+		victimTally.clear();
 		armedVictim = nullptr;
 		phase = Phase::kIdle;
 		victim = {};
@@ -284,6 +289,33 @@ namespace CIGAR
 		return target;
 	}
 
+	void Jujutsu::Tick()
+	{
+		auto* player = Util::Player();
+		auto* lists = RE::ProcessLists::GetSingleton();
+		if (!player || !lists) {
+			return;
+		}
+		const bool atLoad = !scannedSinceLoad;
+		int added = 0;
+		lists->ForEachHighActor([&](RE::Actor* a_actor) {
+			if (a_actor && a_actor != player && seenActors.try_emplace(a_actor->GetFormID(), atLoad).second) {
+				++added;
+			}
+			return RE::BSContainer::ForEachResult::kContinue;
+		});
+		if (atLoad) {
+			scannedSinceLoad = true;
+			Log("first actor scan after load: {} actors present at load", added);
+		}
+		const bool combat = player->IsInCombat();
+		if (combat && !inCombat) {
+			++combatIndex;
+			Log("combat #{} of this session started", combatIndex);
+		}
+		inCombat = combat;
+	}
+
 	void Jujutsu::FastTick()
 	{
 		if (idles.empty() || !originalKillActor) {
@@ -340,8 +372,12 @@ namespace CIGAR
 		phaseStart = Clock::now();
 		// The distance at the press, beside each retry's and the start's: tells a play refused because the
 		// target moved from one the engine refused at close range.
-		Log("start idle {:08X} {} (first use this session={}, window {} ms) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
-			playing->GetFormID(), idleNames[pick], firstUse, prepareWindow.count(), Util::NameOf(target),
+		const auto seen = seenActors.find(target->GetFormID());
+		const auto& tally = victimTally[target->GetFormID()];
+		Log("start idle {:08X} {} (first use this session={}, window {} ms) combat #{} victim {} (tally {} played / {} refused) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
+			playing->GetFormID(), idleNames[pick], firstUse, prepareWindow.count(), combatIndex,
+			seen == seenActors.end() ? "unscanned"sv : seen->second ? "present at load"sv : "arrived later"sv, tally.first, tally.second,
+			Util::NameOf(target),
 			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
@@ -675,6 +711,10 @@ namespace CIGAR
 	{
 		armedVictim = nullptr;
 		auto victimPtr = victim.get();
+		if (auto* tv = victimPtr.get()) {
+			auto& tally = victimTally[tv->GetFormID()];
+			(std::string_view{ a_reason } == "refused" ? tally.second : tally.first) += 1;
+		}
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.
 			if (v->IsInKillMove() && phase != Phase::kPreparing) {

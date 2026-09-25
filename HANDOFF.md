@@ -459,6 +459,8 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
   (`kModPoisonDoseCount` has 3 tabs: owner, weapon, poison).
 - **IED configs.** One form from a plugin that is not loaded makes IED reject the whole config file,
   with nothing on screen. `verify_deploy.py` checks the default config and the overwrite exports.
+- **Decline on hold-and-keep prompts.** SkyPrompt's `kHoldAndKeep` sends only down / up, never a
+  decline, for a double tap; a module that needs one reads two short taps itself (`Observe`).
 - **Worn state.** Unequip and equip are queued, so ignore the worn state for a
   few ticks after a change (`kSettleTicks`).
 - **Pausing.** `RE::UI::GameIsPaused()` is non-const, and ticks do not run

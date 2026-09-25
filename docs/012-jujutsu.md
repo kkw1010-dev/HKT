@@ -584,3 +584,23 @@ for 1.5 s instead of 300 ms; `blockStop` / `attackStop` are still sent only in t
 longer window does not cut the player's swings. The log's `start idle` line says `first use this
 session=` and the window, and the `pair started` and `refused` lines repeat it. If first-use presses
 now start after 0.3-1.5 s, the lead holds; if they are still refused for the whole 1.5 s, it does not.
+
+## Test 25 (2026-09-25 21:30-21:33): not a move's first use
+
+With the 1.5 s first-use window, the first victim (`FF000BBB`) refused **10 of 10** presses, each for the
+full 1.5 s (17 tries), across BodySlam, KneeThrow and ComboA. The next victims then played moves never
+used before on the **first try** (BodySlam 0.09 s, SlamA, NeckBreak, KneeThrow): 9 of 11 after it. So
+the first-use lead is wrong; the refusals follow the first opponent. The per-try states of that victim
+(blocking or not, attacking or not, distance 54-153) look like those of victims that play.
+
+Still confounded: that victim was the first of the session's first combat **and** an actor far older
+than the rest (`FF000BBB`, while the others were a fresh consecutive batch `FF0031F2`-`FF0031FF`,
+likely spawned during this run). Test 24 had the same shape (first victim `FF001112` 0 of 5, then
+`FF002E3E` 3 of 6).
+
+**Diagnostic built (untested):** every press now logs `combat #N` (the player's Nth combat since the
+load) and whether the victim was `present at load` (seen in the first actor scan after the load) or
+`arrived later`, plus that victim's running tally. The first-use window stays in for now. Next run:
+start the first fight of a fresh load against a newly spawned actor, then fight one that was there at
+load. If the fresh one plays and the old one does not, the cause is on the actor; if the first fight
+fails whoever it is, it is on the player's side.

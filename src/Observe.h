@@ -67,6 +67,11 @@ namespace CIGAR
 		// (the user, 2026-09-25).
 		bool dismissed{ false };
 		RE::NiPoint3 dismissedAt{};
+		// SkyPrompt's hold-and-keep type sends no decline, only down and up, so a double tap is read
+		// here: two short presses close together (test 2026-09-25: the double tap only zoomed).
+		Clock::time_point downAt{};
+		Clock::time_point lastTapAt{};
+		void Dismiss(std::string_view a_how);
 		std::atomic_bool frameQueued{ false };
 	};
 }
