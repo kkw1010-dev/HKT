@@ -433,6 +433,7 @@ def check_helmet(modlist):
 
 
 IED_BELT_ENTRY = "CIGAR - Helmet on Belt"
+IED_BELT_NODE = "ExtraPelvisArmorHelmet1"
 
 
 def loaded_plugins(profile):
@@ -484,6 +485,14 @@ def check_ied(modlist, profile):
         if path == default:
             player = data.get("data", {}).get("custom", {}).get("data", {}).get("default_player", {}).get("data", {})
             check(IED_BELT_ENTRY in player, "IED default config has '%s'" % IED_BELT_ENTRY)
+            # Test run 3: on the bare pelvis node at x = 0 the helmet sat inside the armor. IED's own
+            # ExtraPelvisArmorHelmet1 (00215_MiscItems.json) is the hip node Helmet Toggle used.
+            if IED_BELT_ENTRY in player:
+                node = player[IED_BELT_ENTRY]["f"]["node"]["name"]
+                nodes = winning_file(modlist, "SKSE/Plugins/IED/SkeletonExtensions/ExtraGearNodes/00215_MiscItems.json")
+                defined = bool(nodes) and ('"%s"' % node) in open(nodes, encoding="utf-8").read()
+                check(node == IED_BELT_NODE and defined,
+                      "IED belt entry on %s, defined by IED's extra gear nodes (found %s)" % (IED_BELT_NODE, node))
 
 
 def check_pno(modlist):

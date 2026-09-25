@@ -14,7 +14,6 @@
 #include "Helmet.h"
 #include "Poison.h"
 #include "Observe.h"
-#include "GearSwap.h"
 #include "PartyOutfit.h"
 #include "LockOn.h"
 #include "Module.h"
@@ -35,7 +34,7 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 25> modules{
+		static const std::array<Module*, 24> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
@@ -43,7 +42,7 @@ namespace CIGAR
 			BookRead::GetSingleton(),
 			Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 			QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
-			GearSwap::GetSingleton(), PartyOutfit::GetSingleton()
+			PartyOutfit::GetSingleton()
 		};
 		return modules;
 	}

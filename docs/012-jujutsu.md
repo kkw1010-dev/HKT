@@ -540,3 +540,21 @@ turns the victim to line the pair up, a visible snap), or only when the player i
 
 Open (the user, 2026-09-25): a victim getting up to fight on after the neck break may look wrong; the
 suplex and the sleeper hold are fine to get up from. The user judges the three in game first.
+
+## Test 22 (2026-09-25 18:00-18:11): Cinematic Clash on, seven moves, 30 of 44
+
+With Clash back on, 44 presses played 30: KneeThrow 5/6, BodySlam 4/4, ComboA 4/5, SlamA 5/6, Suplex
+7/8, Sleeper 5/7, NeckBreak 0/8 by the log's count. **Cinematic Clash was not the cause** of test 20's
+0 of 26 (the user agrees); what changed between tests 20 and 21 is not known.
+
+- The user dropped the suplex and the sleeper hold (awkward from the front) and found the neck break
+  natural.
+- **The neck break's aftermath.** Its two plays that started (18:01:46, 18:09:07) ran as the others do
+  up to the knock-down at 3.4 s, but ~1.4 s after the victim got up the hook saw **a second
+  KillMoveStart on the victim** (5.9 s), its KillMoveEnd at 8.4 s, and the run ended on the 10 s
+  timeout with the victim still `synced=true`. The user saw that victim stand up and play a
+  from-behind weapon kill move on its own. The neck break is a sneak kill whose victim normally dies at
+  KillActor; with KillActor and KillMoveEnd swallowed and the victim ragdolled, its graph appears to
+  resume the paired state after the getup. Its other six presses were refused (the 50% condition plus
+  the usual guard refusals). **Open, the user's call:** let the neck break kill (pass KillActor
+  through, no knock-down) or drop it.

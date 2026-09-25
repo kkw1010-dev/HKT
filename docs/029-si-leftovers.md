@@ -81,6 +81,31 @@ actions are off.
   `InventoryEntryData::PoisonObject` on the equipped entry, one poison removed. Logs
   `applied ... poisoned after=<bool>` and notifies if the weapon is not poisoned afterwards.
 
+## Test run 3 (2026-09-25 17:38-18:11, the user's report and the logs)
+
+| # | Test | Result |
+|---|---|---|
+| 1 | helmet on the hip (IED) | **failed**: IED now parses the configs (no error in its log), and the take-off worked (`worn=-` after it), but nothing showed |
+| 2 | 주시하기 (actor and scenery) | passed |
+| 3 | GearSwap with an enchanted cuirass worn | GearSwap stayed quiet (`worn ... enchanted`), but **ItemEquip offered 장착하기** for the cuirass once picked up |
+| 4 | BookRead, no SI prompt | passed |
+| 5 | ItemEquip on a weapon | passed |
+| 6 | 유술 with Cinematic Clash on | 30 of 44 (`docs/012`, test 22) |
+
+After run 3:
+- **IED.** Read against IED's source (`IEquipment.h`, `SelectInventoryFormLastEquipped`) the entry's
+  flags, filter and slots select the helmet; what was wrong is where it went: the bare `NPC Pelvis
+  [Pelv]` node at x = 0 puts it in the middle of the body, inside the armor's skirt. It now uses IED's
+  own hip node `ExtraPelvisArmorHelmet1` (`00215_MiscItems.json`, offset 15.5, -19.45, -6.2 from the
+  pelvis) with Helmet Toggle's transform on it, and hides while using furniture as Helmet Toggle's did.
+  Written to the default config and both exports (backups `*.bak_20260925_belt-node`);
+  `verify_deploy.py` checks the node.
+- **GearSwap removed** (the user: keep it simple, only acquired gear). Its rule moved into ItemEquip:
+  acquired armor is offered only if the piece it would replace is not enchanted and has a lower armor
+  rating (inventory values). An empty part is still offered. Weapons are unchanged. PromptID 36 is
+  retired.
+- 유술: the suplex and the sleeper hold are out; the neck break stays for now (see `docs/012`).
+
 ## Observe (주시하기, first built as 살펴보기)
 
 - SI's defaults: idle 5 s, distance 5000, FOV offset 40.

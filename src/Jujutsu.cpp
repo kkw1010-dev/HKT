@@ -21,19 +21,16 @@ namespace CIGAR
 			std::string_view plugin;
 		};
 		//
-		// 2026-09-25, the user: every other vanilla hand-to-hand paired kill move joins the pool. There are
-		// three more (every IDLE whose event contains H2H was read): the suplex and the two sneak moves,
-		// all authored from behind the victim, so from the front the engine turns the victim to line the
-		// pair up. The suplex comes from Valhalla's condition-free copy (Update.esm's wants empty hands
-		// and a level target); the sleeper hold has no conditions; the neck break's only condition is
-		// GetRandomPercent <= 50, which a retry re-rolls.
+		// 2026-09-25, the user: every other vanilla hand-to-hand paired kill move was tried (every IDLE
+		// whose event contains H2H was read; three more, all authored from behind the victim). After
+		// seeing them the user kept only the neck break: the suplex (Valhalla 9700AA84) and the sleeper
+		// hold (Update.esm 0816) looked awkward from the front. The neck break's only condition is
+		// GetRandomPercent <= 50, which a retry re-rolls. docs/012, test 22.
 		constexpr std::array kValhallaIdles{
 			IdleRef{ "KneeThrow", 0xAA3A, "ValhallaCombat.esp"sv },
 			IdleRef{ "BodySlam", 0xAA3B, "ValhallaCombat.esp"sv },
 			IdleRef{ "ComboA", 0xAA3C, "ValhallaCombat.esp"sv },
 			IdleRef{ "SlamA", 0xAA3D, "ValhallaCombat.esp"sv },
-			IdleRef{ "Suplex", 0xAA84, "ValhallaCombat.esp"sv },  // Val_KillMoveH2HSuplex
-			IdleRef{ "Sleeper", 0x816, "Update.esm"sv },          // KillMoveSneakH2HSleeper
 			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },        // KillMoveSneakH2HNeckBreak
 		};
 		constexpr std::array kVanillaIdles{
@@ -41,8 +38,6 @@ namespace CIGAR
 			IdleRef{ "BodySlam", 0x820, "Update.esm"sv },      // H2HKillMoveBodySlam
 			IdleRef{ "ComboA", 0x0F9958, "Skyrim.esm"sv },     // pa_KillMoveH2HComboA
 			IdleRef{ "SlamA", 0x100EF8, "Skyrim.esm"sv },      // H2HKillMoveSlamA00
-			IdleRef{ "Suplex", 0x81B, "Update.esm"sv },        // KillMoveH2HSuplex (empty hands only)
-			IdleRef{ "Sleeper", 0x816, "Update.esm"sv },       // KillMoveSneakH2HSleeper
 			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },     // KillMoveSneakH2HNeckBreak
 		};
 

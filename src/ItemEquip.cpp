@@ -14,6 +14,17 @@ namespace CIGAR
 		constexpr RE::FormID kWoodAxesID = 0x10ACCC;  // woodChoppingAxes, Skyrim.esm
 		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
 		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
+
+		// The four parts GearSwap judged by (head, body, hands, feet); an armor is compared with what is
+		// worn on the first of them it covers, or on any slot it shares when it covers none of them.
+		using Slot = RE::BGSBipedObjectForm::BipedObjectSlot;
+		constexpr std::array kParts{ Slot::kHead, Slot::kBody, Slot::kHands, Slot::kFeet };
+
+		RE::InventoryEntryData* EntryOf(const RE::TESObjectREFR::InventoryItemMap& a_inventory, RE::TESBoundObject* a_item)
+		{
+			const auto it = a_inventory.find(a_item);
+			return it != a_inventory.end() ? it->second.second.get() : nullptr;
+		}
 	}
 
 	ItemEquip::ItemEquip()
@@ -71,6 +82,46 @@ namespace CIGAR
 		return false;
 	}
 
+	// Acquired armor is offered only if it beats what it would replace (the user, 2026-09-25, when
+	// GearSwap was folded in here): never over an enchanted piece, otherwise only with a higher armor
+	// rating as the inventory shows it (tempering and perks included). An empty part is offered.
+	bool ItemEquip::BetterArmor(RE::PlayerCharacter* a_player, RE::TESObjectARMO* a_armor, std::string& a_reason)
+	{
+		RE::TESObjectARMO* worn = nullptr;
+		for (const auto slot : kParts) {
+			if (a_armor->HasPartOf(slot)) {
+				worn = a_player->GetWornArmor(slot);
+				break;
+			}
+		}
+		for (std::uint32_t bit = 0; !worn && bit < 32; ++bit) {
+			const auto slot = static_cast<Slot>(1u << bit);
+			if (a_armor->HasPartOf(slot)) {
+				worn = a_player->GetWornArmor(slot);
+			}
+		}
+		if (!worn || worn == a_armor) {
+			return true;
+		}
+		const auto mine = a_player->GetInventory([](RE::TESBoundObject& a_object) { return a_object.IsArmor(); });
+		auto* wornEntry = EntryOf(mine, worn);
+		if (wornEntry && wornEntry->IsEnchanted()) {
+			a_reason = std::format("worn {} enchanted", Util::NameOf(worn));
+			return false;
+		}
+		auto* newEntry = EntryOf(mine, a_armor);
+		if (!wornEntry || !newEntry) {
+			return true;
+		}
+		const float have = a_player->GetArmorValue(wornEntry);
+		const float got = a_player->GetArmorValue(newEntry);
+		if (got <= have) {
+			a_reason = std::format("not better than {} ({:.0f} <= {:.0f})", Util::NameOf(worn), got, have);
+			return false;
+		}
+		return true;
+	}
+
 	bool ItemEquip::Live(RE::PlayerCharacter* a_player, RE::TESBoundObject* a_item, std::string& a_reason) const
 	{
 		if (!a_player || !a_item) {
@@ -95,6 +146,9 @@ namespace CIGAR
 		}
 		if (AlreadyEquipped(a_player, a_item)) {
 			a_reason = "already equipped";
+			return false;
+		}
+		if (auto* armor = a_item->As<RE::TESObjectARMO>(); armor && !BetterArmor(a_player, armor, a_reason)) {
 			return false;
 		}
 		if (a_player->IsInCombat()) {

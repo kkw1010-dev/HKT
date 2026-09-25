@@ -14,22 +14,16 @@ Built, deployed, **untested**: IED hip display (Helmet Toggle entries removed fr
 GearSwap's enchantment rule, Observe as 주시하기 (eased zoom, no furniture), **SI disabled** in the
 profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost its press to an SI prompt).
 
-**유술, next run:** Cinematic Clash is **back on** (the user's experiment; off gave 20 of 33, on gave
-0 of 26 in test 20). The pool gained the suplex, the sleeper hold and the neck break (seven moves,
-from-behind ones turn the victim). Read `CIGAR.log` `start idle ... <move>` lines with
-`CinematicClash.log` by timestamp. `docs/012`, after test 21.
+**Waiting on the user:** the neck break. After it the victim gets up and plays a from-behind
+kill move by itself (a second KillMoveStart on the victim, `docs/012` test 22). Make the neck break
+lethal, or drop it. Cinematic Clash stays on (it was not the cause).
 
-Next run (new game for the IED default config, or import KKW2 in IED's UI):
-1. 투구 벗기 → helmet on the right hip (IED).
-2. 주시하기: an NPC → smooth zoom in/out; an open view with nothing under the crosshair → the prompt
-   with no name; looking at the floor → only 앉기; a nearby object or chair → nothing.
-3. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, `player.placeatme 00013952 1` → no
-   교체 prompt on the loose steel cuirass (gate `worn ... enchanted`).
-4. `player.additem 000A26E5 1` → 읽기 (BookRead); Faendal's letter in Riverwood → 읽기 opens it; no SI
-   prompt anywhere.
-5. `player.additem 00012EB7 1` → 장착하기 (ItemEquip, weapons and armor only now).
-6. 유술 ×10+ with Cinematic Clash on; watch the suplex, sleeper hold and neck break (the user will say
-   whether the neck break stays).
+Next run (new game, or import KKW2 in IED's UI):
+1. 투구 벗기 → helmet on the right hip, now on IED's `ExtraPelvisArmorHelmet1` node.
+2. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, then `player.additem 00013952 1` → no
+   장착하기 (gate `worn ... enchanted`). Unequip the enchanted cuirass, equip `00012E49` (iron),
+   `player.additem 00013952 1` → 장착하기 offered (steel beats iron).
+3. 유술 ×10 without the suplex and the sleeper hold.
 
 SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
 `verify_deploy.py` fails on it.
@@ -251,7 +245,6 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Helmet` | 투구 벗기, 투구 쓰기 | — (SI HelmetToggle; clips from `CIGAR - Helmet Motions`) | `028` |
 | `Poison` | 독 바르기: <독> | — | `029` |
 | `Observe` | 주시하기: <대상> | — (SI Observer) | `029` |
-| `GearSwap` | <부위> 장비 교체: <장비> | — (SI piecewise outfit swap) | `029` |
 | `PartyOutfit` | 파티 의상 입기, 원래 장비로 | — (SI quest outfit, MQ201) | `029` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own

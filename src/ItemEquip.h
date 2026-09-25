@@ -5,7 +5,8 @@
 
 namespace CIGAR
 {
-	// Offers newly acquired playable weapons and armor for immediate equip.
+	// Offers newly acquired playable weapons and armor for immediate equip; armor only when it beats
+	// the worn piece and that piece is not enchanted (GearSwap's rule, folded in on 2026-09-25).
 	class ItemEquip final :
 		public Module,
 		public RE::BSTEventSink<RE::TESContainerChangedEvent>
@@ -38,6 +39,7 @@ namespace CIGAR
 		void ReceiveAcquiredItem(RE::FormID a_itemID);
 		bool Live(RE::PlayerCharacter* a_player, RE::TESBoundObject* a_item, std::string& a_reason) const;
 		static bool AlreadyEquipped(RE::PlayerCharacter* a_player, RE::TESBoundObject* a_item);
+		static bool BetterArmor(RE::PlayerCharacter* a_player, RE::TESObjectARMO* a_armor, std::string& a_reason);
 
 		PromptSlot equip{ this, kEquip };
 		RE::FormID offeredItem{ 0 };
