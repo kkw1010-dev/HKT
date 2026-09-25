@@ -30,6 +30,13 @@ SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user 
 TidyUp and KillMove are not built (`docs/029`).
 
 
+**Final test of CIGAR 2.0 (2026-09-25):** the checklist is the private artifact
+https://claude.ai/artifact/Wc5nH3HejiEub5mdmtsZRF (44 items, all 24 modules plus the shared behaviour, console
+FormIDs checked against the load order). The user marks each item pass / fail / hold with a note; the
+page stores them in its database, collection `results`, one document per item id. Read them with the
+`ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
+anything.
+
 ## Resume here (2026-09-25, end of session)
 
 - In-game on 2026-09-25, passed: ~ no longer runs `smp reset`; CEE's MCM keys empty; TCL on mouse 4;
