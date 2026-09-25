@@ -17,7 +17,9 @@
 ## CIGAR absorption status
 
 - **Quest Tracking:** implemented as `QuestTrack` on 2026-09-21; hold, tracking, and objective-text label fallback confirmed in game.
-- **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; SE+AE+VR build and deploy passed, in-game test pending.
+- **Acquired gear equip:** implemented as `ItemEquip` on 2026-09-21; confirmed in game on 2026-09-25.
+- **Potions:** `Potion` (`docs/015-potion.md`); all six needs confirmed in game by 2026-09-25.
+- **Remaining, all off in SI (2026-09-25):** HelmetToggle (5), Observer (3), piecewise outfit swap (1), spellbook equip (6), quest note/book equip (4b), quest outfit swap (4c), TidyUp (4d, mod not installed), KillMove (covered by `Execute`). `IdleActions.enabled_passtime` reads true but its module is off.
 - SI overlap disabled by CIGAR for ItemUse: equip weapon/armor, the six potion actions, make-light (`Light`, 2026-09-24) and recharge weapon (`Recharge`, 2026-09-24, `docs/023-recharge.md`). Spellbook equip stays off by the user's choice.
 - WeaponSwap: built as `ToolSwap` and removed the same day at the user's call (`docs/024-tool-swap.md`); `WeaponSwap.enabled` stays off.
 - IdleActions chair eat/drink: `ChairDrink` (inns and houses, alcohol only; `docs/026-chair-drink.md`).

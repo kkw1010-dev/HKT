@@ -198,3 +198,9 @@ Results the same day (log 09:56-10:24):
   `AlchemyItem`, or an effect resisted by PoisonResist) now logs once as `poison-like effect: ...
   counted=<bool>`; and the author build's panel (3. 세부 설정 → 물약) has **시험: 독 10초 걸기**,
   which casts `DLC2crScribPoisonBite` (`04020E92`, 10 s) on the player with `CastSpellImmediate`.
+
+**해독 passed** (log 11:00-11:09): 시험: 독 10초 걸기 → `test poison: cast Scrib Poison (04020E92)` →
+`need=curepoison ... pick=제조 물약 - 독 치료` → held → `drank 제조 물약 - 독 치료 (FF0030FF)` →
+`need=-` one second later. All six needs of the module are now confirmed in game. The new
+`poison-like effect` line logged a dummy ability but not the test poison: it was keyed by
+`ActiveEffect::usUniqueID`, which repeated; it is now keyed by the effect object (not yet seen in game).

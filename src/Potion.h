@@ -106,6 +106,8 @@ namespace CIGAR
 		bool warnedNoChange{ false };
 		// The needs whose empty-handed scan has already been explained, once per session each.
 		std::set<Need> explained;
-		std::set<std::uint16_t> poisonLogged;
+		// Keyed by the effect object: usUniqueID repeated across effects in game (2026-09-25, the test
+		// poison never logged after a dummy ability had).
+		std::set<const RE::ActiveEffect*> poisonLogged;
 	};
 }

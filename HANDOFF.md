@@ -17,9 +17,9 @@
   체력 위급 pick.
 - Passed 2026-09-25 (log 09:56-10:24): 질병 치료; 시간 보내기 hidden after a decline and back after
   standing (`pass time declined` 10:19:46, `offered again` 10:19:50); no equip prompt in a SexLab scene.
-- **Still to test in game:** Potion's 해독 (`docs/015`, results: no poison state was ever reached;
-  the author panel now has 시험: 독 10초 걸기 and poison effects are logged). **Deferred by the
-  user:** QuestAction (`startquest MQ105` did not start the quest; `docs/025`).
+- 해독 passed later the same day with the author panel's 시험: 독 10초 걸기 (`docs/015`); every
+  Potion need is now confirmed. **Deferred by the user:** QuestAction (`startquest MQ105` did not
+  start the quest; `docs/025`).
 - Built and deployed 2026-09-25 (after the tests): 시간 보내기 stays hidden after a decline until the
   next sit (`docs/019`); ItemEquip ignores nameless items, SexLab-scene items and FHU armors
   (`docs/018`); the `HUD mode` line also logs the four control flags Party Sheet gates on.
@@ -31,8 +31,14 @@
   (debug level, never written), with no ini key found for it. **Confirmed 2026-09-25:** sitting in a
   chair turns `fighting` off (`HUD mode All ... fighting=false` at 10:19:44, back to true on standing
   at 10:19:51); movement, looking and menus stay on. So the game's own sit disables fighting controls
-  and Party Sheet hides on that; nothing in CIGAR causes it. Open: the user's choice among leaving it,
-  asking Party Sheet's author for an option, or forcing the flag on while seated (not recommended).
+  and Party Sheet hides on that; nothing in CIGAR causes it. **Out of CIGAR's scope** (the user,
+  2026-09-25): recorded as Installation and Modification case 032, to be fixed in Party Sheet in
+  another session.
+- **Next: the remaining SI features** (all already off in SI's settings; SI does nothing else now).
+  Listed with evidence in `SI/_ABSORPTION/_MAP.md`; the user picks which to build: HelmetToggle,
+  Observer, piecewise outfit swap, spellbook equip, quest note/book equip (4b), quest outfit swap
+  (4c). KillMove is covered by `Execute`; TidyUp needs a mod that is not installed. Once none is
+  wanted, the SI mod itself can be disabled. Streamlined Fishing (`docs/027`) is a separate mod.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
   on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,

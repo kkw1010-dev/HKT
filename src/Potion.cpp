@@ -366,7 +366,7 @@ namespace CIGAR
 	{
 		auto* target = a_actor ? a_actor->AsMagicTarget() : nullptr;
 		auto* effects = target ? target->GetActiveEffectList() : nullptr;
-		std::set<std::uint16_t> present;
+		std::set<const RE::ActiveEffect*> present;
 		if (effects) {
 			for (auto* active : *effects) {
 				if (!active || !active->spell || !active->effect || !active->effect->baseEffect) {
@@ -380,8 +380,8 @@ namespace CIGAR
 				if (!poisonType && !alchPoison && !resistsPoison) {
 					continue;
 				}
-				present.insert(active->usUniqueID);
-				if (poisonLogged.insert(active->usUniqueID).second) {
+				present.insert(active);
+				if (poisonLogged.insert(active).second) {
 					Log("poison-like effect: spell={} ({:08X}) type={} alchPoison={} effect={} resistPoison={} duration={:.1f}s dispelled={} counted={}",
 						Util::NameOf(active->spell), active->spell->GetFormID(),
 						static_cast<int>(active->spell->GetSpellType()), alchPoison, Util::NameOf(base),
@@ -390,7 +390,7 @@ namespace CIGAR
 				}
 			}
 		}
-		std::erase_if(poisonLogged, [&present](std::uint16_t a_id) { return !present.contains(a_id); });
+		std::erase_if(poisonLogged, [&present](const RE::ActiveEffect* a_effect) { return !present.contains(a_effect); });
 	}
 
 	void Potion::ApplyTestPoison()
