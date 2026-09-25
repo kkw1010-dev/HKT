@@ -10,6 +10,8 @@ WardrobeUndress, WaterUndress, IdleActions, KillMove, OutfitSwapPiecewise, Quest
 TreeWeaponSwap, plus Helpers Equipper, QuestActionsHelper, RemedyByItemHelper) and its settings keys.
 SI itself has been disabled in the profile since 2026-09-25.
 
+Result: nothing in SI remains open; every item is built or left out by the user's decision.
+
 | SI prompt / feature | CIGAR | Status |
 |---|---|---|
 | Undress, Dress (bed, wardrobe, water) | `Dress` | done |
@@ -29,11 +31,11 @@ SI itself has been disabled in the profile since 2026-09-25.
 | ToggleHelmet | `Helmet` | done (no hip display, the user's decision) |
 | RechargeWeapon | `Recharge` | done |
 | Potions (health, stamina, magicka, cure poison, cure disease, water breathing) | `Potion` | done |
-| **Health potion slow time** (`slow_time_hp_pot`, `slow_time_duration_hp_pot` 3 s) | — | **the one gap with no decision recorded** |
+| Health potion slow time (`slow_time_hp_pot`, `slow_time_duration_hp_pot` 3 s) | — | **not built, the user's decision** (2026-09-25): slow time overlapping the potion-drinking animation was not restored afterwards |
 | Cast / MakeLight (`CastLight`, `MakeLight`) | — | **the user's decision**: lighting abandoned (TCL keeps its own hotkey) |
 | SwapWeapon (tree, ore vein, fishing) | — | **the user's decision** (docs/024); fishing is the Streamlined Fishing plan (docs/027) |
 | KillMove (sneak kill with dagger / 1H, front, backstab) | `Execute` for executions | **excluded earlier by the user** |
-| Immersive Spell Learning support | — | not applicable: ISL is not installed |
+| Immersive Spell Learning support (`ModSupport::ImmersiveSpellLearning`, SI's spellbook equip; looks up ISL's Spell Notes `0xD66~ImmersiveSpellLearning.esp`, needs po3 Tweaks) | — | not applicable: ISL (Nexus 33375 / DESTified 45514) is not installed, nor any other study mod (Books of Power's log in SKSE is a 2025-10 leftover; it is not in the modlist). If one is ever installed, `BookRead`'s instant learning would bypass it |
 
 ## Evidence Hierarchy
 
