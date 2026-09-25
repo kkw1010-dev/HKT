@@ -537,3 +537,6 @@ turns the victim to line the pair up, a visible snap), or only when the player i
   Update.esm `0815`, only `GetRandomPercent <= 50`, re-rolled by each retry). No DLC adds any. The pool
   is now seven, picked uniformly; from the front the engine turns the victim to line the pair up. The
   `start idle` log line now names the move, for per-move rates.
+
+Open (the user, 2026-09-25): a victim getting up to fight on after the neck break may look wrong; the
+suplex and the sleeper hold are fine to get up from. The user judges the three in game first.

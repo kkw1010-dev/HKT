@@ -12,6 +12,14 @@ namespace CIGAR
 		constexpr float kFOVOffset = 40.0f;
 		constexpr float kMinFOV = 15.0f;
 		constexpr float kMoveInput = 0.2f;
+		// Rest's floor pitch (radians, positive is down): looking this far down offers 앉기/눕기, so
+		// scenery is only watched above it and the two never share a moment.
+		constexpr float kFloorPitch = 0.6f;
+
+		std::string Label(const std::string& a_name)
+		{
+			return a_name.empty() ? "주시하기 (누르고 있기)"s : std::format("주시하기 (누르고 있기): {}", a_name);
+		}
 		// A full zoom in takes 2 s, as SI's 20 degrees a second over 40 did; the way back is quicker.
 		// A partial zoom takes its share of the time.
 		constexpr float kZoomInSeconds = 2.0f;
@@ -47,8 +55,8 @@ namespace CIGAR
 		stillSince = Clock::now();
 		target = {};
 		StartFrameDriver();
-		Log("ready: idle {}s, distance {}, fov -{} eased over {}s in / {}s out, furniture ignored",
-			std::chrono::duration_cast<std::chrono::seconds>(kIdleTime).count(), kMaxDistance, kFOVOffset, kZoomInSeconds,
+		Log("ready: idle {}s, actors within {} or scenery above pitch {}, fov -{} eased over {}s in / {}s out",
+			std::chrono::duration_cast<std::chrono::seconds>(kIdleTime).count(), kMaxDistance, kFloorPitch, kFOVOffset, kZoomInSeconds,
 			kZoomOutSeconds);
 	}
 
@@ -122,7 +130,7 @@ namespace CIGAR
 				return;
 			}
 			const auto name = targetName;
-			look.Update(true, [name] { return std::format("주시하기 (누르고 있기): {}", name); });
+			look.Update(true, [name] { return Label(name); });
 			return;
 		}
 
@@ -133,29 +141,35 @@ namespace CIGAR
 		if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
 			aimed = pick->GetActiveTarget();
 		}
-		auto ref = aimed.get();
-		// Furniture is for sitting or crafting, not for watching (the user, 2026-09-25).
+		// What is watched (the user, 2026-09-25: observation and scouting): an actor under the crosshair,
+		// or nothing at all, which is scenery (a valley, a distant camp beyond the crosshair's reach).
+		// An object under the crosshair (an item, a door, furniture) is at arm's length and is not.
+		const auto ref = aimed.get();
+		auto* actor = ref && ref.get() != player ? ref->As<RE::Actor>() : nullptr;
 		const auto* base = ref ? ref->GetBaseObject() : nullptr;
-		const bool furniture = base && base->Is(RE::FormType::Furniture);
-		if (!ref || ref.get() == player || furniture) {
+		const char* kind = !ref || ref.get() == player ? "scenery" : actor ? "actor" : base && base->Is(RE::FormType::Furniture) ? "furniture" : "object";
+		if (actor) {
+			if (aimed != target) {
+				target = aimed;
+				targetName = Util::NameOf(actor);
+			}
+		} else {
 			target = {};
 			targetName.clear();
-			ref = nullptr;
-		} else if (aimed != target) {
-			target = aimed;
-			targetName = Util::NameOf(ref.get());
 		}
-		const bool inReach = ref && player->GetPosition().GetDistance(ref->GetPosition()) <= kMaxDistance;
-		const bool named = ref && !targetName.empty() && targetName != "-";
+		const float pitch = player->GetAngleX();
+		const bool actorOK = actor && player->GetPosition().GetDistance(actor->GetPosition()) <= kMaxDistance &&
+		                     !targetName.empty() && targetName != "-";
+		const bool sceneryOK = kind == "scenery"sv && pitch < kFloorPitch;
 		const auto* controlMap = RE::ControlMap::GetSingleton();
 		const bool looking = controlMap && controlMap->IsLookingControlsEnabled() && controlMap->IsMovementControlsEnabled();
 		const bool still = now - stillSince >= kIdleTime;
-		const bool ready = still && inReach && named && looking && !easing;
+		const bool ready = still && (actorOK || sceneryOK) && looking && !easing;
 
-		LogGate(std::format("target={} furniture={} near={} still5s={} drawn={} combat={} looking={} easing={} ready={}",
-			named ? targetName : "-"s, furniture, inReach, still, drawn, combat, looking, easing.load(), ready));
+		LogGate(std::format("kind={} target={} pitch={:.2f} still5s={} drawn={} combat={} looking={} easing={} ready={}", kind,
+			actor ? targetName : "-"s, pitch, still, drawn, combat, looking, easing.load(), ready));
 		const auto name = targetName;
-		look.Update(ready, [name] { return std::format("주시하기 (누르고 있기): {}", name); });
+		look.Update(ready, [name] { return Label(name); });
 	}
 
 	void Observe::OnHold(std::uint16_t a_eventID, bool a_down)
@@ -184,7 +198,7 @@ namespace CIGAR
 		zooming = true;
 		const float goal = std::max(kMinFOV, baseFOV - kFOVOffset);
 		StartEase(goal, kZoomInSeconds * (currentFOV - goal) / kFOVOffset);
-		Log("observing {}: fov {:.1f} -> {:.1f} over {:.2f}s ({})", targetName, baseFOV, goal, ease.length,
+		Log("observing {}: fov {:.1f} -> {:.1f} over {:.2f}s ({})", targetName.empty() ? "scenery"s : targetName, baseFOV, goal, ease.length,
 			firstPerson ? "first person" : "third person");
 	}
 

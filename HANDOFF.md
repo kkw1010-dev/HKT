@@ -20,12 +20,19 @@ from-behind ones turn the victim). Read `CIGAR.log` `start idle ... <move>` line
 `CinematicClash.log` by timestamp. `docs/012`, after test 21.
 
 Next run (new game for the IED default config, or import KKW2 in IED's UI):
-1. 투구 벗기 → helmet on the right hip.
-2. 주시하기 on an NPC → smooth zoom in/out; nothing on a chair or workbench.
+1. 투구 벗기 → helmet on the right hip (IED).
+2. 주시하기: an NPC → smooth zoom in/out; an open view with nothing under the crosshair → the prompt
+   with no name; looking at the floor → only 앉기; a nearby object or chair → nothing.
 3. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, `player.placeatme 00013952 1` → no
    교체 prompt on the loose steel cuirass (gate `worn ... enchanted`).
-4. Faendal's letter in Riverwood → 읽기 (길게) opens the letter; no SI prompt anywhere.
-5. `player.additem 000A26E5 1` → 읽기 on the tome (BookRead), and a weapon pickup still offers 장착하기.
+4. `player.additem 000A26E5 1` → 읽기 (BookRead); Faendal's letter in Riverwood → 읽기 opens it; no SI
+   prompt anywhere.
+5. `player.additem 00012EB7 1` → 장착하기 (ItemEquip, weapons and armor only now).
+6. 유술 ×10+ with Cinematic Clash on; watch the suplex, sleeper hold and neck break (the user will say
+   whether the neck break stays).
+
+SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
+`verify_deploy.py` fails on it.
 
 TidyUp and KillMove are not built (`docs/029`).
 

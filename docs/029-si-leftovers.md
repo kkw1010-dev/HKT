@@ -84,8 +84,12 @@ actions are off.
 ## Observe (주시하기, first built as 살펴보기)
 
 - SI's defaults: idle 5 s, distance 5000, FOV offset 40.
-- Gate (100 ms): weapon sheathed, no movement input and out of combat for 5 s, a named crosshair target
-  within 5000 units that is not furniture, looking and movement controls on, no zoom still easing out.
+- Gate (100 ms): weapon sheathed, no movement input and out of combat for 5 s, looking and movement
+  controls on, no zoom still easing out, and something to watch. Since 2026-09-25 (the user: it is for
+  observation and scouting) that is a named actor under the crosshair within 5000 units, or **scenery**:
+  nothing under the crosshair while not looking at the floor (pitch below Rest's 0.6 rad, so 앉기 and
+  주시하기 never share a moment). Objects and furniture under the crosshair are not watched. Scenery
+  reads `주시하기 (누르고 있기)` with no name.
 - Hold-mode prompt (like 시간 보내기): while held, `PlayerCamera` `worldFOV` (or `firstPersonFOV` in
   first person) glides to base - 40 (at least 15) over 2 s on a smootherstep curve. Release, movement or
   combat glides it back over 0.7 s. A small thread posts one task a frame while an ease runs.
