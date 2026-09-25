@@ -682,3 +682,17 @@ Built, untested: the flags line now also prints each actor's AI process `killMov
 `deferredKillTimer`, the last idle played, `unk210`, the high process's current idle and idle timer,
 at each press and again at each refusal. A kill-move cooldown or a stale idle slot that the first
 death clears would show here.
+
+## Decision (the user, 2026-09-25): leave it, disclose it
+
+The remaining lead was writing the AI process's `killMoveTimer` (or another process field) before the
+request. Asked what that could cost, the user chose not to touch engine internals of unknown effect:
+"첫 적만 안되는거잖아 ... 알 수 없는 리스크 때문에 건들지 않았다". The issue is disclosed in the release
+README ("알려진 문제").
+
+Code: `Jujutsu.cpp` / `.h` are back to the version test 23 passed (`b034a9a`: the four front moves
+and the lethal neck break), dropping every experiment of tests 24-29 (the first-use window, the
+automatic retry, the VATS, graph, flag and process logging, the combat and at-load bookkeeping). One
+addition: a `TESDeathEvent` sink notes whether any actor other than the player has died since the
+load; a refusal before that logs `known issue: no actor has died since the load ...` and shows no
+notification, while a refusal after it still notifies "유술 모션 미발동" as before.

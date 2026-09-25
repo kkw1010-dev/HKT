@@ -37,6 +37,12 @@ page stores them in its database, collection `results`, one document per item id
 `ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
 anything.
 
+**유술 known issue, closed by the user's decision (2026-09-25):** every press is refused until the
+session's first death of any actor; after that it works. Not fixed on purpose (the only lead was
+writing an unverified engine field); disclosed in `dist/README-release.md` ("알려진 문제"). The
+experiments of tests 24-29 are removed (`docs/012`, "Decision"). The release README now describes
+CIGAR 2.0 (all modules, SI fully replaced, known issues).
+
 **Temporary, 2026-09-25 (the user: NPC grapples ruined the 유술 test):** Grapple's NPC grapples are
 off (`mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`, backup
 `.bak_20260925_npc-off`), and CIGAR's `Grapple` module is switched off in `CIGAR.json` (backup

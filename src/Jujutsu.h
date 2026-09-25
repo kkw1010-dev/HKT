@@ -3,9 +3,6 @@
 #include "Module.h"
 #include "Prompt.h"
 
-#include <unordered_map>
-#include <unordered_set>
-
 namespace VAL_API
 {
 	class IVVAL2;
@@ -29,7 +26,7 @@ namespace CIGAR
 
 		const char* Name() const override { return "Jujutsu"; }
 		void OnGameLoaded() override;
-		void Tick() override;
+		void Tick() override {}
 		void FastTick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
@@ -57,17 +54,6 @@ namespace CIGAR
 		Jujutsu();
 
 		RE::Actor* FindTarget(RE::PlayerCharacter* a_player, std::string& a_gate) const;
-		// One press: pick a move and start the pair on a_target. a_auto marks the automatic retry.
-		void Start(RE::PlayerCharacter* a_player, RE::Actor* a_target, bool a_auto);
-		void WatchRetry(RE::PlayerCharacter* a_player);
-		static std::string DescribeVats();
-		// Test 27: the first actor spawned in a session refuses every press for its whole life while the
-		// next ones play at once. The lead is its animation graph; this prints what the graph manager holds.
-		static std::string DescribeGraph(RE::Actor* a_actor);
-		// Test 28: refusals last until the session's first death. The raw engine flags of both actors,
-		// logged at each press and at that first death, show what the death changes.
-		static std::string DescribeFlags(RE::Actor* a_actor);
-		bool firstDeathLogged{ false };
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
 		void Sample(RE::Actor* a_victim, float a_time);
@@ -90,32 +76,6 @@ namespace CIGAR
 		std::vector<const char*> idleNames;  // parallel to idles, for the log
 		std::vector<bool> idleLethal;        // parallel to idles
 		bool lethal{ false };                // the move being played kills
-		// Moves that have started a pair since the game started (the process, not the save): the
-		// first-use experiment's memory. Not cleared on load, as loaded animations are not.
-		std::unordered_set<RE::FormID> playedThisSession;
-		// Test 25 split (the user: the first fight of every test is poor). Test 24 ruled out a move's
-		// first use; the first fight and an actor already there when the save loaded are still
-		// confounded, so each press logs both. Actors seen in the first scan after a load are "at load".
-		struct Seen
-		{
-			bool              atLoad{ false };
-			Clock::time_point first{};
-		};
-		std::unordered_map<RE::FormID, Seen> seenActors;
-		bool scannedSinceLoad{ false };
-		bool inCombat{ false };
-		int combatIndex{ 0 };
-		std::unordered_map<RE::FormID, std::pair<int, int>> victimTally;  // played, refused
-		// Test 26: the session's first press was refused and the HUD went to VATSPlayback (the kill
-		// camera) right after; the next press played. A refused press is retried once by itself, as
-		// soon as the kill camera ends, or after kRetryWait if it never starts (the user, 2026-09-25).
-		bool autoPress{ false };
-		bool retryPending{ false };
-		bool retrySawVats{ false };
-		RE::ActorHandle retryVictim;
-		Clock::time_point retryDeadline{};
-		bool firstUse{ false };
-		std::chrono::milliseconds prepareWindow{ 300 };
 		const char* idleSource{ "-" };
 		VAL_API::IVVAL2* valhalla{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };

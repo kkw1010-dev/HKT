@@ -58,14 +58,6 @@ namespace CIGAR
 		// attackStop that comes with them) last only this long: the swing in progress at the press is cut,
 		// and the next one is left alone.
 		constexpr auto kPrepareWindow = 300ms;
-		// The user, 2026-09-25: the first fight of every test has a very low rate. Today's first victim
-		// refused five presses in states later presses played in, and the chair drink's first idle of the
-		// session was refused too, so the lead is a paired animation not yet loaded on its first request.
-		// Experiment: a move not yet played this session keeps retrying this long, without cutting the
-		// player's swing after kPrepareWindow. The log says which window each press had.
-		constexpr auto kFirstUseWindow = 1500ms;
-		// How long a refused press waits for the kill camera before retrying anyway.
-		constexpr auto kRetryWait = 3s;
 
 		bool GraphBool(RE::Actor* a_actor, const char* a_name)
 		{
@@ -158,6 +150,23 @@ namespace CIGAR
 			return originalKillMoveEnd(a_this, a_actor, a_parameter);
 		}
 
+		// Known issue (tests 24-29, 2026-09-25): every press is refused until the session's first death
+		// of another actor, then 유술 works normally. The lead left was an AI-process kill-move timer,
+		// and the user chose not to write engine internals of unknown effect: the issue is disclosed
+		// instead. This only tells the log and the notification whether a refusal falls in that window.
+		std::atomic_bool deathSinceLoad{ false };
+
+		struct DeathWatch final : RE::BSTEventSink<RE::TESDeathEvent>
+		{
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent* a_event, RE::BSTEventSource<RE::TESDeathEvent>*) override
+			{
+				if (a_event && a_event->dead && a_event->actorDying && a_event->actorDying.get() != RE::PlayerCharacter::GetSingleton()) {
+					deathSinceLoad = true;
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		HandlerFn HookSlot(REL::VariantID a_vtable, HandlerFn a_hook)
 		{
 			REL::Relocation<std::uintptr_t> vtbl{ a_vtable };
@@ -193,6 +202,10 @@ namespace CIGAR
 		originalKillMoveEnd = HookSlot(RE::VTABLE_KillMoveEndHandler[0], KillMoveEndHook);
 		logs::info("[Jujutsu] anim handlers hooked: KillActor={} KillMoveStart={} KillMoveEnd={}", originalKillActor != nullptr,
 			originalKillMoveStart != nullptr, originalKillMoveEnd != nullptr);
+		static DeathWatch deathWatch;
+		if (auto* source = RE::ScriptEventSourceHolder::GetSingleton()) {
+			source->AddEventSink<RE::TESDeathEvent>(&deathWatch);
+		}
 	}
 
 	Jujutsu::Jujutsu()
@@ -209,15 +222,8 @@ namespace CIGAR
 	void Jujutsu::OnGameLoaded()
 	{
 		jujutsu.Reset();
+		deathSinceLoad = false;
 		lastGate.clear();
-		seenActors.clear();
-		firstDeathLogged = false;
-		scannedSinceLoad = false;
-		inCombat = false;
-		combatIndex = 0;
-		victimTally.clear();
-		retryPending = false;
-		autoPress = false;
 		armedVictim = nullptr;
 		phase = Phase::kIdle;
 		victim = {};
@@ -294,43 +300,6 @@ namespace CIGAR
 		return target;
 	}
 
-	void Jujutsu::Tick()
-	{
-		auto* player = Util::Player();
-		auto* lists = RE::ProcessLists::GetSingleton();
-		if (!player || !lists) {
-			return;
-		}
-		const bool atLoad = !scannedSinceLoad;
-		int added = 0;
-		RE::Actor* firstDead = nullptr;
-		lists->ForEachHighActor([&](RE::Actor* a_actor) {
-			if (a_actor && a_actor != player && seenActors.try_emplace(a_actor->GetFormID(), Seen{ atLoad, Clock::now() }).second) {
-				++added;
-			}
-			if (!atLoad && !firstDeathLogged && !firstDead && a_actor && a_actor != player && a_actor->IsDead() &&
-				seenActors[a_actor->GetFormID()].atLoad == false) {
-				firstDead = a_actor;
-			}
-			return RE::BSContainer::ForEachResult::kContinue;
-		});
-		if (firstDead) {
-			firstDeathLogged = true;
-			Log("first death this session: {} ({:08X}) in combat #{}; player flags now {}", Util::NameOf(firstDead), firstDead->GetFormID(),
-				combatIndex, DescribeFlags(player));
-		}
-		if (atLoad) {
-			scannedSinceLoad = true;
-			Log("first actor scan after load: {} actors present at load", added);
-		}
-		const bool combat = player->IsInCombat();
-		if (combat && !inCombat) {
-			++combatIndex;
-			Log("combat #{} of this session started", combatIndex);
-		}
-		inCombat = combat;
-	}
-
 	void Jujutsu::FastTick()
 	{
 		if (idles.empty() || !originalKillActor) {
@@ -342,12 +311,6 @@ namespace CIGAR
 			LogGate("busy: 유술 in progress");
 			jujutsu.Update(false, [] { return ""s; });
 			return;
-		}
-		if (retryPending) {
-			WatchRetry(player);
-			if (phase != Phase::kIdle) {
-				return;
-			}
 		}
 		std::string gate;
 		auto* target = FindTarget(player, gate);
@@ -377,76 +340,10 @@ namespace CIGAR
 			Log("accept ignored, no target now: {}", gate);
 			return;
 		}
-		retryPending = false;  // a new press replaces a pending automatic retry
-		Start(player, target, false);
-	}
-
-	std::string Jujutsu::DescribeGraph(RE::Actor* a_actor)
-	{
-		RE::BSTSmartPointer<RE::BSAnimationGraphManager> manager;
-		if (!a_actor || !a_actor->GetAnimationGraphManager(manager) || !manager) {
-			return "no graph manager";
-		}
-		std::string out = std::format("graphs={} active={}", manager->graphs.size(), manager->GetRuntimeData().activeGraph);
-		for (std::uint32_t i = 0; i < manager->graphs.size(); ++i) {
-			const auto& graph = manager->graphs[i];
-			if (!graph) {
-				out += std::format(" [{}: null]", i);
-				continue;
-			}
-			bool synced = false;
-			const bool hasSynced = graph->GetGraphVariableBool("bIsSynced", synced);
-			out += std::format(" [{}: {} db={} holder={} bIsSynced={}]", i, graph->projectName.c_str(), graph->projectDBData != nullptr,
-				graph->holder == a_actor, hasSynced ? (synced ? "1" : "0") : "missing");
-		}
-		return out;
-	}
-
-	std::string Jujutsu::DescribeFlags(RE::Actor* a_actor)
-	{
-		if (!a_actor) {
-			return "-";
-		}
-		const auto& data = a_actor->GetActorRuntimeData();
-		const auto* state = a_actor->AsActorState();
-		std::string process = "process -";
-		if (const auto* ai = data.currentProcess) {
-			// Test 29: the player's flags were identical before and after the first death. The kill-move
-			// timers and idle slots of the AI process are the next place a one-shot block can live.
-			const auto* mh = ai->middleHigh;
-			const auto* hi = ai->high;
-			const auto idleName = [](const RE::TESIdleForm* a_idle) {
-				return a_idle ? std::format("{:08X}", a_idle->GetFormID()) : "-"s;
-			};
-			process = std::format("killMoveTimer={} deferredKillTimer={} lastIdle={} unk210={} processIdle={} idleTimer={}",
-				mh ? std::format("{:.2f}", mh->killMoveTimer) : "-"s, mh ? std::format("{:.2f}", mh->deferredKillTimer) : "-"s,
-				mh ? idleName(mh->lastIdlePlayed) : "-"s, mh ? idleName(mh->unk210) : "-"s, hi ? idleName(hi->currentProcessIdle) : "-"s,
-				hi ? std::format("{:.2f}", hi->idleTimer) : "-"s);
-		}
-		return std::format("boolBits={:08X} boolFlags={:08X} lifeState={} knock={} sitSleep={} flyState={} {}", data.boolBits.underlying(),
-			data.boolFlags.underlying(), state ? static_cast<int>(state->GetLifeState()) : -1,
-			state ? static_cast<int>(state->GetKnockState()) : -1, state ? static_cast<int>(state->GetSitSleepState()) : -1,
-			state ? static_cast<int>(state->GetFlyState()) : -1, process);
-	}
-
-	std::string Jujutsu::DescribeVats()
-	{
-		const auto* vats = RE::VATS::GetSingleton();
-		if (!vats) {
-			return "vats=-";
-		}
-		return std::format("vats mode={} cmds={}", static_cast<std::uint32_t>(vats->mode), vats->commandList.size());
-	}
-
-	void Jujutsu::Start(RE::PlayerCharacter* player, RE::Actor* target, bool a_auto)
-	{
-		autoPress = a_auto;
 		static std::mt19937 rng{ std::random_device{}() };
 		const auto pick = std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng);
 		playing = idles[pick];
 		lethal = idleLethal[pick];
-		firstUse = !playedThisSession.contains(playing->GetFormID());
-		prepareWindow = firstUse ? std::chrono::milliseconds(kFirstUseWindow) : std::chrono::milliseconds(kPrepareWindow);
 		victim = target->GetHandle();
 		payoffDone = false;
 		knocked = false;
@@ -457,53 +354,12 @@ namespace CIGAR
 		phaseStart = Clock::now();
 		// The distance at the press, beside each retry's and the start's: tells a play refused because the
 		// target moved from one the engine refused at close range.
-		const auto seen = seenActors.find(target->GetFormID());
-		const auto& tally = victimTally[target->GetFormID()];
-		Log("start idle {:08X} {} ({}, first use this session={}, window {} ms, {}) combat #{} victim {} (tally {} played / {} refused) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
-			playing->GetFormID(), idleNames[pick], a_auto ? "automatic retry" : "press", firstUse, prepareWindow.count(), DescribeVats(),
-			combatIndex,
-			seen == seenActors.end() ? "unscanned"s :
-			seen->second.atLoad      ? "present at load"s :
-			                           std::format("arrived {:.0f} s ago", std::chrono::duration<float>(Clock::now() - seen->second.first).count()),
-			tally.first, tally.second, Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()),
-			Settings::JujutsuReach(), DescribeVictim(target));
-		Log("graphs: victim {} | player {}", DescribeGraph(target), DescribeGraph(player));
-		Log("flags: victim {} | player {} | first death seen={}", DescribeFlags(target), DescribeFlags(player), firstDeathLogged);
+		Log("start idle {:08X} {} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), idleNames[pick], Util::NameOf(target),
+			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();
 		}
-	}
-
-	void Jujutsu::WatchRetry(RE::PlayerCharacter* a_player)
-	{
-		const auto* vats = RE::VATS::GetSingleton();
-		const bool vatsBusy = vats && (vats->mode != RE::VATS::VATS_MODE::kNone || !vats->commandList.empty());
-		const auto now = Clock::now();
-		if (vatsBusy) {
-			if (!retrySawVats) {
-				retrySawVats = true;
-				Log("after the refusal the kill camera is running ({}); retrying when it ends", DescribeVats());
-			}
-			return;
-		}
-		if (!retrySawVats && now < retryDeadline) {
-			return;
-		}
-		retryPending = false;
-		auto victimPtr = retryVictim.get();
-		auto* v = victimPtr.get();
-		const char* why = !v                                   ? "victim gone" :
-		                  v->IsDead()                          ? "victim dead" :
-		                  !a_player->IsInCombat()              ? "combat over" :
-		                  a_player->GetPosition().GetDistance(v->GetPosition()) > Settings::JujutsuReach() ? "out of reach" :
-		                                                         nullptr;
-		if (why) {
-			Log("automatic retry dropped: {}", why);
-			return;
-		}
-		Log("automatic retry: {}", retrySawVats ? "the kill camera ended" : "no kill camera within 3 s");
-		Start(a_player, v, true);
 	}
 
 	bool Jujutsu::TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
@@ -514,16 +370,14 @@ namespace CIGAR
 			return false;
 		}
 		++tries;
-		// blockStop / attackStop only inside the normal window (test 8: cutting every swing felt wrong).
-		const bool early = Clock::now() - phaseStart < kPrepareWindow;
-		const bool wasBlocking = early && a_victim->IsBlocking();
+		const bool wasBlocking = a_victim->IsBlocking();
 		// Test 4 logged the state after the call, which an accepted play has already changed; the state that
 		// decides is the one before it (and before blockStop / attackStop).
 		const auto before = DescribeRefusal(a_player, a_victim);
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
 		}
-		const bool playerAttacking = early && GraphBool(a_player, "IsAttacking");
+		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
 			a_player->NotifyAnimationGraph("attackStop");
 		}
@@ -537,7 +391,7 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {} {}{}{} -> SetupSpecialIdle returned {}", tries, before, DescribeVats(), wasBlocking ? " (sent blockStop)" : "",
+		Log("try {}: before {}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
 			playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
@@ -731,12 +585,11 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || now - phaseStart >= prepareWindow) {
-				Log("WARN the kill move was refused for {:.1f} s ({} tries, first use this session={}); victim: {}", t, tries,
-					firstUse, DescribeVictim(v));
-				Log("flags at the refusal: victim {} | player {}", DescribeFlags(v), DescribeFlags(a_player));
-				// A refused press gets one automatic retry; only a refused retry is worth a notification.
-				if (autoPress && !warnedNoStart) {
+			} else if (!v || now - phaseStart >= kPrepareWindow) {
+				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
+				if (!deathSinceLoad) {
+					Log("known issue: no actor has died since the load; 유술 is refused until the first death (docs/012, tests 24-29)");
+				} else if (!warnedNoStart) {
 					warnedNoStart = true;
 					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
 				}
@@ -779,8 +632,7 @@ namespace CIGAR
 		case Phase::kStarting:
 			if (pairOn) {
 				phase = Phase::kRunning;
-				playedThisSession.insert(playing->GetFormID());
-				Log("pair started after {:.2f} s after {} tries, first use this session={} (synced={} playerKillMove={} victimKillMove={})", t, tries, firstUse, synced,
+				Log("pair started after {:.2f} s after {} tries (synced={} playerKillMove={} victimKillMove={})", t, tries, synced,
 					a_player->IsInKillMove(), v && v->IsInKillMove());
 			} else if (now - phaseStart >= kStartWindow) {
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
@@ -834,17 +686,6 @@ namespace CIGAR
 	{
 		armedVictim = nullptr;
 		auto victimPtr = victim.get();
-		if (auto* tv = victimPtr.get()) {
-			auto& tally = victimTally[tv->GetFormID()];
-			(std::string_view{ a_reason } == "refused" ? tally.second : tally.first) += 1;
-			if (std::string_view{ a_reason } == "refused" && !autoPress) {
-				retryPending = true;
-				retrySawVats = false;
-				retryVictim = tv->GetHandle();
-				retryDeadline = Clock::now() + kRetryWait;
-				Log("refused press: one automatic retry after the kill camera ({})", DescribeVats());
-			}
-		}
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.
 			if (v->IsInKillMove() && phase != Phase::kPreparing) {
