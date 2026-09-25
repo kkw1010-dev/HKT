@@ -2,18 +2,16 @@
 
 ## Why
 
-SI's `DressActions` module (Water, Bed and Wardrobe Undress) treats
-`HDTSMPObjectBase` (`000805:HDT SMP Object - Simple.esp`) as clothing. The item
-is:
+An undress that treats every worn armor as clothing never finishes on this modlist:
+`HDTSMPObjectBase` (`000805:HDT SMP Object - Simple.esp`) is
 
 - in slot 60, with `ArmorType = Clothing`;
 - **NonPlayable**, with the `SexLabNoStrip` and `OStimNoStrip` keywords;
 - kept equipped by GT Softbody's `DynamicSmpCollision` quest and its
   `SMPCloakFFSelf` effect.
 
-SI removes it, Softbody re-equips it, and SI's undress prompt never goes away.
-Test 3 in `001` covers this. Bed and Wardrobe Undress are assumed to share
-SI's strip code; that was not observed.
+A strip removes it, Softbody re-equips it, and the undress prompt never goes away.
+Test 3 in `001` covers this. So `Dress` strips by the rules below.
 
 ## Rules
 
@@ -84,4 +82,3 @@ History:
 - Bed detection on bedrolls and modded beds (vanilla bed confirmed). Every
   aimed furniture logs `furniture <name> flags=<hex> sleep=<bool>`.
 - Wardrobe detection on modded containers such as the Snazzy wardrobes.
-- SI's Bed and Wardrobe Undress staying off under the Power User preset.

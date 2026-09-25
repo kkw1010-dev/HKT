@@ -1,8 +1,7 @@
 # 030 · MannequinSwap (의상 교환 with a mannequin), plan
 
 Status (2026-09-25): **planned, not started; work is on branch `v3`.** The user files it under
-**CIGAR 3.0**: CIGAR 2.0 ends with the SI absorption (2.0.0 released and tested by the user, no
-problems), and MannequinSwap is the first 3.0 feature. The author build is back in the load order.
+**CIGAR 3.0**: CIGAR 2.0.0 is released and was tested by the user with no problems, and MannequinSwap is the first 3.0 feature. The author build is back in the load order.
 
 Sources: a plan GPT wrote (`claude.md` in the repo root, removed on the user's permission once this
 file replaced it) and Claude's review of it against this load order on 2026-09-25. Everything under

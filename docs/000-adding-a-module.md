@@ -3,29 +3,20 @@
 This is how the `Bathe` and `Dress` modules were built. Follow it for the next
 CIGAR module, so their lessons do not have to be learned again.
 
-## 1. Find out what the target does (and whether SI already does it)
+## 1. Find out what the target does
 
-1. Dump the Streamlined Interactions DLL strings: run a Python regex over
-   `mods/[NoDelete] 0008 StreamlinedInteractions/SKSE/Plugins/StreamlinedInteractions.dll`.
-   Look for:
-   - the module name;
-   - its `Modules/<Name>` MCM label;
-   - hard-coded asset paths;
-   - idle and event names.
-
-   SI is only a source of ideas and of conflicts; CIGAR never calls it.
-2. Decompile the target mod's `.pex` with `housecarl_decompile_script`, using a
+1. Decompile the target mod's `.pex` with `housecarl_decompile_script`, using a
    temporary patch name. Copy the `.psc` files to the scratchpad, then delete
    the temporary `mods/houseCARL - ...` folder (check that it is not listed in
    modlist.txt).
-3. Find the target's public entry points: an API script, `Try...` functions or
+2. Find the target's public entry points: an API script, `Try...` functions or
    ModEvents. Note what each one checks.
-4. List the forms the module needs from the target. Read them from the
+3. List the forms the module needs from the target. Read them from the
    target's quest script properties at load (`Util::ScriptObject` +
    `Util::ScriptProperty`), so no FormID is hard-coded. Use
    `housecarl_records` on the quest's `VirtualMachineAdapter.Scripts[0].Properties`
    to see the property names.
-5. Record all of this as `docs/NNN-<module>.md`.
+4. Record all of this as `docs/NNN-<module>.md`.
 
 ## 2. Write the module (C++)
 
@@ -68,16 +59,9 @@ CIGAR module, so their lessons do not have to be learned again.
 - Self-reporting is required:
   - log to `CIGAR.log` for the gate, offers, events and action results;
   - notify once for every state that silently blocks the module (the target
-    disabled, a replaced SI switch on).
+    disabled in its MCM).
 
-## 3. SI overlap
-
-When the module replaces SI switches, add them to `REPLACED` in both
-`tools/sync_si_settings.py` and `tools/verify_deploy.py`, and warn at runtime
-with `Util::WarnIfSIModuleOn`. SI re-applies preset switches when its menu opens
-unless the preset is Power User (2), which the sync tool pins.
-
-## 3a. Taking over another mod's hotkey (the user's rule, 2026-09-25)
+## 3. Taking over another mod's hotkey (the user's rule, 2026-09-25)
 
 When a module takes over, moves or unbinds another mod's hotkey (prompt-only), do both:
 

@@ -9,8 +9,8 @@ The prompt came back 29 s after a double-tap decline. It now stays hidden until 
 
 ## The user's decision (2026-09-24)
 
-SI's chair eat/drink (IdleActions; the only evidence is the vanilla idles `ChairEatingStart` /
-`ChairDrinkingStart`) is kept as roleplay, narrowed: **inns and houses only, alcohol only, only
+Chair eating and drinking (the vanilla idles `ChairEatingStart` / `ChairDrinkingStart`) is kept
+as roleplay, narrowed: **inns and houses only, alcohol only, only
 when the player carries it, and the drink is really drunk.** No eating.
 
 ## As built

@@ -4,12 +4,8 @@ Status: hold, tracking and objective-text label fallback confirmed in game on 20
 
 ## Contract
 
-Streamlined Interactions shows a Track Quest prompt when a new objective arrives and tracks that
-quest when the prompt is accepted. CIGAR replaces only `QuestActions.enabled_track`; the rest of
-SI's `QuestActions` module stays enabled.
-
-SI uses a hold interaction for Quest Tracking. CIGAR follows that behavior and keeps the prompt
-available for 15 seconds. A newer untracked quest replaces the current offer.
+When a new objective arrives for a quest that is not tracked, CIGAR offers to track it and tracks
+that quest when the prompt is accepted. It is a hold interaction, available for 15 seconds. A newer untracked quest replaces the current offer.
 
 ## Implementation
 
@@ -31,8 +27,7 @@ available for 15 seconds. A newer untracked quest replaces the current offer.
 
 ## Test
 
-1. Start with SI's Quest Tracking enabled, deploy the author build, and verify the deploy tool turns
-   only `QuestActions.enabled_track` off.
+1. Deploy the author build.
 2. Receive a new objective for a quest that is not currently tracked. Expect
    `추적하기 (길게): <퀘스트 이름>` within one second. For a nameless miscellaneous
    quest, expect its new objective text instead of a hexadecimal FormID.

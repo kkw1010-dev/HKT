@@ -1,36 +1,33 @@
-# CIGAR — session handoff (updated 2026-09-25, end of the 2.0 release session)
+# CIGAR — session handoff (updated 2026-09-26)
 
-## Start here (next session, written 2026-09-25 at the end of the 2.0 release session)
+## Start here
 
-Reply to the user in Korean. Read this section, then act on the two tasks below in order.
+Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
+history of each module are in `docs/`, one file per module, and each file starts with its status.
 
 ### State
 
-- **CIGAR 2.0.0 is released locally.** Version 2.0.0 (CMakeLists, vcpkg.json). GitHub
-  (`kkw1010-dev/HKT`): `master` and a new branch **`v2`** both point at `e6d0b9e` (the 2.0.0 source);
-  no GitHub release page (the user's choice). There is also an older remote branch `release/0.2.0`.
-- **Release package:** `%USERPROFILE%\Downloads\CIGAR 2.0.0` (README.md in Korean with the known
-  issues, `SKSE\Plugins\CIGAR.dll`, default `CIGAR.json`).
-- **The author build is back in the load order** (2026-09-25, v3 prep): MO2 profile `TKL - MUNG ADDON`
-  has `+CIGAR`, `-CIGAR 2.0.0`, `-CIGAR 0.2.0` (backup `modlist.txt.bak_20260925_v3-author`), so
-  `tools\Build.ps1 -Deploy` works again. The release copy stays in `mods\CIGAR 2.0.0`.
-- Grapple's NPC grapples and CIGAR's Grapple module are back on (the 유술 test shutdown is undone).
-- Streamlined Interactions stays disabled; `verify_deploy.py` fails if it is enabled.
-- Untracked files in the repo root (`GPT_CODEX_SOURCE_FIDELITY.md`, `SI_IDLE_LEDGE_SIT_ANALYSIS.md`,
-  `TCL_LIGHT_HOOK_ANALYSIS.md`, `scratch/`) are not ours; they were never committed. Leave them.
+- **CIGAR 2.0.0 is released locally** (`%USERPROFILE%\Downloads\CIGAR 2.0.0`, README in Korean with the
+  known issues). The user tested the release build in game with no problems (2026-09-25). GitHub
+  (`kkw1010-dev/HKT`, public): `master` holds the current source; `v2` is the 2.0.0 source snapshot
+  (`e6d0b9e`); there is no GitHub release page (the user's choice).
+- **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
+  are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
+- **The author build is in the load order**: MO2 profile `TKL - MUNG ADDON` has `+CIGAR` and
+  `-CIGAR 2.0.0`, so `tools\Build.ps1 -Deploy` works. The release copy stays in `mods\CIGAR 2.0.0`.
+- **CIGAR is a standalone system (2026-09-26).** It reads, writes and checks nothing of any other
+  interaction mod: no settings reader, no deploy sync, no profile anchor, no duplicate-module warning.
+  Do not add such coupling back; overlapping prompts from another mod are that modlist's problem.
+- Grapple's NPC grapples and CIGAR's Grapple module are on.
+- Untracked files in the repo root (three analysis `.md` files by other agents, and `scratch/`) are
+  not ours; they were never committed. Leave them.
 
-### Task 1: v2 release test (done)
-
-The user tested the 2.0.0 release build in game and reported no problems (2026-09-25). Its log opened
-with `CIGAR 2-0-0-0 loaded` and held no warning or error line. Known issues stay as disclosed in
-`docs/012` (유술 before the session's first death, Execute's missed first press).
-
-### Task 2: CIGAR 3.0, first feature MannequinSwap
+### Next: CIGAR 3.0, first feature MannequinSwap
 
 - Plan: `docs/030-mannequin-swap.md` (facts read from the load order: `MannequinActivatorSCRIPT` by
   Another Mannequin Script Fix, 20 base-form slots, the `MannequinActivateTrig` activate parent;
   PromptID 40; one build with self-verifying logs, one test session).
-- **Branch `v3`** (from `master` at `2de6ee3`) holds all 3.0 work; do not build 3.0 on `master` or `v2`.
+- **Branch `v3`** holds all 3.0 code; do not build 3.0 on `master` or `v2`.
 - **Decisions made** (the user, 2026-09-25; `docs/030`, "The user's decisions"): the stowed helmet
   goes with the outfit and the mannequin's helmet arrives stowed; `Dress` remembers the post-swap
   outfit; the Almsivi CC mannequins are included. Nothing is left to ask; the next step is the build.
@@ -38,83 +35,25 @@ with `CIGAR 2-0-0-0 loaded` and held no warning or error line. Known issues stay
   `cigar-declined-prompt-stays-hidden` (a double-tap decline hides the prompt until the situation
   changes; hold-and-keep prompts must read the double tap themselves).
 
-### What this session did (2026-09-25), in one place
+### Standing facts worth keeping in view
 
-SI fully absorbed and SI disabled; test runs 1-4 and the 44-item final test passed; GearSwap folded
-into ItemEquip; BookRead split out; Observe renamed 주시하기 with eased zoom, scenery and a read double
-tap; ChairDrink and Observe hide after a decline; Poison CTD fixed (entry-point filter forms); IED
-belt display dropped by the user; 유술 pool = four front moves + lethal neck break; the 유술
-first-death issue traced (tests 24-29) and disclosed; the release README and panel text rewritten for
-2.0; version 2.0.0 pushed.
-
-## Resume here (2026-09-25, end of session)
-
-- In-game on 2026-09-25, passed: ~ no longer runs `smp reset`; CEE's MCM keys empty; TCL on mouse 4;
-  MCM Memory restore without failures.
-- Fill Her Up joined the prompt-only list after that (`docs/006-deflate.md`, last section; panel
-  checkbox, default on); passed in game later the same day.
-- The user's standing rule (2026-09-25, `docs/000-adding-a-module.md` 3a): a hotkey CIGAR takes over
-  is removed from the mod **and** from MCM Memory's profile. Applied now to FHU (82 -> -1), Acheron's
+- The user's rule (2026-09-25, `docs/000-adding-a-module.md` section 3): a hotkey CIGAR takes over
+  is removed from the mod **and** from MCM Memory's profile. Applied to FHU (82 -> -1), Acheron's
   surrender key (37 -> 101, CIGAR's hidden F14) and PNO's urinate key (51 -> -1); `verify_deploy.py`
   checks these rows and fails on a cancelled-remap Esc.
-- Passed in game later on 2026-09-25, reported by the user without logs: guard 유술 (its refusal
-  rate is accepted as unresolved, the user's decision), ItemEquip (armor too), Recharge,
-  ChairDrink, pass time in a chair, warm hands at a forge, prompts hidden over menus.
-- Also passed (the user, 2026-09-25): Fill Her Up prompt-only (`docs/006`), Potion's 수중 호흡 and
-  체력 위급 pick.
-- Passed 2026-09-25 (log 09:56-10:24): 질병 치료; 시간 보내기 hidden after a decline and back after
-  standing (`pass time declined` 10:19:46, `offered again` 10:19:50); no equip prompt in a SexLab scene.
-- 해독 passed later the same day with the author panel's 시험: 독 10초 걸기 (`docs/015`); every
-  Potion need is now confirmed. **Deferred by the user:** QuestAction (`startquest MQ105` did not
-  start the quest; `docs/025`).
-- Built and deployed 2026-09-25 (after the tests): 시간 보내기 stays hidden after a decline until the
-  next sit (`docs/019`); ItemEquip ignores nameless items, SexLab-scene items and FHU armors
-  (`docs/018`); the `HUD mode` line also logs the four control flags Party Sheet gates on.
-- Party Sheet HUD while sitting: the `HUD mode` log lines show the vanilla HUD stayed in `All` at
-  alpha 100 through three chair sits (04:00:34, 04:00:55, 04:01:04), so the vanishing is Party
-  Sheet's own logic, not the game HUD. `[HUDVisibility] Enabled = 0` did not help (the user,
-  2026-09-25) and was reverted. Party Sheet 3.5's DLL has a hard gate,
-  `MenuUtils::AreFightingControlsDisabled` / `[HUDGate] fighting= movement= looking= menusShowing=`
-  (debug level, never written), with no ini key found for it. **Confirmed 2026-09-25:** sitting in a
-  chair turns `fighting` off (`HUD mode All ... fighting=false` at 10:19:44, back to true on standing
-  at 10:19:51); movement, looking and menus stay on. So the game's own sit disables fighting controls
-  and Party Sheet hides on that; nothing in CIGAR causes it. **Out of CIGAR's scope** (the user,
-  2026-09-25): recorded as Installation and Modification case 032, to be fixed in Party Sheet in
-  another session.
-- **`Helmet` rebuilt 2026-09-25, untested** (`docs/028-helmet.md`, second design): no Helmet Toggle
-  2 any more (disabled in the profile); helmet off by default, 투구 벗기 everywhere but dungeon
-  interiors, 투구 쓰기 in combat; real unequip with Helmet Toggle's take-off clips from the new asset
-  mod `CIGAR - Helmet Motions`. Belt display (IED) not done. The F12 physics-reset press is gone (it
-  opened photo mode).
-- **유술 0 of 26 on 2026-09-25** (`docs/012`, test 20); lead: Cinematic Clash 1.0.2 (live since
-  09-20 18:10, just before the rate first fell). A/B test with its master switch off is pending the
-  user's go-ahead.
-  Go-ahead given: `CinematicClash.ini` `[General] bEnabled = 0` (backup
-  `CinematicClash.ini.bak_20260925_jujutsu-ab`); restore it after the test.
-- Built 2026-09-25: `Helmet`: SI's HelmetToggle on
-  Helmet Toggle 2. 투구 벗기 in a safe place with headgear on, 투구 쓰기 in an unsafe place while it is
-  hidden; accepting calls `HT_MCM.PressHotkey()`; the safe/unsafe lists are Helmet Toggle's own (FLM).
-  Its B key was removed from MCM Helper's `keybinds.json` (no MCM Memory row exists).
-- **All of SI absorbed, 2026-09-25, untested** (`docs/029-si-leftovers.md`): `Poison` (독 바르기, the
-  user's addition), `Observe`, `GearSwap`, `PartyOutfit`, and books in `ItemEquip`; the helmet-on-belt
-  IED entry added to the user's IED default config. TidyUp (mod not installed) and KillMove (excluded)
-  are not built. SI itself now does nothing and could be disabled (not done; the user's call).
-- **Superseded: the remaining SI features** (all already off in SI's settings; SI does nothing else now).
-  Listed with evidence in `SI/_ABSORPTION/_MAP.md`; the user picks which to build (HelmetToggle is
-  done as `Helmet`): Observer, piecewise outfit swap, spellbook equip, quest note/book equip (4b), quest outfit swap
-  (4c). KillMove is covered by `Execute`; TidyUp needs a mod that is not installed. Once none is
-  wanted, the SI mod itself can be disabled. Streamlined Fishing (`docs/027`) is a separate mod.
+- **Deferred by the user:** QuestAction's in-game test (`startquest MQ105` did not start the quest;
+  `docs/025`).
+- Party Sheet's HUD vanishing while seated is Party Sheet's own gate on disabled fighting controls
+  (the game's sit turns `fighting` off); nothing in CIGAR causes it. **Out of CIGAR's scope** (the
+  user, 2026-09-25): Installation and Modification case 032.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
-- Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
-  on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,
-  and Fishing Preview's overrides SFO's animations. The module waits on the decisions listed there.
+- The user's plan after that: a fishing module on Streamlined Fishing. Prep is in
+  `docs/027-fishing.md`: on this modlist Fish Anywhere's loose script already overrides Streamlined
+  Fishing's rod equip, and Fishing Preview's overrides SFO's animations. The module waits on the
+  decisions listed there.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
-
-Read this first, then `README.md`. The design rationale and the test history of
-each module are in `docs/`, one file per module, and each file starts with its
-status.
 
 ## Open items, in priority order
 
@@ -151,23 +90,17 @@ status.
    수중 호흡, and the 체력 위급 threshold picking the strongest bottle. Test 1 the same day
    found the module showing nothing because the filter required `IsMedicine()`, a flag set on 27
    ALCH records in this whole order and on none of the healing potions; see `docs/015-potion.md`.
-4. **`QuestTrack` starts the SI absorption pass (2026-09-21).** It listens for an objective-state
+4. **`QuestTrack` (2026-09-21).** It listens for an objective-state
    transition to displayed, offers the untracked quest as a 15-second hold prompt, and dispatches the native
    Papyrus `Quest.SetActive(true)` method. Hold and tracking are confirmed in game. A nameless
    miscellaneous QUST now falls back to the new objective text instead of exposing its FormID;
-   that label fix is confirmed in game.
-   `QuestActions.enabled_track` is the only new SI switch CIGAR replaces; the rest of QuestActions
-   remains enabled. See `docs/017-quest-track.md` and `SI/_ABSORPTION/_MAP.md`.
-5. **`ItemEquip` continues the SI absorption pass (2026-09-21).** A newly acquired playable weapon
+   that label fix is confirmed in game. See `docs/017-quest-track.md`.
+5. **`ItemEquip` (2026-09-21).** A newly acquired playable weapon
    or armor piece gets a 15-second hold prompt outside combat. It uses `TESContainerChangedEvent`
    and revalidates ownership and equipped state before calling `ActorEquipManager::EquipObject`.
-   It replaces only `ItemUse.enabled_equip_weapon` and `enabled_equip_armor`; runtime test pending.
-   See `docs/018-item-equip.md`.
+   Passed in game on 2026-09-25. See `docs/018-item-equip.md`.
 6. Backlog below.
 
-The **author/dev build** (`CIGAR`) is enabled and the release build (`CIGAR 0.2.0`) is disabled.
-The dev mod folder's SI override is therefore active in the VFS; deploy sync keeps the absorbed
-switches off while leaving the rest of each SI module intact.
 `Auto Input Switch` is the only gamepad mod enabled; see `docs/016-gamepad.md`.
 
 Confirmed in game on 2026-09-20 (`SKSE\CIGAR.log`, 20:22-20:46), release build:
@@ -204,8 +137,7 @@ refusals (the stun-breaking swing still in progress), so `attackStop` could help
 - **The plugin.** `CIGAR.dll` is an ESP-less SKSE plugin (CommonLibSSE-NG
   alandtse `ng`, one DLL for SE, AE and VR).
   - It is deployed to `C:\TAKEALOOK\mods\CIGAR\SKSE\Plugins\` and enabled in
-    the MO2 profile `TKL - MUNG ADDON`, directly above
-    `[NoDelete] 0008 StreamlinedInteractions`.
+    the MO2 profile `TKL - MUNG ADDON`.
   - The deployed DLL equals the build of `HEAD`, which `verify_deploy.py`
     checks.
 - **The repo.** `C:\TAKEALOOK\TKL-Agent\CIGAR`, published on 2026-09-20 to
@@ -250,18 +182,18 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Execute` | 처형 | Valhalla Combat | `011` |
 | `Jujutsu` | 유술 | — (Valhalla optional) | `012` |
 | `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm | `013` |
-| `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
-| `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
-| `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
-| `BookRead` | 읽기: <책 이름> | — (SI spellbook and quest note; split from `ItemEquip`) | `029` |
-| `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
-| `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
-| `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
-| `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
-| `Helmet` | 투구 벗기, 투구 쓰기 | — (SI HelmetToggle; clips from `CIGAR - Helmet Motions`) | `028` |
-| `Poison` | 독 바르기: <독> | — | `029` |
-| `Observe` | 주시하기: <대상> | — (SI Observer) | `029` |
-| `PartyOutfit` | 파티 의상 입기, 원래 장비로 | — (SI quest outfit, MQ201) | `029` |
+| `Potion` | 마시기: <물약 이름> | — | `015` |
+| `QuestTrack` | 추적하기: <퀘스트 이름> | — | `017` |
+| `ItemEquip` | 장착하기: <장비 이름> | — | `018` |
+| `BookRead` | 읽기: <책 이름> | — (split from `ItemEquip`) | `034` |
+| `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — | `019`, `020` |
+| `Recharge` | 충전하기: <무기 이름> | — | `023` |
+| `QuestAction` | 장착하기: <샤우트> | — | `025` |
+| `ChairDrink` | 마시기: <술> | — | `026` |
+| `Helmet` | 투구 벗기, 투구 쓰기 | — (clips from `CIGAR - Helmet Motions`) | `028` |
+| `Poison` | 독 바르기: <독> | — | `033` |
+| `Observe` | 주시하기: <대상> | — | `031` |
+| `PartyOutfit` | 파티 의상 입기, 원래 장비로 | — (MQ201) | `032` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
@@ -343,19 +275,12 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
   module off withdraws its prompts and calls `OnDisabled()`.
-- **SI is disabled on this modlist since 2026-09-25** (CIGAR absorbed all of it; `verify_deploy.py`
-  fails if it is enabled). The override below stays for players who keep SI.
-- **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
-  turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, weapon/armor equip,
-  and the six ItemUse potion actions, and pins SI's
-  preset to Power User (2). `tools/sync_si_settings.py` enforces this on
-  deploy, and SI keeps the switches off after its menu is opened.
 - **Untested:** gamepad buttons (the user does not use a pad).
 
 ### Prompt input policy
 
-- Non-combat contextual actions default to a hold, matching SI's protection against accidental
-  state changes. Single press is reserved for timing-sensitive combat actions or an explicitly
+- Non-combat contextual actions default to a hold, as protection against accidental state
+  changes. Single press is reserved for timing-sensitive combat actions or an explicitly
   documented exception.
 - `PromptSlot::SetPromptType(kHold)` selects the hold-to-accept interaction. Do not also call
   `SetHoldMode(true)` unless the module needs live key-down/key-up callbacks during the hold.
@@ -397,7 +322,7 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 - **Build.** VS 2026 Build Tools, Ninja, and vcpkg at
   `C:\TAKEALOOK\TOOLS\vcpkg`. An incremental build takes under a minute.
   Build.ps1 runs `check_menu_framework.py` and, with `-Deploy`,
-  `sync_si_settings.py` and `verify_deploy.py`. `verify_deploy.py` fails on:
+  `verify_deploy.py`. `verify_deploy.py` fails on:
   - a stale DLL;
   - a missing dependency;
   - renamed script or property names in BaboDialogue, FHU, Grapple or
@@ -483,43 +408,4 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
    override, so check that first.
 5. **Private Needs.** Done as `Needs` on Private Needs - Orgasm (installed 2026-09-19); see item 2
    above.
-6. **SI IdleActions, absorbed as roleplay actions.** SI's `IdleActions.enabled` is off since
-   2026-09-21 (the user's call), so every action below is gone from the game until CIGAR has it.
-   The user wants each one kept, even where CIGAR has a similar module, because the point is
-   roleplay rather than removing a duplicate. Read from SI's DLL strings; gates are inferred.
-   - **Sit / lie down on the ground** — built as `Rest` (`docs/019-rest.md`), passed in game 2026-09-22 (floor, ledge, lie; exit on movement). SI sends the vanilla events `IdleSitCrossLeggedEnter`
-     and `IdleLayDownEnter`, and gets up with `IdleChairExitStart` (also `IdleStop`,
-     `IdleForceDefaultState`); it watches `idleChairSitting` and `tailLayDown`. The user's gate:
-     looking at the floor for a while, then a hold prompt.
-   - **Pass time** — done in `Rest` (`docs/019-rest.md`), passed in game 2026-09-22: hold
-     시간 보내기 while resting; clock to x60 and game speed to the panel's ceiling (off-3, default
-     3) over 3 s, with a ring and a live xN; release restores both. Never the Wait menu.
-   - **Lean** — built in `Rest`, passed in game 2026-09-22 (facing wall only, table, rail; clips randomized by OAR patch, install case 016). Wall (`IdleWallLeanStart`), table (`IdleLeanTableEnter`), rail or ledge
-     (`IdleRailLeanEnter`/`IdleRailLeanExit`, `IdleSitLedgeEnter`).
-   - **Warm hands** — done in `Rest` (`docs/020-warm-hands.md`), passed in game 2026-09-22. Near a fire (`IdleWarmHandsStanding`/`IdleWarmHandsCrouched`); SI loads
-     its fire list from `ccqdrsse002-firewood.esl` (installed).
-   - **Eat / drink while seated** — inferred: offered while sitting in a chair, e.g. at an inn.
-     Separate from CIGAR's `Eat`, which is Survival Mode hunger; SI reads
-     `ccQDRSSE001-SurvivalMode.esl` for food too.
-   - **Tidy up (sweeping)** — needs `sweepingOrganizesStuff.esp`, which is not installed, so SI
-     never showed it on this modlist.
-7. **The rest of SI, surveyed 2026-09-22** (SI switches read from the deployed settings.json;
-   evidence from SI's DLL strings, so triggers are inferred). Absorbing all of it lets SI go.
-   - *Still on in SI, so still in use:*
-     - **ItemUse `enabled_recharge_weapon`** — built as `Recharge` (`docs/023-recharge.md`), untested in game. Recharge an enchanted weapon from the best soul gem
-       (`RemedyByItemInstances::RestoreAV<TESSoulGem>`); `recharge_weapon_oooc` (out of combat only).
-     - **ItemUse `enabled_makelight`** — built as `Light` (`docs/021-make-light.md`), untested in game. Offer a torch or candlelight spell/scroll after
-       `time_till_makelight_prompt` (5 s) in the dark (`darkness_threshold` 14); hidden in combat.
-     - **WeaponSwap** — built as `ToolSwap`, then removed (`docs/024-tool-swap.md`). Swap to a woodcutter's axe near a tree (`TreeWeaponSwap::IsTree`, by
-       height) or a pickaxe near an ore vein (`VeinWeaponSwap`). Different from CIGAR's
-       ranged/melee `WeaponSwap`; kept for roleplay.
-     - **QuestActions `enabled`** — built as `QuestAction` (`docs/025-quest-action.md`), untested in game. Quest-specific prompts; the one string found is the Greybeards'
-       "show us your Thu'um" → equip Unrelenting Force.
-   - *Off in SI already (the user's earlier choice; ask before building):* ItemUse
-     `enabled_equip_spellbook`, HelmetToggle (helmet off in safe places, on in unsafe ones),
-     Observer (zoom the camera on something the player stares at: `fov_increment`, `t_observe`),
-     DressActions `enabled_piecewiseoutfitswap`, KillMove (excluded earlier; CIGAR has `Execute`).
-   - *IdleActions leftovers* (item 6): warm hands (`IdleWarmHandsStanding`/`Crouched`, events in
-     `mt_behavior.hkx`, not `0_master.hkx`), chair eat/drink (`ChairEatingStart`,
-     `ChairDrinkingStart` are in `0_master.hkx`), tidy-up (needs a mod that is not installed).
-   - New pose-like actions follow `Rest`'s rules: an entry prompt only, movement exits.
+6. **Tidy up (sweeping).** Needs `sweepingOrganizesStuff.esp`, which is not installed.

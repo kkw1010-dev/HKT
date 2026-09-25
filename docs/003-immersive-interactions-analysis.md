@@ -91,8 +91,7 @@ read from a scratch extract.
    - II has no cat animations; a cat would get only the player idle (the
      dog-specific target idles fail silently).
    - `fwavehorse` has no stress effect unless CIGAR adds one.
-   - II and SI both react to activation, so keep II's toggles off where CIGAR
-     prompts.
+   - II reacts to activation, so keep II's toggles off where CIGAR prompts.
 
 Not yet verified: the exact behavior of II's perk entries with every toggle
 off (read from the globals in the conditions, not tested in game), and whether

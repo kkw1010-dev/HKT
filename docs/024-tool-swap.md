@@ -1,7 +1,6 @@
 # 024 · Tool swap (pickaxe at a vein, axe at a tree)
 
-Status (2026-09-24): **removed the same day**, after one in-game run. SI's `WeaponSwap.enabled`
-stays off (SI is being retired, so nothing of it is kept on).
+Status (2026-09-24): **removed the same day**, after one in-game run.
 
 ## Why it was removed (the user, 2026-09-24)
 
@@ -18,16 +17,6 @@ stays off (SI is being retired, so nothing of it is kept on).
 
 The rest of this file is the record of what was built.
 
-## What SI does (settings, MCM text and DLL strings only)
-
-- `WeaponSwap.enabled` (on): "If enabled, the mod will prompt to swap weapons to useful tools like a
-  pickaxe or a woodcutter's axe. Note that the prompts will be shown when the player is in a location
-  where these tools are useful, e.g. near a tree or an ore vein."
-- Scenes `TreeWeaponSwap` (`IsTree`, logging a height), `VeinWeaponSwap`, `FishingWeaponSwap`, all
-  through `ItemSwapper<WeaponSwapper>`; references gathered with `ForEachReferenceInRange`.
-- Prompt text `SwapWeapon` = "무기 교체".
-- Unknown: the ranges, the height, whether SI gives the old weapon back.
-
 ## On this load order
 
 - Ore veins are activators running `MineOreScript`. The winning copy is loose in
@@ -42,7 +31,7 @@ The rest of this file is the record of what was built.
 - `Pickaxe MCO` gives the pickaxe its own attack animations.
 - Fishing: `Streamlined Fishing` (parapets, Nexus 80683) equips a fishing rod when the Fishing
   Supplies are activated (a menu when several rods are carried), and offers Cast Line after each
-  round. SI's fishing swap would only have equipped the rod earlier, so it is not rebuilt;
+  round. A fishing swap would only have equipped the rod earlier, so none is built;
   `verify_deploy.py` fails if Streamlined Fishing is disabled.
   2026-09-25: only the Cast Line half is live here; the rod equip is overridden by Fish Anywhere
   With Water's loose script (`027-fishing.md`).

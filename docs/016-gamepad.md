@@ -36,8 +36,7 @@ Gamepad codes follow SKSE's linear mapping from 266: 266 DPad Up … 276 A,
 (`Gamepad A`, `Gamepad LT`, …).
 
 **So CIGAR should not add a gamepad key picker.** Its prompts share SkyPrompt's
-four slots with every other SkyPrompt client (Streamlined Interactions,
-Grapple's own QTE). If CIGAR forced its own pad buttons, a pad player would get
+four slots with every other SkyPrompt client (Grapple's own QTE, for one). If CIGAR forced its own pad buttons, a pad player would get
 different buttons for CIGAR prompts than for everyone else's. The keyboard
 picker exists only because CIGAR moves other mods' hotkeys out of the way and
 has to know which keys it took.

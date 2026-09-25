@@ -6,8 +6,7 @@ accepted, `equipped 긴 활`); the whole module passed in game on 2026-09-25 (re
 ## Contract
 
 When the player acquires a playable weapon or piece of armor, CIGAR offers it for immediate equip
-for 15 seconds. This absorbs Streamlined Interactions' `ItemUse.enabled_equip_weapon` and
-`ItemUse.enabled_equip_armor` switches. The rest of SI's `ItemUse` module remains enabled.
+for 15 seconds.
 
 This is a non-combat action, so accepting it requires a hold. The prompt is suppressed during
 combat and while movement controls are unavailable. A newer acquired piece of gear replaces the
@@ -28,8 +27,7 @@ current offer.
 
 ## Test
 
-1. Deploy the author build and confirm SI's `enabled_equip_weapon` and `enabled_equip_armor` are
-   false while recharge, spellbook and make-light keep their existing values.
+1. Deploy the author build.
 2. Out of combat, pick up a playable weapon. Expect `장착하기 (길게): <무기 이름>` for 15 seconds.
 3. Hold the prompt key. The weapon should equip and the prompt should disappear.
 4. Repeat with armor. The armor should equip.

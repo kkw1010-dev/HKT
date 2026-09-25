@@ -1,24 +1,6 @@
 # 023 · Recharge weapon
 
-Status (2026-09-24): built as module `Recharge` and deployed; passed in game on 2026-09-25 (reported by the user; no log sent). SI's
-`ItemUse.enabled_recharge_weapon` is now in the replaced list (turned off by the deploy sync). With
-it, every ItemUse action SI turns on by default belongs to CIGAR; spellbook equip was already off by
-the user's choice, and `ItemUse.enabled` itself is left alone.
-
-## What SI does (settings, MCM text and DLL strings only)
-
-SI's licence forbids reverse engineering, so its DLL was read only for strings.
-
-- `enabled_recharge_weapon` (on): "If enabled, the mod will ask to recharge a weapon when the player
-  has a weapon with low charge."
-- `recharge_weapon_oooc` (on): "If enabled, the mod will only prompt to recharge a weapon when the
-  player is out of combat."
-- Prompt text `RechargeWeapon` = "무기 충전하기".
-- Classes `RemedyByItemInstances::RechargeWeaponR`, `RechargeWeaponL`, and
-  `RestoreAV<TESSoulGem>::GetBestRemedy` / `ApplyRemedy`: one action per hand, a soul gem chosen as
-  the "best remedy", and the charge restored as an actor value. This is the same template family
-  as SI's potion actions, which `Potion` replaced.
-- Not in any string or setting: the "low" threshold and the rule for choosing the gem.
+Status (2026-09-24): built as module `Recharge` and deployed; passed in game on 2026-09-25 (reported by the user; no log sent).
 
 ## On this load order
 
@@ -40,8 +22,7 @@ SI's licence forbids reverse engineering, so its DLL was read only for strings.
   (`RightItemCharge` / `LeftItemCharge`) while its permanent value is above 0, otherwise the
   instance's `ExtraCharge` against its enchantment's capacity. The gate line logs both.
 - Offered (hold, `충전하기 (길게): <무기> (N%)`) out of combat, with movement controls enabled, for
-  the hand at or below **25 %** (the lower one when both are). 25 % is CIGAR's choice; SI's number
-  is unknown.
+  the hand at or below **25 %** (the lower one when both are). 25 % is CIGAR's choice.
 - Gem: every filled instance in the inventory (player-filled `ExtraSoul` instances and pre-filled
   forms), quest-alias instances skipped, a pre-filled reusable form skipped (no empty form to give
   back). Worth = the soul's `iSoulLevelValue*` through the perk entry point. The smallest gem that

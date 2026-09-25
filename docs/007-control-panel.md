@@ -1,14 +1,12 @@
 # 007 · Control panel (SKSE Menu Framework)
 
-CIGAR adds a page to SKSE Menu Framework (F1 by default), the way Streamlined
-Interactions (SI) does. The framework stays optional: without it CIGAR runs as
+CIGAR adds a page to SKSE Menu Framework (F1 by default). The framework stays optional: without it CIGAR runs as
 before and the log says there is no panel.
 
-## How SI does it (checked 2026-09-17)
+## The framework (checked 2026-09-17)
 
-- `StreamlinedInteractions.dll` has no import from `SKSEMenuFramework.dll`. It
-  holds the strings `SKSEMenuFramework.dll` and `AddSectionItem`, so it looks
-  the framework up at run time with `GetProcAddress`.
+- CIGAR has no import from `SKSEMenuFramework.dll`; it looks the framework up
+  at run time, so the panel is optional.
 - The installed framework is 3.8.0 (Nexus 120352). It exports
   `AddSectionItem`, `AddWindow`, `RegisterHudElement`, `RegisterInpoutEvent`
   (sic), `GetMenuFrameworkVersion` and the whole cimgui surface (`ig*`, `Im*`).
@@ -24,8 +22,7 @@ function runs:
 `static auto menuFramework = GetModuleHandle(L"SKSEMenuFramework");`.
 SKSE loads `CIGAR.dll` before `SKSEMenuFramework.dll`, so that handle would be
 null. Every wrapper would then silently do nothing, and the panel would be
-missing with no error. SI does not hit this because `StreamlinedInteractions`
-sorts after `SKSEMenuFramework`. The vendored copy replaces the static with
+missing with no error. The vendored copy replaces the static with
 `SKSEMenuFramework_Module()`, which is looked up when first used.
 `CIGAR::Panel::Register()` runs at `kPostLoad`, after every plugin has loaded.
 
@@ -82,7 +79,7 @@ device and key:
 - The keys are fixed when a prompt is queued. Re-sending a queued prompt
   updates only its text, colour and progress.
 - `settings.json` holds one key list for every SkyPrompt client, so changing
-  it there would also move SI's and Grapple's keys.
+  it there would also move every other client's keys (Grapple's, for one).
 
 CIGAR therefore lists a keyboard key for every prompt it sends
 (`PromptSlot::Offer`):

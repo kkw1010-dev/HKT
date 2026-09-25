@@ -4,8 +4,8 @@ Status (2026-09-25): the forge fix passed in game on 2026-09-25 (reported by the
 Earlier status (2026-09-22): first in-game test: prompt, braziers and hearths, "not with the back to
 the fire" and pass time passed; crouching never happened, forges never offered, and movement
 did not end it (only a jump did). Second test: crouching, braziers, movement exit and jumping out
-passed; forges still did not offer (fixed below, not yet retested). The user picked it
-as the next SI absorption and accepted the defaults below.
+passed; forges still did not offer (fixed below, not yet retested). The user accepted the
+defaults below.
 
 ## As built
 
@@ -23,15 +23,6 @@ as the next SI absorption and accepted the defaults below.
 - `verify_deploy.py` checks both idle events in the winning `mt_behavior.hkx`.
 - The player is not turned to face the fire; the idle plays along the current facing, up to 60°
   off.
-
-## What SI does (DLL strings)
-
-- `IdleActions::Act: Warming hands.`; idles `IdleWarmHandsStanding` and `IdleWarmHandsCrouched`.
-- `IdleActions::LoadFireSources`, with `Fire sources not found` and `Campfire (CC) not found`
-  and a reference to `ccqdrsse002-firewood.esl`: it builds its own list of fire objects,
-  including the Creation Club campfire.
-- It was part of `IdleActions`, which is off since 2026-09-21, so the action is gone from the
-  game until CIGAR has it.
 
 ## Facts checked on this modlist
 

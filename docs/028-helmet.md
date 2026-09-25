@@ -3,7 +3,7 @@
 Status (2026-09-25, second design): rebuilt without Helmet Toggle 2 and deployed. **투구 벗기 with the
 take-off clip passed in game (the user, 2026-09-25).** 투구 쓰기 in combat passed too (test run 2).
 **The hip display (IED) is dropped** (the user, 2026-09-25, after test run 3): taking the helmet off and
-putting it on is enough. The IED entry is removed from the configs; `docs/029` keeps its history. The first design (pressing Helmet Toggle's hotkey) passed its five tests but was replaced the
+putting it on is enough. The IED entry is removed from the configs (its history is in git, before 2.0.0). The first design (pressing Helmet Toggle's hotkey) passed its five tests but was replaced the
 same day; its record is kept below under "First design".
 
 ## The user's decision (2026-09-25, second)
@@ -65,8 +65,8 @@ IED config, which is stored per save; that is the next step if the user wants th
 
 ### The user's decision (2026-09-25, first)
 
-SI's HelmetToggle ("prompt to toggle the helmet off/on when the player enters a safe/unsafe
-location", SI's own help text) is rebuilt on Helmet Toggle 2 (Nexus 100617, v3.6), which is already
+A helmet prompt (off when the player enters a safe location, on in an unsafe one) is built on
+Helmet Toggle 2 (Nexus 100617, v3.6), which is already
 installed: CIGAR presses Helmet Toggle's hotkey instead of the player, and the safe list is Helmet
 Toggle's own ("헬멧토글에 기준값이 있음").
 
@@ -113,8 +113,7 @@ Toggle's own ("헬멧토글에 기준값이 있음").
 B (48) removed from MCM Helper's `keybinds.json` (`mods\TAKEALOOK - MCM and INI\MCM\Settings`,
 backup `keybinds.json.bak_20260925_helmet-key`, CRLF kept, one entry removed). MCM Memory's profile
 has no Helmet Toggle row, so nothing restores it. `verify_deploy.py` checks the scripts' names and
-that the keybind stays unbound. SI's `HelmetToggle.enabled` is in the replaced list (it was already
-off).
+that the keybind stays unbound.
 
 Known limit (read from the source, not seen in game): with the key gone, the helmet cannot be put on inside a safe place or taken off in an
 unsafe one (equipping a helmet from the inventory is undone by Helmet Toggle's own state).

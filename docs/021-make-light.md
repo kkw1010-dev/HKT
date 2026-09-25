@@ -5,15 +5,6 @@ Status (2026-09-25): **abandoned; the module is removed.** The user ended CIGAR'
 and Lanterns is restored and runs on its own hotkey (259, mouse button 4). CIGAR keeps only the
 `ItemEquip` filter that hides TCL's lantern armors. Everything below is history.
 
-## What SI does (settings and DLL strings)
-
-- ItemUse `enabled_makelight` (on), `time_till_makelight_prompt` 5 s, `darkness_threshold` 14,
-  `dont_show_in_combat_makelight` (on). MCM text: "If enabled, the mod will ask to use a torch or
-  candlelight spell/scroll when the player is in a dark area." and "The darkness threshold is the
-  level of darkness at which the mod will prompt".
-- Absorbing it (with recharge, the other ItemUse action still on) would let SI's ItemUse module be
-  switched off entirely.
-
 ## Torches Candlelight and Lanterns (TCL) on this modlist
 
 An earlier agent's analysis, `TCL_LIGHT_HOOK_ANALYSIS.md` (untracked, 2026-09-21), recommends
@@ -63,7 +54,6 @@ pressing TCL's own hotkey rather than re-implementing light. Checked on 2026-09-
 
 ## Open before building
 
-- The two SI numbers (5 s, level 14) are SI's; confirm the light level reads the same scale.
 - How the existing prompt-only targets write another mod's key and when the mod picks it up
   (`Surrender`, `Grapple`, `Execute` for Valhalla); TCL goes through MCM Helper.
 
@@ -98,8 +88,7 @@ Grapple's prompt-only is off.
 Passed: the prompt in the dark, lighting through TCL, no prompt when lit, bright or in combat,
 mouse 4 no longer reaching TCL under prompt-only, and the panel switch restoring it.
 
-- **At once.** The user wants the prompt as soon as it is dark; SI's 5 s wait is replaced by a
-  300 ms debounce (the user's choice; the 300 ms is mine, against flicker at a light's edge). The
+- **At once.** The user wants the prompt as soon as it is dark: a 300 ms debounce (the user's choice; the 300 ms is mine, against flicker at a light's edge). The
   engine's `GetLightLevel` is enough: Community Shaders changes rendering, not the value the
   engine's conditions read.
 - **Duplicated lanterns.** Reported by the user. TCL's own changelog, v1.35: "hopefully fix random

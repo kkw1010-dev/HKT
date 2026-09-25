@@ -3,18 +3,6 @@
 **Status:** confirmed in game 2026-09-20 (test 2). Test 1 the same day showed no
 prompt at all; the cause is below, and the fix is what test 2 ran on.
 
-This module takes over the potion half of Streamlined Interactions' `ItemUse`
-module, which the deployed SI override now turns off. SI's other `ItemUse`
-actions (recharge a weapon, equip a weapon, armour or spellbook, make light)
-stay with SI; `ItemUse.enabled` itself is left on.
-
-## Why it was rewritten rather than copied
-
-SI's DLL is closed source and its licence forbids reverse-engineering it, so
-nothing was disassembled. What was read is its `settings.json`, a plain config
-file, which names the six potion actions and the thresholds the user was
-running. The logic below is CIGAR's own, written against the game's data.
-
 ## Behaviour
 
 One prompt at a time, 마시기: <물약 이름>, with the bar's percentage for the
@@ -34,8 +22,8 @@ Needs are checked in this order, and the first that holds wins:
 | 6 | 질병 치료 | an active effect whose source spell is of type Disease |
 
 Each of the six has its own switch in the control panel (3. 세부 설정 → 물약).
-Every default matches what the user was running in SI: all six on, health 50%,
-urgent health 20%, stamina and magicka 50%.
+The defaults are the user's values: all six on, health 50%, urgent health 20%,
+stamina and magicka 50%.
 
 Shared gates: movement controls enabled, not in a SexLab scene, and 3 s of quiet
 after a drink.
@@ -92,18 +80,13 @@ changed while the prompt was up.
   ease is a WARN and one HUD notification per session: the bottle did not do
   what its effects said it would.
 
-## Not carried over from SI
+## Not done
 
-- **SI's `cooldown` (20 s).** What it covers in SI is not documented, and its
-  DLL was not disassembled. CIGAR uses the same 3 s settle as `Eat`, for the
-  same reason: the equip and the effect need a moment before the gate is read
+- **A cooldown.** CIGAR uses the same 3 s settle as `Eat`, for the same reason: the equip and the effect need a moment before the gate is read
   again. Nothing else limits how often a potion may be drunk.
-- **SI's `slow_time_hp_pot`.** It is off in the user's settings. Adding it would
-  mean choosing a time multiplier, which is the user's call rather than a value
+- **Slow time on the health potion.** Adding it would mean choosing a time multiplier, which is the user's call rather than a value
   to invent; `Surrender` already has the slow-motion machinery to reuse if it is
   wanted.
-- **The non-potion `ItemUse` actions**: recharge a weapon, equip a weapon,
-  armour or spellbook, make light. They remain SI's.
 
 ## Test 1 (2026-09-20): the prompt never appeared
 

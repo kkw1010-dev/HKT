@@ -72,15 +72,14 @@ The 40% threshold is the user's choice. It was 20% by the user's instruction
 until 2026-09-17 and was raised to 40% then (`35eb997`). It is not tied to
 Acheron's knockdown threshold (`fKdHealthThresh`).
 
-When the prompt appears, the moment is marked, following Streamlined
-Interactions' low-health potion prompt (`slow_time_hp_pot`, 3 s):
+When the prompt appears, the moment is marked:
 
 - **Slow motion.** `BSTimer::SetGlobalTimeMultiplier(0.3)` (what `sgtm` does)
   is applied once per drop below 40%. The multiplier returns to 1.0 after 3 s
   of real time, or earlier when the prompt goes away, is accepted, or a game
   loads. CIGAR restores it only if the multiplier is still its own 0.3, so it
-  never overrides a change made by another mod in between. SI's health-potion
-  prompt may slow time at the same moment; whichever ends last wins.
+  never overrides a change made by another mod in between; whichever ends last
+  wins.
 - **Pulse.** The prompt text pulses between white and gold (1.5 Hz) while it
   is up. The installed SkyPrompt (DLL of 2026-03-04) has no per-prompt
   effects; upstream `PromptEffects` arrived on 2026-09-07. Instead, CIGAR

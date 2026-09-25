@@ -5,8 +5,11 @@
 CIGAR is an ESP-less SKSE plugin (`CIGAR.dll`, one DLL for SE, AE and VR) that turns the things a
 Skyrim player does over and over into **context prompts** drawn by
 [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/149963): a prompt appears only while
-the action makes sense, and one key does the whole action. It replaces other mods' hotkeys with
-prompts, and in 2.0 it replaces every feature of Streamlined Interactions (SI).
+the action makes sense, and one key does the whole action. It also replaces other mods' hotkeys with
+prompts.
+
+CIGAR resolves repetitive interactions from gameplay context and exposes them as prompts. The system
+absorbs the interaction complexity so the player can simply play the game.
 
 The player-facing readme, in Korean, is [`dist/README-release.md`](dist/README-release.md); it ships
 with the release.
@@ -66,9 +69,9 @@ gamepads are not supported.
   risk**. Refusals in that window are logged as the known issue and raise no notification.
 - **Execute sometimes misses its first press.** Pressing again executes.
 
-History: the project started on 2026-09-16 as `SI-Extensions`, a Papyrus quest in an ESL, was renamed
-CIGAR and rewritten as this DLL on 2026-09-17, and reached 2.0 on 2026-09-25 with the absorption of
-Streamlined Interactions. Each module's design and test record is in `docs/`, one file per module.
+History: the project started on 2026-09-16 as a Papyrus-based prototype, was rewritten as this SKSE
+DLL on 2026-09-17, and reached CIGAR 2.0 on 2026-09-25. Each module's design and test record is in
+`docs/`, one file per module.
 
 ## Layout
 
@@ -76,7 +79,7 @@ Streamlined Interactions. Each module's design and test record is in `docs/`, on
 src/main.cpp        SKSE entry, lifecycle messages, co-save, ticker (one game-thread task per 100 ms: FastTick every time, Tick once a second)
 src/Module.h        module interface (OnGameLoaded / Tick / OnAccepted) and gated logging
 src/Prompt.*        SkyPrompt client and one sink per prompt (SkyPrompt 2.3.15 removes by sink)
-src/Util.*          strip rules, worn description, Papyrus script-property reader, SI settings reader
+src/Util.*          strip rules, worn description, Papyrus script-property reader, synthetic key presses
 src/Bathe.*         Bathing in Skyrim integration (properties read from its quest script at load)
 src/Dress.*         state-based undress / dress, crosshair-based bed and wardrobe detection, co-saved outfit
 src/BaboKey.*       BaboDialogue hotkey during kidnap events (quest stage, script state, kidnap-room cell)
@@ -110,8 +113,7 @@ include/ValhallaCombat/  Valhalla Combat API, V2 part (BSD-3, D7ry/valhallaComba
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
 lib/commonlibsse-ng alandtse/CommonLibVR branch ng (submodule)
 tools/Build.ps1     build (VS 2026 Build Tools, Ninja, vcpkg at C:\TAKEALOOK\TOOLS\vcpkg), deploy, verify
-tools/register_profile.py  enable the CIGAR mod in MO2 and drop old plugin entries (MO2 closed)
-tools/sync_si_settings.py  keep replaced SI modules off and SI on the Power User preset
+tools/register_profile.py  enable the CIGAR mod in MO2 and disable release copies (MO2 closed)
 tools/verify_deploy.py     deployment assertions (exit 1 on any failure)
 ```
 
@@ -150,4 +152,4 @@ every launch and records:
 - the result of every action, including BiS's own `TryWashActor` return value.
 
 A HUD notification appears when SkyPrompt is missing, when prompt IDs collide, when BiS is disabled in
-its MCM, when a replaced SI module is on, or when an action silently fails (each names the log).
+its MCM, or when an action silently fails (each names the log).
