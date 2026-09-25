@@ -11,7 +11,8 @@ namespace CIGAR
 	// the user, 2026-09-25: observation and scouting), holding the key narrows the field of view by up
 	// to 40 degrees (SI's defaults idle_timer 5, max_distance 5000, fov_offset 40). The zoom is eased
 	// every frame, in and out (the user, 2026-09-25: smoother than SI's fixed rate on a 100 ms
-	// tick). Releasing the key or moving eases it back. docs/029-si-leftovers.md.
+	// tick). Releasing the key or moving eases it back. A declined prompt stays hidden until the
+	// player leaves the spot. docs/029-si-leftovers.md.
 	class Observe final : public Module
 	{
 	public:
@@ -23,6 +24,7 @@ namespace CIGAR
 		void FastTick() override;
 		void OnAccepted(std::uint16_t) override {}
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
+		void OnDeclined(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
 
 	private:
@@ -61,6 +63,10 @@ namespace CIGAR
 		float currentFOV{ 0.0f };
 		Ease ease;
 		std::atomic_bool easing{ false };
+		// Declined (a double tap): hidden until the player walks away from where it was declined
+		// (the user, 2026-09-25).
+		bool dismissed{ false };
+		RE::NiPoint3 dismissedAt{};
 		std::atomic_bool frameQueued{ false };
 	};
 }

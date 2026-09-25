@@ -565,3 +565,22 @@ payoff, no knock-down. The log says `passed through (lethal)`, and after the set
 is still alive (an essential NPC bleeds out instead). The other four moves are unchanged.
 
 Test 23 (2026-09-25, the user): 유술 ×10 with the four front moves and the lethal neck break passed.
+
+## Test 24 (2026-09-25 21:09-21:11) and the first-fight lead
+
+The user: in every test the first fight has a very low 유술 rate. This run: the first victim refused
+all five presses (ComboA, KneeThrow, NeckBreak, SlamA, NeckBreak), several of them on tries where the
+victim neither blocked nor attacked and the player was not attacking, states that play later; the
+second victim played 3 of 6. Test 21 looked the same (first two victims 2 of 11, then 18 of 22).
+The archived tests 5-8 and 12 did play their first presses, so it is not every session.
+
+Two other first-of-session refusals point the same way: the chair drink's first `ChairDrinkingStart`
+of this session was refused (21:06:30, the second one played), and Execute is recorded as sometimes
+missing its first press. **Lead:** a paired animation not yet loaded on its first request, which the
+300 ms retry window gives no time to load.
+
+**Experiment built (untested):** a move that has not started a pair since the game started retries
+for 1.5 s instead of 300 ms; `blockStop` / `attackStop` are still sent only in the first 300 ms, so the
+longer window does not cut the player's swings. The log's `start idle` line says `first use this
+session=` and the window, and the `pair started` and `refused` lines repeat it. If first-use presses
+now start after 0.3-1.5 s, the lead holds; if they are still refused for the whole 1.5 s, it does not.

@@ -58,6 +58,12 @@ namespace CIGAR
 		// attackStop that comes with them) last only this long: the swing in progress at the press is cut,
 		// and the next one is left alone.
 		constexpr auto kPrepareWindow = 300ms;
+		// The user, 2026-09-25: the first fight of every test has a very low rate. Today's first victim
+		// refused five presses in states later presses played in, and the chair drink's first idle of the
+		// session was refused too, so the lead is a paired animation not yet loaded on its first request.
+		// Experiment: a move not yet played this session keeps retrying this long, without cutting the
+		// player's swing after kPrepareWindow. The log says which window each press had.
+		constexpr auto kFirstUseWindow = 1500ms;
 
 		bool GraphBool(RE::Actor* a_actor, const char* a_name)
 		{
@@ -322,6 +328,8 @@ namespace CIGAR
 		const auto pick = std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng);
 		playing = idles[pick];
 		lethal = idleLethal[pick];
+		firstUse = !playedThisSession.contains(playing->GetFormID());
+		prepareWindow = firstUse ? std::chrono::milliseconds(kFirstUseWindow) : std::chrono::milliseconds(kPrepareWindow);
 		victim = target->GetHandle();
 		payoffDone = false;
 		knocked = false;
@@ -332,7 +340,8 @@ namespace CIGAR
 		phaseStart = Clock::now();
 		// The distance at the press, beside each retry's and the start's: tells a play refused because the
 		// target moved from one the engine refused at close range.
-		Log("start idle {:08X} {} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), idleNames[pick], Util::NameOf(target),
+		Log("start idle {:08X} {} (first use this session={}, window {} ms) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
+			playing->GetFormID(), idleNames[pick], firstUse, prepareWindow.count(), Util::NameOf(target),
 			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
@@ -348,14 +357,16 @@ namespace CIGAR
 			return false;
 		}
 		++tries;
-		const bool wasBlocking = a_victim->IsBlocking();
+		// blockStop / attackStop only inside the normal window (test 8: cutting every swing felt wrong).
+		const bool early = Clock::now() - phaseStart < kPrepareWindow;
+		const bool wasBlocking = early && a_victim->IsBlocking();
 		// Test 4 logged the state after the call, which an accepted play has already changed; the state that
 		// decides is the one before it (and before blockStop / attackStop).
 		const auto before = DescribeRefusal(a_player, a_victim);
 		if (wasBlocking) {
 			a_victim->NotifyAnimationGraph("blockStop");
 		}
-		const bool playerAttacking = GraphBool(a_player, "IsAttacking");
+		const bool playerAttacking = early && GraphBool(a_player, "IsAttacking");
 		if (playerAttacking) {
 			a_player->NotifyAnimationGraph("attackStop");
 		}
@@ -563,8 +574,9 @@ namespace CIGAR
 			if (v && TryPlay(a_player, v)) {
 				phase = Phase::kStarting;
 				phaseStart = now;
-			} else if (!v || now - phaseStart >= kPrepareWindow) {
-				Log("WARN the kill move was refused for {:.1f} s ({} tries); victim: {}", t, tries, DescribeVictim(v));
+			} else if (!v || now - phaseStart >= prepareWindow) {
+				Log("WARN the kill move was refused for {:.1f} s ({} tries, first use this session={}); victim: {}", t, tries,
+					firstUse, DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
 					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
@@ -608,7 +620,8 @@ namespace CIGAR
 		case Phase::kStarting:
 			if (pairOn) {
 				phase = Phase::kRunning;
-				Log("pair started after {:.2f} s after {} tries (synced={} playerKillMove={} victimKillMove={})", t, tries, synced,
+				playedThisSession.insert(playing->GetFormID());
+				Log("pair started after {:.2f} s after {} tries, first use this session={} (synced={} playerKillMove={} victimKillMove={})", t, tries, firstUse, synced,
 					a_player->IsInKillMove(), v && v->IsInKillMove());
 			} else if (now - phaseStart >= kStartWindow) {
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));

@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "Prompt.h"
 
+#include <unordered_set>
+
 namespace VAL_API
 {
 	class IVVAL2;
@@ -76,6 +78,11 @@ namespace CIGAR
 		std::vector<const char*> idleNames;  // parallel to idles, for the log
 		std::vector<bool> idleLethal;        // parallel to idles
 		bool lethal{ false };                // the move being played kills
+		// Moves that have started a pair since the game started (the process, not the save): the
+		// first-use experiment's memory. Not cleared on load, as loaded animations are not.
+		std::unordered_set<RE::FormID> playedThisSession;
+		bool firstUse{ false };
+		std::chrono::milliseconds prepareWindow{ 300 };
 		const char* idleSource{ "-" };
 		VAL_API::IVVAL2* valhalla{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };

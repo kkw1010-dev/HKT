@@ -26,6 +26,8 @@ namespace CIGAR
 		constexpr float kZoomOutSeconds = 0.7f;
 		// The frame driver's poll; the task it posts runs on the next frame, at most one per frame.
 		constexpr auto kFramePoll = 4ms;
+		// A declined prompt returns once the player is this far from where it was declined.
+		constexpr float kLeaveDistance = 300.0f;
 
 		float Smootherstep(float a_t)
 		{
@@ -52,6 +54,7 @@ namespace CIGAR
 		lastGate.clear();
 		zooming = false;
 		easing = false;
+		dismissed = false;
 		stillSince = Clock::now();
 		target = {};
 		StartFrameDriver();
@@ -137,6 +140,10 @@ namespace CIGAR
 		if (moveInput || drawn || combat) {
 			stillSince = now;
 		}
+		if (dismissed && player->GetPosition().GetDistance(dismissedAt) > kLeaveDistance) {
+			dismissed = false;
+			Log("left the spot: 주시하기 may show again");
+		}
 		RE::ObjectRefHandle aimed;
 		if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
 			aimed = pick->GetActiveTarget();
@@ -164,10 +171,10 @@ namespace CIGAR
 		const auto* controlMap = RE::ControlMap::GetSingleton();
 		const bool looking = controlMap && controlMap->IsLookingControlsEnabled() && controlMap->IsMovementControlsEnabled();
 		const bool still = now - stillSince >= kIdleTime;
-		const bool ready = still && (actorOK || sceneryOK) && looking && !easing;
+		const bool ready = still && (actorOK || sceneryOK) && looking && !easing && !dismissed;
 
-		LogGate(std::format("kind={} target={} pitch={:.2f} still5s={} drawn={} combat={} looking={} easing={} ready={}", kind,
-			actor ? targetName : "-"s, pitch, still, drawn, combat, looking, easing.load(), ready));
+		LogGate(std::format("kind={} target={} pitch={:.2f} still5s={} drawn={} combat={} looking={} easing={} dismissed={} ready={}",
+			kind, actor ? targetName : "-"s, pitch, still, drawn, combat, looking, easing.load(), dismissed, ready));
 		const auto name = targetName;
 		look.Update(ready, [name] { return Label(name); });
 	}
@@ -200,6 +207,20 @@ namespace CIGAR
 		StartEase(goal, kZoomInSeconds * (currentFOV - goal) / kFOVOffset);
 		Log("observing {}: fov {:.1f} -> {:.1f} over {:.2f}s ({})", targetName.empty() ? "scenery"s : targetName, baseFOV, goal, ease.length,
 			firstPerson ? "first person" : "third person");
+	}
+
+	void Observe::OnDeclined(std::uint16_t a_eventID)
+	{
+		if (a_eventID != kLook) {
+			return;
+		}
+		Restore("declined");
+		dismissed = true;
+		if (auto* player = Util::Player()) {
+			dismissedAt = player->GetPosition();
+		}
+		look.Withdraw();
+		Log("주시하기 declined: hidden until the player moves {:.0f} units away", kLeaveDistance);
 	}
 
 	void Observe::Restore(std::string_view a_reason)

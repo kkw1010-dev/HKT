@@ -37,6 +37,11 @@ page stores them in its database, collection `results`, one document per item id
 `ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
 anything.
 
+**CIGAR 2.0 final test: 44 of 44 passed** (retest 2026-09-25 21:04-21:11: 무기 전환 with a bow, chair
+drink decline, 퀘스트 추적, 그레이비어드 샤우트). Built after it, untested: 주시하기 hidden after a
+decline until the player leaves the spot (300 units); the 유술 first-use experiment (`docs/012`, test
+24: a move's first request of the session retries for 1.5 s).
+
 **Final test result (2026-09-25 20:20-20:52, read from the checklist database and `CIGAR.log`):**
 39 of 44 passed.
 - Fail, **무기 전환**: never offered. Every far or flee gate reads `ranged=none`, and the module only offers
