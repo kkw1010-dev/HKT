@@ -47,6 +47,8 @@ REPLACED = [
     # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
     # tracking was already QuestTrack (docs/025-quest-action.md).
     ("QuestActions", "enabled"),
+    # Helmet Toggle 2 prompts (docs/028-helmet.md).
+    ("HelmetToggle", "enabled"),
 ]
 # SI presets: 0 Default, 1 Interactive, 2 PowerUser.
 POWER_USER_PRESET = 2

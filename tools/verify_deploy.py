@@ -51,6 +51,8 @@ REPLACED = [
     # The one quest action SI's menu lists (Greybeards -> Unrelenting Force) is QuestAction;
     # tracking was already QuestTrack (docs/025-quest-action.md).
     ("QuestActions", "enabled"),
+    # Helmet Toggle 2 prompts (docs/028-helmet.md).
+    ("HelmetToggle", "enabled"),
 ]
 # Names src/BaboKey.cpp reads from BaboDialogue.
 # SI features CIGAR has not absorbed. They must stay on: an absorption that was reverted in git
@@ -404,6 +406,36 @@ def check_fhu(modlist):
         check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
 
 
+HT_MOD = "Helmet Toggle 2"
+HT_KEYBINDS = os.path.join(MODS, "TAKEALOOK - MCM and INI", "MCM", "Settings", "keybinds.json")
+
+
+def check_helmet(modlist):
+    """Helmet calls HT_MCM.PressHotkey on HT_AnimationQuest and reads HT_PlayerAlias's globals and
+    lists; a rename leaves the prompt absent. The hotkey it replaces (B, MCM Helper keybind
+    HT_ManageHelmet) must stay unbound: the user's rule for keys CIGAR takes over."""
+    if "+" + HT_MOD not in modlist:
+        note("Helmet Toggle 2 absent: Helmet module idles")
+        return
+    for name, needles in {"HT_MCM": ["PressHotkey", "HT_HotkeyType", "HT_HotkeyState"],
+                          "HT_PlayerAlias": ["HT_SafeLocations", "HT_UnsafeLocations", "HT_HelmetState"]}.items():
+        path = os.path.join(MODS, HT_MOD, "scripts", name + ".pex")
+        if not os.path.isfile(path):
+            check(False, "Helmet Toggle script present: %s.pex" % name)
+            continue
+        with open(path, "rb") as f:
+            data = f.read().lower()
+        missing = [n for n in needles if n.lower().encode() not in data]
+        check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
+    bound = []
+    if os.path.isfile(HT_KEYBINDS):
+        with open(HT_KEYBINDS, encoding="utf-8-sig") as f:
+            bound = [k for k in json.load(f).get("keybinds", [])
+                     if k.get("modName") == HT_MOD and k.get("keycode", -1) not in (-1, 0)]
+    check(not bound, "Helmet Toggle's own hotkey is unbound in MCM Helper keybinds (prompt replaces it)%s" % (
+        " - bound: %s" % [k.get("keycode") for k in bound] if bound else ""))
+
+
 def check_pno(modlist):
     """Needs reads PNO's fill levels and keys and calls UrinateAndDefecate by name; a renamed
     variable leaves the prompts absent or the keys bound without an error."""
@@ -753,6 +785,7 @@ def main():
     check_eat(modlist)
     check_fhu(modlist)
     check_pno(modlist)
+    check_helmet(modlist)
     check_surrender(modlist)
     check_valhalla(modlist)
     check_jujutsu(modlist)

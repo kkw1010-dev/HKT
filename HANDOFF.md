@@ -34,9 +34,13 @@
   and Party Sheet hides on that; nothing in CIGAR causes it. **Out of CIGAR's scope** (the user,
   2026-09-25): recorded as Installation and Modification case 032, to be fixed in Party Sheet in
   another session.
+- **Built 2026-09-25, untested in game: `Helmet`** (`docs/028-helmet.md`): SI's HelmetToggle on
+  Helmet Toggle 2. 투구 벗기 in a safe place with headgear on, 투구 쓰기 in an unsafe place while it is
+  hidden; accepting calls `HT_MCM.PressHotkey()`; the safe/unsafe lists are Helmet Toggle's own (FLM).
+  Its B key was removed from MCM Helper's `keybinds.json` (no MCM Memory row exists).
 - **Next: the remaining SI features** (all already off in SI's settings; SI does nothing else now).
-  Listed with evidence in `SI/_ABSORPTION/_MAP.md`; the user picks which to build: HelmetToggle,
-  Observer, piecewise outfit swap, spellbook equip, quest note/book equip (4b), quest outfit swap
+  Listed with evidence in `SI/_ABSORPTION/_MAP.md`; the user picks which to build (HelmetToggle is
+  done as `Helmet`): Observer, piecewise outfit swap, spellbook equip, quest note/book equip (4b), quest outfit swap
   (4c). KillMove is covered by `Execute`; TidyUp needs a mod that is not installed. Once none is
   wanted, the SI mod itself can be disabled. Streamlined Fishing (`docs/027`) is a separate mod.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
@@ -192,6 +196,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
+| `Helmet` | 투구 벗기, 투구 쓰기 | Helmet Toggle 2 (replaces SI HelmetToggle and its B key) | `028` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both
