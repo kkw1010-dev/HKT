@@ -1,7 +1,7 @@
 # 018 · Acquired gear equip
 
 Status: built on 2026-09-21. Weapon half confirmed by the log on 2026-09-25 (긴 활 offered, held,
-accepted, `equipped 긴 활`); no armor accept has been exercised yet.
+accepted, `equipped 긴 활`); the whole module passed in game on 2026-09-25 (reported by the user; no log sent).
 
 ## Contract
 

@@ -1,6 +1,6 @@
 # 023 · Recharge weapon
 
-Status (2026-09-24): built as module `Recharge` and deployed; not yet tested in game. SI's
+Status (2026-09-24): built as module `Recharge` and deployed; passed in game on 2026-09-25 (reported by the user; no log sent). SI's
 `ItemUse.enabled_recharge_weapon` is now in the replaced list (turned off by the deploy sync). With
 it, every ItemUse action SI turns on by default belongs to CIGAR; spellbook equip was already off by
 the user's choice, and `ItemUse.enabled` itself is left alone.

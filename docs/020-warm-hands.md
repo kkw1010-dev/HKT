@@ -1,6 +1,7 @@
 # 020 · Warm hands
 
-Status (2026-09-22): first in-game test: prompt, braziers and hearths, "not with the back to
+Status (2026-09-25): the forge fix passed in game on 2026-09-25 (reported by the user; no log sent).
+Earlier status (2026-09-22): first in-game test: prompt, braziers and hearths, "not with the back to
 the fire" and pass time passed; crouching never happened, forges never offered, and movement
 did not end it (only a jump did). Second test: crouching, braziers, movement exit and jumping out
 passed; forges still did not offer (fixed below, not yet retested). The user picked it

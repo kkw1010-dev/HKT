@@ -1,6 +1,6 @@
 # 022 · Player feedback: prompts in menus, and custom rules
 
-Status (2026-09-24): part 1 built (option B only) and deployed, not yet tested in game; part 2
+Status (2026-09-24): part 1 built (option B only) and deployed, passed in game on 2026-09-25 (reported by the user; no log sent); part 2
 declined by the user (see the end). Feedback from another player, relayed by the user with a
 screenshot: CIGAR's 탈의하기 prompt stays on screen over the Journal (System tab). The player asked
 whether that is unavoidable, and whether players could make their own rules and keys, "like

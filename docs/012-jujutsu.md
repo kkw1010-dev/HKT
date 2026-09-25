@@ -1,6 +1,8 @@
 # 012 · Jujutsu (유술): a kill move on a guarding humanoid, without the kill
 
-Status (2026-09-19): in progress. This is the first CIGAR module with a game hook.
+Status (2026-09-25): guard 유술 passed in game (reported by the user; no log sent). The refusal rate
+(9 of 20 on 2026-09-20) is accepted as unresolved by the user's decision, not a bug to chase.
+Earlier status (2026-09-19): in progress. This is the first CIGAR module with a game hook.
 
 ## Test 1 (2026-09-19) and what changed
 

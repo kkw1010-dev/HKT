@@ -10,17 +10,20 @@
   is removed from the mod **and** from MCM Memory's profile. Applied now to FHU (82 -> -1), Acheron's
   surrender key (37 -> 101, CIGAR's hidden F14) and PNO's urinate key (51 -> -1); `verify_deploy.py`
   checks these rows and fails on a cancelled-remap Esc.
+- Passed in game later on 2026-09-25, reported by the user without logs: guard 유술 (its refusal
+  rate is accepted as unresolved, the user's decision), ItemEquip (armor too), Recharge,
+  ChairDrink, pass time in a chair, warm hands at a forge, prompts hidden over menus.
+- **Still to test in game:** Fill Her Up prompt-only (below); Potion's 해독, 질병 치료, 수중 호흡 and
+  the 체력 위급 pick; QuestAction (the Greybeards' Unrelenting Force).
 - Party Sheet HUD while sitting: the `HUD mode` log lines show the vanilla HUD stayed in `All` at
   alpha 100 through three chair sits (04:00:34, 04:00:55, 04:01:04), so the vanishing is Party
-  Sheet's own logic, not the game HUD. Not yet tried: its `[HUDVisibility] Enabled` (the "hide
-  widgets during exploration" system) set to 0 in `Skyrim Party Sheet FHD Preset\SKSE\Plugins\PartySheet.ini`,
-  or the same switch in Party Sheet's in-game settings.
+  Sheet's own logic, not the game HUD. On 2026-09-25 `[HUDVisibility] Enabled` was set 1 -> 0 in
+  `mods\Skyrim Party Sheet FHD Preset\SKSE\Plugins\PartySheet.ini` (backup
+  `PartySheet.ini.bak_20260925_hudvisibility`, one byte differs); not yet seen in game.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
   on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,
   and Fishing Preview's overrides SFO's animations. The module waits on the decisions listed there.
-- `ItemEquip`, from the 03:47 log of 2026-09-25: 긴 활 offered, held, accepted and equipped.
-  Armor was offered (종자의 투구) but no armor accept was exercised.
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
@@ -42,7 +45,7 @@ status.
      state told the plays from the refusals (block, recoil, time multiplier, idle and distance were all
      ruled out with per-try logs). The last build also broke NPC combat AI (they moved but stopped
      attacking), most likely from `IdleForceDefaultState` / `recoilStop` sent to the victim.
-   - **Not yet tested in game after the rollback.** Guard 유술 needs one confirming run.
+   - Passed in game on 2026-09-25 (the user); the remaining refusals are accepted as unresolved.
 2. **Test environment, settled 2026-09-20** (the reasoning is in `docs/012-jujutsu.md`):
    - NPC grapples are **on again**: `mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini`
      `bEnableNPCGrapple = true`, byte-identical to

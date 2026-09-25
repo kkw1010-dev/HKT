@@ -1,6 +1,6 @@
 # 026 · Chair drink
 
-Status (2026-09-24): built as module `ChairDrink` and deployed; not yet tested in game.
+Status (2026-09-24): built as module `ChairDrink` and deployed; passed in game on 2026-09-25 (reported by the user; no log sent).
 
 ## The user's decision (2026-09-24)
 
