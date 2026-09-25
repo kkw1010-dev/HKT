@@ -604,3 +604,17 @@ load) and whether the victim was `present at load` (seen in the first actor scan
 start the first fight of a fresh load against a newly spawned actor, then fight one that was there at
 load. If the fresh one plays and the old one does not, the cause is on the actor; if the first fight
 fails whoever it is, it is on the player's side.
+
+## Test 26 (2026-09-25 22:04-22:08): the first press of the session, not the first enemy
+
+The user's routine every time: enter the test cell, spawn orc bandits with the console (`328D7`). This
+run the first orc was killed with `kill` (combat #1, no 유술 press). In combat #2 the session's **first
+press** on the second orc was refused for the full 1.5 s (17 tries); the next press on the **same orc**
+9 s later played at once, and so did the next 10 (11 of 12 in all). So neither the move's first use nor
+the enemy decides it: the first press(es) of the session fail.
+
+Clue: right after that refused press the HUD went to `VATSPlayback` (22:05:52) for 3 s, the kill
+camera mode, and was back to `All` at 22:05:55 before the press that played. Test 25's first victim
+refused 10 presses over a minute; its log was overwritten, so whether VATS mode showed there too is
+unknown. Open: what the first request sets up (kill camera / VATS) and why it can last longer than one
+press.
