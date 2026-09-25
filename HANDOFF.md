@@ -1,78 +1,74 @@
-# CIGAR — session handoff (updated 2026-09-25)
+# CIGAR — session handoff (updated 2026-09-25, end of the 2.0 release session)
 
-## Start here (2026-09-25, after test run 2)
+## Start here (next session, written 2026-09-25 at the end of the 2.0 release session)
 
-**Roadmap (the user, 2026-09-25):** CIGAR **2.0 = the SI absorption**; focus stays there until it
-passes. **MannequinSwap and later features are 3.0**, started on a new branch once the current tests
-are done. Plan: `docs/030-mannequin-swap.md` (it replaced GPT's `claude.md`, deleted with the user's
-permission).
+Reply to the user in Korean. Read this section, then act on the two tasks below in order.
 
-Passed in game on 2026-09-25 (runs 1 and 2, `docs/029`): spell tome 읽기, 투구 벗기 (clip), GearSwap,
-Observe (then changed), 독 바르기 (after the CTD fix), 투구 쓰기 in combat, PartyOutfit.
+### State
 
-Built, deployed, **untested**: IED hip display (Helmet Toggle entries removed from the IED configs),
-GearSwap's enchantment rule, Observe as 주시하기 (eased zoom, no furniture), **SI disabled** in the
-profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost its press to an SI prompt).
+- **CIGAR 2.0.0 is released locally.** Version 2.0.0 (CMakeLists, vcpkg.json). GitHub
+  (`kkw1010-dev/HKT`): `master` and a new branch **`v2`** both point at `e6d0b9e` (the 2.0.0 source);
+  no GitHub release page (the user's choice). There is also an older remote branch `release/0.2.0`.
+- **Release package:** `%USERPROFILE%\Downloads\CIGAR 2.0.0` (README.md in Korean with the known
+  issues, `SKSE\Plugins\CIGAR.dll`, default `CIGAR.json`).
+- **The load order runs the release build now, for the user's test.** MO2 profile `TKL - MUNG ADDON`:
+  `+CIGAR 2.0.0` (new mod folder `mods\CIGAR 2.0.0`, the package copied in), `-CIGAR 0.2.0`,
+  **`-CIGAR`** (the author build is off). Backup of the profile: `modlist.txt.bak_20260925_release-test`.
+  - While this holds, `tools\Build.ps1 -Deploy` would fail `verify_deploy.py` (it expects `+CIGAR` and
+    no release copy enabled) and would deploy an author DLL nobody loads. To go back to author work:
+    close MO2, set `+CIGAR` and `-CIGAR 2.0.0` in `modlist.txt`, relaunch MO2 (Toolchain README,
+    "Editing the MO2 profile while MO2 is running").
+  - The release build's settings come from `mods\CIGAR 2.0.0\SKSE\Plugins\CIGAR.json` (defaults; every
+    prompt-only switch defaults to on), not from the author mod's `CIGAR.json`.
+  - The release panel shows feature descriptions only (`docs/007`, last section).
+- Grapple's NPC grapples and CIGAR's Grapple module are back on (the 유술 test shutdown is undone).
+- Streamlined Interactions stays disabled; `verify_deploy.py` fails if it is enabled.
+- Untracked files in the repo root (`GPT_CODEX_SOURCE_FIDELITY.md`, `SI_IDLE_LEDGE_SIT_ANALYSIS.md`,
+  `TCL_LIGHT_HOOK_ANALYSIS.md`, `scratch/`) are not ours; they were never committed. Leave them.
 
-Decided 2026-09-25: no helmet hip display (IED entry removed); the neck break kills. Cinematic
-Clash stays on (it was not the cause of test 20).
+### Task 1: check the user's v2 release test
 
-Test run 4 (2026-09-25) passed: ItemEquip's armor rule (enchanted worn → no prompt; better rating →
-prompt) and 유술 with the lethal neck break. Every SI absorption item built so far has now passed in
-game. SI survey done (`SI/_ABSORPTION/_MAP.md`, "Final survey"): every SI prompt is built or excluded by
-the user's decision; nothing is left open. The health potion's slow time is not built (the user: slow
-time overlapping the drinking animation was not restored). If a spell-study mod (Immersive Spell
-Learning, Books of Power) is ever installed, `BookRead`'s instant learning would bypass it.
+The user tests the release build in game and reports. Before asking anything:
+1. Read `SKSE\CIGAR.log`. The first line must read `CIGAR 2-0-0-0 loaded`; if it reads 0-2-0-0 the
+   author or old release DLL loaded instead.
+2. The release build logs the same gate and action lines as the author build (only the panel hides
+   diagnostics), so each report can be checked against the log.
+3. The CIGAR 2.0 final test checklist (44 items, all passed on the author build) is the private
+   artifact https://claude.ai/artifact/Wc5nH3HejiEub5mdmtsZRF. Its database collection `results`
+   still holds the author-build results; if the user uses it again, read it with `ArtifactData`
+   `list` and compare the `updatedAt` times with the release run. Offer to reset it first if the user
+   wants a clean sheet (the user decides; do not delete their rows unasked).
+4. Known issues, disclosed on purpose, not bugs to chase: 유술 refused until the session's first death
+   (log line `known issue: no actor has died since the load`, no notification); Execute sometimes
+   misses its first press. See `docs/012` ("Decision") and memory
+   `disclose-known-issue-over-risky-engine-fix`.
+5. Anything that fails only in the release build points at `CIGAR_RELEASE` differences
+   (`src/Panel.cpp` only) or at the default `CIGAR.json`.
 
-SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
-`verify_deploy.py` fails on it.
+### Task 2: CIGAR 3.0, first feature MannequinSwap
 
-TidyUp and KillMove are not built (`docs/029`).
+- Plan: `docs/030-mannequin-swap.md` (facts read from the load order: `MannequinActivatorSCRIPT` by
+  Another Mannequin Script Fix, 20 base-form slots, the `MannequinActivateTrig` activate parent;
+  PromptID 40; one build with self-verifying logs, one test session).
+- **Branch first:** the user wants 3.0 work on a new branch (`git switch -c v3` or `feat/mannequin-swap`
+  from `master`); do not build 3.0 on `master` or `v2`.
+- **Decisions still open, ask before coding** (listed in `docs/030`, "Couplings"): whether the helmet
+  stowed by `Helmet` counts as worn for the swap; whether `Dress`'s remembered outfit is refreshed
+  or cleared after a swap. Also confirm the Almsivi CC mannequins stay excluded until their extra
+  script is read.
+- Author work needs the author build back in the load order (see State).
+- New modules follow `docs/000-adding-a-module.md` and the user's rules in memory, including
+  `cigar-declined-prompt-stays-hidden` (a double-tap decline hides the prompt until the situation
+  changes; hold-and-keep prompts must read the double tap themselves).
 
+### What this session did (2026-09-25), in one place
 
-**Final test of CIGAR 2.0 (2026-09-25):** the checklist is the private artifact
-https://claude.ai/artifact/Wc5nH3HejiEub5mdmtsZRF (44 items, all 24 modules plus the shared behaviour, console
-FormIDs checked against the load order). The user marks each item pass / fail / hold with a note; the
-page stores them in its database, collection `results`, one document per item id. Read them with the
-`ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
-anything.
-
-**CIGAR 2.0.0 released locally (2026-09-25):** version bumped from 0.2.0 (CMakeLists, vcpkg.json);
-the release package is `%USERPROFILE%\Downloads\CIGAR 2.0.0` (README, CIGAR.dll, default CIGAR.json);
-the source and the English README are pushed to origin (HKT). The release panel shows feature
-descriptions only, as for 1.0 (the user's rule): no key codes, hidden keys or internals on pages 2
-and 3. Grapple's NPC grapples and CIGAR's `Grapple` module are back on (the temporary shutdown for the
-유술 tests is undone). `verify_deploy.py` now checks that no release copy (`CIGAR <version>`) is enabled.
-
-**유술 known issue, closed by the user's decision (2026-09-25):** every press is refused until the
-session's first death of any actor; after that it works. Not fixed on purpose (the only lead was
-writing an unverified engine field); disclosed in `dist/README-release.md` ("알려진 문제"). The
-experiments of tests 24-29 are removed (`docs/012`, "Decision"). The release README now describes
-CIGAR 2.0 (all modules, SI fully replaced, known issues).
-
-**Undone the same day:**Temporary, 2026-09-25 (the user: NPC grapples ruined the 유술 test):** Grapple's NPC grapples are
-off (`mods\Grapple\SKSE\Plugins\FH_Grapple_Plugin.ini` `bEnableNPCGrapple = false`, backup
-`.bak_20260925_npc-off`), and CIGAR's `Grapple` module is switched off in `CIGAR.json` (backup
-`CIGAR.json.bak_20260925_grapple-off`). Restore both when the user says so. The next 유술 run doubles as
-an A/B for the "refused until the first death" block (`docs/012`, test 28) with NPC grapples off.
-
-**CIGAR 2.0 final test: 44 of 44 passed** (retest 2026-09-25 21:04-21:11: 무기 전환 with a bow, chair
-drink decline, 퀘스트 추적, 그레이비어드 샤우트). Built after it, untested: 주시하기 hidden after a
-decline until the player leaves the spot (300 units); the 유술 first-use experiment (`docs/012`, test
-24: a move's first request of the session retries for 1.5 s).
-
-**Final test result (2026-09-25 20:20-20:52, read from the checklist database and `CIGAR.log`):**
-39 of 44 passed.
-- Fail, **무기 전환**: never offered. Every far or flee gate reads `ranged=none`, and the module only offers
-  a bow or crossbow that has ammo; the test character carried none, and the checklist did not say to. A
-  setup gap, not a code fault; the item now lists `player.additem 0003B562 1` (Long Bow) and
-  `player.additem 0001397D 50` (Iron Arrow). Retest pending.
-- Hold, **의자에서 마시기** (the user's note: a declined prompt should stop showing): it came back 29 s
-  after a decline. Fixed, untested: `ChairDrink` now keeps it hidden until the player stands up.
-- Hold, situational: 퀘스트 추적, 그레이비어드 샤우트.
-- The rule behind the fix is general (memory `cigar-declined-prompt-stays-hidden`): only `Rest`,
-  `Helmet` and now `ChairDrink` handle `OnDeclined`; the other 21 modules re-offer a declined prompt
-  after SkyPrompt's timeout. Whether to extend it to them is the user's call.
+SI fully absorbed and SI disabled; test runs 1-4 and the 44-item final test passed; GearSwap folded
+into ItemEquip; BookRead split out; Observe renamed 주시하기 with eased zoom, scenery and a read double
+tap; ChairDrink and Observe hide after a decline; Poison CTD fixed (entry-point filter forms); IED
+belt display dropped by the user; 유술 pool = four front moves + lethal neck break; the 유술
+first-death issue traced (tests 24-29) and disclosed; the release README and panel text rewritten for
+2.0; version 2.0.0 pushed.
 
 ## Resume here (2026-09-25, end of session)
 
