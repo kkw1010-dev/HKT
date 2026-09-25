@@ -1,6 +1,7 @@
 # 035 · Nexus edition (base game only), English text, 유술 damage
 
-Status (2026-09-26): built and packaged as `CIGAR 2.0.1 Nexus`; **not yet run in game.**
+Status (2026-09-26): built and packaged as `CIGAR 2.0.1 Nexus`. **First in-game test: the user
+reported every item passed** (see "Test 1" at the end for what the log shows).
 
 ## The user's decisions (2026-09-26)
 
@@ -70,3 +71,22 @@ both shares.
 Not exercised yet. The first launch of the Nexus DLL should show in `CIGAR.log`: the edition in the
 load line, the language line, 15 `settings:` module lines, `ready: alcohol [ 29 of 29 base-game
 drinks ]`, and no line naming another mod.
+
+## Test 1 (2026-09-26, `CIGAR.log` 06:55-07:09, one launch)
+
+The user reported all nine test items passed. The log of the last launch shows:
+
+- `CIGAR 2-0-1-0 loaded (Nexus edition, base game only; ...)`, 15 modules, no warning or error line.
+- `language: Korean (auto from the game's names '골드' '철 검' '락픽')`; the panel registered at
+  kDataLoaded with Korean page titles; switching to English, Korean and back to auto took effect at
+  once (prompts re-offered in the new language, e.g. `Drink (hold): 술 - 맥주`).
+- ChairDrink: `29 of 29 base-game drinks`; ale offered, drunk seated at the Sleeping Giant Inn (3 -> 2).
+- Helmet: taken off without a clip (`clips=false`); the next gate shows `worn=-`. The line's
+  `unequip=false` is `UnequipObject`'s return for a queued unequip, not a failure.
+- Poison applied (`poisoned after=true`), spell tome read and learned, a health potion drunk,
+  ItemEquip accepted, Observe and Rest offered.
+- Not in this log (the log is recreated each launch, so they may be from an earlier launch): 유술 and
+  its damage settings (`CIGAR.json` still holds the defaults 1.00 / 0.05), 투구 쓰기 in combat, the page
+  titles after a relaunch in English. `CIGAR.json` was left on `"language": "en"`.
+- Other mods named in the log: only the field names `tdm=false` (WeaponSwap) and `valhalla=false`
+  (Jujutsu) in two ready lines.
