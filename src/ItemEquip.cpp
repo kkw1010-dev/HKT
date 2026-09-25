@@ -12,8 +12,6 @@ namespace CIGAR
 		// ccBGSSSE001_FishingPoleKW (ccbgssse001-fish.esm), on every Creation Club fishing rod.
 		constexpr auto kFishingRodKeyword = "ccBGSSSE001_FishingPoleKW"sv;
 		constexpr RE::FormID kWoodAxesID = 0x10ACCC;  // woodChoppingAxes, Skyrim.esm
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
 
 		// The four parts GearSwap judged by (head, body, hands, feet); an armor is compared with what is
 		// worn on the first of them it covers, or on any slot it shares when it covers none of them.
@@ -56,11 +54,7 @@ namespace CIGAR
 		offeredItem = 0;
 		expiresAt = {};
 		woodAxes = RE::TESForm::LookupByID<RE::BGSListForm>(kWoodAxesID);
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin)
-		                      ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin)
-		                      : nullptr;
-		Log("ready: woodChoppingAxes={} sexlab={}", woodAxes != nullptr, sexlabAnimating != nullptr);
+		Log("ready: woodChoppingAxes={}{}", woodAxes != nullptr, Util::DescribeScenes());
 	}
 
 	void ItemEquip::Tick() {}
@@ -173,7 +167,7 @@ namespace CIGAR
 				reason == "missing player/item" || reason == "not playable" || reason == "not weapon/armor")) {
 			offeredItem = 0;
 		}
-		equip.Update(available, [item] { return std::format("장착하기 (길게): {}", Util::NameOf(item)); });
+		equip.Update(available, [item] { return Text::F("장착하기 (길게): {}", "Equip (hold): {}", Util::NameOf(item)); });
 	}
 
 	void ItemEquip::OnAccepted(std::uint16_t a_eventID)
@@ -197,7 +191,7 @@ namespace CIGAR
 			Log("equipped {} ({:08X})", Util::NameOf(item), itemID);
 		} else {
 			Log("equip failed: ActorEquipManager unavailable for {:08X}", itemID);
-			Util::Notify("CIGAR: 장착 호출 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 장착 호출 실패. 로그 확인", "CIGAR: Equip failed. See the log"));
 		}
 	}
 
@@ -243,6 +237,7 @@ namespace CIGAR
 				return;
 			}
 		}
+#ifndef CIGAR_NEXUS
 		// Torches Candlelight and Lanterns swaps lit and unlit lantern armors in and out of the
 		// inventory on every toggle, which would offer them here each time. TCL is run by its own
 		// hotkey (the user, 2026-09-25).
@@ -250,6 +245,7 @@ namespace CIGAR
 			Log("acquired {} ({:08X}) from TCL: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
+#endif
 		// A woodcutter's axe is a tool carried for Woodcutting Tweaks' tree harvest and the chopping
 		// block, never wielded (the user, 2026-09-24).
 		if (woodAxes && woodAxes->HasForm(item)) {
@@ -262,17 +258,19 @@ namespace CIGAR
 			Log("acquired nameless {:08X}: not offered", a_itemID);
 			return;
 		}
-		// Anything handed over during a SexLab scene belongs to the scene, as for the other modules'
-		// SexLab gates.
-		if (auto* player = Util::Player(); player && sexlabAnimating && player->IsInFaction(sexlabAnimating)) {
-			Log("acquired {} ({:08X}) during a SexLab scene: not offered", Util::NameOf(item), a_itemID);
+		// Anything handed over during a scene belongs to the scene, as for the other modules' scene
+		// gates.
+		if (Util::InScene(Util::Player())) {
+			Log("acquired {} ({:08X}) during a scene: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
+#ifndef CIGAR_NEXUS
 		// Fill Her Up's leak and inflater armors are its visual state, put on by its scripts.
 		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "sr_FillHerUp")) {
 			Log("acquired {} ({:08X}) from Fill Her Up: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
+#endif
 		if (offeredItem != a_itemID) {
 			equip.Withdraw();
 			equip.Reset();

@@ -293,7 +293,7 @@ namespace CIGAR
 			if ((now <= chargeBefore + 0.5f || gems >= gemsBefore) && !warnedNoChange) {
 				warnedNoChange = true;
 				Log("WARN recharge did not take: the charge did not rise or no gem was spent");
-				Util::Notify("CIGAR: 무기 충전 뒤 변화 없음. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 무기 충전 뒤 변화 없음. 로그 확인", "CIGAR: No change after recharging. See the log"));
 			}
 		}
 
@@ -331,7 +331,7 @@ namespace CIGAR
 		const bool available = hand && gem && !combat && movable;
 		auto* weapon = hand ? hand->weapon : nullptr;
 		const int percent = hand ? static_cast<int>(hand->Ratio() * 100.0f) : 0;
-		prompt.Update(available, [weapon, percent] { return std::format("충전하기 (길게): {} ({}%)", Util::NameOf(weapon), percent); });
+		prompt.Update(available, [weapon, percent] { return Text::F("충전하기 (길게): {} ({}%)", "Recharge (hold): {} ({}%)", Util::NameOf(weapon), percent); });
 	}
 
 	void Recharge::OnAccepted(std::uint16_t a_eventID)

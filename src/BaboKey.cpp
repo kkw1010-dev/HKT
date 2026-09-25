@@ -114,7 +114,7 @@ namespace CIGAR
 				Log("WARN BaboDialogue found but its kidnap scripts did not resolve; the hotkey prompt is off");
 				if (!warnedBroken) {
 					warnedBroken = true;
-					Util::Notify("CIGAR: 바보 납치 연동 실패. 핫키 프롬프트 비활성");
+					Util::Notify(Text::L("CIGAR: 바보 납치 연동 실패. 핫키 프롬프트 비활성", "CIGAR: BaboDialogue kidnap link failed. Hotkey prompt off"));
 				}
 			} else {
 				Log("BaboDialogue not found; the hotkey prompt is off");
@@ -168,7 +168,7 @@ namespace CIGAR
 		std::string gate;
 		const bool live = KeyIsLive(gate);
 		LogGate(std::move(gate));
-		act.Update(live, [] { return "행동 선택"s; });
+		act.Update(live, [] { return std::string(Text::L("행동 선택", "Choose Action")); });
 	}
 
 	void BaboKey::OnAccepted(std::uint16_t a_eventID)

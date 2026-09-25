@@ -17,16 +17,20 @@ param(
     # Build the player-facing variant (CIGAR_RELEASE) into build\dist and assemble the
     # installable folder under Downloads. Not combinable with -Deploy: the deployed mod folder
     # keeps the author build, whose panel shows the gate lines.
-    [switch]$Package
+    [switch]$Package,
+    # Build the Nexus edition (CIGAR_NEXUS: base game only, docs/035-nexus-edition.md) into
+    # build\nexus and assemble "CIGAR <version> Nexus" under Downloads. Not combinable with -Deploy.
+    [switch]$Nexus
 )
 
-if ($Deploy -and $Package) { throw 'Use -Deploy or -Package, not both.' }
+if ($Deploy -and ($Package -or $Nexus)) { throw 'Use -Deploy or a package switch, not both.' }
+if ($Package -and $Nexus) { throw 'Use -Package or -Nexus, not both.' }
 
 $ErrorActionPreference = 'Stop'
 $Repo      = Split-Path -Parent $PSScriptRoot
 $VsDevCmd  = 'C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\Tools\VsDevCmd.bat'
 $ModFolder = 'C:\TAKEALOOK\mods\CIGAR'
-$Preset    = if ($Package) { 'dist' } else { 'release' }
+$Preset    = if ($Nexus) { 'nexus' } elseif ($Package) { 'dist' } else { 'release' }
 $Output    = Join-Path $Repo (Join-Path 'build' $Preset)
 
 if (-not (Test-Path $VsDevCmd)) { throw "Missing Visual Studio Build Tools: $VsDevCmd" }
@@ -57,8 +61,9 @@ Write-Host "built: $dll"
 & python (Join-Path $PSScriptRoot 'check_menu_framework.py')
 if ($LASTEXITCODE -ne 0) { throw 'Control-panel checks failed.' }
 
-if ($Package) {
-    & python (Join-Path $PSScriptRoot 'make_release.py') $dll
+if ($Package -or $Nexus) {
+    $edition = if ($Nexus) { '--nexus' } else { '--standard' }
+    & python (Join-Path $PSScriptRoot 'make_release.py') $edition $dll
     if ($LASTEXITCODE -ne 0) { throw 'Release packaging failed.' }
     exit 0
 }

@@ -25,7 +25,7 @@ namespace CIGAR
 					return objective->displayText.c_str();
 				}
 			}
-			return "퀘스트";
+			return Text::L("퀘스트", "Quest");
 		}
 
 		class TrackResult final : public RE::BSScript::IStackCallbackFunctor
@@ -42,7 +42,7 @@ namespace CIGAR
 					const bool active = quest && quest->IsActive();
 					QuestTrack::GetSingleton()->Log("SetActive returned: quest={:08X} active={}", id, active);
 					if (!active) {
-						Util::Notify("CIGAR: 퀘스트 추적 실패. 로그 확인");
+						Util::Notify(Text::L("CIGAR: 퀘스트 추적 실패. 로그 확인", "CIGAR: Quest tracking failed. See the log"));
 					}
 				});
 			}
@@ -106,7 +106,7 @@ namespace CIGAR
 			offeredQuest = 0;
 			offeredLabel.clear();
 		}
-		track.Update(available, [this] { return std::format("추적하기 (길게): {}", offeredLabel); });
+		track.Update(available, [this] { return Text::F("추적하기 (길게): {}", "Track (hold): {}", offeredLabel); });
 	}
 
 	void QuestTrack::OnAccepted(std::uint16_t a_eventID)
@@ -125,7 +125,7 @@ namespace CIGAR
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		if (!vm) {
 			Log("SetActive(true) not requested: Papyrus VM is unavailable");
-			Util::Notify("CIGAR: 퀘스트 추적 호출 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 퀘스트 추적 호출 실패. 로그 확인", "CIGAR: The quest tracking call failed. See the log"));
 			return;
 		}
 		auto* args = RE::MakeFunctionArguments(true);
@@ -135,7 +135,7 @@ namespace CIGAR
 		if (queued) {
 			offeredQuest = 0;
 		} else {
-			Util::Notify("CIGAR: 퀘스트 추적 호출 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 퀘스트 추적 호출 실패. 로그 확인", "CIGAR: The quest tracking call failed. See the log"));
 		}
 	}
 

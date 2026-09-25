@@ -198,3 +198,9 @@ Beyond the author-only gate and log lines, the release now also hides, on page 2
 codes, the remembered manual keys and the current key summary (each prompt-only switch reads one line:
 on, the mod's own hotkey is freed and the action is prompt-only; off, the mod keeps its hotkey), and
 on page 3 the potion-detection, stagger-gauge and game-speed internals, replaced by plain sentences.
+
+## Language and editions (2026-09-26)
+
+Every panel string has Korean and English (`src/Text.*`); page 1 has the language choice, and the panel
+is registered at kDataLoaded so the page titles follow the resolved language. The Nexus edition hides
+the prompt-only section and the other-mod options. See `docs/035-nexus-edition.md`.

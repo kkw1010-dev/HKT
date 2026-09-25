@@ -25,6 +25,7 @@ namespace CIGAR::Settings
 	// Saves the file and takes every prompt off the screen, so each is offered again with its new key.
 	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key);
 
+#ifndef CIGAR_NEXUS
 	// Prompt-only mode for another mod's own key ("grapple", "surrender", "valhalla", "fillherup"): the module moves that
 	// mod's key to a key no keyboard sends (F13/F14), so only CIGAR's prompt triggers it and the
 	// real key is free for prompts. ManualKey is the key it had before, restored when switched off.
@@ -45,6 +46,7 @@ namespace CIGAR::Settings
 	// The Private Needs bladder/bowel fill (percent) the needs prompts start at; default 50, the user's choice.
 	int NeedsMinPercent();
 	void SetNeedsMinPercent(int a_percent);
+#endif
 
 	// The enemy distance at which the weapon swap offers a ranged weapon (beyond) or a melee weapon
 	// (inside); default 800, the user's choice.
@@ -55,11 +57,19 @@ namespace CIGAR::Settings
 	float JujutsuReach();
 	void SetJujutsuReach(float a_reach);
 
-	// 유술 tuning the player can change in the panel: the Valhalla stun share of a 유술 on a guarding
-	// target. The default of 0.15 is the user's choice (2026-09-20).
+	// 유술 tuning the player can change in the panel, applied at the victim's kill moment:
+	// - guardStun: the Valhalla stun share (with Valhalla Combat); default 0.15, the user's choice
+	//   (2026-09-20).
+	// - staminaDamage: without Valhalla, the share of the victim's maximum stamina taken; default 1.0,
+	//   which is what 유술 always did (all of it).
+	// - healthDamage: the share of the victim's maximum health taken, never leaving less than 1
+	//   health; default 0.05, the value 유술 always used.
+	// The two damage values were made adjustable at the user's request (2026-09-26, Nexus edition).
 	struct JujutsuTuning
 	{
 		float guardStun{ 0.15f };
+		float staminaDamage{ 1.0f };
+		float healthDamage{ 0.05f };
 	};
 	JujutsuTuning JujutsuTune();
 	void SetJujutsuTune(const JujutsuTuning& a_tuning);
@@ -97,4 +107,9 @@ namespace CIGAR::Settings
 
 	// Where Load() read from and whether it succeeded, for the panel's status line.
 	std::string SourceDescription();
+
+	// The player-facing language: "auto" (default; Text::Resolve reads the game's own text), "ko" or
+	// "en". SetLanguageChoice saves the file; the caller re-resolves.
+	std::string LanguageChoice();
+	void SetLanguageChoice(std::string_view a_choice);
 }

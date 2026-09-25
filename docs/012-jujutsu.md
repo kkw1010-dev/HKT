@@ -696,3 +696,8 @@ automatic retry, the VATS, graph, flag and process logging, the combat and at-lo
 addition: a `TESDeathEvent` sink notes whether any actor other than the player has died since the
 load; a refusal before that logs `known issue: no actor has died since the load ...` and shows no
 notification, while a refusal after it still notifies "유술 모션 미발동" as before.
+
+## Damage settings (2026-09-26)
+
+The stamina and health the victim loses are panel settings now (defaults: all of its stamina, 5% of
+its maximum health, the old fixed values); see `docs/035-nexus-edition.md`, "유술 damage".

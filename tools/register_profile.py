@@ -1,6 +1,6 @@
 """Register CIGAR in the active MO2 profile. Safe to re-run.
 
-- modlist.txt: +CIGAR, and every release copy ("CIGAR <version>", e.g. CIGAR 2.0.0) disabled so
+- modlist.txt: +CIGAR, and every release copy ("CIGAR <version>" or "CIGAR <version> Nexus", e.g. CIGAR 2.0.1) disabled so
   only the author build loads. An existing CIGAR entry keeps its place; a new one goes to the top
   (highest priority). CIGAR ships no files another mod provides, so its place does not matter.
 
@@ -14,7 +14,7 @@ import subprocess
 
 MO2 = r"C:\TAKEALOOK"
 AUTHOR_MOD = "CIGAR"
-RELEASE_COPY = re.compile(r"^[+-]CIGAR \d+\.\d+\.\d+$")
+RELEASE_COPY = re.compile(r"^[+-]CIGAR \d+\.\d+\.\d+( Nexus)?$")
 
 
 def active_profile():

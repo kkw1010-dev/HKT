@@ -170,7 +170,7 @@ namespace CIGAR
 			Log("WARN {}; the surrender prompt is off", problem);
 			if (!warned) {
 				warned = true;
-				Util::Notify("CIGAR: Acheron 항복 키 사용 불가. 항복 프롬프트 비활성");
+				Util::Notify(Text::L("CIGAR: Acheron 항복 키 사용 불가. 항복 프롬프트 비활성", "CIGAR: Acheron's surrender key is unusable. Surrender prompt off"));
 			}
 			return;
 		}
@@ -392,7 +392,7 @@ namespace CIGAR
 				StartSlow();
 			}
 		}
-		surrender.Update(offer, [] { return "항복 (길게 누르기)"s; });
+		surrender.Update(offer, [] { return std::string(Text::L("항복 (길게 누르기)", "Surrender (hold)")); });
 		wasOffered = offer;
 
 		if (offer) {

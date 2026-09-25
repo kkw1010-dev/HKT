@@ -104,10 +104,12 @@ src/Recharge.*       recharges the held enchanted weapon from the best-fitting s
 src/Poison.*         applies the most valuable poison to the drawn weapon (Mod Poison Dose Count perks honoured)
 src/QuestAction.*    equips the shout a quest asks for (the Greybeards)
 src/PartyOutfit.*    party clothes for Diplomatic Immunity, and back to the stored gear
+src/Text.*          Korean/English pairs for every player-facing string; the language comes from CIGAR.json or the game's own text
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정); the release build shows feature descriptions only
-tools/make_release.py   assembles the installable folder under Downloads from a CIGAR_RELEASE build (refuses an author build)
+tools/make_release.py   assembles the installable folder and .7z under Downloads: --standard (CIGAR_RELEASE) or --nexus (CIGAR_NEXUS, refuses a DLL naming another mod)
 dist/README-release.md  the readme that ships with the release; the player-facing one
+dist/README-nexus*.md   the Nexus edition's readmes (English, Korean)
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/ValhallaCombat/  Valhalla Combat API, V2 part (BSD-3, D7ry/valhallaCombat)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)
@@ -118,7 +120,9 @@ tools/verify_deploy.py     deployment assertions (exit 1 on any failure)
 ```
 
 On the author's modlist the author build is deployed to `C:\TAKEALOOK\mods\CIGAR\SKSE\Plugins\CIGAR.dll`;
-`tools\Build.ps1 -Package` builds the release instead and assembles it under `Downloads\CIGAR <version>`.
+`tools\Build.ps1 -Package` builds the release instead and assembles it under `Downloads\CIGAR <version>`;
+`tools\Build.ps1 -Nexus` builds the base-game-only Nexus edition (`docs/035-nexus-edition.md`) as
+`Downloads\CIGAR <version> Nexus`.
 
 ## Build
 

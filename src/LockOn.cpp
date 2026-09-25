@@ -35,7 +35,7 @@ namespace CIGAR
 		if (!TDMLock::Pressable() && !warnedKey) {
 			warnedKey = true;
 			Log("WARN TDM lock key {} is not a keyboard or mouse key; the lock-on prompt is off", TDMLock::Key());
-			Util::Notify("CIGAR: TDM 록온 키가 키보드/마우스 키가 아님. 록온 프롬프트 비활성");
+			Util::Notify(Text::L("CIGAR: TDM 록온 키가 키보드/마우스 키가 아님. 록온 프롬프트 비활성", "CIGAR: TDM's lock key is not a keyboard or mouse key. Lock-on prompt off"));
 		}
 	}
 
@@ -62,7 +62,7 @@ namespace CIGAR
 		LogGate(std::format("combat={} locked={} movable={} quiet={} relock={} key={}",
 			combat, locked, movable, quiet, busy, TDMLock::Pressable()));
 
-		lock.Update(combat && movable && !quiet && !busy && !locked && TDMLock::Pressable(), [] { return "록온"s; });
+		lock.Update(combat && movable && !quiet && !busy && !locked && TDMLock::Pressable(), [] { return std::string(Text::L("록온", "Lock On")); });
 	}
 
 	void LockOn::OnAccepted(std::uint16_t a_eventID)

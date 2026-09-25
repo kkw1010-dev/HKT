@@ -66,10 +66,12 @@ namespace CIGAR
 				dungeonKeywords.push_back(keyword);
 			}
 		}
+#ifndef CIGAR_NEXUS
 		if (auto* handler = RE::TESDataHandler::GetSingleton(); handler && handler->LookupModByName("Helmet Toggle 2.esp")) {
 			Log("WARN Helmet Toggle 2 is loaded: its scripts re-hide or re-equip headgear on every change");
-			Util::Notify("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음");
+			Util::Notify(Text::L("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음", "CIGAR: Helmet Toggle 2 is on. Helmet changes may conflict"));
 		}
+#endif
 		Log("ready: keywords helmet={} head={} circlet={}, dungeon types {} of {}, stowed {}", armorHelmet != nullptr,
 			clothingHead != nullptr, clothingCirclet != nullptr, dungeonKeywords.size(), kDungeonTypes.size(), stowed.size());
 	}
@@ -136,9 +138,15 @@ namespace CIGAR
 		const auto* state = a_player->AsActorState();
 		const bool seated = state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal;
 		const bool drawn = state && state->IsWeaponDrawn();
-		if (seated || drawn) {
+#ifdef CIGAR_NEXUS
+		// The Nexus edition ships no take-off clip (the clips are Helmet Toggle 2's): off at once.
+		constexpr bool kNoClip = true;
+#else
+		constexpr bool kNoClip = false;
+#endif
+		if (kNoClip || seated || drawn) {
 			// Helmet Toggle's clip is a standing, empty-handed one; seated or armed it is skipped.
-			Log("take off without the clip (seated={} drawn={})", seated, drawn);
+			Log("take off without the clip (seated={} drawn={} clips={})", seated, drawn, !kNoClip);
 			step = Step::kUnequip;
 			stepAt = Clock::now();
 			clipRunning = false;
@@ -166,7 +174,7 @@ namespace CIGAR
 			Log("put on {} ({:08X})", Util::NameOf(armor), id);
 		}
 		if (equipped == 0) {
-			Util::Notify("CIGAR: 쓸 투구가 인벤토리에 없음");
+			Util::Notify(Text::L("CIGAR: 쓸 투구가 인벤토리에 없음", "CIGAR: No helmet to put on in the inventory"));
 		}
 		stowed.clear();
 	}
@@ -246,8 +254,8 @@ namespace CIGAR
 			offDismissed, onDismissed));
 
 		off.Update(!worn.empty() && !dungeon && !combat && movable && !busy && !offDismissed,
-			[] { return "투구 벗기 (길게)"s; });
-		on.Update(worn.empty() && !stowed.empty() && combat && !busy && !onDismissed, [] { return "투구 쓰기"s; });
+			[] { return std::string(Text::L("투구 벗기 (길게)", "Take Off Helmet (hold)")); });
+		on.Update(worn.empty() && !stowed.empty() && combat && !busy && !onDismissed, [] { return std::string(Text::L("투구 쓰기", "Put On Helmet")); });
 	}
 
 	void Helmet::OnAccepted(std::uint16_t a_eventID)

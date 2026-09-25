@@ -70,7 +70,7 @@ namespace CIGAR
 		{
 			bool combat{ false };
 			bool movable{ false };
-			bool sexlab{ false };
+			bool scene{ false };
 			bool quiet{ false };
 			bool locked{ false };
 			RE::Actor* target{ nullptr };
@@ -100,7 +100,6 @@ namespace CIGAR
 		PromptSlot melee{ this, kMelee };
 
 		TDM_API::IVTDM1* tdm{ nullptr };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 		const RE::BGSEquipSlot* rightSlot{ nullptr };
 		const RE::BGSEquipSlot* leftSlot{ nullptr };
 

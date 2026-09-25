@@ -11,9 +11,8 @@ namespace VAL_API
 namespace CIGAR
 {
 	// 유술: a vanilla hand-to-hand kill move played on a humanoid enemy that is blocking, without the
-	// kill. At the victim's kill moment it loses its stamina, or, with Valhalla Combat, a large share of
-	// its stun meter, and a little health. Balance values are placeholders (the user asked for function
-	// first).
+	// kill. At the victim's kill moment it loses stamina, or, with Valhalla Combat, a share of its stun
+	// meter instead, and some health; each share is set in the control panel (Settings::JujutsuTuning).
 	//
 	// The kill comes from the victim's KillMoveEnd event (test 2, 2026-09-19: with it passed through the
 	// victim died on that very tick, essential flag or not). Hooks on the engine's KillActor and
@@ -78,7 +77,6 @@ namespace CIGAR
 		bool lethal{ false };                // the move being played kills
 		const char* idleSource{ "-" };
 		VAL_API::IVVAL2* valhalla{ nullptr };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 
 		// Blocking comes and goes; the target stays offered briefly after its guard drops.
 		RE::ActorHandle lastBlocker;

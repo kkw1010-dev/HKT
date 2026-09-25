@@ -137,13 +137,13 @@ namespace CIGAR
 			if (!bisOn && !warnedBisOff) {
 				warnedBisOff = true;
 				Log("WARN Bathing in Skyrim is disabled in its MCM; no bathe prompt is offered");
-				Util::Notify("CIGAR: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시");
+				Util::Notify(Text::L("CIGAR: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시", "CIGAR: Bathing in Skyrim is disabled. Enable it in its MCM for bathing prompts"));
 			}
 		}
 		wasInWater = inWater;
 
-		bathe.Update(inWater && !busy && strippable == 0 && bisOn, [this] { return "목욕하기" + DirtText(); });
-		shower.Update(underFall && bisOn, [this] { return "샤워하기" + DirtText(); });
+		bathe.Update(inWater && !busy && strippable == 0 && bisOn, [this] { return Text::L("목욕하기", "Bathe") + DirtText(); });
+		shower.Update(underFall && bisOn, [this] { return Text::L("샤워하기", "Shower") + DirtText(); });
 	}
 
 	void Bathe::OnAccepted(std::uint16_t a_eventID)

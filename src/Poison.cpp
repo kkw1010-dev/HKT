@@ -4,12 +4,6 @@
 
 namespace CIGAR
 {
-	namespace
-	{
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-	}
-
 	Poison::Poison()
 	{
 		apply.SetPromptType(SkyPromptAPI::kHold);
@@ -25,11 +19,7 @@ namespace CIGAR
 	{
 		apply.Reset();
 		lastGate.clear();
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin)
-		                      ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin)
-		                      : nullptr;
-		Log("ready: sexlab={}", sexlabAnimating != nullptr);
+		Log("ready:{}", Util::DescribeScenes());
 	}
 
 	Poison::Pick Poison::Evaluate(RE::PlayerCharacter* a_player) const
@@ -75,12 +65,12 @@ namespace CIGAR
 		const auto pick = Evaluate(player);
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
-		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);
-		LogGate(std::format("weapon={} poison={} state={} movable={} sexlab={}",
+		const bool scene = Util::InScene(player);
+		LogGate(std::format("weapon={} poison={} state={} movable={} scene={}",
 			pick.weapon ? Util::NameOf(pick.weapon) : "-"s, pick.poison ? Util::NameOf(pick.poison) : "-"s, pick.why,
-			movable, sexlab));
+			movable, scene));
 		auto* poison = pick.poison;
-		apply.Update(poison && movable && !sexlab, [poison] { return std::format("독 바르기 (길게): {}", Util::NameOf(poison)); });
+		apply.Update(poison && movable && !scene, [poison] { return Text::F("독 바르기 (길게): {}", "Apply Poison (hold): {}", Util::NameOf(poison)); });
 	}
 
 	void Poison::OnAccepted(std::uint16_t a_eventID)
@@ -113,7 +103,7 @@ namespace CIGAR
 		Log("applied {} ({:08X}) to {}: doses={} poisoned after={}", Util::NameOf(pick.poison), pick.poison->GetFormID(),
 			Util::NameOf(pick.weapon), count, poisoned);
 		if (!poisoned) {
-			Util::Notify("CIGAR: 독 바르기 확인 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 독 바르기 확인 실패. 로그 확인", "CIGAR: The poison was not applied. See the log"));
 		}
 	}
 }

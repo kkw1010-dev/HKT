@@ -7,9 +7,6 @@ namespace CIGAR
 {
 	namespace
 	{
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		// The equip and the effect need a moment before the gate is read again, so the same prompt
 		// is not offered for a second bottle. This is the settle time `Eat` uses, for the same
 		// reason.
@@ -97,15 +94,11 @@ namespace CIGAR
 		quietUntil = {};
 		checkAfterDrink = false;
 
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin)
-		                      ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin)
-		                      : nullptr;
 		const auto tune = Settings::PotionTune();
-		Log("ready: health={}({:.0f}%/{:.0f}%) stamina={}({:.0f}%) magicka={}({:.0f}%) curePoison={} cureDisease={} waterBreathing={} sexlab={}",
+		Log("ready: health={}({:.0f}%/{:.0f}%) stamina={}({:.0f}%) magicka={}({:.0f}%) curePoison={} cureDisease={} waterBreathing={}{}",
 			tune.health, tune.healthThreshold * 100.0f, tune.urgentHealthThreshold * 100.0f,
 			tune.stamina, tune.staminaThreshold * 100.0f, tune.magicka, tune.magickaThreshold * 100.0f,
-			tune.curePoison, tune.cureDisease, tune.waterBreathing, sexlabAnimating != nullptr);
+			tune.curePoison, tune.cureDisease, tune.waterBreathing, Util::DescribeScenes());
 	}
 
 	bool Potion::HasActiveValue(RE::Actor* a_actor, RE::ActorValue a_value)
@@ -357,7 +350,7 @@ namespace CIGAR
 		if (now == drankFor && ratio <= ratioBeforeDrink && !warnedNoChange) {
 			warnedNoChange = true;
 			Log("WARN the {} need did not ease after drinking (was {:.2f}, now {:.2f})", NeedTag(drankFor), ratioBeforeDrink, ratio);
-			Util::Notify("CIGAR: 물약을 마신 뒤 변화 없음. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 물약을 마신 뒤 변화 없음. 로그 확인", "CIGAR: No change after the potion. See the log"));
 		}
 	}
 
@@ -411,7 +404,7 @@ namespace CIGAR
 		LogPoisonLike(player);
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
-		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);
+		const bool scene = Util::InScene(player);
 		const auto now = Clock::now();
 		const bool quiet = now < quietUntil;
 
@@ -419,7 +412,7 @@ namespace CIGAR
 		float missing = 0.0f;
 		bool urgent = false;
 		const Need need = Current(player, ratio, missing, urgent);
-		const bool ready = need != Need::kNone && movable && !sexlab && !quiet;
+		const bool ready = need != Need::kNone && movable && !scene && !quiet;
 
 		// The inventory is read when the need changes, when the bottle in hand is gone, and once a
 		// second otherwise; the rest of this gate is cheap enough to run every tick.
@@ -444,8 +437,8 @@ namespace CIGAR
 		const Need was = offeredNeed;
 		offeredNeed = ready ? need : Need::kNone;
 
-		LogGate(std::format("need={} ratio={:.2f} urgent={} movable={} sexlab={} quiet={} alch={} potions={} pick={}",
-			NeedTag(need), ratio, urgent, movable, sexlab, quiet,
+		LogGate(std::format("need={} ratio={:.2f} urgent={} movable={} scene={} quiet={} alch={} potions={} pick={}",
+			NeedTag(need), ratio, urgent, movable, scene, quiet,
 			ready ? std::to_string(examined) : "-"s, ready ? std::to_string(candidates) : "-"s,
 			offeredPotion ? Util::NameOf(offeredPotion) : "-"s));
 
@@ -458,8 +451,8 @@ namespace CIGAR
 		const bool showRatio = need == Need::kHealth || need == Need::kStamina || need == Need::kMagicka;
 		const int percent = static_cast<int>(ratio * 100.0f);
 		drink.Update(ready && potion != nullptr, [potion, showRatio, percent] {
-			return showRatio ? std::format("마시기: {} ({}%)", Util::NameOf(potion), percent)
-			                 : std::format("마시기: {}", Util::NameOf(potion));
+			return showRatio ? Text::F("마시기: {} ({}%)", "Drink: {} ({}%)", Util::NameOf(potion), percent)
+			                 : Text::F("마시기: {}", "Drink: {}", Util::NameOf(potion));
 		});
 	}
 

@@ -27,6 +27,21 @@
         "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "Embedded",
         "CIGAR_RELEASE": "ON"
       }
+    },
+    {
+      "name": "nexus",
+      "displayName": "Nexus package (base game only, player-facing panel)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/nexus",
+      "toolchainFile": "C:/TAKEALOOK/TOOLS/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md",
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_MSVC_DEBUG_INFORMATION_FORMAT": "Embedded",
+        "CIGAR_RELEASE": "ON",
+        "CIGAR_NEXUS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -37,6 +52,10 @@
     {
       "name": "dist",
       "configurePreset": "dist"
+    },
+    {
+      "name": "nexus",
+      "configurePreset": "nexus"
     }
   ]
 }

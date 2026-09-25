@@ -13,7 +13,10 @@ namespace CIGAR
 		// Seconds of standing still before the prompts appear.
 		constexpr auto kReadyDelay = 1s;
 		// Pass time is offered at once (the user's choice).
-		constexpr auto kPassTimeText = "시간 보내기 (누르고 있기)"sv;
+		std::string PassTimeText()
+		{
+			return Text::L("시간 보내기 (누르고 있기)", "Pass Time (hold)");
+		}
 		// While the key is held the timescale climbs from x1 to x kPassTimeMax over kPassTimeRamp.
 		// Both numbers are my choice. At the vanilla timescale 20, x60 is 20 game minutes per real
 		// second.
@@ -304,7 +307,7 @@ namespace CIGAR
 			const float timescale = calendar->timeScale->value;
 			if (timescale > kTimescaleSuspicious) {
 				Log("WARN timescale {:.0f} at load; an accelerated pass time may have been saved", timescale);
-				Util::Notify(std::format("CIGAR: 시간 배율 비정상 ({:.0f}). 로그 확인", timescale));
+				Util::Notify(Text::F("CIGAR: 시간 배율 비정상 ({:.0f}). 로그 확인", "CIGAR: Abnormal timescale ({:.0f}). See the log", timescale));
 			}
 		}
 		leanFound = Pose::kStanding;
@@ -361,7 +364,7 @@ namespace CIGAR
 			} else if (Clock::now() >= pendingUntil) {
 				pendingPose = Pose::kStanding;
 				Log("{} failed: the graph refused the enter event after the camera switch", PoseName(wanted));
-				Util::Notify("CIGAR: 앉기/눕기 실패. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 앉기/눕기 실패. 로그 확인", "CIGAR: Could not sit or lie down. See the log"));
 			}
 		}
 
@@ -450,26 +453,26 @@ namespace CIGAR
 			passDismissed = false;
 			Log("pass time offered again from the next sit or rest");
 		}
-		passTime.Update(chair && !passDismissed, [] { return std::string{ kPassTimeText }; });
+		passTime.Update(chair && !passDismissed, [] { return PassTimeText(); });
 		if (chair) {
 			PassTimeTick();
 		}
-		sit.Update(available, [] { return "앉기 (길게)"s; });
-		lie.Update(available, [] { return "눕기 (길게)"s; });
+		sit.Update(available, [] { return std::string(Text::L("앉기 (길게)", "Sit (hold)")); });
+		lie.Update(available, [] { return std::string(Text::L("눕기 (길게)", "Lie Down (hold)")); });
 		if (leanShown != leanFound) {
 			// The text names the surface, so a different surface is a new prompt.
 			lean.Withdraw();
 			leanShown = leanFound;
 		}
-		warm.Update(warmFound != Pose::kStanding, [] { return "손 녹이기 (길게)"s; });
+		warm.Update(warmFound != Pose::kStanding, [] { return std::string(Text::L("손 녹이기 (길게)", "Warm Hands (hold)")); });
 		lean.Update(leanFound != Pose::kStanding, [this] {
 			switch (leanShown) {
 			case Pose::kLeanTable:
-				return "탁자에 기대기 (길게)"s;
+				return std::string(Text::L("탁자에 기대기 (길게)", "Lean on Table (hold)"));
 			case Pose::kLeanRail:
-				return "난간에 기대기 (길게)"s;
+				return std::string(Text::L("난간에 기대기 (길게)", "Lean on Railing (hold)"));
 			default:
-				return "벽에 기대기 (길게)"s;
+				return std::string(Text::L("벽에 기대기 (길게)", "Lean on Wall (hold)"));
 			}
 		});
 	}
@@ -650,7 +653,7 @@ namespace CIGAR
 
 		// Offered as soon as the pose is entered (the user's call, 2026-09-22); a double press hides it
 		// for the rest of this pose (passDismissed).
-		passTime.Update(!exitQueued && !passDismissed, [] { return std::string{ kPassTimeText }; });
+		passTime.Update(!exitQueued && !passDismissed, [] { return PassTimeText(); });
 		PassTimeTick();
 	}
 
@@ -791,7 +794,7 @@ namespace CIGAR
 		Log("get up from {} ({}): {}={} {}={} {}={}", PoseName(was), a_reason, exitEvent, exit, kStopEvent, stop,
 			kResetEvent, reset);
 		if (!exit && !stop && !reset) {
-			Util::Notify("CIGAR: 일어나기 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 일어나기 실패. 로그 확인", "CIGAR: Could not stand up. See the log"));
 		}
 	}
 
@@ -879,7 +882,7 @@ namespace CIGAR
 		if (!timescale) {
 			passHolding = false;
 			Log("WARN pass time: the calendar timescale global is unavailable");
-			Util::Notify("CIGAR: 시간 보내기 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 시간 보내기 실패. 로그 확인", "CIGAR: Pass time failed. See the log"));
 			return;
 		}
 		auto* timer = RE::BSTimer::GetSingleton();
@@ -911,14 +914,14 @@ namespace CIGAR
 			}
 		}
 		timescale->value = passBase * multiplier / speed;
-		passTime.SetLive(std::format("시간 보내기 ×{:.0f}", multiplier), ramp);
+		passTime.SetLive(Text::F("시간 보내기 ×{:.0f}", "Pass Time ×{:.0f}", multiplier), ramp);
 	}
 
 	void Rest::StopPassTime(std::string_view a_reason)
 	{
 		const bool wasHolding = passHolding;
 		passHolding = false;
-		passTime.SetLive(std::string{ kPassTimeText }, 0.0f);
+		passTime.SetLive(PassTimeText(), 0.0f);
 		if (passSpeedSet > 0.0f) {
 			const float now = RE::BSTimer::QGlobalTimeMultiplier();
 			if (std::abs(now - passSpeedSet) > 0.01f) {

@@ -94,7 +94,7 @@ namespace CIGAR
 				reason == "missing player/book")) {
 			offeredBook = 0;
 		}
-		read.Update(available, [book] { return std::format("읽기 (길게): {}", Util::NameOf(book)); });
+		read.Update(available, [book] { return Text::F("읽기 (길게): {}", "Read (hold): {}", Util::NameOf(book)); });
 	}
 
 	void BookRead::OnAccepted(std::uint16_t a_eventID)
@@ -126,7 +126,7 @@ namespace CIGAR
 			const bool known = a_player->HasSpell(spell);
 			if (known) {
 				a_player->RemoveItem(a_book, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				Util::Notify(std::format("{} 습득", Util::NameOf(spell)));
+				Util::Notify(Text::F("{} 습득", "Learned {}", Util::NameOf(spell)));
 			}
 			GetSingleton()->Log("spell tome {} ({:08X}): Read={} spell {} known={}", Util::NameOf(a_book),
 				a_book->GetFormID(), read, Util::NameOf(spell), known);

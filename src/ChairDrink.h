@@ -41,6 +41,8 @@ namespace CIGAR
 		PromptSlot prompt{ this, kDrink };
 
 		std::vector<RE::BGSKeyword*> alcoholKeywords;
+		// The Nexus edition's base-game drinks (runtime FormIDs).
+		std::vector<RE::FormID> alcoholForms;
 		std::vector<RE::BGSKeyword*> placeKeywords;
 
 		// After an accept: the bottle count is checked, and getting up is watched for.

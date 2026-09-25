@@ -13,6 +13,13 @@ history of each module are in `docs/`, one file per module, and each file starts
   they carried the old coupling. The user tested 2.0.0 in game with no problems (2026-09-25); 2.0.1 was
   not played. GitHub (`kkw1010-dev/HKT`, public): `master` and `v2` both hold the 2.0.1 source; there
   is no GitHub release page (the user's choice).
+- **Nexus edition built, untested in game** (2026-09-26, `docs/035-nexus-edition.md`):
+  `Downloads\CIGAR 2.0.1 Nexus` + `.7z` (15 base-game modules, no other-mod references,
+  English/Korean). All builds now have Korean/English text (`src/Text.*`, auto from the game's names)
+  and adjustable 유술 stamina/health damage. The standard `CIGAR 2.0.1` package was rebuilt with these
+  too. Both are copied into `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`; MO2 was open, so the
+  Nexus folder has no `modlist.txt` row yet (MO2 lists it disabled on refresh). To test the Nexus DLL:
+  enable `CIGAR 2.0.1 Nexus`, disable `CIGAR`, and read the load line in `CIGAR.log`.
 - **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
   are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
 - **The author build is in the load order**: MO2 profile `TKL - MUNG ADDON` has `+CIGAR` and

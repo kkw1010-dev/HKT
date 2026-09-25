@@ -253,7 +253,7 @@ namespace CIGAR
 			Log("WARN Valhalla Combat is loaded but {}; the execution prompt is off", !api ? "its API (V2) was not returned" : "no race mapping was read");
 			if (!warned) {
 				warned = true;
-				Util::Notify("CIGAR: Valhalla 연동 실패. 처형 프롬프트 비활성");
+				Util::Notify(Text::L("CIGAR: Valhalla 연동 실패. 처형 프롬프트 비활성", "CIGAR: Valhalla Combat link failed. Execute prompt off"));
 			}
 			return;
 		}
@@ -369,7 +369,7 @@ namespace CIGAR
 					executionKey.load(), victim ? Util::NameOf(victim.get()) : "-"s);
 				if (!warnedNoKillMove) {
 					warnedNoKillMove = true;
-					Util::Notify("CIGAR: 처형 키 입력 후 처형 미발동. 로그 확인");
+					Util::Notify(Text::L("CIGAR: 처형 키 입력 후 처형 미발동. 로그 확인", "CIGAR: Execution key sent, no execution. See the log"));
 				}
 			}
 		}
@@ -384,7 +384,7 @@ namespace CIGAR
 			execute.Reset();
 		}
 		offeredVictim = live ? victim : nullptr;
-		execute.Update(live, [victim] { return std::format("처형: {}", Util::NameOf(victim)); });
+		execute.Update(live, [victim] { return Text::F("처형: {}", "Execute: {}", Util::NameOf(victim)); });
 	}
 
 	void Execute::OnAccepted(std::uint16_t a_eventID)

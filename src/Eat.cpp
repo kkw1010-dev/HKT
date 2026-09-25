@@ -101,7 +101,7 @@ namespace CIGAR
 			Log("WARN Survival Mode found but its hunger forms did not resolve; the eat prompt is off");
 			if (!warnedOff) {
 				warnedOff = true;
-				Util::Notify("CIGAR: 서바이벌 허기 연동 실패. 먹기 프롬프트 비활성");
+				Util::Notify(Text::L("CIGAR: 서바이벌 허기 연동 실패. 먹기 프롬프트 비활성", "CIGAR: Survival hunger link failed. Eat prompt off"));
 			}
 			return;
 		}
@@ -219,7 +219,7 @@ namespace CIGAR
 			if (after >= hungerBeforeEat && hungerBeforeEat > 0.0f && !warnedNoDrop) {
 				warnedNoDrop = true;
 				Log("WARN hunger did not drop after eating; Survival Mode Improved may not have handled the equip");
-				Util::Notify("CIGAR: 먹기 후 허기 변화 없음. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 먹기 후 허기 변화 없음. 로그 확인", "CIGAR: Hunger unchanged after eating. See the log"));
 			}
 		}
 		std::string gate;
@@ -232,7 +232,7 @@ namespace CIGAR
 			eat.Reset();
 		}
 		offeredFood = live ? food : nullptr;
-		eat.Update(live, [food] { return std::format("먹기: {}", Util::NameOf(food)); });
+		eat.Update(live, [food] { return Text::F("먹기: {}", "Eat: {}", Util::NameOf(food)); });
 	}
 
 	void Eat::OnAccepted(std::uint16_t a_eventID)

@@ -180,7 +180,7 @@ namespace CIGAR
 		if (!keyOk.load() && !warnedKey) {
 			warnedKey = true;
 			Log("WARN Grapple has no usable hotkey (key={} modifier={}); the grapple prompt is off", key, modifier);
-			Util::Notify("CIGAR: 그래플 키 미지정 또는 조합키. 그래플 프롬프트 비활성");
+			Util::Notify(Text::L("CIGAR: 그래플 키 미지정 또는 조합키. 그래플 프롬프트 비활성", "CIGAR: Grapple key unset or a key combination. Grapple prompt off"));
 		}
 	}
 
@@ -284,7 +284,7 @@ namespace CIGAR
 			combat, locked, movable, quiet, relockPending, usable, hostileNear));
 
 		const bool ready = combat && movable && !quiet && !relockPending;
-		grapple.Update(ready && usable && (locked || hostileNear), [] { return "그래플"s; });
+		grapple.Update(ready && usable && (locked || hostileNear), [] { return std::string(Text::L("그래플", "Grapple")); });
 	}
 
 	void Grapple::OnAccepted(std::uint16_t a_eventID)

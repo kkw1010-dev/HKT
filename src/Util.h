@@ -4,6 +4,13 @@ namespace CIGAR::Util
 {
 	RE::PlayerCharacter* Player();
 
+	// Scene frameworks that animate the player (SexLab): while one runs, the modules offer nothing.
+	// Resolved at every game load, before the modules. The Nexus edition has none: always false.
+	void ResolveScenes();
+	bool InScene(RE::Actor* a_actor);
+	// "sexlab=<bool>" style text for the gate lines; empty in the Nexus edition.
+	std::string DescribeScenes();
+
 	// Shows a HUD notification (UTF-8).
 	void Notify(const std::string& a_text);
 
@@ -13,8 +20,8 @@ namespace CIGAR::Util
 	std::vector<RE::Actor*> NearbyHostiles(RE::Actor* a_actor, float a_radius);
 
 	// Hair, tail, ears and decapitation slots belong to the body. Non-playable items (such as
-	// the Softbody SMP collision carrier HDTSMPObjectBase in slot 60), no-strip items and
-	// locked devices stay on.
+	// the Softbody SMP collision carrier HDTSMPObjectBase in slot 60) stay on, and so do other
+	// mods' no-strip items and locked devices (not in the Nexus edition, which knows no other mod).
 	bool IsStrippable(const RE::TESObjectARMO* a_armor, std::uint32_t a_slot);
 
 	// Worn armour undress may remove, each item once.

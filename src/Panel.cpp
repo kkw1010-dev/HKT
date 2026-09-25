@@ -1,20 +1,22 @@
 #include "Panel.h"
 
-#include "Eat.h"
-#include "Deflate.h"
-#include "Execute.h"
-#include "Grapple.h"
-#include "Jujutsu.h"
-#include "ItemEquip.h"
+#ifndef CIGAR_NEXUS
+#	include "Deflate.h"
+#	include "Eat.h"
+#	include "Execute.h"
+#	include "Grapple.h"
+#	include "Needs.h"
+#	include "Surrender.h"
+#endif
 #include "BookRead.h"
+#include "ItemEquip.h"
+#include "Jujutsu.h"
 #include "Module.h"
-#include "Needs.h"
 #include "Potion.h"
 #include "Prompt.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
-#include "Surrender.h"
 #include "WeaponSwap.h"
 
 #include <set>
@@ -29,6 +31,8 @@ namespace CIGAR::Panel
 {
 	namespace
 	{
+		using Text::L;
+
 		constexpr auto kSection = "CIGAR";
 
 		// A release build hides what only a mod author reads: the internal module name, the live
@@ -42,62 +46,91 @@ namespace CIGAR::Panel
 		struct Label
 		{
 			std::string_view module;
-			const char* title;
+			const char* titleKo;
+			const char* titleEn;
+			// The mod it waits for (a name, the same in both languages); empty for none.
 			const char* needs;
 			// What the player gets from it, in one or two sentences.
-			const char* what;
+			const char* whatKo;
+			const char* whatEn;
 		};
 
 		// Modules missing here still get a switch, titled with their own name.
-		constexpr std::array kLabels{
-			Label{ "Bathe", "목욕", "Bathing in Skyrim - Renewed",
-				"물에 들어가면 목욕, 폭포 아래에서는 샤워 프롬프트가 뜹니다. 씻으면 때가 사라집니다." },
-			Label{ "Dress", "탈의·착용", "",
-				"침대나 옷장 앞, 그리고 물속에서 탈의 프롬프트가 뜹니다. 벗은 옷은 기억해 두었다가 착용 프롬프트로 그대로 입습니다." },
-			Label{ "BaboKey", "납치 행동 선택", "BaboDialogue",
-				"납치당한 방에서 행동 선택 프롬프트가 뜹니다. 단축키 대신 프롬프트로 고릅니다." },
-			Label{ "LockOn", "록온", "True Directional Movement",
-				"전투 중 적을 록온하는 프롬프트가 뜹니다. 이미 록온 중이면 뜨지 않습니다." },
-			Label{ "Grapple", "그래플", "Grapple",
-				"전투 중 가까운 적에게 그래플 프롬프트가 뜹니다. 록온 상태에서 쓰면 그래플이 끝난 뒤 다시 록온합니다." },
-			Label{ "Deflate", "배출", "Fill Her Up",
-				"몸에 찬 것을 배출하는 프롬프트가 뜹니다. 키를 길게 누릅니다." },
-			Label{ "Surrender", "항복", "Acheron (Yamete Kudasai)",
-				"전투 중 체력이 40% 아래로 떨어지면 항복 프롬프트가 뜹니다. 키를 길게 누르며, 누르는 동안 화면이 느려집니다." },
-			Label{ "Eat", "먹기", "Survival Mode (SMI, Gourmet)",
-				"배가 고프면 가진 음식 중 가장 싼 것을 먹는 프롬프트가 뜹니다. 날고기, 술, 상한 음식은 고르지 않습니다." },
-			Label{ "WeaponSwap", "무기 전환", "",
-				"적이 멀거나 도망치면 원거리 무기로, 가까우면 근접 무기로 바꾸는 프롬프트가 뜹니다. 쓰기 전 무기로 되돌아옵니다." },
-			Label{ "Execute", "처형", "Valhalla Combat",
-				"스태거가 깨진 적에게 처형 프롬프트가 뜹니다. 프롬프트는 실제로 처형이 나갈 때만 보입니다." },
-			Label{ "Jujutsu", "유술", "",
-				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 네 가지 기술은 적을 넘어뜨려 가드를 무너뜨리고, 목 꺾기는 적을 쓰러뜨려 죽입니다." },
-			Label{ "Needs", "용변", "Private Needs - Orgasm",
-				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다." },
-			Label{ "Potion", "물약", "",
-				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다." },
-			Label{ "QuestTrack", "퀘스트 추적", "",
-				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다." },
-			Label{ "ItemEquip", "획득 장비 착용", "",
-				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 방어구는 지금 입은 것보다 방어력이 높을 때만 뜨고, 입은 것이 마법부여 장비면 뜨지 않습니다. 전투 밖에서 키를 길게 누릅니다." },
-			Label{ "BookRead", "책 읽기", "",
-				"아직 모르는 주문서나 퀘스트 쪽지·책을 얻으면 읽기 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다." },
-			Label{ "Recharge", "무기 충전", "",
-				"전투 밖에서 손에 든 마법 무기의 충전량이 25% 이하로 떨어지면 충전 프롬프트가 뜹니다. 채워진 소울젬 중 부족분을 채우는 가장 작은 것을 씁니다. 아즈라의 별처럼 재사용하는 젬은 빈 젬으로 돌아옵니다." },
-			Label{ "ChairDrink", "의자에서 마시기", "",
-				"여관이나 집에서 의자에 앉아 있고 술을 가지고 있으면 마시기 프롬프트가 뜹니다. 앉은 채로 술을 마십니다. 움직이면 일어납니다. 두 번 눌러 닫으면 일어날 때까지 뜨지 않습니다." },
-			Label{ "Helmet", "투구 벗기·쓰기", "",
-				"얼굴이 보이도록 투구를 벗고 다니는 것이 기본입니다. 던전 안이 아니면 투구를 쓰고 있는 동안 투구 벗기가 뜨고, 전투가 시작되면 벗어 둔 투구를 쓰는 프롬프트가 뜹니다. 두 번 눌러 닫으면 장소를 옮기거나 전투가 끝날 때까지 뜨지 않습니다." },
-			Label{ "Poison", "독 바르기", "",
-				"무기를 꺼냈을 때 오른손 무기에 독이 없고 독을 가지고 있으면, 가장 비싼 독을 바르는 프롬프트가 뜹니다." },
-			Label{ "Observe", "주시하기", "",
-				"무기를 넣고 5초 동안 가만히 인물이나 먼 풍경을 바라보면 주시하기가 뜹니다. 누르고 있는 동안 시야가 부드럽게 좁아지며 확대되고, 떼거나 움직이면 돌아옵니다. 가까운 물건이나 가구에는 뜨지 않습니다. 두 번 눌러 닫으면 자리를 옮길 때까지 뜨지 않습니다." },
-			Label{ "PartyOutfit", "파티 의상", "",
-				"탈모어 대사관 연회 퀘스트에서 파티 의상을 가지고 있으면 입기 프롬프트가, 연회가 끝나면 원래 장비로 돌아가는 프롬프트가 뜹니다." },
-			Label{ "QuestAction", "퀘스트 행동", "",
-				"그레이비어드가 샤우트를 보여 달라고 하면 그 샤우트를 장착하는 프롬프트가 뜹니다." },
-			Label{ "Rest", "앉기·눕기·기대기", "",
-				"무기를 넣고 가만히 서서 바닥을 내려다보면 앉기·눕기가, 앞에 벽·탁자·난간이 있으면 기대기가, 앞에 불이 있으면 손 녹이기가 뜹니다. 쉬는 동안이나 의자에 앉아 있는 동안 시간 보내기 키를 누르고 있으면 시간이 빨리 흐릅니다. 움직이면 천천히 일어납니다." },
+		constexpr Label kLabels[]{
+#ifndef CIGAR_NEXUS
+			Label{ "Bathe", "목욕", "Bathing", "Bathing in Skyrim - Renewed",
+				"물에 들어가면 목욕, 폭포 아래에서는 샤워 프롬프트가 뜹니다. 씻으면 때가 사라집니다.",
+				"In water a bathe prompt shows, under a waterfall a shower prompt. Washing removes the dirt." },
+			Label{ "BaboKey", "납치 행동 선택", "Kidnap Action", "BaboDialogue",
+				"납치당한 방에서 행동 선택 프롬프트가 뜹니다. 단축키 대신 프롬프트로 고릅니다.",
+				"In the kidnap room an action prompt shows, in place of the hotkey." },
+			Label{ "LockOn", "록온", "Lock On", "True Directional Movement",
+				"전투 중 적을 록온하는 프롬프트가 뜹니다. 이미 록온 중이면 뜨지 않습니다.",
+				"In combat a prompt locks on to the enemy. It does not show while already locked." },
+			Label{ "Grapple", "그래플", "Grapple", "Grapple",
+				"전투 중 가까운 적에게 그래플 프롬프트가 뜹니다. 록온 상태에서 쓰면 그래플이 끝난 뒤 다시 록온합니다.",
+				"In combat a grapple prompt shows on a nearby enemy. Used while locked on, the lock comes back after the grapple." },
+			Label{ "Deflate", "배출", "Deflate", "Fill Her Up",
+				"몸에 찬 것을 배출하는 프롬프트가 뜹니다. 키를 길게 누릅니다.",
+				"A prompt to deflate shows. Hold the key." },
+			Label{ "Surrender", "항복", "Surrender", "Acheron (Yamete Kudasai)",
+				"전투 중 체력이 40% 아래로 떨어지면 항복 프롬프트가 뜹니다. 키를 길게 누르며, 누르는 동안 화면이 느려집니다.",
+				"Below 40% health in combat a surrender prompt shows. Hold the key; time slows while it is up." },
+			Label{ "Eat", "먹기", "Eating", "Survival Mode (SMI, Gourmet)",
+				"배가 고프면 가진 음식 중 가장 싼 것을 먹는 프롬프트가 뜹니다. 날고기, 술, 상한 음식은 고르지 않습니다.",
+				"When hungry, a prompt eats the cheapest food carried. Raw meat, alcohol and spoiled food are never picked." },
+			Label{ "Execute", "처형", "Execution", "Valhalla Combat",
+				"스태거가 깨진 적에게 처형 프롬프트가 뜹니다. 프롬프트는 실제로 처형이 나갈 때만 보입니다.",
+				"An execution prompt shows on a stunned enemy, only while an execution would really play." },
+			Label{ "Needs", "용변", "Relief", "Private Needs - Orgasm",
+				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다.",
+				"With a full bladder or bowel a relief prompt shows; not in combat, in water or seated." },
+#endif
+			Label{ "Dress", "탈의·착용", "Undress & Dress", "",
+				"침대나 옷장 앞, 그리고 물속에서 탈의 프롬프트가 뜹니다. 벗은 옷은 기억해 두었다가 착용 프롬프트로 그대로 입습니다.",
+				"At a bed or wardrobe, and in water, an undress prompt shows. The clothes taken off are remembered and put back on with the dress prompt." },
+			Label{ "WeaponSwap", "무기 전환", "Weapon Swap", "",
+				"적이 멀거나 도망치면 원거리 무기로, 가까우면 근접 무기로 바꾸는 프롬프트가 뜹니다. 쓰기 전 무기로 되돌아옵니다.",
+				"A prompt switches to a ranged weapon when the enemy is far or fleeing, and to a melee weapon when it is close. The previous weapons come back afterwards." },
+			Label{ "Jujutsu", "유술", "Jujutsu", "",
+				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 네 가지 기술은 적을 넘어뜨려 가드를 무너뜨리고, 목 꺾기는 적을 쓰러뜨려 죽입니다.",
+				"A jujutsu prompt shows on a blocking humanoid enemy. Four throws knock it down and break its guard; the neck break kills." },
+			Label{ "Potion", "물약", "Potions", "",
+				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다.",
+				"Low health, stamina or magicka, poison, disease or being under water brings up a prompt to drink a fitting potion. Valuable potions are not spent first." },
+			Label{ "QuestTrack", "퀘스트 추적", "Quest Tracking", "",
+				"새 퀘스트 목표를 받으면 해당 퀘스트를 추적하는 프롬프트가 잠시 뜹니다.",
+				"A new quest objective briefly brings up a prompt to track that quest." },
+			Label{ "ItemEquip", "획득 장비 착용", "Equip New Gear", "",
+				"새로 얻은 무기나 방어구를 바로 장착하는 프롬프트가 잠시 뜹니다. 방어구는 지금 입은 것보다 방어력이 높을 때만 뜨고, 입은 것이 마법부여 장비면 뜨지 않습니다. 전투 밖에서 키를 길게 누릅니다.",
+				"Newly acquired weapons and armor briefly get a prompt to equip them. Armor is offered only when it beats what is worn, and never over an enchanted piece. Hold the key, out of combat." },
+			Label{ "BookRead", "책 읽기", "Reading", "",
+				"아직 모르는 주문서나 퀘스트 쪽지·책을 얻으면 읽기 프롬프트가 잠시 뜹니다. 전투 밖에서 키를 길게 누릅니다.",
+				"An unknown spell tome or a quest note or book briefly gets a read prompt. Hold the key, out of combat." },
+			Label{ "Recharge", "무기 충전", "Weapon Recharge", "",
+				"전투 밖에서 손에 든 마법 무기의 충전량이 25% 이하로 떨어지면 충전 프롬프트가 뜹니다. 채워진 소울젬 중 부족분을 채우는 가장 작은 것을 씁니다. 아즈라의 별처럼 재사용하는 젬은 빈 젬으로 돌아옵니다.",
+				"Out of combat, an enchanted weapon in hand at 25% charge or less gets a recharge prompt. The smallest filled soul gem that covers the gap is used; reusable gems such as Azura's Star come back empty." },
+			Label{ "ChairDrink", "의자에서 마시기", "Chair Drinking", "",
+				"여관이나 집에서 의자에 앉아 있고 술을 가지고 있으면 마시기 프롬프트가 뜹니다. 앉은 채로 술을 마십니다. 움직이면 일어납니다. 두 번 눌러 닫으면 일어날 때까지 뜨지 않습니다.",
+				"Seated in a chair at an inn or a home with alcohol in the pack, a drink prompt shows and the drink is had in the chair. Moving gets up. Dismissed with a double tap, it stays away until you stand up." },
+			Label{ "Helmet", "투구 벗기·쓰기", "Helmet Off & On", "",
+				"얼굴이 보이도록 투구를 벗고 다니는 것이 기본입니다. 던전 안이 아니면 투구를 쓰고 있는 동안 투구 벗기가 뜨고, 전투가 시작되면 벗어 둔 투구를 쓰는 프롬프트가 뜹니다. 두 번 눌러 닫으면 장소를 옮기거나 전투가 끝날 때까지 뜨지 않습니다.",
+				"The helmet stays off by default so the face shows. Outside dungeons a take-off prompt shows while one is worn, and in combat a prompt puts the stowed helmet back on. Dismissed with a double tap, it stays away until the location changes or the fight ends." },
+			Label{ "Poison", "독 바르기", "Apply Poison", "",
+				"무기를 꺼냈을 때 오른손 무기에 독이 없고 독을 가지고 있으면, 가장 비싼 독을 바르는 프롬프트가 뜹니다.",
+				"With a weapon drawn, an unpoisoned right-hand weapon and a poison carried, a prompt applies the most valuable poison." },
+			Label{ "Observe", "주시하기", "Observe", "",
+				"무기를 넣고 5초 동안 가만히 인물이나 먼 풍경을 바라보면 주시하기가 뜹니다. 누르고 있는 동안 시야가 부드럽게 좁아지며 확대되고, 떼거나 움직이면 돌아옵니다. 가까운 물건이나 가구에는 뜨지 않습니다. 두 번 눌러 닫으면 자리를 옮길 때까지 뜨지 않습니다.",
+				"Stand still for 5 s with the weapon sheathed, looking at a person or a distant view, and an observe prompt shows. Holding it zooms in smoothly; releasing or moving zooms back. Close objects and furniture never get it. Dismissed with a double tap, it stays away until you move on." },
+			Label{ "PartyOutfit", "파티 의상", "Party Clothes", "",
+				"탈모어 대사관 연회 퀘스트에서 파티 의상을 가지고 있으면 입기 프롬프트가, 연회가 끝나면 원래 장비로 돌아가는 프롬프트가 뜹니다.",
+				"In the Thalmor embassy party quest, carrying the party clothes brings up a prompt to wear them, and after the party one to change back." },
+			Label{ "QuestAction", "퀘스트 행동", "Quest Actions", "",
+				"그레이비어드가 샤우트를 보여 달라고 하면 그 샤우트를 장착하는 프롬프트가 뜹니다.",
+				"When the Greybeards ask to see a shout, a prompt equips that shout." },
+			Label{ "Rest", "앉기·눕기·기대기", "Sit, Lie & Lean", "",
+				"무기를 넣고 가만히 서서 바닥을 내려다보면 앉기·눕기가, 앞에 벽·탁자·난간이 있으면 기대기가, 앞에 불이 있으면 손 녹이기가 뜹니다. 쉬는 동안이나 의자에 앉아 있는 동안 시간 보내기 키를 누르고 있으면 시간이 빨리 흐릅니다. 움직이면 천천히 일어납니다.",
+				"Standing still with the weapon sheathed: looking at the floor offers sit and lie down, a wall, table or railing ahead offers lean, a fire ahead offers warm hands. While resting or seated, holding pass time makes time fly. Moving gets up slowly." },
 		};
 
 		const Label* Find(std::string_view a_module)
@@ -160,11 +193,31 @@ namespace CIGAR::Panel
 				break;
 			}
 			if (a_code >= 256 && a_code < 264) {
-				return std::format("마우스 {}", a_code - 255);
+				return Text::F("마우스 {}", "Mouse {}", a_code - 255);
 			}
 			return std::format("#{}", a_code);
 		}
 
+		// Shows a help line below a control, wrapped.
+		void Help(const char* a_text)
+		{
+			ImGui::PushTextWrapPos(0.0f);
+			ImGui::TextColored(kDim, "%s", a_text);
+			ImGui::PopTextWrapPos();
+		}
+
+		// A percent slider over a 0-1 share; saves when released. Returns true while it changed.
+		bool SharePercent(const std::string& a_label, float& a_share)
+		{
+			float percent = a_share * 100.0f;
+			const bool changed = ImGui::SliderFloat(a_label.c_str(), &percent, 0.0f, 100.0f, "%.0f%%");
+			if (changed) {
+				a_share = percent / 100.0f;
+			}
+			return changed;
+		}
+
+#ifndef CIGAR_NEXUS
 		void RenderPromptOnlyItem(std::string_view a_target, const char* a_label, const char* a_hidden, void (*a_apply)())
 		{
 			bool on = Settings::PromptOnly(a_target);
@@ -175,63 +228,67 @@ namespace CIGAR::Panel
 			ImGui::Indent();
 			if constexpr (kRelease) {
 				// The release panel says what the switch does, not which key codes moved where.
-				ImGui::TextColored(kDim, "%s", on ? "켜짐: 이 모드의 원래 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: 이 모드의 원래 단축키를 그대로 씁니다");
+				ImGui::TextColored(kDim, "%s", on ? L("켜짐: 이 모드의 원래 단축키를 비우고 프롬프트로만 씁니다", "On: this mod's own hotkey is cleared; only the prompt uses it") :
+				                                    L("꺼짐: 이 모드의 원래 단축키를 그대로 씁니다", "Off: this mod keeps its own hotkey"));
 				ImGui::Unindent();
 				return;
 			}
 			const auto manual = Settings::ManualKey(a_target);
-			const auto manualName = manual >= 0 ? NameOf(manual) : std::string("기록 없음");
+			const auto manualName = manual >= 0 ? NameOf(manual) : std::string(L("기록 없음", "none recorded"));
 			if (on) {
-				ImGui::TextColored(kDim, "모드 키를 %s(숨김 키)로 옮김. 원래 키 %s는 비어 있음", a_hidden, manualName.c_str());
+				ImGui::TextColored(kDim, L("모드 키를 %s(숨김 키)로 옮김. 원래 키 %s는 비어 있음", "Mod key moved to %s (hidden key). Its own key %s is free"), a_hidden,
+					manualName.c_str());
 			} else {
-				ImGui::TextColored(kDim, "모드 자체 키 사용. 끌 때 복원한 키: %s", manualName.c_str());
+				ImGui::TextColored(kDim, L("모드 자체 키 사용. 끌 때 복원한 키: %s", "Mod uses its own key. Key restored when switched off: %s"), manualName.c_str());
 			}
 			ImGui::Unindent();
 		}
 
 		void RenderPromptOnly()
 		{
-			RenderPromptOnlyItem("grapple", "그래플: 프롬프트 전용##po-grapple", "F13",
+			RenderPromptOnlyItem("grapple", L("그래플: 프롬프트 전용##po-grapple", "Grapple: prompt only##po-grapple"), "F13",
 				[] { Grapple::GetSingleton()->CheckKeys(); });
-			RenderPromptOnlyItem("surrender", "Acheron 항복: 프롬프트 전용##po-surrender", "F14",
+			RenderPromptOnlyItem("surrender", L("Acheron 항복: 프롬프트 전용##po-surrender", "Acheron surrender: prompt only##po-surrender"), "F14",
 				[] { Surrender::GetSingleton()->ApplyKeyMode(); });
-			RenderPromptOnlyItem("valhalla", "Valhalla 처형: 프롬프트 전용##po-valhalla", "F15",
+			RenderPromptOnlyItem("valhalla", L("Valhalla 처형: 프롬프트 전용##po-valhalla", "Valhalla execution: prompt only##po-valhalla"), "F15",
 				[] { Execute::GetSingleton()->CheckKey(); });
 			{
 				bool on = Settings::PromptOnly("fillherup");
-				if (ImGui::Checkbox("Fill Her Up 배출: 프롬프트 전용##po-fillherup", &on)) {
+				if (ImGui::Checkbox(L("Fill Her Up 배출: 프롬프트 전용##po-fillherup", "Fill Her Up deflate: prompt only##po-fillherup"), &on)) {
 					Settings::SetPromptOnly("fillherup", on);
 					SKSE::GetTaskInterface()->AddTask([] { Deflate::GetSingleton()->ApplyKeyMode(); });
 				}
 				ImGui::Indent();
 				const auto key = Deflate::GetSingleton()->Key();
 				if (kRelease) {
-					ImGui::TextColored(kDim, "%s", on ? "켜짐: 배출 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: Fill Her Up의 원래 단축키를 그대로 씁니다");
+					ImGui::TextColored(kDim, "%s", on ? L("켜짐: 배출 단축키를 비우고 프롬프트로만 씁니다", "On: the deflate hotkey is cleared; only the prompt uses it") :
+					                                    L("꺼짐: Fill Her Up의 원래 단축키를 그대로 씁니다", "Off: Fill Her Up keeps its own hotkey"));
 				} else if (on) {
-					ImGui::TextColored(kDim, "FHU 배출 키 해제(키 없음). 배출은 프롬프트로만");
+					ImGui::TextColored(kDim, "%s", L("FHU 배출 키 해제(키 없음). 배출은 프롬프트로만", "FHU deflate key cleared (no key). Deflate by prompt only"));
 				} else {
-					ImGui::TextColored(kDim, "FHU 자체 키 사용. 현재 키: %s", key >= 0 ? NameOf(key).c_str() : "없음");
+					ImGui::TextColored(kDim, L("FHU 자체 키 사용. 현재 키: %s", "FHU uses its own key. Current key: %s"), key >= 0 ? NameOf(key).c_str() : L("없음", "none"));
 				}
 				ImGui::Unindent();
 			}
 			{
 				bool on = Settings::PromptOnly("privateneeds");
-				if (ImGui::Checkbox("Private Needs: 프롬프트 전용##po-privateneeds", &on)) {
+				if (ImGui::Checkbox(L("Private Needs: 프롬프트 전용##po-privateneeds", "Private Needs: prompt only##po-privateneeds"), &on)) {
 					Settings::SetPromptOnly("privateneeds", on);
 					SKSE::GetTaskInterface()->AddTask([] { Needs::GetSingleton()->ApplyKeyMode(); });
 				}
 				ImGui::Indent();
 				const auto keys = Needs::GetSingleton()->KeySummary();
 				if (kRelease) {
-					ImGui::TextColored(kDim, "%s", on ? "켜짐: 용변 관련 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: Private Needs의 원래 단축키를 그대로 씁니다");
+					ImGui::TextColored(kDim, "%s", on ? L("켜짐: 용변 관련 단축키를 비우고 프롬프트로만 씁니다", "On: the relief hotkeys are cleared; only the prompts use them") :
+					                                    L("꺼짐: Private Needs의 원래 단축키를 그대로 씁니다", "Off: Private Needs keeps its own hotkeys"));
 				} else if (on) {
-					ImGui::TextColored(kDim, "PNO 단축키 6개 해제(메뉴 Y, 수치 확인 U 포함). MCM을 닫을 때마다 다시 확인");
+					ImGui::TextColored(kDim, "%s", L("PNO 단축키 6개 해제(메뉴 Y, 수치 확인 U 포함). MCM을 닫을 때마다 다시 확인", "PNO's six hotkeys cleared (menu Y and check U included). Checked again whenever its MCM closes"));
 				} else {
-					ImGui::TextColored(kDim, "PNO 자체 키 사용. 현재 키 코드: %s", keys.empty() ? "없음" : keys.c_str());
+					ImGui::TextColored(kDim, L("PNO 자체 키 사용. 현재 키 코드: %s", "PNO uses its own keys. Current key codes: %s"), keys.empty() ? L("없음", "none") : keys.c_str());
 				}
 				ImGui::Unindent();
 			}
-			if (ImGui::Button("모드 키 다시 확인")) {
+			if (ImGui::Button(L("모드 키 다시 확인##recheck", "Check mod keys again##recheck"))) {
 				SKSE::GetTaskInterface()->AddTask([] {
 					Grapple::GetSingleton()->CheckKeys();
 					Surrender::GetSingleton()->CheckKey();
@@ -241,21 +298,20 @@ namespace CIGAR::Panel
 				});
 			}
 			if constexpr (kRelease) {
-				ImGui::PushTextWrapPos(0.0f);
-				ImGui::TextColored(kDim, "다른 모드의 설정 메뉴에서 단축키를 바꿨다면 이 버튼을 한 번 눌러 주세요");
-				ImGui::PopTextWrapPos();
+				Help(L("다른 모드의 설정 메뉴에서 단축키를 바꿨다면 이 버튼을 한 번 눌러 주세요", "If you changed a hotkey in another mod's menu, press this button once"));
 				return;
 			}
 			const auto grapple = Grapple::GetSingleton()->Key();
 			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
 			const auto execution = Execute::GetSingleton()->ExecutionKey();
-			ImGui::TextColored(kDim, "현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s",
-				grapple >= 0 ? NameOf(grapple).c_str() : "없음", surrender >= 0 ? NameOf(surrender).c_str() : "없음",
-				execution >= 0 ? NameOf(execution).c_str() : "없음");
-			ImGui::PushTextWrapPos(0.0f);
-			ImGui::TextColored(kDim, "키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림");
-			ImGui::PopTextWrapPos();
+			const char* none = L("없음", "none");
+			ImGui::TextColored(kDim, L("현재: 그래플 %s, Acheron 항복 %s, Valhalla 처형 %s", "Now: Grapple %s, Acheron surrender %s, Valhalla execution %s"),
+				grapple >= 0 ? NameOf(grapple).c_str() : none, surrender >= 0 ? NameOf(surrender).c_str() : none,
+				execution >= 0 ? NameOf(execution).c_str() : none);
+			Help(L("키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림",
+				"Keys are checked at load and when this button is pressed. Press it after changing a key in an MCM. With prompt only on, the new key is remembered and moved back to the hidden key"));
 		}
+#endif
 
 		void RenderKeys()
 		{
@@ -275,54 +331,58 @@ namespace CIGAR::Panel
 						current = static_cast<int>(i);
 					}
 				}
-				const auto label = std::format("{}번째 프롬프트 키##key{}", slot + 1, slot);
+				const auto label = Text::F("{}번째 프롬프트 키##key{}", "Prompt key {}##key{}", slot + 1, slot);
 				ImGui::SetNextItemWidth(160.0f);
 				if (ImGui::Combo(label.c_str(), &current, names.data(), static_cast<int>(names.size()), 12) && current >= 0) {
 					Settings::SetPromptKey(slot, kKeys[current].code);
 				}
 				if (current < 0) {
 					ImGui::SameLine();
-					ImGui::TextColored(kDim, "(설정 파일 값 %s)", NameOf(keys[slot]).c_str());
+					ImGui::TextColored(kDim, L("(설정 파일 값 %s)", "(settings file value %s)"), NameOf(keys[slot]).c_str());
 				}
 			}
-			if (ImGui::Button("기본값 (1, 2, 3, 4)")) {
+			if (ImGui::Button(L("기본값 (1, 2, 3, 4)##keys-default", "Defaults (1, 2, 3, 4)##keys-default"))) {
 				for (std::size_t slot = 0; slot < keys.size(); ++slot) {
 					if (keys[slot] != Settings::kDefaultPromptKeys[slot]) {
 						Settings::SetPromptKey(slot, Settings::kDefaultPromptKeys[slot]);
 					}
 				}
 			}
-			ImGui::TextColored(kDim, "%s", kRelease ? "프롬프트가 화면에 뜬 순서대로 1번째 키부터 배정됩니다" : "화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값");
+			ImGui::TextColored(kDim, "%s", kRelease ? L("프롬프트가 화면에 뜬 순서대로 1번째 키부터 배정됩니다", "Prompts take the keys in the order they appear, from the first") :
+			                                          L("화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값", "Assigned in the order shown, from the first. Gamepads use SkyPrompt's defaults"));
 
 			// A key shared by two slots fires both prompts; a key another mod listens to fires that mod too.
 			for (std::size_t a = 0; a < keys.size(); ++a) {
 				for (std::size_t b = a + 1; b < keys.size(); ++b) {
 					if (keys[a] == keys[b]) {
-						ImGui::TextColored(kWarn, "경고: %zu번째와 %zu번째 키가 같음 (%s)", a + 1, b + 1, NameOf(keys[a]).c_str());
+						ImGui::TextColored(kWarn, L("경고: %zu번째와 %zu번째 키가 같음 (%s)", "Warning: prompt keys %zu and %zu are the same (%s)"), a + 1, b + 1,
+							NameOf(keys[a]).c_str());
 					}
 				}
 			}
+#ifndef CIGAR_NEXUS
 			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
-				{ "그래플", Grapple::GetSingleton()->Key() },
-				{ "Acheron 항복", Surrender::GetSingleton()->SurrenderKey() },
-				{ "Valhalla 처형", Execute::GetSingleton()->ExecutionKey() },
+				{ L("그래플", "Grapple"), Grapple::GetSingleton()->Key() },
+				{ L("Acheron 항복", "Acheron surrender"), Surrender::GetSingleton()->SurrenderKey() },
+				{ L("Valhalla 처형", "Valhalla execution"), Execute::GetSingleton()->ExecutionKey() },
 			} };
 			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
 				for (const auto& [who, code] : others) {
 					if (code == keys[slot]) {
-						ImGui::TextColored(kWarn, "경고: %zu번째 키(%s)가 %s 키와 같음", slot + 1, NameOf(code).c_str(), who);
+						ImGui::TextColored(kWarn, L("경고: %zu번째 키(%s)가 %s 키와 같음", "Warning: prompt key %zu (%s) is the same as the %s key"), slot + 1,
+							NameOf(code).c_str(), who);
 					}
 				}
 			}
+#endif
 		}
 
 		void RenderModule(const Module* a_module)
 		{
 			const std::string_view name = a_module->Name();
 			const auto* label = Find(name);
-			const std::string id = kRelease
-			                           ? std::format("{}##{}", label ? label->title : a_module->Name(), name)
-			                           : std::format("{} ({})##{}", label ? label->title : a_module->Name(), name, name);
+			const char* title = label ? L(label->titleKo, label->titleEn) : a_module->Name();
+			const std::string id = kRelease ? std::format("{}##{}", title, name) : std::format("{} ({})##{}", title, name, name);
 
 			bool on = Settings::Enabled(name);
 			if (ImGui::Checkbox(id.c_str(), &on)) {
@@ -330,14 +390,14 @@ namespace CIGAR::Panel
 			}
 			ImGui::Indent();
 			ImGui::PushTextWrapPos(0.0f);
-			if (label && label->what[0] != '\0') {
-				ImGui::TextColored(kDim, "%s", label->what);
+			if (label) {
+				ImGui::TextColored(kDim, "%s", L(label->whatKo, label->whatEn));
 			}
 			if (label && label->needs[0] != '\0') {
-				ImGui::TextColored(kDim, "연동: %s (없으면 대기)", label->needs);
+				ImGui::TextColored(kDim, L("연동: %s (없으면 대기)", "Needs: %s (idle without it)"), label->needs);
 			}
 			if (!on) {
-				ImGui::TextColored(kDim, "꺼짐. 프롬프트 표시 안 함");
+				ImGui::TextColored(kDim, "%s", L("꺼짐. 프롬프트 표시 안 함", "Off. No prompts"));
 			} else if constexpr (!kRelease) {
 				// Author-side: the live gate inputs and the last log line, so a missing prompt is
 				// explained without opening the log.
@@ -351,6 +411,29 @@ namespace CIGAR::Panel
 			ImGui::Spacing();
 		}
 
+		void RenderLanguage()
+		{
+			static constexpr std::array kChoices{ "auto"sv, "ko"sv, "en"sv };
+			const auto choice = Settings::LanguageChoice();
+			int current = 0;
+			for (int i = 0; i < static_cast<int>(kChoices.size()); ++i) {
+				if (kChoices[i] == choice) {
+					current = i;
+				}
+			}
+			const std::array<const char*, 3> names{ L("자동 (게임 언어)", "Auto (game language)"), "한국어", "English" };
+			ImGui::SetNextItemWidth(200.0f);
+			if (ImGui::Combo(L("언어##language", "Language##language"), &current, names.data(), static_cast<int>(names.size()))) {
+				Settings::SetLanguageChoice(kChoices[current]);
+				Text::Resolve();
+				// Prompts keep the text they were queued with; take them down so each comes back in the new language.
+				SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
+			}
+			const auto described = Text::Describe();
+			Help(std::format("{} {}", L("현재:", "Now:"), described).c_str());
+			Help(L("페이지 이름은 다음 실행부터 바뀝니다", "Page names change from the next launch"));
+		}
+
 		void LogFirstDraw(const char* a_page)
 		{
 			static std::mutex lock;
@@ -361,75 +444,82 @@ namespace CIGAR::Panel
 			}
 		}
 
-		// The framework lists a section's items by their names, so the numbers fix the order.
-		constexpr auto kPageModules = "1. 모듈";
-		constexpr auto kPageKeys = "2. 단축키";
-		constexpr auto kPageOptions = "3. 세부 설정";
+		// The framework lists a section's items by their names, so the numbers fix the order. The names
+		// are fixed at registration (kDataLoaded), in the language resolved then.
+		const char* PageModules() { return L("1. 모듈", "1. Modules"); }
+		const char* PageKeys() { return L("2. 단축키", "2. Keys"); }
+		const char* PageOptions() { return L("3. 세부 설정", "3. Options"); }
 
 		void __stdcall RenderModules()
 		{
-			LogFirstDraw(kPageModules);
-			ImGui::SeparatorText("모듈");
+			LogFirstDraw("modules");
+			ImGui::SeparatorText(L("모듈", "Modules"));
 			for (const auto* module : Modules()) {
 				RenderModule(module);
 			}
 
-			ImGui::SeparatorText("상태");
-			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? "연결됨" : "없음 (프롬프트 비활성)");
+			ImGui::SeparatorText(L("언어", "Language"));
+			RenderLanguage();
+
+			ImGui::SeparatorText(L("상태", "Status"));
+			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? L("연결됨", "connected") : L("없음 (프롬프트 비활성)", "missing (no prompts)"));
 			if constexpr (!kRelease) {
 				const auto source = Settings::SourceDescription();
 				ImGui::TextColored(kDim, "설정 파일: %s", source.c_str());
 			}
-			ImGui::TextColored(kDim, "문제가 생기면 SKSE\\CIGAR.log를 첨부해 주세요");
+			ImGui::TextColored(kDim, "%s", L("문제가 생기면 SKSE\\CIGAR.log를 첨부해 주세요", "If something goes wrong, please attach SKSE\\CIGAR.log"));
 		}
 
 		void __stdcall RenderKeyPage()
 		{
-			LogFirstDraw(kPageKeys);
-			ImGui::SeparatorText("프롬프트 키");
+			LogFirstDraw("keys");
+			ImGui::SeparatorText(L("프롬프트 키", "Prompt keys"));
 			RenderKeys();
-
-			ImGui::SeparatorText("모드 단축키");
+#ifndef CIGAR_NEXUS
+			ImGui::SeparatorText(L("모드 단축키", "Mod hotkeys"));
 			RenderPromptOnly();
+#endif
 		}
 
 		void __stdcall RenderOptions()
 		{
-			LogFirstDraw(kPageOptions);
-			ImGui::SeparatorText("먹기");
+			LogFirstDraw("options");
+#ifndef CIGAR_NEXUS
+			ImGui::SeparatorText(L("먹기", "Eating"));
 			int stage = Settings::EatMinStage();
-			if (ImGui::SliderInt("표시 시작 허기 단계", &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
+			if (ImGui::SliderInt(L("표시 시작 허기 단계##eat-stage", "Hunger stage to start##eat-stage"), &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
 				Settings::SetEatMinStage(stage);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시");
+			Help(L("기본 3. 비전투 중 이 단계 이상이면 가장 싼 음식으로 프롬프트 표시", "Default 3. Out of combat, at this stage or above, the cheapest food is offered"));
 
-			ImGui::SeparatorText("용변");
+			ImGui::SeparatorText(L("용변", "Relief"));
 			int needs = Settings::NeedsMinPercent();
-			if (ImGui::SliderInt("표시 시작 수치", &needs, Needs::kMinPercentLow, Needs::kMinPercentHigh, "%d%%")) {
+			if (ImGui::SliderInt(L("표시 시작 수치##needs", "Level to start##needs"), &needs, Needs::kMinPercentLow, Needs::kMinPercentHigh, "%d%%")) {
 				Settings::SetNeedsMinPercent(needs);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 50%%. Private Needs의 방광·장 수치가 이 이상이면 프롬프트 표시");
+			Help(L("기본 50%. Private Needs의 방광·장 수치가 이 이상이면 프롬프트 표시", "Default 50%. The prompts show once Private Needs' bladder or bowel is this full"));
+#endif
 
-			ImGui::SeparatorText("물약");
+			ImGui::SeparatorText(L("물약", "Potions"));
 			{
 				auto tune = Settings::PotionTune();
 				bool changed = false;
-				changed |= ImGui::Checkbox("체력##pot-hp", &tune.health);
+				changed |= ImGui::Checkbox(L("체력##pot-hp", "Health##pot-hp"), &tune.health);
 				ImGui::SameLine();
-				changed |= ImGui::Checkbox("기력##pot-sp", &tune.stamina);
+				changed |= ImGui::Checkbox(L("기력##pot-sp", "Stamina##pot-sp"), &tune.stamina);
 				ImGui::SameLine();
-				changed |= ImGui::Checkbox("마나##pot-mp", &tune.magicka);
-				changed |= ImGui::Checkbox("해독##pot-poison", &tune.curePoison);
+				changed |= ImGui::Checkbox(L("마나##pot-mp", "Magicka##pot-mp"), &tune.magicka);
+				changed |= ImGui::Checkbox(L("해독##pot-poison", "Cure poison##pot-poison"), &tune.curePoison);
 				ImGui::SameLine();
-				changed |= ImGui::Checkbox("질병 치료##pot-disease", &tune.cureDisease);
+				changed |= ImGui::Checkbox(L("질병 치료##pot-disease", "Cure disease##pot-disease"), &tune.cureDisease);
 				ImGui::SameLine();
-				changed |= ImGui::Checkbox("수중 호흡##pot-water", &tune.waterBreathing);
+				changed |= ImGui::Checkbox(L("수중 호흡##pot-water", "Water breathing##pot-water"), &tune.waterBreathing);
 				if (changed) {
 					Settings::SetPotionTune(tune);
 					Settings::Save();
@@ -448,14 +538,15 @@ namespace CIGAR::Panel
 					}
 					ImGui::TextColored(kDim, "%s", a_help);
 				};
-				bar("체력 표시 시작##pot-hp-th", tune.healthThreshold, "기본 50%. 체력이 이 비율 이하면 프롬프트 표시");
-				bar("체력 위급##pot-hp-urgent", tune.urgentHealthThreshold, "기본 20%. 이 이하면 가장 약한 물약 대신 가장 강한 물약을 선택");
-				bar("기력 표시 시작##pot-sp-th", tune.staminaThreshold, "기본 50%");
-				bar("마나 표시 시작##pot-mp-th", tune.magickaThreshold, "기본 50%");
-				ImGui::PushTextWrapPos(0.0f);
-				ImGui::TextColored(kDim, "%s", kRelease ? "해로운 효과가 섞인 물약은 고르지 않습니다. 한 번에 한 가지만 표시하며, 체력이 가장 먼저입니다" :
-					"물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
-				ImGui::PopTextWrapPos();
+				bar(L("체력 표시 시작##pot-hp-th", "Health to start##pot-hp-th"), tune.healthThreshold,
+					L("기본 50%. 체력이 이 비율 이하면 프롬프트 표시", "Default 50%. The prompt shows at or below this share of health"));
+				bar(L("체력 위급##pot-hp-urgent", "Health urgent##pot-hp-urgent"), tune.urgentHealthThreshold,
+					L("기본 20%. 이 이하면 가장 약한 물약 대신 가장 강한 물약을 선택", "Default 20%. At or below it the strongest potion is picked instead of the weakest"));
+				bar(L("기력 표시 시작##pot-sp-th", "Stamina to start##pot-sp-th"), tune.staminaThreshold, L("기본 50%", "Default 50%"));
+				bar(L("마나 표시 시작##pot-mp-th", "Magicka to start##pot-mp-th"), tune.magickaThreshold, L("기본 50%", "Default 50%"));
+				Help(kRelease ? L("해로운 효과가 섞인 물약은 고르지 않습니다. 한 번에 한 가지만 표시하며, 체력이 가장 먼저입니다",
+				                  "Potions with a harmful effect are never picked. One need shows at a time, health first") :
+				                "물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
 				if constexpr (!kRelease) {
 					if (ImGui::Button("시험: 독 10초 걸기##pot-test-poison")) {
 						SKSE::GetTaskInterface()->AddTask([] { Potion::GetSingleton()->ApplyTestPoison(); });
@@ -463,38 +554,60 @@ namespace CIGAR::Panel
 				}
 			}
 
-			ImGui::SeparatorText("무기 전환");
+			ImGui::SeparatorText(L("무기 전환", "Weapon swap"));
 			float swap = Settings::WeaponSwapRange();
-			if (ImGui::SliderFloat("전환 거리", &swap, WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh, "%.0f")) {
+			if (ImGui::SliderFloat(L("전환 거리##swap", "Switch distance##swap"), &swap, WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh, "%.0f")) {
 				Settings::SetWeaponSwapRange(swap);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트");
+			Help(L("기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트",
+				"Default 800. Beyond it, or with the enemy fleeing, the ranged weapon prompt shows; inside it, the melee one"));
 
-			ImGui::SeparatorText("유술");
+			ImGui::SeparatorText(L("유술", "Jujutsu"));
 			float reach = Settings::JujutsuReach();
-			if (ImGui::SliderFloat("유술 거리", &reach, Jujutsu::kReachLow, Jujutsu::kReachHigh, "%.0f")) {
+			if (ImGui::SliderFloat(L("유술 거리##jj-reach", "Reach##jj-reach"), &reach, Jujutsu::kReachLow, Jujutsu::kReachHigh, "%.0f")) {
 				Settings::SetJujutsuReach(reach);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 250. 가드 중인 인간형 적이 이 거리 안이면 프롬프트 표시");
+			Help(L("기본 250. 가드 중인 인간형 적이 이 거리 안이면 프롬프트 표시", "Default 250. The prompt shows for a blocking humanoid enemy within this distance"));
 
 			auto tune = Settings::JujutsuTune();
-			float guardPct = tune.guardStun * 100.0f;
-			if (ImGui::SliderFloat("게이지 피해", &guardPct, 0.0f, 100.0f, "%.0f%%")) {
-				tune.guardStun = guardPct / 100.0f;
+#ifndef CIGAR_NEXUS
+			if (SharePercent(L("게이지 피해##jj-stun", "Stun damage##jj-stun"), tune.guardStun)) {
 				Settings::SetJujutsuTune(tune);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "%s", kRelease ? "기본 15%. 유술이 적의 스태거 게이지를 깎는 양 (Valhalla Combat이 있을 때)" : "기본 15%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
+			Help(kRelease ? L("기본 15%. 유술이 적의 스태거 게이지를 깎는 양 (Valhalla Combat이 있을 때)", "Default 15%. How much of the enemy's stun meter jujutsu takes (with Valhalla Combat)") :
+			                "기본 15%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
+#endif
+			if (SharePercent(L("기력 피해##jj-stamina", "Stamina damage##jj-stamina"), tune.staminaDamage)) {
+				Settings::SetJujutsuTune(tune);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+#ifdef CIGAR_NEXUS
+			Help(L("기본 100%. 넘어진 적이 잃는 기력 (최대 기력 대비)", "Default 100%. Stamina the thrown enemy loses, as a share of its maximum"));
+#else
+			Help(L("기본 100%. 넘어진 적이 잃는 기력 (최대 기력 대비, Valhalla Combat이 없을 때)",
+				"Default 100%. Stamina the thrown enemy loses, as a share of its maximum (without Valhalla Combat)"));
+#endif
+			if (SharePercent(L("체력 피해##jj-health", "Health damage##jj-health"), tune.healthDamage)) {
+				Settings::SetJujutsuTune(tune);
+			}
+			if (ImGui::IsItemDeactivatedAfterEdit()) {
+				Settings::Save();
+			}
+			Help(L("기본 5%. 넘어진 적이 잃는 체력 (최대 체력 대비). 체력 1은 남기며, 목 꺾기만 죽입니다",
+				"Default 5%. Health the thrown enemy loses, as a share of its maximum. It always keeps 1; only the neck break kills"));
 
-			ImGui::SeparatorText("시간 보내기");
+			ImGui::SeparatorText(L("시간 보내기", "Pass time"));
 			{
 				const auto& steps = Settings::kRestGameSpeedSteps;
 				const float current = Settings::RestGameSpeed();
@@ -505,26 +618,27 @@ namespace CIGAR::Panel
 					}
 				}
 				// No %d in the format: ImGui shows the text as the value.
-				const std::string shown = step == 0 ? "끔"s : std::format("x{:.1f}", steps[step]);
-				if (ImGui::SliderInt("게임 속도", &step, 0, static_cast<int>(steps.size()) - 1, shown.c_str())) {
+				const std::string shown = step == 0 ? std::string(L("끔", "off")) : std::format("x{:.1f}", steps[step]);
+				if (ImGui::SliderInt(L("게임 속도##rest-speed", "Game speed##rest-speed"), &step, 0, static_cast<int>(steps.size()) - 1, shown.c_str())) {
 					Settings::SetRestGameSpeed(steps[step]);
 				}
 				if (ImGui::IsItemDeactivatedAfterEdit()) {
 					Settings::Save();
 				}
-				ImGui::TextColored(kDim, "%s", kRelease ? "기본 x3.0. 시간 보내기 중 세상이 빨라지는 정도. 게임 속 시간은 항상 최대 60배로 흐릅니다" :
-					"기본 x3.0. 시간 보내기 중 게임 전체(NPC 포함) 속도 최대치. 시간 흐름은 항상 최대 x60");
+				Help(kRelease ? L("기본 x3.0. 시간 보내기 중 세상이 빨라지는 정도. 게임 속 시간은 항상 최대 60배로 흐릅니다",
+				                  "Default x3.0. How much faster the world moves while passing time. Game time always runs up to 60 times faster") :
+				                "기본 x3.0. 시간 보내기 중 게임 전체(NPC 포함) 속도 최대치. 시간 흐름은 항상 최대 x60");
 			}
 
-			ImGui::SeparatorText("탈의·착용");
+			ImGui::SeparatorText(L("탈의·착용", "Undress & dress"));
 			float range = Settings::PlaceRange();
-			if (ImGui::SliderFloat("침대·옷장 유효 거리", &range, Settings::kPlaceRangeMin, Settings::kPlaceRangeMax, "%.0f")) {
+			if (ImGui::SliderFloat(L("침대·옷장 유효 거리##dress-range", "Bed and wardrobe reach##dress-range"), &range, Settings::kPlaceRangeMin, Settings::kPlaceRangeMax, "%.0f")) {
 				Settings::SetPlaceRange(range);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 250. 조준한 가구에서 이 거리를 벗어나면 프롬프트 해제");
+			Help(L("기본 250. 조준한 가구에서 이 거리를 벗어나면 프롬프트 해제", "Default 250. Moving this far from the furniture aimed at withdraws the prompt"));
 		}
 	}
 
@@ -541,9 +655,9 @@ namespace CIGAR::Panel
 			return;
 		}
 		SKSEMenuFramework::SetSection(kSection);
-		SKSEMenuFramework::AddSectionItem(kPageModules, RenderModules);
-		SKSEMenuFramework::AddSectionItem(kPageKeys, RenderKeyPage);
-		SKSEMenuFramework::AddSectionItem(kPageOptions, RenderOptions);
-		logs::info("control panel: registered {}/{{{}, {}, {}}} in SKSE Menu Framework", kSection, kPageModules, kPageKeys, kPageOptions);
+		SKSEMenuFramework::AddSectionItem(PageModules(), RenderModules);
+		SKSEMenuFramework::AddSectionItem(PageKeys(), RenderKeyPage);
+		SKSEMenuFramework::AddSectionItem(PageOptions(), RenderOptions);
+		logs::info("control panel: registered {}/{{{}, {}, {}}} in SKSE Menu Framework", kSection, PageModules(), PageKeys(), PageOptions());
 	}
 }

@@ -28,3 +28,6 @@
 using namespace std::literals;
 
 namespace logs = SKSE::log;
+
+// Player-facing text in Korean or English, used almost everywhere.
+#include "Text.h"

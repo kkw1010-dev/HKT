@@ -7,11 +7,53 @@ namespace CIGAR
 {
 	namespace
 	{
+#ifdef CIGAR_NEXUS
+		// The base game tags no drink as alcohol, so the Nexus edition knows its 29 by FormID (read from
+		// Skyrim.esm, HearthFires.esm and Dragonborn.esm with houseCARL, 2026-09-26). Drinks added by
+		// other mods are not offered.
+		struct DrinkRef
+		{
+			RE::FormID id;
+			std::string_view plugin;
+		};
+		constexpr std::array kBaseGameDrinks{
+			DrinkRef{ 0x034C5E, "Skyrim.esm"sv },     // Ale
+			DrinkRef{ 0x09380D, "Skyrim.esm"sv },     // Argonian Ale
+			DrinkRef{ 0x034C5D, "Skyrim.esm"sv },     // Nord Mead
+			DrinkRef{ 0x02C35A, "Skyrim.esm"sv },     // Black-Briar Mead
+			DrinkRef{ 0x0F693F, "Skyrim.esm"sv },     // Black-Briar Reserve
+			DrinkRef{ 0x0508CA, "Skyrim.esm"sv },     // Honningbrew Mead
+			DrinkRef{ 0x0555E8, "Skyrim.esm"sv },     // Dragon's Breath Mead
+			DrinkRef{ 0x03133C, "Skyrim.esm"sv },     // Wine
+			DrinkRef{ 0x0C5348, "Skyrim.esm"sv },     // Wine
+			DrinkRef{ 0x03133B, "Skyrim.esm"sv },     // Alto Wine
+			DrinkRef{ 0x0C5349, "Skyrim.esm"sv },     // Alto Wine
+			DrinkRef{ 0x0F257E, "Skyrim.esm"sv },     // Jessica's Wine
+			DrinkRef{ 0x085368, "Skyrim.esm"sv },     // Spiced Wine
+			DrinkRef{ 0x01895F, "Skyrim.esm"sv },     // Firebrand Wine
+			DrinkRef{ 0x0B91D7, "Skyrim.esm"sv },     // Cyrodilic Brandy
+			DrinkRef{ 0x036D53, "Skyrim.esm"sv },     // Colovian Brandy
+			DrinkRef{ 0x0D055E, "Skyrim.esm"sv },     // Stros M'Kai Rum
+			DrinkRef{ 0x065C37, "Skyrim.esm"sv },     // Velvet LeChance
+			DrinkRef{ 0x065C38, "Skyrim.esm"sv },     // White-Gold Tower
+			DrinkRef{ 0x065C39, "Skyrim.esm"sv },     // Cliff Racer
+			DrinkRef{ 0x003536, "HearthFires.esm"sv },  // Surilie Brothers Wine
+			DrinkRef{ 0x003535, "HearthFires.esm"sv },  // Argonian Bloodwine
+			DrinkRef{ 0x03572F, "Dragonborn.esm"sv },   // Ashfire Mead
+			DrinkRef{ 0x0320DF, "Dragonborn.esm"sv },   // Emberbrand Wine
+			DrinkRef{ 0x024E0B, "Dragonborn.esm"sv },   // Sadri's Sujamma
+			DrinkRef{ 0x0207E6, "Dragonborn.esm"sv },   // Sujamma
+			DrinkRef{ 0x0248CE, "Dragonborn.esm"sv },   // Matze
+			DrinkRef{ 0x0248CC, "Dragonborn.esm"sv },   // Shein
+			DrinkRef{ 0x0207E5, "Dragonborn.esm"sv },   // Flin
+		};
+#else
 		// Alcohol on this order: Gourmet tags vanilla ale, mead and wine MAG_FoodTypeAle / Wine; OCF,
 		// Hunterborn-style and vendor keywords cover the rest. Resolved by editor ID, so a missing one
 		// is simply skipped.
 		constexpr std::array kAlcoholKeywords{ "MAG_FoodTypeAle"sv, "MAG_FoodTypeWine"sv, "OCF_AlchDrinkAlcohol"sv,
 			"VendorItemDrinkAlcoholModerate"sv, "VendorItemDrinkAlcoholStrong"sv, "_SH_AlcoholDrinkKeyword"sv };
+#endif
 		// The places the user named: inns and houses (the player's own included).
 		constexpr std::array kPlaceKeywords{ "LocTypeInn"sv, "LocTypeHouse"sv, "LocTypePlayerHouse"sv };
 		constexpr auto kDrinkEvent = "ChairDrinkingStart"sv;
@@ -42,23 +84,37 @@ namespace CIGAR
 		moving = false;
 		dismissed = false;
 		alcoholKeywords.clear();
+		alcoholForms.clear();
 		placeKeywords.clear();
 		std::string found;
+#ifdef CIGAR_NEXUS
+		if (auto* handler = RE::TESDataHandler::GetSingleton()) {
+			for (const auto& ref : kBaseGameDrinks) {
+				if (const auto id = handler->LookupFormID(ref.id, ref.plugin); id != 0) {
+					alcoholForms.push_back(id);
+				}
+			}
+		}
+		found = std::format(" {} of {} base-game drinks", alcoholForms.size(), kBaseGameDrinks.size());
+		const bool noAlcohol = alcoholForms.empty();
+#else
 		for (const auto name : kAlcoholKeywords) {
 			if (auto* keyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(name)) {
 				alcoholKeywords.push_back(keyword);
 				found += std::format(" {}", name);
 			}
 		}
+		const bool noAlcohol = alcoholKeywords.empty();
+#endif
 		for (const auto name : kPlaceKeywords) {
 			if (auto* keyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(name)) {
 				placeKeywords.push_back(keyword);
 			}
 		}
-		Log("ready: alcohol keywords [{} ] places {}/{}", found, placeKeywords.size(), kPlaceKeywords.size());
-		if (alcoholKeywords.empty() || placeKeywords.empty()) {
-			Log("WARN a keyword list is empty: the prompt never shows");
-			Util::Notify("CIGAR: 의자 음주 키워드를 찾지 못함. 로그 확인");
+		Log("ready: alcohol [{} ] places {}/{}", found, placeKeywords.size(), kPlaceKeywords.size());
+		if (noAlcohol || placeKeywords.empty()) {
+			Log("WARN no alcohol or no place keyword resolved: the prompt never shows");
+			Util::Notify(Text::L("CIGAR: 의자 음주 대상을 찾지 못함. 로그 확인", "CIGAR: No drinks or places found for chair drinking. See the log"));
 		}
 	}
 
@@ -82,7 +138,11 @@ namespace CIGAR
 		if (!a_item || a_item->IsPoison()) {
 			return false;
 		}
+#ifdef CIGAR_NEXUS
+		return std::ranges::find(alcoholForms, a_item->GetFormID()) != alcoholForms.end();
+#else
 		return std::ranges::any_of(alcoholKeywords, [a_item](RE::BGSKeyword* a_keyword) { return a_item->HasKeyword(a_keyword); });
+#endif
 	}
 
 	RE::AlchemyItem* ChairDrink::PickDrink(RE::PlayerCharacter* a_player) const
@@ -116,7 +176,7 @@ namespace CIGAR
 			Log("after drinking {}: {} -> {} carried, still seated={}", drank ? Util::NameOf(drank) : "-"s, countBefore, count, chair);
 			if (count >= countBefore) {
 				Log("WARN the drink was not consumed");
-				Util::Notify("CIGAR: 술을 마시지 못함. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 술을 마시지 못함. 로그 확인", "CIGAR: Could not drink. See the log"));
 			}
 		}
 
@@ -137,7 +197,7 @@ namespace CIGAR
 				warnedStuck = true;
 				Log("WARN still seated {}s into movement input after the drinking idle",
 					std::chrono::duration_cast<std::chrono::seconds>(kStuckAfter).count());
-				Util::Notify("CIGAR: 음주 후 일어나지 못함. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 음주 후 일어나지 못함. 로그 확인", "CIGAR: Could not stand up after drinking. See the log"));
 			}
 		}
 
@@ -154,7 +214,7 @@ namespace CIGAR
 		LogGate(std::format("chair={} place={} ({}) combat={} drink={} dismissed={}", chair, place, chair ? where : "-"s, combat,
 			drink ? Util::NameOf(drink) : "-"s, dismissed));
 
-		prompt.Update(drink != nullptr && !dismissed, [drink] { return std::format("마시기 (길게): {}", Util::NameOf(drink)); });
+		prompt.Update(drink != nullptr && !dismissed, [drink] { return Text::F("마시기 (길게): {}", "Drink (hold): {}", Util::NameOf(drink)); });
 	}
 
 	void ChairDrink::OnDeclined(std::uint16_t a_eventID)

@@ -5,7 +5,15 @@ namespace CIGAR::Util
 	namespace
 	{
 		constexpr std::array kKeptSlots{ 31u, 40u, 41u, 43u, 50u, 51u };
+#ifndef CIGAR_NEXUS
 		constexpr std::array kNoStripKeywords{ "SexLabNoStrip"sv, "OStimNoStrip"sv, "zad_Lockable"sv, "zad_QuestItem"sv };
+
+		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
+		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
+		std::atomic<RE::TESFaction*> sexlabAnimating{ nullptr };
+#else
+		constexpr std::array<std::string_view, 0> kNoStripKeywords{};
+#endif
 
 		RE::BGSBipedObjectForm::BipedObjectSlot SlotMask(std::uint32_t a_slot)
 		{
@@ -52,6 +60,40 @@ namespace CIGAR::Util
 		}
 		return result;
 	}
+
+#ifndef CIGAR_NEXUS
+	void ResolveScenes()
+	{
+		auto* handler = RE::TESDataHandler::GetSingleton();
+		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
+		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
+		                      nullptr;
+		logs::info("scene frameworks: sexlab={}", sexlabAnimating.load() != nullptr);
+	}
+
+	bool InScene(RE::Actor* a_actor)
+	{
+		auto* faction = sexlabAnimating.load();
+		return faction && a_actor && a_actor->IsInFaction(faction);
+	}
+
+	std::string DescribeScenes()
+	{
+		return std::format(" sexlab={}", sexlabAnimating.load() != nullptr);
+	}
+#else
+	void ResolveScenes() {}
+
+	bool InScene(RE::Actor*)
+	{
+		return false;
+	}
+
+	std::string DescribeScenes()
+	{
+		return {};
+	}
+#endif
 
 	bool IsStrippable(const RE::TESObjectARMO* a_armor, std::uint32_t a_slot)
 	{

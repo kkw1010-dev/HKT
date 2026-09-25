@@ -85,8 +85,8 @@ namespace CIGAR
 		LogGate(std::format("mq201={} party={} carried={} wearing={} stored={} ({} carried) combat={} movable={}",
 			quest && quest->IsRunning() ? std::to_string(quest->GetCurrentStageID()) : "-"s, party, carried, wearing,
 			stored.size(), storedCarried, combat, movable));
-		wear.Update(party && carried && !wearing && !combat && movable, [this] { return std::format("파티 의상 입기 (길게): {}", Util::NameOf(outfit)); });
-		back.Update(!party && wearing && storedCarried > 0 && !combat && movable, [] { return "원래 장비로 (길게)"s; });
+		wear.Update(party && carried && !wearing && !combat && movable, [this] { return Text::F("파티 의상 입기 (길게): {}", "Wear Party Clothes (hold): {}", Util::NameOf(outfit)); });
+		back.Update(!party && wearing && storedCarried > 0 && !combat && movable, [] { return std::string(Text::L("원래 장비로 (길게)", "Back to Own Gear (hold)")); });
 	}
 
 	void PartyOutfit::OnAccepted(std::uint16_t a_eventID)

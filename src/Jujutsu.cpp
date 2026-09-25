@@ -29,6 +29,7 @@ namespace CIGAR
 		// GetRandomPercent <= 50, which a retry re-rolls. docs/012, test 22.
 		// The neck break kills (the user, 2026-09-25): kept alive, its victim got up and replayed a
 		// kill move on its own (test 22), and a broken neck is not something to stand up from.
+#ifndef CIGAR_NEXUS
 		constexpr std::array kValhallaIdles{
 			IdleRef{ "KneeThrow", 0xAA3A, "ValhallaCombat.esp"sv },
 			IdleRef{ "BodySlam", 0xAA3B, "ValhallaCombat.esp"sv },
@@ -36,6 +37,7 @@ namespace CIGAR
 			IdleRef{ "SlamA", 0xAA3D, "ValhallaCombat.esp"sv },
 			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv, true },  // KillMoveSneakH2HNeckBreak
 		};
+#endif
 		constexpr std::array kVanillaIdles{
 			IdleRef{ "KneeThrow", 0x821, "Update.esm"sv },     // H2HKillMoveKneeThrow
 			IdleRef{ "BodySlam", 0x820, "Update.esm"sv },      // H2HKillMoveBodySlam
@@ -44,8 +46,6 @@ namespace CIGAR
 			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv, true },  // KillMoveSneakH2HNeckBreak
 		};
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
 		constexpr RE::FormID kHumanoidBodyPartData = 0x1D;
 
 		// A guard drops between blows; keep offering the target this long after it was last seen blocking.
@@ -65,9 +65,13 @@ namespace CIGAR
 			return a_actor && a_actor->GetGraphVariableBool(a_name, value) && value;
 		}
 
-		bool IsDodging(RE::Actor* a_actor)
+		bool IsDodging([[maybe_unused]] RE::Actor* a_actor)
 		{
+#ifdef CIGAR_NEXUS
+			return false;
+#else
 			return GraphBool(a_actor, "bIsDodging");
+#endif
 		}
 		constexpr auto kStartWindow = 1s;
 		constexpr auto kPairTimeout = 10s;
@@ -80,9 +84,9 @@ namespace CIGAR
 		constexpr float kKnockMagnitude = 1.0f;
 		constexpr auto kKnockCheck = 400ms;
 
-		// The Valhalla stun share comes from the panel (the user's default 15%: "the ragdoll alone makes it
-		// a guard break"). The health share is unchanged.
-		constexpr float kHealthShare = 0.05f;  // of max health; never takes the victim below 1
+		// The Valhalla stun share, and without Valhalla the stamina share, come from the panel with the
+		// health share (Settings::JujutsuTuning; the stun default of 15% is the user's: "the ragdoll alone
+		// makes it a guard break"). Health never drops below 1: only the neck break kills.
 
 		using HandlerFn = bool (*)(RE::AnimHandler*, RE::Actor&, const RE::BSFixedString&);
 		HandlerFn originalKillActor = nullptr;
@@ -234,9 +238,14 @@ namespace CIGAR
 		idleLethal.clear();
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
+#ifdef CIGAR_NEXUS
+		const auto table = std::span<const IdleRef>(kVanillaIdles);
+		idleSource = "Skyrim.esm/Update.esm";
+#else
 		const bool valhallaEsp = handler && handler->LookupModByName("ValhallaCombat.esp"sv);
 		const auto& table = valhallaEsp ? std::span<const IdleRef>(kValhallaIdles) : std::span<const IdleRef>(kVanillaIdles);
 		idleSource = valhallaEsp ? "ValhallaCombat.esp (no conditions) + Update.esm sneak moves" : "Skyrim.esm/Update.esm";
+#endif
 		std::string found;
 		for (const auto& ref : table) {
 			auto* idle = handler ? handler->LookupForm<RE::TESIdleForm>(ref.id, ref.plugin) : nullptr;
@@ -247,12 +256,13 @@ namespace CIGAR
 				idleLethal.push_back(ref.lethal);
 			}
 		}
+#ifdef CIGAR_NEXUS
+		valhalla = nullptr;
+#else
 		valhalla = GetModuleHandleW(L"ValhallaCombat.dll") ? VAL_API::RequestPluginAPI() : nullptr;
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
-		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
-		                      nullptr;
+#endif
 		const bool hooked = originalKillActor && originalKillMoveStart && originalKillMoveEnd;
-		Log("idles from {}:{}; hooks={} valhalla={} sexlab={}", idleSource, found, hooked, valhalla != nullptr, sexlabAnimating != nullptr);
+		Log("idles from {}:{}; hooks={} valhalla={}{}", idleSource, found, hooked, valhalla != nullptr, Util::DescribeScenes());
 		if (idles.empty() || !hooked) {
 			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the anim-handler hooks are not installed");
 			return;
@@ -267,8 +277,8 @@ namespace CIGAR
 			a_gate = "why=no-controls";
 			return nullptr;
 		}
-		if (sexlabAnimating && a_player->IsInFaction(sexlabAnimating)) {
-			a_gate = "why=sexlab";
+		if (Util::InScene(a_player)) {
+			a_gate = "why=scene";
 			return nullptr;
 		}
 		if (a_player->IsDead() || a_player->IsInKillMove() || a_player->IsOnMount() || !IsHumanoid(a_player)) {
@@ -325,7 +335,7 @@ namespace CIGAR
 			jujutsu.Reset();
 		}
 		offeredTarget = target;
-		jujutsu.Update(target != nullptr, [target] { return std::format("유술: {}", Util::NameOf(target)); });
+		jujutsu.Update(target != nullptr, [target] { return Text::F("유술: {}", "Jujutsu: {}", Util::NameOf(target)); });
 	}
 
 	void Jujutsu::OnAccepted(std::uint16_t a_eventID)
@@ -417,7 +427,9 @@ namespace CIGAR
 			a_actor->GetGraphVariableBool("IsAttacking", graphAttacking);
 			// TK Dodge RE's graph variables (its Nemesis patch adds them to 1hm_behavior and magicbehavior).
 			bool iframe = false;
+#ifndef CIGAR_NEXUS
 			a_actor->GetGraphVariableBool("bInIframe", iframe);
+#endif
 			return std::format(
 				"attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={} dodge={} iframe={}",
 				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
@@ -437,7 +449,9 @@ namespace CIGAR
 		const auto* base = a_player->GetActorBase();
 		const auto* controls = RE::ControlMap::GetSingleton();
 		std::int32_t pnoIdx = 0;
+#ifndef CIGAR_NEXUS
 		a_player->GetGraphVariableInt("PNO_Animation_Idx", pnoIdx);
+#endif
 		bool animDriven = false;
 		a_player->GetGraphVariableBool("bAnimationDriven", animDriven);
 		std::string effects;
@@ -553,11 +567,12 @@ namespace CIGAR
 			Log("payoff skipped: victim {}", a_victim ? "dead" : "gone");
 			return;
 		}
+		const auto tune = Settings::JujutsuTune();
 		std::string what;
 		if (valhalla) {
 			auto* owner = a_victim->AsActorValueOwner();
 			const float maxStun = (owner->GetPermanentActorValue(RE::ActorValue::kHealth) + owner->GetPermanentActorValue(RE::ActorValue::kStamina)) / 2.0f;
-			const float share = Settings::JujutsuTune().guardStun;
+			const float share = tune.guardStun;
 			const float stun = maxStun * share;
 			// timedBlock applies the base damage times fStunTimedBlockMult (1 here) and nothing else.
 			valhalla->processStunDamage(VAL_API::timedBlock, nullptr, a_player, a_victim, stun);
@@ -565,13 +580,16 @@ namespace CIGAR
 				valhalla->isActorStunned(a_victim));
 		} else {
 			const float stamina = AV(a_victim, RE::ActorValue::kStamina);
-			DamageAV(a_victim, RE::ActorValue::kStamina, stamina);
-			what = std::format("stamina {:.0f} -> {:.0f}", stamina, AV(a_victim, RE::ActorValue::kStamina));
+			const float drain = std::min(a_victim->GetActorValueMax(RE::ActorValue::kStamina) * tune.staminaDamage, std::max(0.0f, stamina));
+			DamageAV(a_victim, RE::ActorValue::kStamina, drain);
+			what = std::format("stamina {:.0f} -> {:.0f} ({:.0f}% of max)", stamina, AV(a_victim, RE::ActorValue::kStamina),
+				tune.staminaDamage * 100.0f);
 		}
 		const float health = AV(a_victim, RE::ActorValue::kHealth);
-		const float damage = std::min(a_victim->GetActorValueMax(RE::ActorValue::kHealth) * kHealthShare, std::max(0.0f, health - 1.0f));
+		const float damage = std::min(a_victim->GetActorValueMax(RE::ActorValue::kHealth) * tune.healthDamage, std::max(0.0f, health - 1.0f));
 		DamageAV(a_victim, RE::ActorValue::kHealth, damage);
-		Log("payoff: {}; health {:.0f} -> {:.0f}", what, health, AV(a_victim, RE::ActorValue::kHealth));
+		Log("payoff: {}; health {:.0f} -> {:.0f} ({:.0f}% of max)", what, health, AV(a_victim, RE::ActorValue::kHealth),
+			tune.healthDamage * 100.0f);
 	}
 
 	void Jujutsu::Watch(RE::PlayerCharacter* a_player)
@@ -591,7 +609,7 @@ namespace CIGAR
 					Log("known issue: no actor has died since the load; 유술 is refused until the first death (docs/012, tests 24-29)");
 				} else if (!warnedNoStart) {
 					warnedNoStart = true;
-					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
+					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The Jujutsu move did not play. See the log"));
 				}
 				Finish("refused");
 			}
@@ -638,7 +656,7 @@ namespace CIGAR
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
-					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
+					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The Jujutsu move did not play. See the log"));
 				}
 				Finish("no start");
 			}
@@ -672,7 +690,7 @@ namespace CIGAR
 				} else if (v && v->IsDead() && !warnedDied) {
 					warnedDied = true;
 					Log("WARN the victim died although KillActor and KillMoveEnd were swallowed");
-					Util::Notify("CIGAR: 유술 대상 사망. 로그 확인");
+					Util::Notify(Text::L("CIGAR: 유술 대상 사망. 로그 확인", "CIGAR: The Jujutsu target died. See the log"));
 				}
 				Finish("done");
 			}

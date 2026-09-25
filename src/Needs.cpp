@@ -149,7 +149,7 @@ namespace CIGAR
 			static_cast<bool>(main), excreteEffect != nullptr, sexlabAnimating != nullptr);
 		if (!config || !utility || !main || !excreteEffect) {
 			Log("WARN PNO found but its quests/scripts did not resolve; the needs prompts are off");
-			Util::Notify("CIGAR: Private Needs 연동 실패. 용변 프롬프트 비활성");
+			Util::Notify(Text::L("CIGAR: Private Needs 연동 실패. 용변 프롬프트 비활성", "CIGAR: Private Needs link failed. Relief prompts off"));
 			return;
 		}
 		active = true;
@@ -279,7 +279,7 @@ namespace CIGAR
 			checking = false;
 			Log("WARN PNO did not start excreting within {} s of the request (fill {:.0f}%)",
 				std::chrono::duration_cast<std::chrono::seconds>(kStartWindow).count(), fill);
-			Util::Notify("CIGAR: Private Needs가 용변을 시작하지 않음. 로그 확인");
+			Util::Notify(Text::L("CIGAR: Private Needs가 용변을 시작하지 않음. 로그 확인", "CIGAR: Private Needs did not start. See the log"));
 		}
 	}
 
@@ -301,7 +301,7 @@ namespace CIGAR
 		if (!s.running && !warnedStopped) {
 			warnedStopped = true;
 			Log("WARN PNO's main quest is not running; switch PNO on in its MCM");
-			Util::Notify("CIGAR: Private Needs 꺼짐. MCM에서 켜야 용변 프롬프트 표시");
+			Util::Notify(Text::L("CIGAR: Private Needs 꺼짐. MCM에서 켜야 용변 프롬프트 표시", "CIGAR: Private Needs is off. Enable it in its MCM for relief prompts"));
 		}
 
 		// The prompt shows the fill; offer it again when the level changes.
@@ -315,8 +315,8 @@ namespace CIGAR
 		}
 		offeredBladder = s.bladderLevel;
 		offeredBowel = s.bowelLevel;
-		urinate.Update(s.canUrinate, [&s] { return std::format("소변 보기 ({:.0f}%)", s.bladderPercent); });
-		defecate.Update(s.canDefecate, [&s] { return std::format("대변 보기 ({:.0f}%)", s.bowelPercent); });
+		urinate.Update(s.canUrinate, [&s] { return Text::F("소변 보기 ({:.0f}%)", "Urinate ({:.0f}%)", s.bladderPercent); });
+		defecate.Update(s.canDefecate, [&s] { return Text::F("대변 보기 ({:.0f}%)", "Defecate ({:.0f}%)", s.bowelPercent); });
 	}
 
 	void Needs::OnAccepted(std::uint16_t a_eventID)
@@ -348,7 +348,7 @@ namespace CIGAR
 		Log("{}UrinateAndDefecate({}) requested: bladder {}:{:.0f}% bowel {}:{:.0f}% queued={}", queued ? "" : "WARN ", type,
 			s.bladderLevel, s.bladderPercent, s.bowelLevel, s.bowelPercent, queued);
 		if (!queued) {
-			Util::Notify("CIGAR: Private Needs 호출 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: Private Needs 호출 실패. 로그 확인", "CIGAR: Private Needs call failed. See the log"));
 		}
 	}
 }

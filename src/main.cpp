@@ -1,10 +1,15 @@
-#include "BaboKey.h"
-#include "Bathe.h"
-#include "Deflate.h"
+#ifndef CIGAR_NEXUS
+#	include "BaboKey.h"
+#	include "Bathe.h"
+#	include "Deflate.h"
+#	include "Eat.h"
+#	include "Execute.h"
+#	include "Grapple.h"
+#	include "LockOn.h"
+#	include "Needs.h"
+#	include "Surrender.h"
+#endif
 #include "Dress.h"
-#include "Eat.h"
-#include "Execute.h"
-#include "Grapple.h"
 #include "Jujutsu.h"
 #include "ItemEquip.h"
 #include "BookRead.h"
@@ -15,16 +20,13 @@
 #include "Poison.h"
 #include "Observe.h"
 #include "PartyOutfit.h"
-#include "LockOn.h"
 #include "Module.h"
-#include "Needs.h"
 #include "Panel.h"
 #include "Potion.h"
 #include "Prompt.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
-#include "Surrender.h"
 #include "Util.h"
 #include "WeaponSwap.h"
 
@@ -34,6 +36,15 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
+#ifdef CIGAR_NEXUS
+		// The Nexus edition: base-game modules only (docs/035-nexus-edition.md).
+		static const std::array<Module*, 15> modules{
+			Dress::GetSingleton(), WeaponSwap::GetSingleton(), Jujutsu::GetSingleton(), Potion::GetSingleton(),
+			QuestTrack::GetSingleton(), ItemEquip::GetSingleton(), BookRead::GetSingleton(), Rest::GetSingleton(),
+			Recharge::GetSingleton(), ChairDrink::GetSingleton(), QuestAction::GetSingleton(), Helmet::GetSingleton(),
+			Poison::GetSingleton(), Observe::GetSingleton(), PartyOutfit::GetSingleton()
+		};
+#else
 		static const std::array<Module*, 24> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
@@ -44,6 +55,7 @@ namespace CIGAR
 			QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
 			PartyOutfit::GetSingleton()
 		};
+#endif
 		return modules;
 	}
 }
@@ -256,11 +268,12 @@ namespace
 		SKSE::GetTaskInterface()->AddTask([] {
 			if (!Prompts::Available()) {
 				logs::error("SkyPrompt is missing or incompatible; CIGAR shows no prompts");
-				Util::Notify("CIGAR: SkyPrompt 없음 또는 버전 불일치. 프롬프트 비활성");
+				Util::Notify(Text::L("CIGAR: SkyPrompt 없음 또는 버전 불일치. 프롬프트 비활성", "CIGAR: SkyPrompt is missing or incompatible. Prompts off"));
 			}
 			if (Prompts::HasDuplicateIDs()) {
-				Util::Notify("CIGAR: 프롬프트 ID 중복. 한 키에 두 동작이 실행됨. 로그 확인");
+				Util::Notify(Text::L("CIGAR: 프롬프트 ID 중복. 한 키에 두 동작이 실행됨. 로그 확인", "CIGAR: Duplicate prompt IDs. One key runs two actions. See the log"));
 			}
+			Util::ResolveScenes();
 			for (auto* module : Modules()) {
 				module->OnGameLoaded();
 			}
@@ -273,11 +286,16 @@ namespace
 		switch (a_msg->type) {
 		case SKSE::MessagingInterface::kPostLoad:
 			Settings::Load();
+#ifndef CIGAR_NEXUS
 			// Valhalla Combat reads its settings file at kDataLoaded; set its execution key before that.
 			Execute::GetSingleton()->PrepareKey();
-			Panel::Register();
+#endif
 			break;
 		case SKSE::MessagingInterface::kDataLoaded:
+			// The language reads the game's own names, so it waits for the data; the panel's page
+			// titles are registered in it.
+			Text::Resolve();
+			Panel::Register();
 			Prompts::Init();
 			if (auto* ui = RE::UI::GetSingleton()) {
 				ui->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatch::GetSingleton());
@@ -286,11 +304,15 @@ namespace
 				logs::error("UI unavailable: prompts will stay on screen over menus");
 			}
 			Dress::GetSingleton()->RegisterEvents();
+#ifndef CIGAR_NEXUS
 			Needs::GetSingleton()->RegisterEvents();
+#endif
 			QuestTrack::GetSingleton()->RegisterEvents();
 			ItemEquip::GetSingleton()->RegisterEvents();
 			BookRead::GetSingleton()->RegisterEvents();
+#ifndef CIGAR_NEXUS
 			Grapple::GetSingleton()->ReadIni();
+#endif
 			Jujutsu::InstallHook();
 			StartTicker();
 			break;
@@ -354,7 +376,14 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	SKSE::Init(a_skse, false);
 
 	const auto* plugin = SKSE::PluginDeclaration::GetSingleton();
-	logs::info("{} {} loaded (runtime {})", plugin->GetName(), plugin->GetVersion().string(), a_skse->RuntimeVersion().string());
+#if defined(CIGAR_NEXUS)
+	constexpr auto kEdition = "Nexus edition, base game only";
+#elif defined(CIGAR_RELEASE)
+	constexpr auto kEdition = "release";
+#else
+	constexpr auto kEdition = "author";
+#endif
+	logs::info("{} {} loaded ({}; runtime {})", plugin->GetName(), plugin->GetVersion().string(), kEdition, a_skse->RuntimeVersion().string());
 
 	if (!SKSE::GetMessagingInterface()->RegisterListener(OnMessage)) {
 		logs::critical("could not register the SKSE message listener");

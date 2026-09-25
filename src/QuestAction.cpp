@@ -78,7 +78,7 @@ namespace CIGAR
 			objective, shout ? Util::NameOf(shout) : "-"s, known, equipped ? Util::NameOf(equipped) : "-"s, combat, movable));
 
 		const bool available = shout && known && !already && !combat && movable;
-		prompt.Update(available, [shout] { return std::format("장착하기 (길게): {}", Util::NameOf(shout)); });
+		prompt.Update(available, [shout] { return Text::F("장착하기 (길게): {}", "Equip (hold): {}", Util::NameOf(shout)); });
 	}
 
 	void QuestAction::OnAccepted(std::uint16_t a_eventID)
@@ -99,7 +99,7 @@ namespace CIGAR
 			equipped ? Util::NameOf(equipped) : "-"s);
 		if (equipped != shout) {
 			Log("WARN the voice slot does not hold the shout right after equipping");
-			Util::Notify("CIGAR: 샤우트 장착 확인 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 샤우트 장착 확인 실패. 로그 확인", "CIGAR: The shout was not equipped. See the log"));
 		}
 	}
 }

@@ -38,6 +38,5 @@ namespace CIGAR
 		Pick Evaluate(RE::PlayerCharacter* a_player) const;
 
 		PromptSlot apply{ this, kApply };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 	};
 }

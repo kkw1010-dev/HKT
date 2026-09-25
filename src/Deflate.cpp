@@ -123,7 +123,7 @@ namespace CIGAR
 		if (!Resolve()) {
 			if (playerAlias || inflater) {
 				Log("WARN Fill Her Up found but its scripts did not resolve; the deflate prompt is off");
-				Util::Notify("CIGAR: FHU 연동 실패. 배출 프롬프트 비활성");
+				Util::Notify(Text::L("CIGAR: FHU 연동 실패. 배출 프롬프트 비활성", "CIGAR: Fill Her Up link failed. Deflate prompt off"));
 			}
 			inflater = nullptr;
 			return;
@@ -206,7 +206,7 @@ namespace CIGAR
 		LogGate(std::format("tracked={} type={} animating={} sexlab={} settling={} holding={}", tracked, type, animating, sexlab, settling, holding));
 		// While held, FHU itself is animating; keep the prompt so the release still arrives.
 		const bool can = holding || (tracked && type > 0 && !settling);
-		deflate.Update(can, [] { return "배출 (길게 누르기)"s; });
+		deflate.Update(can, [] { return std::string(Text::L("배출 (길게 누르기)", "Deflate (hold)")); });
 	}
 
 	void Deflate::SendKey(const char* a_event, bool a_down)

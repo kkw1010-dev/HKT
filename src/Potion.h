@@ -93,7 +93,6 @@ namespace CIGAR
 
 		PromptSlot drink{ this, kDrink };
 
-		RE::TESFaction* sexlabAnimating{ nullptr };
 
 		Need offeredNeed{ Need::kNone };
 		RE::AlchemyItem* offeredPotion{ nullptr };

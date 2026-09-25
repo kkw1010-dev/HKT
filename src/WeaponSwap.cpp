@@ -1,16 +1,15 @@
 #include "WeaponSwap.h"
 
 #include "Settings.h"
-#include "TDM/TrueDirectionalMovementAPI.h"
 #include "Util.h"
+#ifndef CIGAR_NEXUS
+#	include "TDM/TrueDirectionalMovementAPI.h"
+#endif
 
 namespace CIGAR
 {
 	namespace
 	{
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		// Hostiles farther than this are not considered the enemy (the panel's range tops out below it).
 		constexpr float kSearchRadius = 4096.0f;
 		// Inside this band below the switch distance the previous zone holds, so an enemy standing at
@@ -85,17 +84,15 @@ namespace CIGAR
 		expected = nullptr;
 		checkPending = false;
 
+#ifndef CIGAR_NEXUS
 		if (!tdm) {
 			tdm = TDM_API::RequestPluginAPI();
 		}
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
-		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
-		                      nullptr;
+#endif
 		auto* defaults = RE::BGSDefaultObjectManager::GetSingleton();
 		rightSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kRightHandEquip) : nullptr;
 		leftSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kLeftHandEquip) : nullptr;
-		Log("tdm={} sexlab={} rightSlot={} leftSlot={} range={:.0f}", tdm != nullptr, sexlabAnimating != nullptr,
+		Log("tdm={}{} rightSlot={} leftSlot={} range={:.0f}", tdm != nullptr, Util::DescribeScenes(),
 			rightSlot != nullptr, leftSlot != nullptr, Settings::WeaponSwapRange());
 		if (!rightSlot || !leftSlot) {
 			Log("WARN hand equip slots did not resolve; one-handed weapons use their default hand");
@@ -106,6 +103,7 @@ namespace CIGAR
 	RE::NiPointer<RE::Actor> WeaponSwap::FindTarget(RE::PlayerCharacter* a_player, bool& a_locked) const
 	{
 		a_locked = false;
+#ifndef CIGAR_NEXUS
 		if (tdm && tdm->GetTargetLockState()) {
 			auto target = tdm->GetCurrentTarget().get();
 			if (target && !target->IsDead()) {
@@ -113,6 +111,7 @@ namespace CIGAR
 				return target;
 			}
 		}
+#endif
 		for (auto* actor : Util::NearbyHostiles(a_player, kSearchRadius)) {
 			if (actor->IsInCombat()) {
 				return RE::NiPointer<RE::Actor>(actor);
@@ -255,7 +254,7 @@ namespace CIGAR
 		s.combat = a_player->IsInCombat();
 		const auto* controls = RE::ControlMap::GetSingleton();
 		s.movable = controls && controls->IsMovementControlsEnabled();
-		s.sexlab = sexlabAnimating && a_player->IsInFaction(sexlabAnimating);
+		s.scene = Util::InScene(a_player);
 		s.quiet = Clock::now() < quietUntil;
 		s.hands = Wielded(a_player);
 		if (s.combat) {
@@ -307,7 +306,7 @@ namespace CIGAR
 			lastZone = s.zone;
 		}
 
-		const bool ready = s.combat && s.movable && !s.sexlab && !s.quiet && s.target;
+		const bool ready = s.combat && s.movable && !s.scene && !s.quiet && s.target;
 		const bool distant = s.zone == Zone::kFar || s.zone == Zone::kFleeing;
 		const bool wantRanged = ready && distant && (s.hands == Hands::kMelee || s.hands == Hands::kEmpty);
 		const bool wantMelee = ready && s.zone == Zone::kNear && s.hands == Hands::kRanged;
@@ -321,9 +320,9 @@ namespace CIGAR
 			return a_pick.weapon ? Util::NameOf(a_pick.weapon) + (a_pick.previous ? "(prev)" : a_pick.favorite ? "(fav)" : "") : "none"s;
 		};
 		// Distance changes every tick, so the gate carries the zone; the zone line above has the distance.
-		LogGate(std::format("combat={} target={} locked={} zone={} hands={} movable={} sexlab={} quiet={} ranged={} melee={}",
+		LogGate(std::format("combat={} target={} locked={} zone={} hands={} movable={} scene={} quiet={} ranged={} melee={}",
 			s.combat, s.target ? Util::NameOf(s.target) : "-"s, s.locked, ZoneName(static_cast<int>(s.zone)),
-			HandsName(static_cast<int>(s.hands)), s.movable, s.sexlab, s.quiet,
+			HandsName(static_cast<int>(s.hands)), s.movable, s.scene, s.quiet,
 			pickName(wantRanged, rangedPick), pickName(wantMelee, meleePick)));
 
 		const auto update = [](PromptSlot& a_slot, bool a_want, const Pick& a_pick, RE::TESObjectWEAP*& a_offered, std::string_view a_label) {
@@ -336,8 +335,8 @@ namespace CIGAR
 			a_offered = live ? a_pick.weapon : nullptr;
 			a_slot.Update(live, [&] { return std::format("{}: {}", a_label, Util::NameOf(a_pick.weapon)); });
 		};
-		update(ranged, wantRanged, rangedPick, offeredRanged, "원거리 무기");
-		update(melee, wantMelee, meleePick, offeredMelee, "근접 무기");
+		update(ranged, wantRanged, rangedPick, offeredRanged, Text::L("원거리 무기", "Ranged Weapon"));
+		update(melee, wantMelee, meleePick, offeredMelee, Text::L("근접 무기", "Melee Weapon"));
 	}
 
 	void WeaponSwap::RestoreLeft(RE::PlayerCharacter* a_player)
@@ -381,7 +380,7 @@ namespace CIGAR
 		const auto s = Read(player, hold);
 		const bool isRanged = a_eventID == kRanged;
 		// Re-check: the fight or the hands may have changed while the prompt was up.
-		const bool ready = s.combat && s.movable && !s.sexlab && s.target;
+		const bool ready = s.combat && s.movable && !s.scene && s.target;
 		const bool live = isRanged ?
 		                      ready && (s.zone == Zone::kFar || s.zone == Zone::kFleeing) && (s.hands == Hands::kMelee || s.hands == Hands::kEmpty) :
 		                      ready && s.zone == Zone::kNear && s.hands == Hands::kRanged;
@@ -450,7 +449,7 @@ namespace CIGAR
 		Log("WARN after equip: right hand is {}, expected {}", right ? Util::NameOf(right) : "-"s, Util::NameOf(expected));
 		if (!warnedEquip) {
 			warnedEquip = true;
-			Util::Notify("CIGAR: 무기 전환 실패. 로그 확인");
+			Util::Notify(Text::L("CIGAR: 무기 전환 실패. 로그 확인", "CIGAR: Weapon swap failed. See the log"));
 		}
 	}
 }
