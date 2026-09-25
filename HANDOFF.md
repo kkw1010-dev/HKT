@@ -11,52 +11,30 @@ Reply to the user in Korean. Read this section, then act on the two tasks below 
   no GitHub release page (the user's choice). There is also an older remote branch `release/0.2.0`.
 - **Release package:** `%USERPROFILE%\Downloads\CIGAR 2.0.0` (README.md in Korean with the known
   issues, `SKSE\Plugins\CIGAR.dll`, default `CIGAR.json`).
-- **The load order runs the release build now, for the user's test.** MO2 profile `TKL - MUNG ADDON`:
-  `+CIGAR 2.0.0` (new mod folder `mods\CIGAR 2.0.0`, the package copied in), `-CIGAR 0.2.0`,
-  **`-CIGAR`** (the author build is off). Backup of the profile: `modlist.txt.bak_20260925_release-test`.
-  - While this holds, `tools\Build.ps1 -Deploy` would fail `verify_deploy.py` (it expects `+CIGAR` and
-    no release copy enabled) and would deploy an author DLL nobody loads. To go back to author work:
-    close MO2, set `+CIGAR` and `-CIGAR 2.0.0` in `modlist.txt`, relaunch MO2 (Toolchain README,
-    "Editing the MO2 profile while MO2 is running").
-  - The release build's settings come from `mods\CIGAR 2.0.0\SKSE\Plugins\CIGAR.json` (defaults; every
-    prompt-only switch defaults to on), not from the author mod's `CIGAR.json`.
-  - The release panel shows feature descriptions only (`docs/007`, last section).
+- **The author build is back in the load order** (2026-09-25, v3 prep): MO2 profile `TKL - MUNG ADDON`
+  has `+CIGAR`, `-CIGAR 2.0.0`, `-CIGAR 0.2.0` (backup `modlist.txt.bak_20260925_v3-author`), so
+  `tools\Build.ps1 -Deploy` works again. The release copy stays in `mods\CIGAR 2.0.0`.
 - Grapple's NPC grapples and CIGAR's Grapple module are back on (the 유술 test shutdown is undone).
 - Streamlined Interactions stays disabled; `verify_deploy.py` fails if it is enabled.
 - Untracked files in the repo root (`GPT_CODEX_SOURCE_FIDELITY.md`, `SI_IDLE_LEDGE_SIT_ANALYSIS.md`,
   `TCL_LIGHT_HOOK_ANALYSIS.md`, `scratch/`) are not ours; they were never committed. Leave them.
 
-### Task 1: check the user's v2 release test
+### Task 1: v2 release test (done)
 
-The user tests the release build in game and reports. Before asking anything:
-1. Read `SKSE\CIGAR.log`. The first line must read `CIGAR 2-0-0-0 loaded`; if it reads 0-2-0-0 the
-   author or old release DLL loaded instead.
-2. The release build logs the same gate and action lines as the author build (only the panel hides
-   diagnostics), so each report can be checked against the log.
-3. The CIGAR 2.0 final test checklist (44 items, all passed on the author build) is the private
-   artifact https://claude.ai/artifact/Wc5nH3HejiEub5mdmtsZRF. Its database collection `results`
-   still holds the author-build results; if the user uses it again, read it with `ArtifactData`
-   `list` and compare the `updatedAt` times with the release run. Offer to reset it first if the user
-   wants a clean sheet (the user decides; do not delete their rows unasked).
-4. Known issues, disclosed on purpose, not bugs to chase: 유술 refused until the session's first death
-   (log line `known issue: no actor has died since the load`, no notification); Execute sometimes
-   misses its first press. See `docs/012` ("Decision") and memory
-   `disclose-known-issue-over-risky-engine-fix`.
-5. Anything that fails only in the release build points at `CIGAR_RELEASE` differences
-   (`src/Panel.cpp` only) or at the default `CIGAR.json`.
+The user tested the 2.0.0 release build in game and reported no problems (2026-09-25). Its log opened
+with `CIGAR 2-0-0-0 loaded` and held no warning or error line. Known issues stay as disclosed in
+`docs/012` (유술 before the session's first death, Execute's missed first press).
 
 ### Task 2: CIGAR 3.0, first feature MannequinSwap
 
 - Plan: `docs/030-mannequin-swap.md` (facts read from the load order: `MannequinActivatorSCRIPT` by
   Another Mannequin Script Fix, 20 base-form slots, the `MannequinActivateTrig` activate parent;
   PromptID 40; one build with self-verifying logs, one test session).
-- **Branch first:** the user wants 3.0 work on a new branch (`git switch -c v3` or `feat/mannequin-swap`
-  from `master`); do not build 3.0 on `master` or `v2`.
+- **Branch `v3`** (from `master` at `2de6ee3`) holds all 3.0 work; do not build 3.0 on `master` or `v2`.
 - **Decisions still open, ask before coding** (listed in `docs/030`, "Couplings"): whether the helmet
   stowed by `Helmet` counts as worn for the swap; whether `Dress`'s remembered outfit is refreshed
-  or cleared after a swap. Also confirm the Almsivi CC mannequins stay excluded until their extra
-  script is read.
-- Author work needs the author build back in the load order (see State).
+  or cleared after a swap. The Almsivi CC mannequins are included: their extra script only seeds the
+  starting outfit once (read 2026-09-25, `docs/030`).
 - New modules follow `docs/000-adding-a-module.md` and the user's rules in memory, including
   `cigar-declined-prompt-stays-hidden` (a double-tap decline hides the prompt until the situation
   changes; hold-and-keep prompts must read the double tap themselves).

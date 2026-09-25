@@ -1,8 +1,8 @@
 # 030 · MannequinSwap (의상 교환 with a mannequin), plan
 
-Status (2026-09-25): **planned, not started.** The user files it under **CIGAR 3.0**: CIGAR 2.0 ends
-with the SI absorption, and MannequinSwap is the first 3.0 feature. Work starts **on a new branch
-after the current SI test cycle is finished**, not before.
+Status (2026-09-25): **planned, not started; work is on branch `v3`.** The user files it under
+**CIGAR 3.0**: CIGAR 2.0 ends with the SI absorption (2.0.0 released and tested by the user, no
+problems), and MannequinSwap is the first 3.0 feature. The author build is back in the load order.
 
 Sources: a plan GPT wrote (`claude.md` in the repo root, removed on the user's permission once this
 file replaced it) and Claude's review of it against this load order on 2026-09-25. Everything under
@@ -54,7 +54,12 @@ All four run the same `Swap()`. Hold, as the project's prompt policy asks for no
   - A slot left behind by an item that is gone reduces capacity. Count the free slots by reading the
     `ArmorSlotNN` properties (read only); never write them.
 - **Almsivi CC mannequins** (`ccASVSSE001_TempleMannequin01-04`) also carry `ccASVSSE001_EquipScript`,
-  not read yet. Exclude them until it is.
+  read 2026-09-25 (decompiled from `ccasvsse001-almsivi.bsa`): on the first `OnCellAttach` it
+  `AddItem`s its four `ArmorNN` properties and goes to state `done`, which is empty. It only seeds the
+  starting outfit once (through `MannequinActivatorSCRIPT.OnItemAdded`) and never reacts again, so
+  **these mannequins are included**. The same archive's `ccASVSSE001_MannequinRefAliasClear` is a
+  ReferenceAlias script that clears three quest aliases when the player *activates* the mannequin;
+  CIGAR does not activate it, so a swap leaves those aliases (quest markers) as they were.
 
 ## Keep from GPT's plan
 
@@ -94,8 +99,8 @@ All four run the same `Swap()`. Hold, as the project's prompt policy asks for no
 - **`Dress` (co-save `DRES`)** remembers the outfit by FormID. After a swap those items are on the
   mannequin, and 착용하기 would dress the player half-way. Options: refresh `Dress`'s memory from what
   is worn after the swap, or clear it.
-- **`Helmet` (co-save `HELM`)** keeps the helmet off by default and shows it on the hip. The stowed
-  helmet is not worn, so a plain swap leaves it on the hip while the mannequin's helmet comes onto the
+- **`Helmet` (co-save `HELM`)** keeps the helmet off by default; the stowed helmet sits unworn in the
+  inventory (the hip display was dropped). A plain swap leaves it there while the mannequin's helmet comes onto the
   head. Options: count the stowed helmet as part of the player's outfit, or leave helmets out of the
   swap and to `Helmet`.
 - **`PartyOutfit` (co-save `QOUT`)**: blocked while active (see gates).
