@@ -7,14 +7,16 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 ### State
 
-- **CIGAR 2.0.0 is released locally** (`%USERPROFILE%\Downloads\CIGAR 2.0.0`, README in Korean with the
-  known issues). The user tested the release build in game with no problems (2026-09-25). GitHub
-  (`kkw1010-dev/HKT`, public): `master` holds the current source; `v2` is the 2.0.0 source snapshot
-  (`e6d0b9e`); there is no GitHub release page (the user's choice).
+- **CIGAR 2.0.1 is released locally** (2026-09-26): `%USERPROFILE%\Downloads\CIGAR 2.0.1` and
+  `CIGAR 2.0.1.7z` (README in Korean with the known issues). 2.0.1 is 2.0.0 made standalone (below);
+  gameplay is unchanged. The 2.0.0 package, archive and `mods\CIGAR 2.0.0` copy were deleted, since
+  they carried the old coupling. The user tested 2.0.0 in game with no problems (2026-09-25); 2.0.1 was
+  not played. GitHub (`kkw1010-dev/HKT`, public): `master` and `v2` both hold the 2.0.1 source; there
+  is no GitHub release page (the user's choice).
 - **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
   are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
 - **The author build is in the load order**: MO2 profile `TKL - MUNG ADDON` has `+CIGAR` and
-  `-CIGAR 2.0.0`, so `tools\Build.ps1 -Deploy` works. The release copy stays in `mods\CIGAR 2.0.0`.
+  `-CIGAR 2.0.1`, so `tools\Build.ps1 -Deploy` works. The release copy is `mods\CIGAR 2.0.1`.
 - **CIGAR is a standalone system (2026-09-26).** It reads, writes and checks nothing of any other
   interaction mod: no settings reader, no deploy sync, no profile anchor, no duplicate-module warning.
   Do not add such coupling back; overlapping prompts from another mod are that modlist's problem.
