@@ -10,6 +10,7 @@ never required.
 import hashlib
 import json
 import os
+import re
 import struct
 import sys
 
@@ -809,8 +810,10 @@ def main():
     # Profile registration and priority.
     modlist = read_lines(os.path.join(profile, "modlist.txt"))
     check("+" + MOD_NAME in modlist, "mod enabled in modlist.txt")
-    check("-" + RELEASE_MOD in modlist and "+" + RELEASE_MOD not in modlist,
-          "release mod disabled in modlist.txt")
+    # Any installed release copy ("CIGAR 0.2.0", "CIGAR 2.0.0", ...) must stay off beside the author build.
+    releases = [l for l in modlist if re.match(r"^[+-]CIGAR \d", l)]
+    enabled = [l[1:] for l in releases if l.startswith("+")]
+    check(not enabled, "release copies disabled in modlist.txt%s" % (": enabled " + ", ".join(enabled) if enabled else ""))
     # CIGAR absorbed all of SI; on 2026-09-25 an SI prompt still overlapped CIGAR's book prompt and took
     # the key, and the user had SI switched off. The override below stays for players who keep SI.
     check("+" + SI_MOD not in modlist, "Streamlined Interactions disabled (fully absorbed by CIGAR)")

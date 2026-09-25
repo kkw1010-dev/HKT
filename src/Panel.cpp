@@ -58,7 +58,7 @@ namespace CIGAR::Panel
 				"납치당한 방에서 행동 선택 프롬프트가 뜹니다. 단축키 대신 프롬프트로 고릅니다." },
 			Label{ "LockOn", "록온", "True Directional Movement",
 				"전투 중 적을 록온하는 프롬프트가 뜹니다. 이미 록온 중이면 뜨지 않습니다." },
-			Label{ "Grapple", "그래플", "Grapple (Patreon)",
+			Label{ "Grapple", "그래플", "Grapple",
 				"전투 중 가까운 적에게 그래플 프롬프트가 뜹니다. 록온 상태에서 쓰면 그래플이 끝난 뒤 다시 록온합니다." },
 			Label{ "Deflate", "배출", "Fill Her Up",
 				"몸에 찬 것을 배출하는 프롬프트가 뜹니다. 키를 길게 누릅니다." },
@@ -71,7 +71,7 @@ namespace CIGAR::Panel
 			Label{ "Execute", "처형", "Valhalla Combat",
 				"스태거가 깨진 적에게 처형 프롬프트가 뜹니다. 프롬프트는 실제로 처형이 나갈 때만 보입니다." },
 			Label{ "Jujutsu", "유술", "",
-				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 적을 죽이지 않고 넘어뜨리며, 가드를 무너뜨립니다." },
+				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 네 가지 기술은 적을 넘어뜨려 가드를 무너뜨리고, 목 꺾기는 적을 쓰러뜨려 죽입니다." },
 			Label{ "Needs", "용변", "Private Needs - Orgasm",
 				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다." },
 			Label{ "Potion", "물약", "",
@@ -85,13 +85,13 @@ namespace CIGAR::Panel
 			Label{ "Recharge", "무기 충전", "",
 				"전투 밖에서 손에 든 마법 무기의 충전량이 25% 이하로 떨어지면 충전 프롬프트가 뜹니다. 채워진 소울젬 중 부족분을 채우는 가장 작은 것을 씁니다. 아즈라의 별처럼 재사용하는 젬은 빈 젬으로 돌아옵니다." },
 			Label{ "ChairDrink", "의자에서 마시기", "",
-				"여관이나 집에서 의자에 앉아 있고 술을 가지고 있으면 마시기 프롬프트가 뜹니다. 앉은 채로 술을 마십니다. 움직이면 일어납니다." },
+				"여관이나 집에서 의자에 앉아 있고 술을 가지고 있으면 마시기 프롬프트가 뜹니다. 앉은 채로 술을 마십니다. 움직이면 일어납니다. 두 번 눌러 닫으면 일어날 때까지 뜨지 않습니다." },
 			Label{ "Helmet", "투구 벗기·쓰기", "",
 				"얼굴이 보이도록 투구를 벗고 다니는 것이 기본입니다. 던전 안이 아니면 투구를 쓰고 있는 동안 투구 벗기가 뜨고, 전투가 시작되면 벗어 둔 투구를 쓰는 프롬프트가 뜹니다. 두 번 눌러 닫으면 장소를 옮기거나 전투가 끝날 때까지 뜨지 않습니다." },
 			Label{ "Poison", "독 바르기", "",
 				"무기를 꺼냈을 때 오른손 무기에 독이 없고 독을 가지고 있으면, 가장 비싼 독을 바르는 프롬프트가 뜹니다." },
 			Label{ "Observe", "주시하기", "",
-				"무기를 넣고 5초 동안 가만히 인물이나 먼 풍경을 바라보면 주시하기가 뜹니다. 누르고 있는 동안 시야가 부드럽게 좁아지며 확대되고, 떼거나 움직이면 돌아옵니다. 가까운 물건이나 가구에는 뜨지 않습니다." },
+				"무기를 넣고 5초 동안 가만히 인물이나 먼 풍경을 바라보면 주시하기가 뜹니다. 누르고 있는 동안 시야가 부드럽게 좁아지며 확대되고, 떼거나 움직이면 돌아옵니다. 가까운 물건이나 가구에는 뜨지 않습니다. 두 번 눌러 닫으면 자리를 옮길 때까지 뜨지 않습니다." },
 			Label{ "PartyOutfit", "파티 의상", "",
 				"탈모어 대사관 연회 퀘스트에서 파티 의상을 가지고 있으면 입기 프롬프트가, 연회가 끝나면 원래 장비로 돌아가는 프롬프트가 뜹니다." },
 			Label{ "QuestAction", "퀘스트 행동", "",
@@ -173,6 +173,12 @@ namespace CIGAR::Panel
 				SKSE::GetTaskInterface()->AddTask(a_apply);
 			}
 			ImGui::Indent();
+			if constexpr (kRelease) {
+				// The release panel says what the switch does, not which key codes moved where.
+				ImGui::TextColored(kDim, "%s", on ? "켜짐: 이 모드의 원래 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: 이 모드의 원래 단축키를 그대로 씁니다");
+				ImGui::Unindent();
+				return;
+			}
 			const auto manual = Settings::ManualKey(a_target);
 			const auto manualName = manual >= 0 ? NameOf(manual) : std::string("기록 없음");
 			if (on) {
@@ -199,7 +205,9 @@ namespace CIGAR::Panel
 				}
 				ImGui::Indent();
 				const auto key = Deflate::GetSingleton()->Key();
-				if (on) {
+				if (kRelease) {
+					ImGui::TextColored(kDim, "%s", on ? "켜짐: 배출 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: Fill Her Up의 원래 단축키를 그대로 씁니다");
+				} else if (on) {
 					ImGui::TextColored(kDim, "FHU 배출 키 해제(키 없음). 배출은 프롬프트로만");
 				} else {
 					ImGui::TextColored(kDim, "FHU 자체 키 사용. 현재 키: %s", key >= 0 ? NameOf(key).c_str() : "없음");
@@ -214,7 +222,9 @@ namespace CIGAR::Panel
 				}
 				ImGui::Indent();
 				const auto keys = Needs::GetSingleton()->KeySummary();
-				if (on) {
+				if (kRelease) {
+					ImGui::TextColored(kDim, "%s", on ? "켜짐: 용변 관련 단축키를 비우고 프롬프트로만 씁니다" : "꺼짐: Private Needs의 원래 단축키를 그대로 씁니다");
+				} else if (on) {
 					ImGui::TextColored(kDim, "PNO 단축키 6개 해제(메뉴 Y, 수치 확인 U 포함). MCM을 닫을 때마다 다시 확인");
 				} else {
 					ImGui::TextColored(kDim, "PNO 자체 키 사용. 현재 키 코드: %s", keys.empty() ? "없음" : keys.c_str());
@@ -229,6 +239,12 @@ namespace CIGAR::Panel
 					Needs::GetSingleton()->ApplyKeyMode();
 					Deflate::GetSingleton()->ApplyKeyMode();
 				});
+			}
+			if constexpr (kRelease) {
+				ImGui::PushTextWrapPos(0.0f);
+				ImGui::TextColored(kDim, "다른 모드의 설정 메뉴에서 단축키를 바꿨다면 이 버튼을 한 번 눌러 주세요");
+				ImGui::PopTextWrapPos();
+				return;
 			}
 			const auto grapple = Grapple::GetSingleton()->Key();
 			const auto surrender = Surrender::GetSingleton()->SurrenderKey();
@@ -276,7 +292,7 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-			ImGui::TextColored(kDim, "화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값");
+			ImGui::TextColored(kDim, "%s", kRelease ? "프롬프트가 화면에 뜬 순서대로 1번째 키부터 배정됩니다" : "화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값");
 
 			// A key shared by two slots fires both prompts; a key another mod listens to fires that mod too.
 			for (std::size_t a = 0; a < keys.size(); ++a) {
@@ -437,7 +453,8 @@ namespace CIGAR::Panel
 				bar("기력 표시 시작##pot-sp-th", tune.staminaThreshold, "기본 50%");
 				bar("마나 표시 시작##pot-mp-th", tune.magickaThreshold, "기본 50%");
 				ImGui::PushTextWrapPos(0.0f);
-				ImGui::TextColored(kDim, "물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
+				ImGui::TextColored(kDim, "%s", kRelease ? "해로운 효과가 섞인 물약은 고르지 않습니다. 한 번에 한 가지만 표시하며, 체력이 가장 먼저입니다" :
+					"물약은 효과(회복하는 수치, 해독·질병 치료 원형)로 판별. 해로운 효과가 하나라도 있으면 제외. 한 번에 한 개만 표시하며 순서는 체력, 수중 호흡, 기력, 마나, 해독, 질병 치료");
 				ImGui::PopTextWrapPos();
 				if constexpr (!kRelease) {
 					if (ImGui::Button("시험: 독 10초 걸기##pot-test-poison")) {
@@ -475,7 +492,7 @@ namespace CIGAR::Panel
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-			ImGui::TextColored(kDim, "기본 15%%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
+			ImGui::TextColored(kDim, "%s", kRelease ? "기본 15%. 유술이 적의 스태거 게이지를 깎는 양 (Valhalla Combat이 있을 때)" : "기본 15%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
 
 			ImGui::SeparatorText("시간 보내기");
 			{
@@ -495,7 +512,8 @@ namespace CIGAR::Panel
 				if (ImGui::IsItemDeactivatedAfterEdit()) {
 					Settings::Save();
 				}
-				ImGui::TextColored(kDim, "기본 x3.0. 시간 보내기 중 게임 전체(NPC 포함) 속도 최대치. 시간 흐름은 항상 최대 x60");
+				ImGui::TextColored(kDim, "%s", kRelease ? "기본 x3.0. 시간 보내기 중 세상이 빨라지는 정도. 게임 속 시간은 항상 최대 60배로 흐릅니다" :
+					"기본 x3.0. 시간 보내기 중 게임 전체(NPC 포함) 속도 최대치. 시간 흐름은 항상 최대 x60");
 			}
 
 			ImGui::SeparatorText("탈의·착용");

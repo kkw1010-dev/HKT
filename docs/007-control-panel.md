@@ -193,3 +193,11 @@ new module adds its own in the same place (see `docs/000-adding-a-module.md`).
 `tools/make_release.py` refuses to package a DLL that still carries the
 `조건: %s` format string, so an author build cannot be shipped under a release
 name by mistake.
+
+## Release panel text (the user, 2026-09-25, CIGAR 2.0)
+
+The release build keeps the 1.0 rule: the panel shows what each feature does and nothing technical.
+Beyond the author-only gate and log lines, the release now also hides, on page 2, the hidden-key
+codes, the remembered manual keys and the current key summary (each prompt-only switch reads one line:
+on, the mod's own hotkey is freed and the action is prompt-only; off, the mod keeps its hotkey), and
+on page 3 the potion-detection, stagger-gauge and game-speed internals, replaced by plain sentences.
