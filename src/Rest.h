@@ -24,6 +24,7 @@ namespace CIGAR
 		void OnAccepted(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
+		void OnDeclined(std::uint16_t a_eventID) override;
 
 		// Sitting in a chair or bench the player activated: the game's sitting state in furniture
 		// that is not a work station. The chopping block, the sawmill, the grain mill and the like
@@ -121,6 +122,9 @@ namespace CIGAR
 		// Pass time: the key is down, since when, and the timescale to restore (0 while the clock
 		// runs at its own speed).
 		bool passHolding{ false };
+		// The player declined 시간 보내기; it stays hidden until they sit or rest again (the user,
+		// 2026-09-25). Cleared whenever the player is standing outside a chair.
+		bool passDismissed{ false };
 		Clock::time_point passHeldSince{};
 		float passBase{ 0.0f };
 		float passHoursAtStart{ 0.0f };

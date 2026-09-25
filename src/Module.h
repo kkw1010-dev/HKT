@@ -23,6 +23,9 @@ namespace CIGAR
 		// Hold prompts only: the prompt key went down (true) or up (false). A removed prompt
 		// reports up, so a hold always ends.
 		virtual void OnHold(std::uint16_t, bool) {}
+		// The player dismissed the prompt with SkyPrompt's decline (a double tap of its key). A hold
+		// prompt also gets OnHold(false) for it.
+		virtual void OnDeclined(std::uint16_t) {}
 
 		// Logs a line tagged with the module name.
 		template <class... Args>

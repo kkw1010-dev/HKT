@@ -32,3 +32,23 @@ Status (2026-09-24): built as module `QuestAction` and deployed; not yet tested 
 
 - In-game at High Hrothgar. If SI had further quest actions (party clothes, notes), switching
   `QuestActions.enabled` off removed them; none is known to exist in 1.0.6.
+
+## Console setup (2026-09-25)
+
+For a test save (it pushes the main quest forward). Stage→objective map read from
+`QF_MQ105_000242BA` (USSEP's copy) and the quest's fragment table: objective 20 is shown at stage
+30, 40 at stage 80, 60 at stage 120. `startquest MQ105` runs stage 0 → 1, a skip-ahead stage that
+completes MQ103/MQ104 and sets 5 and 10.
+
+```
+startquest MQ105
+player.addshout 00013E07
+player.teachword 00013E22
+player.unlockword 00013E22
+setobjectivedisplayed MQ105 20 1
+```
+
+Expected gate line: `mq105=10 objective=20 shout=거침없는 힘 known=true equipped=-`. For objective 60
+the same with `0002F7BA` / word `0002F7BB` and `setobjectivedisplayed MQ105 60 1`. If
+`player.addshout` is not accepted by the console, `player.psb` grants every shout. Afterwards
+`setobjectivecompleted MQ105 20 1` must take the prompt away.

@@ -134,6 +134,14 @@ namespace
 		if (hud->uiMovie->GetVariable(&alpha, "_root.HUDMovieBaseInstance._alpha") && alpha.IsNumber()) {
 			mode += std::format(" alpha {:.0f}", alpha.GetNumber());
 		}
+		// Skyrim Party Sheet 3.5's DLL gates its overlay on the same four facts ("[HUDGate] fighting=
+		// movement= looking= menusShowing=", a debug-level line it never writes at its default level);
+		// logging them here names the one a chair sit turns off.
+		if (const auto* controls = RE::ControlMap::GetSingleton()) {
+			mode += std::format(" controls fighting={} movement={} looking={} menusShowing={}",
+				controls->IsFightingControlsEnabled(), controls->IsMovementControlsEnabled(),
+				controls->IsLookingControlsEnabled(), a_ui->IsShowingMenus());
+		}
 		if (mode != lastMode) {
 			logs::info("HUD mode {}", mode);
 			lastMode = std::move(mode);

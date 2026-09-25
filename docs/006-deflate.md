@@ -90,3 +90,9 @@ and CIGAR sends `defKey`, so -1 still matches; a physical key no longer does, an
 registers no key while `defKey` is below 0. Switching prompt-only off writes the remembered key back
 and asks the ability to `RegisterForKey` it. MCM Memory's FHU row is -1 as well (see `docs/000`,
 the hotkey rule).
+
+Passed in game on 2026-09-25 (the user; no log sent): R does nothing, the hold prompt deflates, and
+with prompt-only off R works again. That third step also made MCM Memory record R (82) in its
+profile again at 09:36; `verify_deploy.py` failed the next build on it, and the row was set back to
+-1 (backup `Default.json.bak_20260925_fhu-key-again`). Switching prompt-only off in a test is
+therefore followed by that check failing until the row is reset.

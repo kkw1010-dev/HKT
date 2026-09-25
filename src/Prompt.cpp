@@ -240,6 +240,9 @@ namespace CIGAR
 				ReleaseKeySlot(self->ID());
 			});
 		}
+		if (type == SkyPromptAPI::kDeclined) {
+			SKSE::GetTaskInterface()->AddTask([module, eventID]() { module->OnDeclined(eventID); });
+		}
 		if (hold) {
 			const bool down = type == SkyPromptAPI::kDown;
 			const bool ends = type == SkyPromptAPI::kUp || type == SkyPromptAPI::kRemovedByMod ||

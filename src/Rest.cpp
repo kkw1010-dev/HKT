@@ -288,6 +288,7 @@ namespace CIGAR
 		warm.Reset();
 		warmFound = Pose::kStanding;
 		passTime.Reset();
+		passDismissed = false;
 		lastGate.clear();
 		// The loaded save carries its own timescale; nothing of ours is left to restore. Game speed is
 		// not saved, so one we set before the load must still be put back.
@@ -450,7 +451,11 @@ namespace CIGAR
 		if (!chair && passHolding) {
 			StopPassTime("left the chair");
 		}
-		passTime.Update(chair, [] { return std::string{ kPassTimeText }; });
+		if (!chair && passDismissed) {
+			passDismissed = false;
+			Log("pass time offered again from the next sit or rest");
+		}
+		passTime.Update(chair && !passDismissed, [] { return std::string{ kPassTimeText }; });
 		if (chair) {
 			PassTimeTick();
 		}
@@ -648,8 +653,9 @@ namespace CIGAR
 			return;
 		}
 
-		// Offered as soon as the pose is entered (the user's call, 2026-09-22); a double press hides it.
-		passTime.Update(!exitQueued, [] { return std::string{ kPassTimeText }; });
+		// Offered as soon as the pose is entered (the user's call, 2026-09-22); a double press hides it
+		// for the rest of this pose (passDismissed).
+		passTime.Update(!exitQueued && !passDismissed, [] { return std::string{ kPassTimeText }; });
 		PassTimeTick();
 	}
 
@@ -801,6 +807,16 @@ namespace CIGAR
 		if (pose != Pose::kStanding) {
 			GetUp("module switched off");
 		}
+	}
+
+	void Rest::OnDeclined(std::uint16_t a_eventID)
+	{
+		if (a_eventID != kPassTime) {
+			return;
+		}
+		passDismissed = true;
+		StopPassTime("declined");
+		Log("pass time declined: hidden until the player sits or rests again");
 	}
 
 	void Rest::OnHold(std::uint16_t a_eventID, bool a_down)

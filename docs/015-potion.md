@@ -166,3 +166,20 @@ filter had gone wrong again.
 
 Not yet exercised in game: 해독, 질병 치료, 수중 호흡, and the 체력 위급
 threshold picking the strongest bottle.
+
+## Test 3 (2026-09-25)
+
+Passed (the user; the log shows `drank 물약 - 수중 호흡 하급 ... for waterbreathing at 0.95`):
+수중 호흡 and the 체력 위급 pick. Not yet run:
+
+- **해독.** No cure-poison potion exists on this modlist: the only `ALCH` with a `CurePoison`
+  effect is `SU04HoneyRum`, a food item, which the module skips. A player-made potion works; the
+  only ingredients carrying Cure Poison are 헝거 혓바닥 (`7E03837D`, mihaildeadrapack.esp) and
+  칼날주둥이 물고기 (`22066559`, Saints and Seducers), and Cure Poison is the only effect they share,
+  so brewing the two gives a clean 해독 potion. A poison state: `player.cast 000638B2 player`
+  (`crSpider01PoisonBite`, spell type Poison, which `Poisoned()` recognises).
+- **질병 치료.** Starfrost puts `GetRandomPercent <= 2` (or 5) on the Stage01 disease effects, so a
+  Stage01 spell added from the console usually stays inactive; the user saw no disease. Survival
+  Mode is off here, so its Stage02/03 effects are inactive too. `MAG_DiseaseRattlesTrap`
+  (`0010A24E`, 경련) has a non-survival effect with no random condition. The potion is
+  `000AE723` (물약 - 질병 치료).

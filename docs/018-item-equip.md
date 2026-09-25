@@ -63,3 +63,11 @@ chopping block, not wielded. The TCL lantern filter is gone with TCL.
 
 TCL was restored after CIGAR's `Light` was abandoned, so the TCL lantern filter is back (the
 2026-09-24 test of it passed). The woodcutter's axe filter stays.
+
+## SexLab and scripted armor (2026-09-25)
+
+In game a SexLab scene offered "장착하기 (길게): FEEFB813": `SLOVE_Tongue1Armor` (SLOVE.esp), a
+nameless slot-44 armor its scripts give the player (not softbody). Fill Her Up's `Inflater - leakOral`
+and `leakA` arrived the same way and were skipped only because they were already worn. Now not
+offered: a nameless armor or weapon, anything received while the player is in SexLab's animating
+faction, and anything defined in `sr_FillHerUp.esp`. Each logs `acquired ... not offered`.

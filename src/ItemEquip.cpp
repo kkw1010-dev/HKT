@@ -12,6 +12,8 @@ namespace CIGAR
 		// ccBGSSSE001_FishingPoleKW (ccbgssse001-fish.esm), on every Creation Club fishing rod.
 		constexpr auto kFishingRodKeyword = "ccBGSSSE001_FishingPoleKW"sv;
 		constexpr RE::FormID kWoodAxesID = 0x10ACCC;  // woodChoppingAxes, Skyrim.esm
+		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
+		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
 	}
 
 	ItemEquip::ItemEquip()
@@ -43,9 +45,13 @@ namespace CIGAR
 		offeredItem = 0;
 		expiresAt = {};
 		woodAxes = RE::TESForm::LookupByID<RE::BGSListForm>(kWoodAxesID);
+		auto* handler = RE::TESDataHandler::GetSingleton();
+		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin)
+		                      ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin)
+		                      : nullptr;
 		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_weapon", "/MCP/modules/ItemUse/enabled_equip_weapon");
 		Util::WarnIfSIModuleOn("ItemUse.enabled_equip_armor", "/MCP/modules/ItemUse/enabled_equip_armor");
-		Log("ready: woodChoppingAxes={}", woodAxes != nullptr);
+		Log("ready: woodChoppingAxes={} sexlab={}", woodAxes != nullptr, sexlabAnimating != nullptr);
 	}
 
 	void ItemEquip::Tick()
@@ -199,6 +205,23 @@ namespace CIGAR
 		// block, never wielded (the user, 2026-09-24).
 		if (woodAxes && woodAxes->HasForm(item)) {
 			Log("acquired {} ({:08X}), a woodcutter's axe: not offered", Util::NameOf(item), a_itemID);
+			return;
+		}
+		// A nameless armor is a body part or effect a script puts on the player (SLOVE's tongue
+		// during a SexLab scene, 2026-09-25), never gear; the prompt would show its FormID.
+		if (const char* name = item->GetName(); !name || !*name) {
+			Log("acquired nameless {:08X}: not offered", a_itemID);
+			return;
+		}
+		// Anything handed over during a SexLab scene belongs to the scene, as for the other modules'
+		// SexLab gates.
+		if (auto* player = Util::Player(); player && sexlabAnimating && player->IsInFaction(sexlabAnimating)) {
+			Log("acquired {} ({:08X}) during a SexLab scene: not offered", Util::NameOf(item), a_itemID);
+			return;
+		}
+		// Fill Her Up's leak and inflater armors are its visual state, put on by its scripts.
+		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "sr_FillHerUp")) {
+			Log("acquired {} ({:08X}) from Fill Her Up: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
 		if (offeredItem != a_itemID) {

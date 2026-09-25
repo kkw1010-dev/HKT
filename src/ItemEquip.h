@@ -43,5 +43,6 @@ namespace CIGAR
 		RE::FormID offeredItem{ 0 };
 		Clock::time_point expiresAt{};
 		RE::BGSListForm* woodAxes{ nullptr };
+		RE::TESFaction* sexlabAnimating{ nullptr };
 	};
 }

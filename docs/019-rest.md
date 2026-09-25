@@ -58,6 +58,13 @@ own way (activate a chair or bench): sit state `kIsSitting`, not on a mount (the
 value for riding), out of combat. Standing up out of the chair stops it. The same hold, ring and
 game-speed ceiling apply.
 
+Declining it (SkyPrompt's double tap, `prompt event declined (1) event=24`) hides it for the rest of
+that pose or that chair; it comes back the next time the player sits or rests (the user, 2026-09-25).
+Before this the keep-alive offered it again within seconds. Log: `pass time declined: hidden until
+the player sits or rests again`, then `pass time offered again from the next sit or rest` once the
+player is standing outside a chair. `Module::OnDeclined` carries the decline; hold prompts still get
+`OnHold(false)` for it as well.
+
 ## Getting up (redesigned 2026-09-22)
 
 There is no 일어나기 / 그만 기대기 prompt. The user dropped it: these poses are for

@@ -4,8 +4,8 @@
 
 - In-game on 2026-09-25, passed: ~ no longer runs `smp reset`; CEE's MCM keys empty; TCL on mouse 4;
   MCM Memory restore without failures.
-- Built and deployed after that, **untested in game**: Fill Her Up in the prompt-only list
-  (`docs/006-deflate.md`, last section). Panel checkbox, default on.
+- Fill Her Up joined the prompt-only list after that (`docs/006-deflate.md`, last section; panel
+  checkbox, default on); passed in game later the same day.
 - The user's standing rule (2026-09-25, `docs/000-adding-a-module.md` 3a): a hotkey CIGAR takes over
   is removed from the mod **and** from MCM Memory's profile. Applied now to FHU (82 -> -1), Acheron's
   surrender key (37 -> 101, CIGAR's hidden F14) and PNO's urinate key (51 -> -1); `verify_deploy.py`
@@ -13,13 +13,20 @@
 - Passed in game later on 2026-09-25, reported by the user without logs: guard 유술 (its refusal
   rate is accepted as unresolved, the user's decision), ItemEquip (armor too), Recharge,
   ChairDrink, pass time in a chair, warm hands at a forge, prompts hidden over menus.
-- **Still to test in game:** Fill Her Up prompt-only (below); Potion's 해독, 질병 치료, 수중 호흡 and
-  the 체력 위급 pick; QuestAction (the Greybeards' Unrelenting Force).
+- Also passed (the user, 2026-09-25): Fill Her Up prompt-only (`docs/006`), Potion's 수중 호흡 and
+  체력 위급 pick.
+- **Still to test in game**, with console setups written down: Potion's 해독 and 질병 치료
+  (`docs/015`, test 3), QuestAction (MQ105 objective 20/60; see `docs/025`, "Console setup").
+- Built and deployed 2026-09-25 (after the tests): 시간 보내기 stays hidden after a decline until the
+  next sit (`docs/019`); ItemEquip ignores nameless items, SexLab-scene items and FHU armors
+  (`docs/018`); the `HUD mode` line also logs the four control flags Party Sheet gates on.
 - Party Sheet HUD while sitting: the `HUD mode` log lines show the vanilla HUD stayed in `All` at
   alpha 100 through three chair sits (04:00:34, 04:00:55, 04:01:04), so the vanishing is Party
-  Sheet's own logic, not the game HUD. On 2026-09-25 `[HUDVisibility] Enabled` was set 1 -> 0 in
-  `mods\Skyrim Party Sheet FHD Preset\SKSE\Plugins\PartySheet.ini` (backup
-  `PartySheet.ini.bak_20260925_hudvisibility`, one byte differs); not yet seen in game.
+  Sheet's own logic, not the game HUD. `[HUDVisibility] Enabled = 0` did not help (the user,
+  2026-09-25) and was reverted. Party Sheet 3.5's DLL has a hard gate,
+  `MenuUtils::AreFightingControlsDisabled` / `[HUDGate] fighting= movement= looking= menusShowing=`
+  (debug level, never written), with no ini key found for it. CIGAR's `HUD mode` line now logs the
+  same four flags, so the next chair sit shows which one turns off.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
 - Next, the user's plan: absorb Streamlined Fishing into CIGAR. Prep is in `docs/027-fishing.md`:
   on this modlist Fish Anywhere's loose script already overrides Streamlined Fishing's rod equip,
