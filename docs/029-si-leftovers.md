@@ -112,6 +112,12 @@ Decided after run 3 (the user, 2026-09-25):
   stays out. Helmet Toggle's entries stay removed too.
 - **The neck break kills** (`docs/012`).
 
+## Test run 4 (2026-09-25, the user's report): all passed
+
+1. ItemEquip with an enchanted cuirass worn, a steel cuirass acquired → no 장착하기. Passed.
+2. Iron cuirass worn (25), steel acquired (32) → 장착하기. Passed.
+3. 유술 ×10 without the suplex and the sleeper hold; the neck break kills. Passed.
+
 ## Observe (주시하기, first built as 살펴보기)
 
 - SI's defaults: idle 5 s, distance 5000, FOV offset 40.

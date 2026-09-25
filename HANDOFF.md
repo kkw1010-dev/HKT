@@ -17,12 +17,9 @@ profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost
 Decided 2026-09-25: no helmet hip display (IED entry removed); the neck break kills. Cinematic
 Clash stays on (it was not the cause of test 20).
 
-Next run (no new game needed):
-1. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, `player.additem 00013952 1` → no
-   장착하기 (gate `worn ... enchanted`).
-2. `player.additem 00012E49 1`, `player.equipitem 00012E49` (iron, 25), `player.additem 00013952 1`
-   (steel, 32) → 장착하기 offered.
-3. 유술 ×10: no suplex or sleeper hold; a neck break kills the victim (log `passed through (lethal)`).
+Test run 4 (2026-09-25) passed: ItemEquip's armor rule (enchanted worn → no prompt; better rating →
+prompt) and 유술 with the lethal neck break. Every SI absorption item built so far has now passed in
+game. Next: the survey of what SI still has that CIGAR does not (`docs/029`).
 
 SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
 `verify_deploy.py` fails on it.

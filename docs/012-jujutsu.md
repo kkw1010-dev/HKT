@@ -563,3 +563,5 @@ With Clash back on, 44 presses played 30: KneeThrow 5/6, BodySlam 4/4, ComboA 4/
 and the victim's KillMoveEnd pass through to the engine, so the victim dies as in vanilla; no stun
 payoff, no knock-down. The log says `passed through (lethal)`, and after the settle warns if the victim
 is still alive (an essential NPC bleeds out instead). The other four moves are unchanged.
+
+Test 23 (2026-09-25, the user): 유술 ×10 with the four front moves and the lethal neck break passed.
