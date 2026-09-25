@@ -523,3 +523,17 @@ own), which sits under `Val_KillMoveBackSideRoot`: a from-behind kill move, auth
 at the victim's back. Adding it is a design choice for the user: always in the pool (the engine then
 turns the victim to line the pair up, a visible snap), or only when the player is behind the victim
 (rare for a guard break, since a blocking victim faces the player).
+
+## After test 21 (2026-09-25): Cinematic Clash back on, three more kill moves
+
+- The user wants to test with Cinematic Clash on again: `CinematicClash.ini` was restored from
+  `CinematicClash.ini.bak_20260925_jujutsu-ab` (byte-identical now; its `bDebugLog = 1` was already
+  on, so `CinematicClash.log` can be read beside `CIGAR.log` by timestamp).
+- The user asked for every vanilla hand-to-hand kill move not yet in the pool. Reading every IDLE whose
+  event contains `H2H` gives three more, all paired kill moves authored from behind the victim:
+  `pa_KillMoveH2HSuplex` (Valhalla's condition-free `9700AA84`; Update.esm's `KillMoveH2HSuplex`
+  requires empty hands and a level target), `pa_KillMoveH2HSneakSleeper` (`KillMoveSneakH2HSleeper`,
+  Update.esm `0816`, no conditions) and `pa_KillMoveH2HSneakNeckBreak` (`KillMoveSneakH2HNeckBreak`,
+  Update.esm `0815`, only `GetRandomPercent <= 50`, re-rolled by each retry). No DLC adds any. The pool
+  is now seven, picked uniformly; from the front the engine turns the victim to line the pair up. The
+  `start idle` log line now names the move, for per-move rates.

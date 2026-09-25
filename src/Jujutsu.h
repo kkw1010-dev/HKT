@@ -73,6 +73,7 @@ namespace CIGAR
 		PromptSlot jujutsu{ this, kJujutsu };
 
 		std::vector<RE::TESIdleForm*> idles;
+		std::vector<const char*> idleNames;  // parallel to idles, for the log
 		const char* idleSource{ "-" };
 		VAL_API::IVVAL2* valhalla{ nullptr };
 		RE::TESFaction* sexlabAnimating{ nullptr };

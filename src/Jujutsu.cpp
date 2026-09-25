@@ -20,17 +20,30 @@ namespace CIGAR
 			RE::FormID id;
 			std::string_view plugin;
 		};
+		//
+		// 2026-09-25, the user: every other vanilla hand-to-hand paired kill move joins the pool. There are
+		// three more (every IDLE whose event contains H2H was read): the suplex and the two sneak moves,
+		// all authored from behind the victim, so from the front the engine turns the victim to line the
+		// pair up. The suplex comes from Valhalla's condition-free copy (Update.esm's wants empty hands
+		// and a level target); the sleeper hold has no conditions; the neck break's only condition is
+		// GetRandomPercent <= 50, which a retry re-rolls.
 		constexpr std::array kValhallaIdles{
 			IdleRef{ "KneeThrow", 0xAA3A, "ValhallaCombat.esp"sv },
 			IdleRef{ "BodySlam", 0xAA3B, "ValhallaCombat.esp"sv },
 			IdleRef{ "ComboA", 0xAA3C, "ValhallaCombat.esp"sv },
 			IdleRef{ "SlamA", 0xAA3D, "ValhallaCombat.esp"sv },
+			IdleRef{ "Suplex", 0xAA84, "ValhallaCombat.esp"sv },  // Val_KillMoveH2HSuplex
+			IdleRef{ "Sleeper", 0x816, "Update.esm"sv },          // KillMoveSneakH2HSleeper
+			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },        // KillMoveSneakH2HNeckBreak
 		};
 		constexpr std::array kVanillaIdles{
 			IdleRef{ "KneeThrow", 0x821, "Update.esm"sv },     // H2HKillMoveKneeThrow
 			IdleRef{ "BodySlam", 0x820, "Update.esm"sv },      // H2HKillMoveBodySlam
 			IdleRef{ "ComboA", 0x0F9958, "Skyrim.esm"sv },     // pa_KillMoveH2HComboA
 			IdleRef{ "SlamA", 0x100EF8, "Skyrim.esm"sv },      // H2HKillMoveSlamA00
+			IdleRef{ "Suplex", 0x81B, "Update.esm"sv },        // KillMoveH2HSuplex (empty hands only)
+			IdleRef{ "Sleeper", 0x816, "Update.esm"sv },       // KillMoveSneakH2HSleeper
+			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv },     // KillMoveSneakH2HNeckBreak
 		};
 
 		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
@@ -191,17 +204,19 @@ namespace CIGAR
 		offeredTarget = nullptr;
 		lastBlocker = {};
 		idles.clear();
+		idleNames.clear();
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		const bool valhallaEsp = handler && handler->LookupModByName("ValhallaCombat.esp"sv);
 		const auto& table = valhallaEsp ? std::span<const IdleRef>(kValhallaIdles) : std::span<const IdleRef>(kVanillaIdles);
-		idleSource = valhallaEsp ? "ValhallaCombat.esp (no conditions)" : "Skyrim.esm/Update.esm";
+		idleSource = valhallaEsp ? "ValhallaCombat.esp (no conditions) + Update.esm sneak moves" : "Skyrim.esm/Update.esm";
 		std::string found;
 		for (const auto& ref : table) {
 			auto* idle = handler ? handler->LookupForm<RE::TESIdleForm>(ref.id, ref.plugin) : nullptr;
 			found += std::format(" {}={}", ref.name, idle ? std::format("{:08X}", idle->GetFormID()) : "missing"s);
 			if (idle) {
 				idles.push_back(idle);
+				idleNames.push_back(ref.name);
 			}
 		}
 		valhalla = GetModuleHandleW(L"ValhallaCombat.dll") ? VAL_API::RequestPluginAPI() : nullptr;
@@ -298,7 +313,8 @@ namespace CIGAR
 			return;
 		}
 		static std::mt19937 rng{ std::random_device{}() };
-		playing = idles[std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng)];
+		const auto pick = std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng);
+		playing = idles[pick];
 		victim = target->GetHandle();
 		payoffDone = false;
 		knocked = false;
@@ -309,7 +325,7 @@ namespace CIGAR
 		phaseStart = Clock::now();
 		// The distance at the press, beside each retry's and the start's: tells a play refused because the
 		// target moved from one the engine refused at close range.
-		Log("start idle {:08X} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), Util::NameOf(target),
+		Log("start idle {:08X} {} on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}", playing->GetFormID(), idleNames[pick], Util::NameOf(target),
 			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;

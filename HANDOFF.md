@@ -14,11 +14,10 @@ Built, deployed, **untested**: IED hip display (Helmet Toggle entries removed fr
 GearSwap's enchantment rule, Observe as 주시하기 (eased zoom, no furniture), **SI disabled** in the
 profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost its press to an SI prompt).
 
-**Waiting on the user:**
-- **Cinematic Clash:** 유술 went from 0 of 26 (on) to 20 of 33 (off; `docs/012`, test 21). Keep it
-  off, or restore `CinematicClash.ini.bak_20260925_jujutsu-ab`.
-- **Back suplex:** 유술 never picks it; it is Valhalla's from-behind `Val_KillMoveH2HSuplex`
-  (`9700AA84`). Always in the pool (victim snaps around) or only from behind (rare)?
+**유술, next run:** Cinematic Clash is **back on** (the user's experiment; off gave 20 of 33, on gave
+0 of 26 in test 20). The pool gained the suplex, the sleeper hold and the neck break (seven moves,
+from-behind ones turn the victim). Read `CIGAR.log` `start idle ... <move>` lines with
+`CinematicClash.log` by timestamp. `docs/012`, after test 21.
 
 Next run (new game for the IED default config, or import KKW2 in IED's UI):
 1. 투구 벗기 → helmet on the right hip.
