@@ -11,6 +11,7 @@ Two editions:
 
 Usage: python tools/make_release.py --standard|--nexus <path to CIGAR.dll>
 """
+import glob
 import hashlib
 import json
 import os
@@ -44,6 +45,38 @@ def version():
     if not found:
         raise SystemExit("could not read the version out of CMakeLists.txt")
     return found.group(1)
+
+
+def notices(dll):
+    """THIRD-PARTY-NOTICES.txt from the build's own license files, so it cannot go stale.
+
+    CommonLibSSE-NG is GPL-3.0-or-later (the package's LICENSE.txt); the rest are the notices the
+    permissive licenses of the code compiled into CIGAR.dll ask to be kept: CommonLibSSE-NG's
+    bundled legacy notices, the vendored API headers, and every vcpkg package of this build.
+    """
+    nl = "\n"
+    rule = "=" * 78
+    parts = [
+        "CIGAR is licensed under the GNU General Public License v3.0 or later (LICENSE.txt)." + nl,
+        "Source: https://github.com/kkw1010-dev/HKT" + nl + nl,
+        "CIGAR.dll contains code from the projects below. Their notices follow." + nl,
+        "CommonLibSSE-NG (alandtse/CommonLibVR, branch ng): GPL-3.0-or-later, see LICENSE.txt." + nl,
+    ]
+    sections = []
+    for path in sorted(glob.glob(os.path.join(REPO, "lib", "commonlibsse-ng", "licenses", "LICENSE-*.txt"))):
+        sections.append(("CommonLibSSE-NG bundled notice: " + os.path.basename(path), path))
+    for path in sorted(glob.glob(os.path.join(REPO, "include", "*", "LICENSE"))):
+        sections.append(("API header: " + os.path.basename(os.path.dirname(path)), path))
+    share = os.path.join(os.path.dirname(os.path.abspath(dll)), "vcpkg_installed", "x64-windows-static-md", "share")
+    found = sorted(glob.glob(os.path.join(share, "*", "copyright")))
+    if not found:
+        raise SystemExit("no vcpkg copyright files under " + share + "; build with tools/Build.ps1 first")
+    for path in found:
+        sections.append(("vcpkg package: " + os.path.basename(os.path.dirname(path)), path))
+    for title, path in sections:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            parts.append(nl + rule + nl + title + nl + rule + nl + nl + f.read().strip() + nl)
+    return "".join(parts)
 
 
 def main():
@@ -100,6 +133,11 @@ def main():
         shutil.copyfile(os.path.join(REPO, "dist", "README-nexus-ko.md"), os.path.join(out, "README-ko.md"))
     else:
         shutil.copyfile(os.path.join(REPO, "dist", "README-release.md"), os.path.join(out, "README.md"))
+
+    # GPL-3.0 asks for the license text with every copy, and the permissive licenses for their notices.
+    shutil.copyfile(os.path.join(REPO, "LICENSE"), os.path.join(out, "LICENSE.txt"))
+    with open(os.path.join(out, "THIRD-PARTY-NOTICES.txt"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(notices(dll))
 
     print("release folder:", out)
     total = 0

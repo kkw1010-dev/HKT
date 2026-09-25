@@ -10,13 +10,18 @@ depends on no other mod. Text is in English or Korean, following your game's lan
 
 ## Requirements
 
-- SKSE
-- Address Library for SKSE Plugins
-- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/149963), which draws the prompts.
-  Without it nothing shows.
-- Optional: SKSE Menu Framework, for the in-game settings panel. Everything works without it.
+- [SKSE64](https://skse.silverlock.org/)
+- [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/148703), which draws the prompts. Without it nothing shows.
+  SkyPrompt itself needs SKSE Menu Framework and ImGui Icons.
+- [SKSE Menu Framework](https://www.nexusmods.com/skyrimspecialedition/mods/120352) also hosts CIGAR's
+  in-game settings panel. CIGAR works without the panel.
 
-Made for keyboard and mouse. Gamepads are not supported.
+Tested on Skyrim 1.6.1170 (Anniversary Edition) with SkyPrompt 2.3.15; SkyPrompt 2.4.0 keeps the
+same API (2.0). Made for keyboard and mouse; gamepads are not supported.
+
+Prompt text follows the language CIGAR uses; item, quest and character names come from your game,
+so a translated game shows its own names inside English prompts.
 
 ## Installation
 

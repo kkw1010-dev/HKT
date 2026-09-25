@@ -10,7 +10,7 @@
 
 - SKSE
 - Address Library for SKSE Plugins
-- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/149963) — 프롬프트를 그리는 모드입니다. 없으면 아무것도 표시되지 않습니다.
+- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/148703) — 프롬프트를 그리는 모드입니다. 없으면 아무것도 표시되지 않습니다.
 - (선택) SKSE Menu Framework — 게임 안에서 설정을 바꾸는 패널이 여기에 생깁니다. 없어도 기능은 그대로 동작합니다.
 
 키보드·마우스 기준으로 만들었습니다. 게임패드는 지원 대상이 아닙니다.

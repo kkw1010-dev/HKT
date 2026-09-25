@@ -4,7 +4,7 @@
 
 CIGAR is an ESP-less SKSE plugin (`CIGAR.dll`, one DLL for SE, AE and VR) that turns the things a
 Skyrim player does over and over into **context prompts** drawn by
-[SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/149963): a prompt appears only while
+[SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/148703): a prompt appears only while
 the action makes sense, and one key does the whole action. It also replaces other mods' hotkeys with
 prompts.
 

@@ -10,12 +10,15 @@
 
 ## 요구 사항
 
-- SKSE
-- Address Library for SKSE Plugins
-- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/149963) — 프롬프트를 그리는 모드입니다. 없으면 아무것도 표시되지 않습니다.
-- (선택) SKSE Menu Framework — 게임 안에서 설정을 바꾸는 패널이 여기에 생깁니다. 없어도 기능은 그대로 동작합니다.
+- [SKSE64](https://skse.silverlock.org/)
+- [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+- [SkyPrompt](https://www.nexusmods.com/skyrimspecialedition/mods/148703) — 프롬프트를 그리는 모드입니다. 없으면 아무것도 표시되지 않습니다.
+  SkyPrompt 자체가 SKSE Menu Framework와 ImGui Icons를 필요로 합니다.
+- [SKSE Menu Framework](https://www.nexusmods.com/skyrimspecialedition/mods/120352) — CIGAR의 게임 안 설정 패널도 여기에 생깁니다. 패널이 없어도 기능은 그대로 동작합니다.
 
-키보드·마우스 기준으로 만들었습니다. 게임패드는 지원 대상이 아닙니다.
+스카이림 1.6.1170(애니버서리 에디션)과 SkyPrompt 2.3.15에서 테스트했습니다. SkyPrompt 2.4.0도 같은 API(2.0)를 씁니다. 키보드·마우스 기준으로 만들었고, 게임패드는 지원 대상이 아닙니다.
+
+아이템·퀘스트·인물 이름은 게임 데이터에서 가져오므로, 영어 프롬프트에도 번역된 게임의 이름이 그대로 나옵니다.
 
 ## 설치
 
