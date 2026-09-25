@@ -630,3 +630,18 @@ press.
 - The "유술 모션 미발동" notification now comes only when the automatic retry is refused too.
 - Next run: the session's first fight, first press. It should play on the first press or by itself
   a moment later; the log shows whether the kill camera was involved.
+
+## Test 27 (2026-09-25 22:24-22:25): the first spawned actor, whole life
+
+The user's routine: enter the test cell, spawn the orc bandit `328D7` with the console. The first orc
+(`FF000C78`, combat #1) refused **6 of 6** (3 presses, 3 automatic retries, each the full 1.5 s)
+until it was killed with the console; the next orc (`FF000CB9`) played every press on the first try.
+The kill camera was never involved: every try read `vats mode=0 cmds=0`. The automatic retry and the
+VATS lead are therefore beside the point, and the first-use window did nothing either.
+
+Across tests 24-27 the refusals belong to the session's first spawned actor (test 26, where that orc
+was killed before any press, moved one refused press onto the second). Lead: that actor's animation
+graph instance was built while the character behaviour project was still loading for the session,
+and never takes paired idles. Built, untested: each press logs `graphs: victim ... | player ...`
+(graph count, active index, project name, whether its project DB data is present, the holder, and
+whether `bIsSynced` exists) and how many seconds ago the victim arrived.

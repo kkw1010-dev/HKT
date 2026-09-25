@@ -61,6 +61,9 @@ namespace CIGAR
 		void Start(RE::PlayerCharacter* a_player, RE::Actor* a_target, bool a_auto);
 		void WatchRetry(RE::PlayerCharacter* a_player);
 		static std::string DescribeVats();
+		// Test 27: the first actor spawned in a session refuses every press for its whole life while the
+		// next ones play at once. The lead is its animation graph; this prints what the graph manager holds.
+		static std::string DescribeGraph(RE::Actor* a_actor);
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
 		void Sample(RE::Actor* a_victim, float a_time);
@@ -89,7 +92,12 @@ namespace CIGAR
 		// Test 25 split (the user: the first fight of every test is poor). Test 24 ruled out a move's
 		// first use; the first fight and an actor already there when the save loaded are still
 		// confounded, so each press logs both. Actors seen in the first scan after a load are "at load".
-		std::unordered_map<RE::FormID, bool> seenActors;  // FormID -> present at load
+		struct Seen
+		{
+			bool              atLoad{ false };
+			Clock::time_point first{};
+		};
+		std::unordered_map<RE::FormID, Seen> seenActors;
 		bool scannedSinceLoad{ false };
 		bool inCombat{ false };
 		int combatIndex{ 0 };

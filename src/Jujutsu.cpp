@@ -303,7 +303,7 @@ namespace CIGAR
 		const bool atLoad = !scannedSinceLoad;
 		int added = 0;
 		lists->ForEachHighActor([&](RE::Actor* a_actor) {
-			if (a_actor && a_actor != player && seenActors.try_emplace(a_actor->GetFormID(), atLoad).second) {
+			if (a_actor && a_actor != player && seenActors.try_emplace(a_actor->GetFormID(), Seen{ atLoad, Clock::now() }).second) {
 				++added;
 			}
 			return RE::BSContainer::ForEachResult::kContinue;
@@ -370,6 +370,27 @@ namespace CIGAR
 		Start(player, target, false);
 	}
 
+	std::string Jujutsu::DescribeGraph(RE::Actor* a_actor)
+	{
+		RE::BSTSmartPointer<RE::BSAnimationGraphManager> manager;
+		if (!a_actor || !a_actor->GetAnimationGraphManager(manager) || !manager) {
+			return "no graph manager";
+		}
+		std::string out = std::format("graphs={} active={}", manager->graphs.size(), manager->GetRuntimeData().activeGraph);
+		for (std::uint32_t i = 0; i < manager->graphs.size(); ++i) {
+			const auto& graph = manager->graphs[i];
+			if (!graph) {
+				out += std::format(" [{}: null]", i);
+				continue;
+			}
+			bool synced = false;
+			const bool hasSynced = graph->GetGraphVariableBool("bIsSynced", synced);
+			out += std::format(" [{}: {} db={} holder={} bIsSynced={}]", i, graph->projectName.c_str(), graph->projectDBData != nullptr,
+				graph->holder == a_actor, hasSynced ? (synced ? "1" : "0") : "missing");
+		}
+		return out;
+	}
+
 	std::string Jujutsu::DescribeVats()
 	{
 		const auto* vats = RE::VATS::GetSingleton();
@@ -402,9 +423,13 @@ namespace CIGAR
 		const auto& tally = victimTally[target->GetFormID()];
 		Log("start idle {:08X} {} ({}, first use this session={}, window {} ms, {}) combat #{} victim {} (tally {} played / {} refused) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
 			playing->GetFormID(), idleNames[pick], a_auto ? "automatic retry" : "press", firstUse, prepareWindow.count(), DescribeVats(),
-			combatIndex, seen == seenActors.end() ? "unscanned"sv : seen->second ? "present at load"sv : "arrived later"sv, tally.first,
-			tally.second, Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()),
+			combatIndex,
+			seen == seenActors.end() ? "unscanned"s :
+			seen->second.atLoad      ? "present at load"s :
+			                           std::format("arrived {:.0f} s ago", std::chrono::duration<float>(Clock::now() - seen->second.first).count()),
+			tally.first, tally.second, Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()),
 			Settings::JujutsuReach(), DescribeVictim(target));
+		Log("graphs: victim {} | player {}", DescribeGraph(target), DescribeGraph(player));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();
