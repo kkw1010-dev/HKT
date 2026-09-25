@@ -2,6 +2,11 @@
 
 Status (2026-09-24): built as module `ChairDrink` and deployed; passed in game on 2026-09-25 (reported by the user; no log sent).
 
+## Declined prompt (the user, 2026-09-25, CIGAR 2.0 final test)
+
+The prompt came back 29 s after a double-tap decline. It now stays hidden until the player stands up
+(`OnDeclined` sets `dismissed`; the gate logs it; leaving the chair clears it), as pass time does.
+
 ## The user's decision (2026-09-24)
 
 SI's chair eat/drink (IdleActions; the only evidence is the vanilla idles `ChairEatingStart` /

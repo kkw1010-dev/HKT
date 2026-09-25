@@ -40,6 +40,7 @@ namespace CIGAR
 		checkPending = false;
 		drinking = false;
 		moving = false;
+		dismissed = false;
 		alcoholKeywords.clear();
 		placeKeywords.clear();
 		std::string found;
@@ -140,15 +141,30 @@ namespace CIGAR
 			}
 		}
 
+		if (dismissed && !chair) {
+			dismissed = false;
+			Log("stood up: 마시기 may show again");
+		}
+
 		std::string where;
 		const bool place = chair && AtInnOrHome(player, where);
 		const bool combat = player->IsInCombat();
 		auto* drink = chair && place && !combat ? PickDrink(player) : nullptr;
 
-		LogGate(std::format("chair={} place={} ({}) combat={} drink={}", chair, place, chair ? where : "-"s, combat,
-			drink ? Util::NameOf(drink) : "-"s));
+		LogGate(std::format("chair={} place={} ({}) combat={} drink={} dismissed={}", chair, place, chair ? where : "-"s, combat,
+			drink ? Util::NameOf(drink) : "-"s, dismissed));
 
-		prompt.Update(drink != nullptr, [drink] { return std::format("마시기 (길게): {}", Util::NameOf(drink)); });
+		prompt.Update(drink != nullptr && !dismissed, [drink] { return std::format("마시기 (길게): {}", Util::NameOf(drink)); });
+	}
+
+	void ChairDrink::OnDeclined(std::uint16_t a_eventID)
+	{
+		if (a_eventID != kDrink) {
+			return;
+		}
+		dismissed = true;
+		prompt.Withdraw();
+		Log("마시기 declined: hidden until the player stands up");
 	}
 
 	void ChairDrink::OnAccepted(std::uint16_t a_eventID)

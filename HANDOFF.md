@@ -37,6 +37,19 @@ page stores them in its database, collection `results`, one document per item id
 `ArtifactData` tool (`list`, collection `results`) and compare against `SKSE\CIGAR.log` before asking
 anything.
 
+**Final test result (2026-09-25 20:20-20:52, read from the checklist database and `CIGAR.log`):**
+39 of 44 passed.
+- Fail, **무기 전환**: never offered. Every far or flee gate reads `ranged=none`, and the module only offers
+  a bow or crossbow that has ammo; the test character carried none, and the checklist did not say to. A
+  setup gap, not a code fault; the item now lists `player.additem 0003B562 1` (Long Bow) and
+  `player.additem 0001397D 50` (Iron Arrow). Retest pending.
+- Hold, **의자에서 마시기** (the user's note: a declined prompt should stop showing): it came back 29 s
+  after a decline. Fixed, untested: `ChairDrink` now keeps it hidden until the player stands up.
+- Hold, situational: 퀘스트 추적, 그레이비어드 샤우트.
+- The rule behind the fix is general (memory `cigar-declined-prompt-stays-hidden`): only `Rest`,
+  `Helmet` and now `ChairDrink` handle `OnDeclined`; the other 21 modules re-offer a declined prompt
+  after SkyPrompt's timeout. Whether to extend it to them is the user's call.
+
 ## Resume here (2026-09-25, end of session)
 
 - In-game on 2026-09-25, passed: ~ no longer runs `smp reset`; CEE's MCM keys empty; TCL on mouse 4;
