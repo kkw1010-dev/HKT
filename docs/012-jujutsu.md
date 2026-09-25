@@ -503,3 +503,23 @@ effects against 0 and 2 in test 12), so today's 0 of 26 may have more than one c
 Decisive test: `[General] bEnabled = 0` in `CinematicClash.ini` for one run of 10 presses. Set on
 2026-09-25 with the user's go-ahead (backup `CinematicClash.ini.bak_20260925_jujutsu-ab`, one byte
 differs); the DLL reads it at game start, so a restart is enough and no new game is needed.
+
+## Test 21 (2026-09-25 16:53-17:00): Cinematic Clash off, 20 of 33
+
+The A/B run. With `CinematicClash.ini` `bEnabled = 0` and nothing else changed, 33 presses on four orc
+victims played 20 (test 20, with it on: 0 of 26). The rate rose through the run: 5 of 13 in the first
+two victims (16:53-16:57), then 15 of 20, and 13 of the last 14 (16:58-17:00). By idle: SlamA 9 of
+11, BodySlam 4 of 7, ComboA 3 of 6, KneeThrow 4 of 9. Most refusals show the victim still blocking on
+the first tries and lowering the guard by try 4-5 without a play, the pattern of tests 13-18. The user
+found the rate "high in the test room".
+
+Reading: Cinematic Clash 1.0.2 is the cause of test 20's 0 of 26 (it is the only change between the
+two runs). The INI stays off until the user decides; restoring it is copying the backup back.
+
+**Why the back suplex never plays.** 유술 only ever picks from the four front hand-to-hand kill moves
+(KneeThrow, BodySlam, ComboA, SlamA; the user's list when the module was built). The suplex is
+Valhalla's `Val_KillMoveH2HSuplex` (`9700AA84`, event `pa_KillMoveH2HSuplex`, no conditions of its
+own), which sits under `Val_KillMoveBackSideRoot`: a from-behind kill move, authored with the attacker
+at the victim's back. Adding it is a design choice for the user: always in the pool (the engine then
+turns the victim to line the pair up, a visible snap), or only when the player is behind the victim
+(rare for a guard break, since a blocking victim faces the player).

@@ -73,7 +73,7 @@ All four run the same `Swap()`. Hold, as the project's prompt policy asks for no
 
 ## Changed from GPT's plan
 
-- **PromptID 39** (18 is `kTrackQuest`). **This doc is 030** (016 is the gamepad doc).
+- **PromptID 40** (18 is `kTrackQuest`; 39 went to `BookRead`). **This doc is 030** (016 is the gamepad doc).
 - **Capacity** is the free-slot count read from the script (20 on this modlist), not a constant 10.
 - **No fixed waits.** Papyrus latency on a 4000-plugin order is not predictable. After each phase,
   poll the engine state every 100 ms (up to about 3 s): "the mannequin no longer wears B", then "the

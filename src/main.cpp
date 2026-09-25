@@ -7,6 +7,7 @@
 #include "Grapple.h"
 #include "Jujutsu.h"
 #include "ItemEquip.h"
+#include "BookRead.h"
 #include "Recharge.h"
 #include "ChairDrink.h"
 #include "QuestAction.h"
@@ -34,11 +35,12 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 24> modules{
+		static const std::array<Module*, 25> modules{
 			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
 			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
 			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
+			BookRead::GetSingleton(),
 			Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 			QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
 			GearSwap::GetSingleton(), PartyOutfit::GetSingleton()
@@ -289,6 +291,7 @@ namespace
 			Needs::GetSingleton()->RegisterEvents();
 			QuestTrack::GetSingleton()->RegisterEvents();
 			ItemEquip::GetSingleton()->RegisterEvents();
+			BookRead::GetSingleton()->RegisterEvents();
 			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
 			StartTicker();

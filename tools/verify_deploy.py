@@ -810,6 +810,9 @@ def main():
     check("+" + MOD_NAME in modlist, "mod enabled in modlist.txt")
     check("-" + RELEASE_MOD in modlist and "+" + RELEASE_MOD not in modlist,
           "release mod disabled in modlist.txt")
+    # CIGAR absorbed all of SI; on 2026-09-25 an SI prompt still overlapped CIGAR's book prompt and took
+    # the key, and the user had SI switched off. The override below stays for players who keep SI.
+    check("+" + SI_MOD not in modlist, "Streamlined Interactions disabled (fully absorbed by CIGAR)")
     if "+" + MOD_NAME in modlist and ("+" + SI_MOD) in modlist:
         # modlist.txt lists the highest priority first.
         check(modlist.index("+" + MOD_NAME) < modlist.index("+" + SI_MOD),

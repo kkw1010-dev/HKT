@@ -1,39 +1,34 @@
 # CIGAR — session handoff (updated 2026-09-25)
 
-## Start here (2026-09-25, after test run 1)
+## Start here (2026-09-25, after test run 2)
 
 **Roadmap (the user, 2026-09-25):** CIGAR **2.0 = the SI absorption**; focus stays there until it
 passes. **MannequinSwap and later features are 3.0**, started on a new branch once the current tests
 are done. Plan: `docs/030-mannequin-swap.md` (it replaced GPT's `claude.md`, deleted with the user's
 permission).
 
-Test run 1 (the user's report, `docs/029`, section "Test run 1"): 1 spell tome **passed**, 2 helmet
-take-off **passed** (hip display failed), 3 GearSwap **passed**, 4 Observe worked (changes asked),
-5 독 바르기 **crashed** (CTD on accept). Tests 6-9 were not reached.
+Passed in game on 2026-09-25 (runs 1 and 2, `docs/029`): spell tome 읽기, 투구 벗기 (clip), GearSwap,
+Observe (then changed), 독 바르기 (after the CTD fix), 투구 쓰기 in combat, PartyOutfit.
 
-Fixed, built and deployed afterwards (DLL plus IED config; **untested in game**):
-- Poison CTD: `HandleEntryPoint(kModPoisonDoseCount)` now gets its weapon and poison filter forms.
-- IED: Helmet Toggle's four entries (forms in the disabled `Helmet Toggle 2.esp`) made IED reject the
-  whole `DefaultConfigUser.json` and the user's `KKW1/KKW2.json` exports. Removed from all three;
-  the belt entry added to both exports. `verify_deploy.py` now guards this.
-- GearSwap: worn enchanted piece → no prompt; otherwise the inventory armor rating decides.
-- Observe renamed **주시하기**, eased zoom in and out every frame, never on furniture.
+Built, deployed, **untested**: IED hip display (Helmet Toggle entries removed from the IED configs),
+GearSwap's enchantment rule, Observe as 주시하기 (eased zoom, no furniture), **SI disabled** in the
+profile, **`BookRead`** split out of `ItemEquip` (the quest letter's 읽기 lost its press to an SI prompt).
 
-Next run, on a **new game** (IED's default config applies only to games without IED data; or import
-KKW2 in IED's UI), reading `SKSE\CIGAR.log` and `ImmersiveEquipmentDisplays.log` first:
-1. 투구 벗기 → helmet on the right hip (IED; position a first guess).
-2. `player.additem 0003A5A4 2`, draw the weapon → 독 바르기 (길게) → no crash, `applied ... doses=`.
-3. 주시하기 on an NPC → smooth zoom in and out; nothing on a chair or a workbench.
-4. GearSwap with an enchanted worn cuirass → no prompt (gate `worn ... enchanted`).
-5-8. The old tests 6-9: helmet on in combat (wolf `00023ABE`), 유술 ×10 at Bleak Falls Barrow
-   (Cinematic Clash still off), PartyOutfit (MQ201 objective 40), Faendal's letter.
+**Waiting on the user:**
+- **Cinematic Clash:** 유술 went from 0 of 26 (on) to 20 of 33 (off; `docs/012`, test 21). Keep it
+  off, or restore `CinematicClash.ini.bak_20260925_jujutsu-ab`.
+- **Back suplex:** 유술 never picks it; it is Valhalla's from-behind `Val_KillMoveH2HSuplex`
+  (`9700AA84`). Always in the pool (victim snaps around) or only from behind (rare)?
 
-Open experiment: **Cinematic Clash is switched off** for the 유술 A/B test
-(`CinematicClash.ini` `[General] bEnabled = 0`, backup `CinematicClash.ini.bak_20260925_jujutsu-ab`).
-Read the 유술 result, then restore the INI (or keep it off if it fixes 유술 and the user agrees).
+Next run (new game for the IED default config, or import KKW2 in IED's UI):
+1. 투구 벗기 → helmet on the right hip.
+2. 주시하기 on an NPC → smooth zoom in/out; nothing on a chair or workbench.
+3. `player.additem 000B50A5 1`, `player.equipitem 000B50A5`, `player.placeatme 00013952 1` → no
+   교체 prompt on the loose steel cuirass (gate `worn ... enchanted`).
+4. Faendal's letter in Riverwood → 읽기 (길게) opens the letter; no SI prompt anywhere.
+5. `player.additem 000A26E5 1` → 읽기 on the tome (BookRead), and a weapon pickup still offers 장착하기.
 
-Also open: whether to disable the SI mod itself (it now does nothing); TidyUp and KillMove are not
-built (`docs/029`).
+TidyUp and KillMove are not built (`docs/029`).
 
 
 ## Resume here (2026-09-25, end of session)
@@ -242,6 +237,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Potion` | 마시기: <물약 이름> | — (replaces SI's ItemUse potion actions) | `015` |
 | `QuestTrack` | 추적하기: <퀘스트 이름> | — (replaces SI Quest Tracking) | `017` |
 | `ItemEquip` | 장착하기: <장비 이름> | — (replaces SI weapon/armor equip) | `018` |
+| `BookRead` | 읽기: <책 이름> | — (SI spellbook and quest note; split from `ItemEquip`) | `029` |
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — (replaces SI IdleActions) | `019`, `020` |
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
@@ -332,6 +328,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 
   Choices are saved to `mods\CIGAR\SKSE\Plugins\CIGAR.json`. Switching a
   module off withdraws its prompts and calls `OnDisabled()`.
+- **SI is disabled on this modlist since 2026-09-25** (CIGAR absorbed all of it; `verify_deploy.py`
+  fails if it is enabled). The override below stays for players who keep SI.
 - **SI overlap.** `mods\CIGAR\SKSE\Plugins\StreamlinedInteractions\settings.json`
   turns off SI's Bathe, DressActions (water, bed, wardrobe), Quest Tracking, weapon/armor equip,
   and the six ItemUse potion actions, and pins SI's

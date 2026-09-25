@@ -37,6 +37,22 @@ Fixes built and deployed the same day (untested in game):
   smootherstep curve every frame (2 s in, 0.7 s out) instead of stepping on the 100 ms tick, the way
   back is eased too, and furniture is never a target.
 
+## Test run 2 (2026-09-25 16:34-17:05, the user's report and `CIGAR.log`)
+
+| # | Test | Result |
+|---|---|---|
+| 5 | 독 바르기 (after the CTD fix) | passed |
+| 6 | 투구 쓰기 in combat | passed |
+| 7 | 유술 with Cinematic Clash off | 20 of 33 (`docs/012`, test 21) |
+| 8 | PartyOutfit (on a test save) | passed |
+| 9 | Faendal's letter | the 읽기 prompt showed, but an SI prompt overlapped it and the press went to SI |
+
+After run 2 (the user): **SI is disabled** in the profile (`-[NoDelete] 0008 StreamlinedInteractions`;
+MO2 closed and relaunched for the edit, backup `modlist.txt.bak_20260925_disable-si`), since CIGAR
+absorbs all of it; `verify_deploy.py` now fails while it is enabled. **Books are their own module,
+`BookRead`** (책 읽기, PromptID 39), split out of `ItemEquip`, which now handles weapons and armor only.
+Both untested in game.
+
 What SI still had (all already off in its settings; evidence in `SI/_ABSORPTION/_MAP.md`) and where it
 went:
 
@@ -87,7 +103,7 @@ actions are off.
 - The best gain wins; the prompt reads `<부위> 장비 교체 (길게): <이름>`. Accepting picks the loose item
   up or moves it out of the container, then equips it; the old piece stays in the inventory.
 
-## ItemEquip books
+## BookRead (책 읽기; books in ItemEquip until 2026-09-25)
 
 - A newly acquired spell tome whose spell is not known, or a book that is a quest item, gets the same
   15 s hold prompt as gear, reading `읽기 (길게): <이름>`.
