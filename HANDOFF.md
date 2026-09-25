@@ -22,6 +22,9 @@ history of each module are in `docs/`, one file per module, and each file starts
   enable `CIGAR 2.0.1 Nexus`, disable `CIGAR`, and read the load line in `CIGAR.log`.
 - **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
   are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
+- **The Nexus build is in the load order for its first test** (2026-09-26): `+CIGAR 2.0.1 Nexus`,
+  `-CIGAR`, `-CIGAR 2.0.1` (backup `modlist.txt.bak_20260926_nexus-test`). `Build.ps1 -Deploy` fails
+  `verify_deploy.py` until `+CIGAR` / `-CIGAR 2.0.1 Nexus` are set back with MO2 closed.
 - **The author build is in the load order**: MO2 profile `TKL - MUNG ADDON` has `+CIGAR` and
   `-CIGAR 2.0.1`, so `tools\Build.ps1 -Deploy` works. The release copy is `mods\CIGAR 2.0.1`.
 - **CIGAR is a standalone system (2026-09-26).** It reads, writes and checks nothing of any other
