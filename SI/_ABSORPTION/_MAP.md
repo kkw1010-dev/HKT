@@ -2,6 +2,39 @@
 
 본 문서는 CIGAR가 아직 구현하지 않았으며 차후 흡수 가능성이 있는 Streamlined Interactions(SI) 기능만을 대상으로 정밀 분석한 결과입니다. 이미 CIGAR에 구현되었거나 제외된 기능(Bathe, Potion, KillMove 등)은 포함하지 않습니다.
 
+## Final survey (2026-09-25, after test run 4): what SI still has that CIGAR does not
+
+Read from SI 1.0.6's own files: its 29 translation keys (`translations/StreamlinedInteractions_ENGLISH.json`,
+every player-facing prompt), its scene sources named in the DLL (`src/Scenes/*.cpp`: BedUndress,
+WardrobeUndress, WaterUndress, IdleActions, KillMove, OutfitSwapPiecewise, QuestActions,
+TreeWeaponSwap, plus Helpers Equipper, QuestActionsHelper, RemedyByItemHelper) and its settings keys.
+SI itself has been disabled in the profile since 2026-09-25.
+
+| SI prompt / feature | CIGAR | Status |
+|---|---|---|
+| Undress, Dress (bed, wardrobe, water) | `Dress` | done |
+| Bathe | `Bathe` | done |
+| Sit, GetUp, LayDown, Lean, WarmHands, PassTime | `Rest` | done |
+| Drink (chair) | `ChairDrink` | done |
+| Eat (chair, `IdleActions::Eat`) | — | **not built, the user's decision** (docs/026: no eating) |
+| TidyUp (`Sweeping floor`) | — | not built: needs `sweepingOrganizesStuff.esp`, not installed |
+| Observe | `Observe` (주시하기) | done |
+| TrackQuest | `QuestTrack` | done |
+| Equip (weapon, armor) | `ItemEquip` | done |
+| Equip (spell tome, quest note) | `BookRead` | done |
+| Equip (shout, quest) | `QuestAction` | done |
+| SwapOutfit (quest outfit) | `PartyOutfit` | done |
+| SwapOutfitHead/Chest/Arms/Legs (piecewise) | folded into `ItemEquip` | **the user's decision**: acquired gear only (GearSwap removed) |
+| UndressHead/Chest/Arms/Legs | — | translation keys only; no SI scene of their own (the piecewise family) |
+| ToggleHelmet | `Helmet` | done (no hip display, the user's decision) |
+| RechargeWeapon | `Recharge` | done |
+| Potions (health, stamina, magicka, cure poison, cure disease, water breathing) | `Potion` | done |
+| **Health potion slow time** (`slow_time_hp_pot`, `slow_time_duration_hp_pot` 3 s) | — | **the one gap with no decision recorded** |
+| Cast / MakeLight (`CastLight`, `MakeLight`) | — | **the user's decision**: lighting abandoned (TCL keeps its own hotkey) |
+| SwapWeapon (tree, ore vein, fishing) | — | **the user's decision** (docs/024); fishing is the Streamlined Fishing plan (docs/027) |
+| KillMove (sneak kill with dagger / 1H, front, backstab) | `Execute` for executions | **excluded earlier by the user** |
+| Immersive Spell Learning support | — | not applicable: ISL is not installed |
+
 ## Evidence Hierarchy
 
 본 문서의 모든 정보에는 다음 태그 중 하나가 붙습니다. 하위 태그의 내용이 이후 문맥에서 상위 태그로 승격되지 않습니다.

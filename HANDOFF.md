@@ -19,7 +19,9 @@ Clash stays on (it was not the cause of test 20).
 
 Test run 4 (2026-09-25) passed: ItemEquip's armor rule (enchanted worn → no prompt; better rating →
 prompt) and 유술 with the lethal neck break. Every SI absorption item built so far has now passed in
-game. Next: the survey of what SI still has that CIGAR does not (`docs/029`).
+game. SI survey done (`SI/_ABSORPTION/_MAP.md`, "Final survey"): every SI prompt is built or excluded by
+the user's decision, except **the health potion's slow time** (SI slows time for 3 s with the low
+health potion prompt), which has no decision yet.
 
 SI must stay disabled: on 2026-09-25 an MO2 save re-enabled it without the user meaning to;
 `verify_deploy.py` fails on it.
