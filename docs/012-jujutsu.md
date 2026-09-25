@@ -500,5 +500,6 @@ re-entering the player's block hold during clashes. Since then many more mods ar
 Serana Dialogue Add-On, and others; the player now carries 2 SPVS effects and 5 Smooth Moveset
 effects against 0 and 2 in test 12), so today's 0 of 26 may have more than one cause.
 
-Decisive test offered to the user: `[General] bEnabled = 0` in `CinematicClash.ini` for one run of
-10 presses.
+Decisive test: `[General] bEnabled = 0` in `CinematicClash.ini` for one run of 10 presses. Set on
+2026-09-25 with the user's go-ahead (backup `CinematicClash.ini.bak_20260925_jujutsu-ab`, one byte
+differs); the DLL reads it at game start, so a restart is enough and no new game is needed.

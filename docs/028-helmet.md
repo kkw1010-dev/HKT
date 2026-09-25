@@ -1,8 +1,67 @@
-# 028 · Helmet (Helmet Toggle 2's hotkey as a prompt)
+# 028 · Helmet (off by default, so the face shows)
 
-Status (2026-09-25): built as module `Helmet` and deployed; not yet tested in game.
+Status (2026-09-25, second design): rebuilt without Helmet Toggle 2 and deployed; not yet tested in
+game. The first design (pressing Helmet Toggle's hotkey) passed its five tests but was replaced the
+same day; its record is kept below under "First design".
 
-## The user's decision (2026-09-25)
+## The user's decision (2026-09-25, second)
+
+- Helmet Toggle 2 has no reason to stay. Take only its motions and IED conditions.
+- The helmet is off by default: 투구 벗기 keeps offering itself while headgear is worn, except inside
+  dungeons. In combat, with an enemy, 투구 쓰기 comes up.
+- Why: players keep looking at their character's face; most have sculpted a handsome or beautiful
+  Dragonborn, and anything that hides or disturbs the face and hair is bad UX. So the helmet comes
+  off outdoors and in the field as well, and only dungeons are the exception.
+
+## As built (second design)
+
+- `src/Helmet.cpp`, once a second:
+  - **투구 벗기 (길게)** while ArmorHelmet or ClothingHead headgear is worn on the head or hair slot
+    (circlets excluded), out of combat, movement controls on, and not in a dungeon. A dungeon is an
+    interior cell whose location has one of 19 location types (LocTypeDungeon, LocTypeClearable,
+    LocTypeDraugrCrypt, Dwemer, Falmer, vampire/warlock/dragon priest lairs, animal dens, bandit and
+    Forsworn camps, hagraven nests, werewolf/werebear lairs, spriggan groves, giant camps, dragon
+    lairs, Riekling camps, ash spawn; looked up by editor ID at load). Exteriors never count.
+  - **투구 쓰기** (one press, the combat exception of the input policy) in combat while no headgear is
+    worn and a piece CIGAR took off is still carried.
+- Taking off: Helmet Toggle 2's take-off clip (graph variable `iGPMAAnimationType` = 2 for a helmet,
+  6 for a ClothingHead hood, then the event `OffsetGPMA`), the headgear really unequipped 0.7 s in
+  (`ActorEquipManager::UnequipObject`), `OffsetGPMAStop` 1.85 s later. Seated or with a weapon drawn,
+  the clip is skipped and the headgear comes off at once.
+- Putting on: every stowed piece still carried is equipped at once, without a clip (it is combat).
+- The stowed pieces are kept in the co-save (record `HELM` v1). Wearing headgear again by any route
+  clears the list; a stowed piece no longer carried drops out.
+- Declining 투구 벗기 hides it until the location changes; declining 투구 쓰기, until combat ends.
+- Gate line: `worn= stowed= dungeon= (reason) combat= movable= busy= dismissed=off/on`; each clip logs
+  whether the variable was set and the event accepted.
+
+## Assets and modlist (2026-09-25)
+
+- New asset mod `mods\CIGAR - Helmet Motions`: `meshes\OpenAnimationReplacer\CIGAR Helmet\` with
+  Helmet Toggle 2's `Helmet Unequip` and `Hood Unequip` OAR submods, byte-identical copies. They are
+  keyed only on `iGPMAAnimationType`; the `OffsetGPMA` event and the variable are in the Pandora
+  output's `0_Master.hkx` already. The equip clips are not copied (putting on is instant).
+- Profile `TKL - MUNG ADDON` (MO2 closed and reopened; backups `*.bak_20260925_cigar-helmet`):
+  `Helmet Toggle 2` and `Helmet Toggle 2 - KR` disabled, `Helmet Toggle 2.esp` unticked (no plugin
+  has it as a master), `CIGAR - Helmet Motions` enabled above the CIGAR release entry. `Helmet
+  Toggle 2 - SMP Hair Fix` stays: it is the winning FSMP `configs.xml` for the whole game.
+- `verify_deploy.py` checks that Helmet Toggle 2 is off, the motions mod is on with both clips, and
+  `0_Master.hkx` still has the event and the variable.
+- The first design's physics-reset key press is gone: the synthetic F12 for Auto Physics Reset also
+  opened photo mode (test 2 of the first design, the user). A real unequip should not need a reset.
+
+## Not done: the helmet on the belt (IED)
+
+Helmet Toggle's IED profile does not carry over. It only repositions the node
+`ExtraPelvisArmorHelmet1`, which belongs to the *hidden variant mesh* of a helmet that is still
+equipped (Dynamic Armor Variants), plus a hand node during its clip. Once the helmet is really
+unequipped there is nothing for those entries to move. Showing a carried, unequipped helmet on the
+pelvis needs a new IED entry (a last-equipped or inventory display for the head slot) in the user's
+IED config, which is stored per save; that is the next step if the user wants the belt display.
+
+## First design (2026-09-25, replaced)
+
+### The user's decision (2026-09-25, first)
 
 SI's HelmetToggle ("prompt to toggle the helmet off/on when the player enters a safe/unsafe
 location", SI's own help text) is rebuilt on Helmet Toggle 2 (Nexus 100617, v3.6), which is already

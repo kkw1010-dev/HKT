@@ -407,33 +407,25 @@ def check_fhu(modlist):
 
 
 HT_MOD = "Helmet Toggle 2"
-HT_KEYBINDS = os.path.join(MODS, "TAKEALOOK - MCM and INI", "MCM", "Settings", "keybinds.json")
+HELMET_MOTIONS_MOD = "CIGAR - Helmet Motions"
+HELMET_CLIPS = ["Helmet Unequip", "Hood Unequip"]
 
 
 def check_helmet(modlist):
-    """Helmet calls HT_MCM.PressHotkey on HT_AnimationQuest and reads HT_PlayerAlias's globals and
-    lists; a rename leaves the prompt absent. The hotkey it replaces (B, MCM Helper keybind
-    HT_ManageHelmet) must stay unbound: the user's rule for keys CIGAR takes over."""
-    if "+" + HT_MOD not in modlist:
-        note("Helmet Toggle 2 absent: Helmet module idles")
-        return
-    for name, needles in {"HT_MCM": ["PressHotkey", "HT_HotkeyType", "HT_HotkeyState"],
-                          "HT_PlayerAlias": ["HT_SafeLocations", "HT_UnsafeLocations", "HT_HelmetState"]}.items():
-        path = os.path.join(MODS, HT_MOD, "scripts", name + ".pex")
-        if not os.path.isfile(path):
-            check(False, "Helmet Toggle script present: %s.pex" % name)
-            continue
-        with open(path, "rb") as f:
-            data = f.read().lower()
-        missing = [n for n in needles if n.lower().encode() not in data]
-        check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
-    bound = []
-    if os.path.isfile(HT_KEYBINDS):
-        with open(HT_KEYBINDS, encoding="utf-8-sig") as f:
-            bound = [k for k in json.load(f).get("keybinds", [])
-                     if k.get("modName") == HT_MOD and k.get("keycode", -1) not in (-1, 0)]
-    check(not bound, "Helmet Toggle's own hotkey is unbound in MCM Helper keybinds (prompt replaces it)%s" % (
-        " - bound: %s" % [k.get("keycode") for k in bound] if bound else ""))
+    """Helmet unequips and re-equips headgear itself and plays Helmet Toggle 2's take-off clips from
+    its own asset mod. Helmet Toggle 2 must be off: its scripts re-hide or re-equip headgear on every
+    equip change, and its hidden-variant swap is what left SMP hair without physics."""
+    check("+" + HT_MOD not in modlist, "Helmet Toggle 2 disabled (CIGAR's Helmet replaces it)")
+    check("+" + HELMET_MOTIONS_MOD in modlist, "%s enabled" % HELMET_MOTIONS_MOD)
+    base = os.path.join(MODS, HELMET_MOTIONS_MOD, "meshes", "OpenAnimationReplacer", "CIGAR Helmet")
+    for clip in HELMET_CLIPS:
+        path = os.path.join(base, clip, "Actors", "Character", "Animations", "GPMAOffsetAnimation.hkx")
+        check(os.path.isfile(path), "helmet clip present: %s" % clip)
+    for rel in ("meshes/actors/character/behaviors/0_master.hkx",):
+        path = winning_file(modlist, rel)
+        data = open(path, "rb").read() if path else b""
+        check(b"OffsetGPMA" in data and b"iGPMAAnimationType" in data,
+              "%s has the OffsetGPMA event and iGPMAAnimationType (the clips' trigger)" % rel)
 
 
 def check_pno(modlist):

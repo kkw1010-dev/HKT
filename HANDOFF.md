@@ -34,11 +34,16 @@
   and Party Sheet hides on that; nothing in CIGAR causes it. **Out of CIGAR's scope** (the user,
   2026-09-25): recorded as Installation and Modification case 032, to be fixed in Party Sheet in
   another session.
-- **`Helmet` passed in game 2026-09-25** (`docs/028-helmet.md`); an SMP hair physics reset after
-  each toggle was added afterwards, untested.
+- **`Helmet` rebuilt 2026-09-25, untested** (`docs/028-helmet.md`, second design): no Helmet Toggle
+  2 any more (disabled in the profile); helmet off by default, 투구 벗기 everywhere but dungeon
+  interiors, 투구 쓰기 in combat; real unequip with Helmet Toggle's take-off clips from the new asset
+  mod `CIGAR - Helmet Motions`. Belt display (IED) not done. The F12 physics-reset press is gone (it
+  opened photo mode).
 - **유술 0 of 26 on 2026-09-25** (`docs/012`, test 20); lead: Cinematic Clash 1.0.2 (live since
   09-20 18:10, just before the rate first fell). A/B test with its master switch off is pending the
   user's go-ahead.
+  Go-ahead given: `CinematicClash.ini` `[General] bEnabled = 0` (backup
+  `CinematicClash.ini.bak_20260925_jujutsu-ab`); restore it after the test.
 - Built 2026-09-25: `Helmet`: SI's HelmetToggle on
   Helmet Toggle 2. 투구 벗기 in a safe place with headgear on, 투구 쓰기 in an unsafe place while it is
   hidden; accepting calls `HT_MCM.PressHotkey()`; the safe/unsafe lists are Helmet Toggle's own (FLM).
@@ -201,7 +206,7 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 | `Recharge` | 충전하기: <무기 이름> | — (replaces SI weapon recharge) | `023` |
 | `QuestAction` | 장착하기: <샤우트> | — (replaces SI QuestActions) | `025` |
 | `ChairDrink` | 마시기: <술> | — (SI chair drink, narrowed) | `026` |
-| `Helmet` | 투구 벗기, 투구 쓰기 | Helmet Toggle 2 (replaces SI HelmetToggle and its B key) | `028` |
+| `Helmet` | 투구 벗기, 투구 쓰기 | — (SI HelmetToggle; clips from `CIGAR - Helmet Motions`) | `028` |
 
 - **Bathe.** In water with nothing strippable worn, it calls BiS's own
   `TryWashActor`. The dirt reset and the waterfall shower were both

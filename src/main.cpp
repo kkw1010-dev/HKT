@@ -311,6 +311,7 @@ namespace
 	void OnSave(SKSE::SerializationInterface* a_intfc)
 	{
 		Dress::GetSingleton()->Save(a_intfc);
+		Helmet::GetSingleton()->Save(a_intfc);
 	}
 
 	void OnLoad(SKSE::SerializationInterface* a_intfc)
@@ -321,6 +322,8 @@ namespace
 		while (a_intfc->GetNextRecordInfo(type, version, length)) {
 			if (type == 'DRES' && (version == 1 || version == 2)) {
 				Dress::GetSingleton()->Load(a_intfc, version);
+			} else if (type == 'HELM' && version == 1) {
+				Helmet::GetSingleton()->Load(a_intfc, version);
 			} else {
 				logs::warn("skipping unknown co-save record {:08X} v{}", type, version);
 			}
@@ -331,6 +334,7 @@ namespace
 	{
 		gameReady = false;
 		Dress::GetSingleton()->Revert();
+		Helmet::GetSingleton()->Revert();
 	}
 }
 
