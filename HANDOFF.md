@@ -31,10 +31,9 @@ with `CIGAR 2-0-0-0 loaded` and held no warning or error line. Known issues stay
   Another Mannequin Script Fix, 20 base-form slots, the `MannequinActivateTrig` activate parent;
   PromptID 40; one build with self-verifying logs, one test session).
 - **Branch `v3`** (from `master` at `2de6ee3`) holds all 3.0 work; do not build 3.0 on `master` or `v2`.
-- **Decisions still open, ask before coding** (listed in `docs/030`, "Couplings"): whether the helmet
-  stowed by `Helmet` counts as worn for the swap; whether `Dress`'s remembered outfit is refreshed
-  or cleared after a swap. The Almsivi CC mannequins are included: their extra script only seeds the
-  starting outfit once (read 2026-09-25, `docs/030`).
+- **Decisions made** (the user, 2026-09-25; `docs/030`, "The user's decisions"): the stowed helmet
+  goes with the outfit and the mannequin's helmet arrives stowed; `Dress` remembers the post-swap
+  outfit; the Almsivi CC mannequins are included. Nothing is left to ask; the next step is the build.
 - New modules follow `docs/000-adding-a-module.md` and the user's rules in memory, including
   `cigar-declined-prompt-stays-hidden` (a double-tap decline hides the prompt until the situation
   changes; hold-and-keep prompts must read the double tap themselves).

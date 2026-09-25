@@ -94,7 +94,17 @@ All four run the same `Swap()`. Hold, as the project's prompt policy asks for no
   enchantment, charge and tempering, an item-count conservation check for player + mannequin, and the
   slot readback.
 
-## Couplings with existing modules (decide before building)
+## The user's decisions (2026-09-25)
+
+- **Helmet:** the helmet `Helmet` stowed counts as part of the player's outfit and goes to the
+  mannequin (its `HELM` list is cleared). The mannequin's helmet arrives **stowed**, not on the head:
+  it is unequipped on arrival and added to `Helmet`'s list, so 투구 쓰기 offers it in combat and the
+  face stays visible, as `Helmet` already does everywhere else.
+- **Dress:** after a swap, `Dress` remembers what the player now wears (the same `Remember()` path
+  it uses after 착용하기). After 의상 보관 the player wears nothing, so the memory ends up empty.
+- **Almsivi CC mannequins:** included (see "Facts from the load order").
+
+## Couplings with existing modules (decided above)
 
 - **`Dress` (co-save `DRES`)** remembers the outfit by FormID. After a swap those items are on the
   mannequin, and 착용하기 would dress the player half-way. Options: refresh `Dress`'s memory from what
