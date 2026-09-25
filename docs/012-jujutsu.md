@@ -663,3 +663,22 @@ standoff in that window, only hit checks.
 Built, untested: each press logs both actors' raw `boolBits` / `boolFlags`, life, knock, sit and fly
 states, and whether the first death has happened; the first death of a spawned actor is logged with
 the player's flags at that moment. The next run compares the player's flags before and after it.
+
+## Test 29 (2026-09-25 23:08-23:11): NPC grapples off, same block
+
+NPC grapples off (the user's call) changed nothing: two spawned orcs refused 16 presses and retries
+between 23:08:56 and 23:10:06. The user opened the console during a press, killed one orc, and as the
+console closed the press still in its window **started the pair at once** on the other orc; every
+press after that played (combat #2 had two ordinary refusals while the victim blocked).
+
+The player's `boolBits` / `boolFlags` were **identical** before and after that first death
+(`304021A2` / `00002104`); the one difference logged at the death (`00806104`) is the kill move that
+had just started (`kIsInKillMove`, `kForceIncMinBoneUpdate`). No other SKSE log shows anything at the
+kill but routine lines (SPID redistribution of the corpse, Experience's kill XP). The spawned base
+`000328D7` is `TreasCorpseBanditOrcMale`, a corpse-template NPC, but the later orcs of the same base
+play, so it is not the base.
+
+Built, untested: the flags line now also prints each actor's AI process `killMoveTimer`,
+`deferredKillTimer`, the last idle played, `unk210`, the high process's current idle and idle timer,
+at each press and again at each refusal. A kill-move cooldown or a stale idle slot that the first
+death clears would show here.

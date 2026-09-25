@@ -409,10 +409,24 @@ namespace CIGAR
 		}
 		const auto& data = a_actor->GetActorRuntimeData();
 		const auto* state = a_actor->AsActorState();
-		return std::format("boolBits={:08X} boolFlags={:08X} lifeState={} knock={} sitSleep={} flyState={}", data.boolBits.underlying(),
+		std::string process = "process -";
+		if (const auto* ai = data.currentProcess) {
+			// Test 29: the player's flags were identical before and after the first death. The kill-move
+			// timers and idle slots of the AI process are the next place a one-shot block can live.
+			const auto* mh = ai->middleHigh;
+			const auto* hi = ai->high;
+			const auto idleName = [](const RE::TESIdleForm* a_idle) {
+				return a_idle ? std::format("{:08X}", a_idle->GetFormID()) : "-"s;
+			};
+			process = std::format("killMoveTimer={} deferredKillTimer={} lastIdle={} unk210={} processIdle={} idleTimer={}",
+				mh ? std::format("{:.2f}", mh->killMoveTimer) : "-"s, mh ? std::format("{:.2f}", mh->deferredKillTimer) : "-"s,
+				mh ? idleName(mh->lastIdlePlayed) : "-"s, mh ? idleName(mh->unk210) : "-"s, hi ? idleName(hi->currentProcessIdle) : "-"s,
+				hi ? std::format("{:.2f}", hi->idleTimer) : "-"s);
+		}
+		return std::format("boolBits={:08X} boolFlags={:08X} lifeState={} knock={} sitSleep={} flyState={} {}", data.boolBits.underlying(),
 			data.boolFlags.underlying(), state ? static_cast<int>(state->GetLifeState()) : -1,
 			state ? static_cast<int>(state->GetKnockState()) : -1, state ? static_cast<int>(state->GetSitSleepState()) : -1,
-			state ? static_cast<int>(state->GetFlyState()) : -1);
+			state ? static_cast<int>(state->GetFlyState()) : -1, process);
 	}
 
 	std::string Jujutsu::DescribeVats()
@@ -720,6 +734,7 @@ namespace CIGAR
 			} else if (!v || now - phaseStart >= prepareWindow) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries, first use this session={}); victim: {}", t, tries,
 					firstUse, DescribeVictim(v));
+				Log("flags at the refusal: victim {} | player {}", DescribeFlags(v), DescribeFlags(a_player));
 				// A refused press gets one automatic retry; only a refused retry is worth a notification.
 				if (autoPress && !warnedNoStart) {
 					warnedNoStart = true;
