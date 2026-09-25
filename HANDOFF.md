@@ -1,4 +1,36 @@
-# CIGAR — session handoff (updated 2026-09-21)
+# CIGAR — session handoff (updated 2026-09-25)
+
+## Start here (2026-09-25, end of session; nothing below has been tested in game)
+
+Built, deployed and committed, **untested**: `Helmet` second design (`docs/028`), `Poison`, `Observe`,
+`GearSwap`, `PartyOutfit`, books in `ItemEquip`, the IED helmet-on-belt entry (`docs/029`). The user
+runs the whole test in the next session on a **new game** (Helmet Toggle 2.esp was removed; IED's
+default config and the new co-save records `HELM`/`QOUT` apply to new games).
+
+Open experiment: **Cinematic Clash is switched off** for the 유술 A/B test
+(`CinematicClash.ini` `[General] bEnabled = 0`, backup `CinematicClash.ini.bak_20260925_jujutsu-ab`).
+Read the 유술 result, then restore the INI (or keep it off if it fixes 유술 and the user agrees).
+
+After the user's run, read `SKSE\CIGAR.log` for every item below before asking anything. The test
+list given to the user (console IDs checked against the load order):
+
+1. `player.additem 000A26E5 1` → 읽기 (길게): 주문서 - 염력 → hold → "염력 습득", tome gone.
+2. `coc Riverwood`, `player.additem 00012E4D 1`, `player.equipitem 00012E4D` → 투구 벗기 (길게) →
+   take-off clip, helmet on the right hip (IED; position is a first guess).
+3. `player.additem 00012E49 1`, `player.equipitem 00012E49`, `player.placeatme 00013952 1` → aim at
+   the dropped steel cuirass → 몸 장비 교체 (길게) → picked up and worn.
+4. Weapon sheathed, look at a Riverwood NPC for 5 s → 살펴보기 (누르고 있기) → zoom while held.
+5. `player.additem 0003A5A4 2`, draw the weapon → 독 바르기 (길게) → prompt gone (weapon poisoned).
+6. `player.placeatme 00023ABE 1` (wolf) → 투구 쓰기 (one press) in combat → helmet on, hip display gone.
+7. `coc BleakFallsBarrow01` → 유술 ×10 on blocking bandits (Cinematic Clash off).
+8. Test save: `startquest MQ201`, `setobjectivedisplayed MQ201 40 1`, `player.additem 000E40DF 1`,
+   `player.additem 000E40DE 1` → 파티 의상 입기; `setobjectivedisplayed MQ201 40 0` → 원래 장비로.
+   `startquest` may fail as it did for MQ105 (gate would read `mq201=-`).
+9. Quest note: take Faendal's "A Lovely Letter" in Riverwood → 읽기 prompt on receiving the letter.
+
+Also open: whether to disable the SI mod itself (it now does nothing); TidyUp and KillMove are not
+built (`docs/029`).
+
 
 ## Resume here (2026-09-25, end of session)
 
