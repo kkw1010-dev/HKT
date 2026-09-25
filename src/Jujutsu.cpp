@@ -64,6 +64,8 @@ namespace CIGAR
 		// Experiment: a move not yet played this session keeps retrying this long, without cutting the
 		// player's swing after kPrepareWindow. The log says which window each press had.
 		constexpr auto kFirstUseWindow = 1500ms;
+		// How long a refused press waits for the kill camera before retrying anyway.
+		constexpr auto kRetryWait = 3s;
 
 		bool GraphBool(RE::Actor* a_actor, const char* a_name)
 		{
@@ -213,6 +215,8 @@ namespace CIGAR
 		inCombat = false;
 		combatIndex = 0;
 		victimTally.clear();
+		retryPending = false;
+		autoPress = false;
 		armedVictim = nullptr;
 		phase = Phase::kIdle;
 		victim = {};
@@ -328,6 +332,12 @@ namespace CIGAR
 			jujutsu.Update(false, [] { return ""s; });
 			return;
 		}
+		if (retryPending) {
+			WatchRetry(player);
+			if (phase != Phase::kIdle) {
+				return;
+			}
+		}
 		std::string gate;
 		auto* target = FindTarget(player, gate);
 		// Remember who blocked, for the grace period.
@@ -356,6 +366,22 @@ namespace CIGAR
 			Log("accept ignored, no target now: {}", gate);
 			return;
 		}
+		retryPending = false;  // a new press replaces a pending automatic retry
+		Start(player, target, false);
+	}
+
+	std::string Jujutsu::DescribeVats()
+	{
+		const auto* vats = RE::VATS::GetSingleton();
+		if (!vats) {
+			return "vats=-";
+		}
+		return std::format("vats mode={} cmds={}", static_cast<std::uint32_t>(vats->mode), vats->commandList.size());
+	}
+
+	void Jujutsu::Start(RE::PlayerCharacter* player, RE::Actor* target, bool a_auto)
+	{
+		autoPress = a_auto;
 		static std::mt19937 rng{ std::random_device{}() };
 		const auto pick = std::uniform_int_distribution<std::size_t>(0, idles.size() - 1)(rng);
 		playing = idles[pick];
@@ -374,15 +400,46 @@ namespace CIGAR
 		// target moved from one the engine refused at close range.
 		const auto seen = seenActors.find(target->GetFormID());
 		const auto& tally = victimTally[target->GetFormID()];
-		Log("start idle {:08X} {} (first use this session={}, window {} ms) combat #{} victim {} (tally {} played / {} refused) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
-			playing->GetFormID(), idleNames[pick], firstUse, prepareWindow.count(), combatIndex,
-			seen == seenActors.end() ? "unscanned"sv : seen->second ? "present at load"sv : "arrived later"sv, tally.first, tally.second,
-			Util::NameOf(target),
-			target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()), Settings::JujutsuReach(), DescribeVictim(target));
+		Log("start idle {:08X} {} ({}, first use this session={}, window {} ms, {}) combat #{} victim {} (tally {} played / {} refused) on {} ({:08X}) distance={:.0f} reach={:.0f}; victim before: {}",
+			playing->GetFormID(), idleNames[pick], a_auto ? "automatic retry" : "press", firstUse, prepareWindow.count(), DescribeVats(),
+			combatIndex, seen == seenActors.end() ? "unscanned"sv : seen->second ? "present at load"sv : "arrived later"sv, tally.first,
+			tally.second, Util::NameOf(target), target->GetFormID(), player->GetPosition().GetDistance(target->GetPosition()),
+			Settings::JujutsuReach(), DescribeVictim(target));
 		if (TryPlay(player, target)) {
 			phase = Phase::kStarting;
 			phaseStart = Clock::now();
 		}
+	}
+
+	void Jujutsu::WatchRetry(RE::PlayerCharacter* a_player)
+	{
+		const auto* vats = RE::VATS::GetSingleton();
+		const bool vatsBusy = vats && (vats->mode != RE::VATS::VATS_MODE::kNone || !vats->commandList.empty());
+		const auto now = Clock::now();
+		if (vatsBusy) {
+			if (!retrySawVats) {
+				retrySawVats = true;
+				Log("after the refusal the kill camera is running ({}); retrying when it ends", DescribeVats());
+			}
+			return;
+		}
+		if (!retrySawVats && now < retryDeadline) {
+			return;
+		}
+		retryPending = false;
+		auto victimPtr = retryVictim.get();
+		auto* v = victimPtr.get();
+		const char* why = !v                                   ? "victim gone" :
+		                  v->IsDead()                          ? "victim dead" :
+		                  !a_player->IsInCombat()              ? "combat over" :
+		                  a_player->GetPosition().GetDistance(v->GetPosition()) > Settings::JujutsuReach() ? "out of reach" :
+		                                                         nullptr;
+		if (why) {
+			Log("automatic retry dropped: {}", why);
+			return;
+		}
+		Log("automatic retry: {}", retrySawVats ? "the kill camera ended" : "no kill camera within 3 s");
+		Start(a_player, v, true);
 	}
 
 	bool Jujutsu::TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim)
@@ -416,7 +473,7 @@ namespace CIGAR
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
-		Log("try {}: before {}{}{} -> SetupSpecialIdle returned {}", tries, before, wasBlocking ? " (sent blockStop)" : "",
+		Log("try {}: before {} {}{}{} -> SetupSpecialIdle returned {}", tries, before, DescribeVats(), wasBlocking ? " (sent blockStop)" : "",
 			playerAttacking ? " (sent attackStop to the player)" : "", requested);
 		if (!requested) {
 			armedVictim = nullptr;
@@ -613,7 +670,8 @@ namespace CIGAR
 			} else if (!v || now - phaseStart >= prepareWindow) {
 				Log("WARN the kill move was refused for {:.1f} s ({} tries, first use this session={}); victim: {}", t, tries,
 					firstUse, DescribeVictim(v));
-				if (!warnedNoStart) {
+				// A refused press gets one automatic retry; only a refused retry is worth a notification.
+				if (autoPress && !warnedNoStart) {
 					warnedNoStart = true;
 					Util::Notify("CIGAR: 유술 모션 미발동. 로그 확인");
 				}
@@ -714,6 +772,13 @@ namespace CIGAR
 		if (auto* tv = victimPtr.get()) {
 			auto& tally = victimTally[tv->GetFormID()];
 			(std::string_view{ a_reason } == "refused" ? tally.second : tally.first) += 1;
+			if (std::string_view{ a_reason } == "refused" && !autoPress) {
+				retryPending = true;
+				retrySawVats = false;
+				retryVictim = tv->GetHandle();
+				retryDeadline = Clock::now() + kRetryWait;
+				Log("refused press: one automatic retry after the kill camera ({})", DescribeVats());
+			}
 		}
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.

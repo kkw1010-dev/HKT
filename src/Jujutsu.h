@@ -57,6 +57,10 @@ namespace CIGAR
 		Jujutsu();
 
 		RE::Actor* FindTarget(RE::PlayerCharacter* a_player, std::string& a_gate) const;
+		// One press: pick a move and start the pair on a_target. a_auto marks the automatic retry.
+		void Start(RE::PlayerCharacter* a_player, RE::Actor* a_target, bool a_auto);
+		void WatchRetry(RE::PlayerCharacter* a_player);
+		static std::string DescribeVats();
 		bool TryPlay(RE::PlayerCharacter* a_player, RE::Actor* a_victim);
 		void Watch(RE::PlayerCharacter* a_player);
 		void Sample(RE::Actor* a_victim, float a_time);
@@ -90,6 +94,14 @@ namespace CIGAR
 		bool inCombat{ false };
 		int combatIndex{ 0 };
 		std::unordered_map<RE::FormID, std::pair<int, int>> victimTally;  // played, refused
+		// Test 26: the session's first press was refused and the HUD went to VATSPlayback (the kill
+		// camera) right after; the next press played. A refused press is retried once by itself, as
+		// soon as the kill camera ends, or after kRetryWait if it never starts (the user, 2026-09-25).
+		bool autoPress{ false };
+		bool retryPending{ false };
+		bool retrySawVats{ false };
+		RE::ActorHandle retryVictim;
+		Clock::time_point retryDeadline{};
 		bool firstUse{ false };
 		std::chrono::milliseconds prepareWindow{ 300 };
 		const char* idleSource{ "-" };

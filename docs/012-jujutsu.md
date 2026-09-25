@@ -618,3 +618,15 @@ camera mode, and was back to `All` at 22:05:55 before the press that played. Tes
 refused 10 presses over a minute; its log was overwritten, so whether VATS mode showed there too is
 unknown. Open: what the first request sets up (kill camera / VATS) and why it can last longer than one
 press.
+
+**Built after test 26 (the user's go-ahead, untested):**
+- Every try and every press logs the kill-camera state, `vats mode=<n> cmds=<n>` (`RE::VATS`: mode 0 is
+  none, 4 the kill camera; `cmds` is its queued command count).
+- A refused press gets **one automatic retry**: as soon as the kill camera ends if it starts, or after
+  3 s if it never does, provided the victim is alive, in reach and the player still in combat. The
+  log says `refused press: one automatic retry`, then `automatic retry: the kill camera ended` or
+  `no kill camera within 3 s` (or `automatic retry dropped: <why>`); the start line says `automatic
+  retry` instead of `press`. A new press cancels a pending retry.
+- The "유술 모션 미발동" notification now comes only when the automatic retry is refused too.
+- Next run: the session's first fight, first press. It should play on the first press or by itself
+  a moment later; the log shows whether the kill camera was involved.
