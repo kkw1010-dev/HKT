@@ -35,8 +35,8 @@ history of each module are in `docs/`, one file per module, and each file starts
    published on Nexus 193080 the same day** (see item 7).
 7. **Nexus 2.1.0 published** (the user's go-ahead, through their Chrome): "CIGAR 2.1.0" uploaded as an
    Update of the 2.0.1 file (now Main/Primary; 2.0.1 moved to old versions, not archived), mod version
-   2.1.0, new summary and description (`dist/nexus-page/summary-2.1.0.txt`,
-   `description-2.1.0.bbcode`), file description and changelog. Adult tag **not** set (the user).
+   2.1.0, new summary and description (`dist/nexus-page/summary-live.txt`,
+   `description-live.bbcode`, kept current), file description and changelog. Adult tag **not** set (the user).
    Requirements (legacy method, for its notes): SKSE64, Address Library, SkyPrompt and SKSE Menu
    Framework "Required"; BiS, TDM, Valhalla, Acheron, SMI and Gourmet "Not necessary, but
    recommended" (the user's rule); LoversLab-only mods in the description only. **Grapple is not named anywhere on the Nexus page** (the
@@ -50,7 +50,9 @@ history of each module are in `docs/`, one file per module, and each file starts
    because the keyboard key was polled (`docs/019` last section). Readmes now say gamepads work
    through SkyPrompt's buttons. In the load order as `+CIGAR 2.1.1` (`-CIGAR 2.1.0`; backup
    `modlist.txt.bak_20260926_cigar-2.1.1`). **Passed in game (13:09-13:21 log; the pad helmet step of
-   `TEST-2.1.1.md` left no line in the log). Pushed.** Not yet on Nexus: the Nexus update
+   `TEST-2.1.1.md` left no line in the log). Pushed. On Nexus since 2026-09-26** as an Update of the 2.1.0 file (2.1.0 moved to old versions), with a
+   changelog, the gamepad wording in the description, the summary "No gameplay mods required" and
+   the AI Media tag (the page texts in `dist/nexus-page/*-live.*` are the live ones). Was: the Nexus update
    (also: gamepad wording on the page, AI Media tag, summary "Works with Skyrim alone" wording).
 
 ### State now
