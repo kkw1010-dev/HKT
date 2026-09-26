@@ -136,14 +136,22 @@ def main():
     print("  %d bytes total" % total)
     print("  CIGAR.dll sha256 %s" % hashlib.sha256(blob).hexdigest())
 
-    # The archive holds the folder itself, as the 2.0.0 archive did.
+    # The archive holds the folder's contents, SKSE/ at its root, so a mod manager installs it as is.
+    # Up to 2.0.1 it held the folder itself, which Vortex would unpack as Data/CIGAR <version>/SKSE.
     archive = out + ".7z"
     if os.path.exists(archive):
         os.remove(archive)
     if os.path.isfile(SEVEN_ZIP):
-        result = subprocess.run([SEVEN_ZIP, "a", "-t7z", archive, name], cwd=OUT_ROOT, capture_output=True, text=True)
+        result = subprocess.run([SEVEN_ZIP, "a", "-t7z", archive, "*"], cwd=out, capture_output=True, text=True)
         if result.returncode != 0:
             raise SystemExit("7-Zip failed:\n" + result.stdout + result.stderr)
+        listing = subprocess.run([SEVEN_ZIP, "l", "-slt", archive], capture_output=True, text=True).stdout
+        # -slt prints the archive's own path first; the entries follow the "----------" line.
+        entries = listing.split("----------", 1)[1]
+        roots = {line[7:].replace("/", "\\").split("\\")[0] for line in entries.splitlines() if line.startswith("Path = ")}
+        if roots != {"SKSE", "README.md", "README-ko.md", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt"}:
+            raise SystemExit("the archive root is %s; SKSE and the documents belong at its root" % sorted(roots))
+        print("PASS the archive has SKSE at its root")
         print("archive:", archive, os.path.getsize(archive), "bytes")
     else:
         print("WARN 7-Zip not found at %s; no archive made" % SEVEN_ZIP)
