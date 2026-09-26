@@ -95,3 +95,27 @@ After test 1 (the user's go-ahead): the Nexus edition's ready lines drop those t
 `valhalla=` joined the forbidden strings (30), and Helmet's line now reads `unequip queued (call
 returned ...)` in every edition. Both packages were rebuilt; the Nexus upload is
 `Downloads\CIGAR 2.0.1 Nexus.7z` (DLL sha256 3950258b...).
+
+## Nexus page and GitHub release (2026-09-26)
+
+- **Nexus:** mod 193080, "Cigar - One-Button Interaction". The user asked for a thorough review of
+  the published page; Claude found and fixed, with the user's authorization:
+  - requirements grouped SKSE and SkyPrompt as "pick one of these"; now SkyPrompt AND Address Library
+    AND SKSE (Steam or GOG);
+  - every readme and the release notes linked SkyPrompt to mod 149963 (Slower Swimming); SkyPrompt is
+    148703;
+  - permissions ("no re-upload", "ask to modify") contradicted GPL-3.0; now a custom GPL statement
+    with the source link and credits for the libraries in the DLL;
+  - the description promised "Followers", "supported external mods" and runtime optional
+    integrations this edition does not have, and never said gamepads are unsupported; the corrected
+    text keeps the user's own sections and wording elsewhere. Original and new texts are kept in
+    `dist/nexus-page/`;
+  - the file had no description or changelog.
+- The package gained `LICENSE.txt` and a generated `THIRD-PARTY-NOTICES.txt`; `CIGAR.dll` is
+  unchanged (sha256 3950258b...). On Nexus the new archive updated the file and the old one is
+  archived (7 downloads had happened before the fix).
+- **SkyPrompt 2.4.0** (what players download now) keeps API 2.0: the same structs, event numbers and
+  exports CIGAR calls (checked against its DLL exports and the upstream header). CIGAR was run only
+  with 2.3.15.
+- **GitHub:** release `v2.0.1-nexus` notes corrected; asset `CIGAR-2.0.1-Nexus.7z` added; the old
+  asset is renamed `superseded-do-not-use-CIGAR.2.0.1.Nexus.7z` (deleting it is left to the user).

@@ -1,0 +1,351 @@
+[center]
+[size=6][b][color=#D6A24A]CIGAR[/color][/b][/size]
+[size=4][b]Contextual Interactions for Skyrim[/b][/size]
+
+[size=3][b][color=#E6B85C]ONE BUTTON. THE RIGHT ACTION. NO HOTKEY CLUTTER.[/color][/b][/size]
+[/center]
+
+[size=4][b][color=#D6A24A]Description[/color][/b][/size]
+
+[color=#D4D4D8]
+Skyrim was designed in an era where every new feature could simply be given another key.
+
+That approach does not scale very well anymore.
+
+A heavily modded Skyrim can easily end up with dozens of hotkeys for actions that are only useful in very specific situations. The player is expected to remember which key belongs to which mod, manage controller combinations, open menus, and manually tell the game what should already be obvious from context.
+
+[b][color=#FFFFFF]CIGAR takes the opposite approach.[/color][/b]
+
+Instead of asking the player to manage more inputs, CIGAR asks the game to understand more context.
+
+When an action makes sense, a prompt appears.
+When it does not, it stays out of the way.
+
+[b][color=#E6B85C]One button performs the whole action.[/color][/b]
+[/color]
+
+
+[size=4][b][color=#D6A24A]Design Philosophy[/color][/b][/size]
+
+[color=#D4D4D8]
+Modern games rarely dedicate a permanent controller button to every possible action.
+
+Games such as [b]Red Dead Redemption 2, Monster Hunter, Hitman, Assassin's Creed[/b] and many other modern AAA games use contextual interaction to solve a simple problem:
+
+[b][color=#FFFFFF]There are more possible actions than there are practical buttons.[/color][/b]
+
+Instead of expanding the input scheme indefinitely, the meaning of an input changes according to context:
+
+- What the player is looking at
+- What the player is currently doing
+- The state of the target
+- Current equipment
+- Combat state
+- Whether the action is actually relevant
+
+CIGAR applies the same broad design philosophy to heavily modded Skyrim.
+
+The goal is [b]not[/b] to reproduce Red Dead Redemption 2, Monster Hunter, or any other individual game.
+
+Context-sensitive interaction is a general game-design pattern used throughout modern games. CIGAR studies those patterns and rebuilds appropriate solutions around Skyrim's mechanics, limitations and modding ecosystem.
+
+[center]
+[b][color=#E6B85C]If this UX problem were designed today,
+would we still solve it the way Skyrim did in 2011?[/color][/b]
+[/center]
+
+That question is the foundation of CIGAR.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Main Features[/color][/b][/size]
+
+[color=#D4D4D8]
+CIGAR is an [b]ESP-less SKSE plugin[/b] designed for heavily modded Skyrim.
+
+Instead of assigning another permanent hotkey to every new feature, CIGAR detects what the player is doing and exposes an action only when that action is actually relevant.
+
+[center]
+[b][color=#E6B85C]CONTEXT → PROMPT → ONE INPUT → COMPLETE ACTION[/color][/b]
+[/center]
+
+CIGAR provides contextual interactions across areas including:
+
+- Equipment
+- Consumables
+- Resting and roleplay poses
+- Quest interactions
+- Combat actions
+
+CIGAR is [b]not[/b] a radial menu.
+
+It is [b]not[/b] a universal hotkey launcher.
+
+Moving twenty hotkeys into another menu does not remove the underlying complexity. It merely relocates it.
+
+Each CIGAR interaction is deliberately designed around a specific gameplay context.
+
+If an action already works well with one button, CIGAR has little reason to interfere with it.
+
+The project focuses on situations where the player is forced to remember arbitrary inputs, navigate unnecessary menus, repeat meaningless actions, lose control without meaningful counterplay, or manually communicate an intention the game could reasonably infer from context.
+[/color]
+
+
+[size=4][b][color=#D6A24A]This Release: Base-Game Edition[/color][/b][/size]
+
+[color=#D4D4D8]
+This Nexus release is the [b]base-game edition[/b]. Its 15 modules work with Skyrim alone: it reads, changes or depends on no other mod, and works the same in a vanilla game and a heavily modded one.
+
+[b]Daily life[/b]
+- Undress / Get Dressed (bed, wardrobe, water)
+- Sit, Lie Down, Lean on a wall, table or railing, Warm Hands at a fire
+- Pass Time while resting or seated (hold)
+- Drink at an inn or home while seated
+- Observe a person or a distant view (hold to zoom)
+
+[b]Gear and items[/b]
+- Equip newly acquired gear (armor only when it beats what you wear, never over an enchanted piece)
+- Read unknown spell tomes and quest notes
+- Helmet off by default so your face shows; put it back on in combat
+- Recharge an enchanted weapon with the best-fitting soul gem
+- Apply the most valuable poison to a drawn weapon
+- Drink the right potion for low health, stamina or magicka, poison, disease or water breathing
+
+[b]Quests[/b]
+- Track a quest when it gets a new objective
+- Equip the shout the Greybeards ask for
+- Party clothes for the Thalmor embassy party, and back again
+
+[b]Combat[/b]
+- Ranged / Melee weapon swap by enemy distance
+- Jujutsu: throw a blocking humanoid enemy; stamina and health damage are adjustable
+
+The full prompt list, settings and details are in [b]README.md[/b] (English) and [b]README-ko.md[/b] (Korean) in the download.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Built for Heavily Modded Skyrim[/color][/b][/size]
+
+[color=#D4D4D8]
+CIGAR began with a simple problem:
+
+[center]
+[b][color=#FFFFFF]Too many useful mods require too many dedicated controls.[/color][/b]
+[/center]
+
+The problem becomes especially obvious on a gamepad, where physical input space is finite. (This release itself targets keyboard and mouse; gamepads are not supported yet.)
+
+More modifier keys, button combinations, radial menus and configuration pages can postpone the problem, but they do not eliminate it.
+
+CIGAR instead treats [b]context itself as additional input space.[/b]
+
+Rather than expecting the player to remember more controls, the system determines which action makes sense at that moment.
+
+The long-term objective is for heavily modded Skyrim to feel less like a collection of independently operated mods and more like a single coherently designed game.
+
+[center]
+[b][color=#E6B85C]The system absorbs complexity.
+The player plays the game.[/color][/b]
+[/center]
+[/color]
+
+
+[size=4][b][color=#D6A24A]Installation Instructions[/color][/b][/size]
+
+[color=#D4D4D8]
+1. Install [b]SKSE64[/b].
+2. Install [b]Address Library for SKSE Plugins[/b].
+3. Install [b]SkyPrompt[/b] and its own requirements (SKSE Menu Framework, ImGui Icons).
+4. Install CIGAR normally through your preferred mod manager.
+5. Launch Skyrim through SKSE.
+
+CIGAR is [b]ESP-less[/b] and does not require a new game.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Requirements[/color][/b][/size]
+
+[color=#D4D4D8]
+[b]Required[/b]
+
+- Skyrim Special Edition / Anniversary Edition (tested on 1.6.1170)
+- [url=https://skse.silverlock.org/]SKSE64[/url]
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/148703]SkyPrompt[/url] (tested with 2.3.15; 2.4.0 keeps the same API)
+
+[b]Optional[/b]
+
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/120352]SKSE Menu Framework[/url] hosts CIGAR's in-game settings panel (SkyPrompt already requires it).
+
+[b]Input[/b]
+
+Keyboard and mouse. Gamepads are not supported.
+
+[b]No other mods required[/b]
+
+This edition does not detect, read or change any other mod. Third-party mods, assets and trademarks remain the property of their respective authors.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Language[/color][/b][/size]
+
+[color=#D4D4D8]
+Prompts, notifications and the settings panel are in [b]English or Korean[/b]. CIGAR follows your game's language automatically; you can switch it in the settings panel. Item, quest and character names come from your game, so a translated game shows its own names inside English prompts.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Known Issues[/color][/b][/size]
+
+[color=#D4D4D8]
+- [b]Jujutsu does nothing until someone has died since the game was loaded.[/b] Once anyone dies in the session it works normally. The cause appears to be a kill-move state inside the game engine; changing it directly might fix it, but its side effects cannot be checked, so it is deliberately left alone. The log records each refusal.
+- [b]The helmet comes off at once, without an animation.[/b]
+[/color]
+
+
+[size=4][b][color=#D6A24A]Design Inspiration & Shout Outs[/color][/b][/size]
+
+[color=#D4D4D8]
+Thanks to the developers of [b]SKSE, CommonLibSSE-NG[/b] and [b]SkyPrompt[/b], and to the Skyrim modding community whose work makes projects like this possible.
+
+CIGAR's broader design inspiration comes from modern games including:
+
+- Red Dead Redemption 2
+- Monster Hunter
+- Hitman
+- Assassin's Creed
+- Tekken
+- Guilty Gear
+
+Different games provide different solutions to recurring gameplay and UX problems.
+
+CIGAR does not attempt to reproduce any one of them.
+
+Instead, it looks at a problem, studies proven solutions from other games, extracts the useful design principle, and rebuilds it around Skyrim.
+
+RDR2-style contextual prompts and modern AAA-style context-sensitive actions demonstrate that limited controller space does not need to be solved by endlessly adding new hotkeys.
+
+Likewise, combat and movement systems from other genres can provide useful design references for problems such as defensive commitment, recovery, movement obstruction and temporary loss of player control.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Open Source & Independent Development[/color][/b][/size]
+
+[color=#D4D4D8]
+CIGAR is open-source software released under the [b]GNU General Public License v3.0 or later (GPL-3.0-or-later)[/b], as required by CommonLibSSE-NG, which it is built on. The license text is [b]LICENSE.txt[/b] in the download, with third-party notices in [b]THIRD-PARTY-NOTICES.txt[/b].
+
+[b]Source code:[/b] [url=https://github.com/kkw1010-dev/HKT]github.com/kkw1010-dev/HKT[/url]
+
+You are free to study, modify, fork and redistribute CIGAR in accordance with the terms of that license.
+
+If you modify or redistribute CIGAR:
+
+- Follow the requirements of the GPL-3.0 license.
+- Preserve required copyright and license notices.
+- Provide corresponding source code where required by the license.
+- Clearly identify modified versions or forks as such.
+- Do not represent an unofficial fork or modified build as the official CIGAR release.
+
+[b]Open source does not mean that modified or redistributed versions become official CIGAR releases.[/b]
+
+Official CIGAR releases are those distributed on this Nexus page and on the GitHub releases of the repository above.
+
+[b]Gameplay Ideas and Similar Mods[/b]
+
+CIGAR does [b]not[/b] claim ownership over contextual interaction as a general game-design concept.
+
+RDR2-style contextual prompts, modern AAA-style context-sensitive actions, recovery mechanics, contextual combat opportunities and similar gameplay patterns existed long before CIGAR and are used throughout the games industry.
+
+Independent developers are free to arrive at similar ideas and create their own implementations.
+
+A separately written mod that solves the same gameplay problem in its own way is an [b]independent implementation[/b], not a CIGAR fork merely because the underlying design idea is similar.
+
+The distinction is simple:
+
+[b]Similar idea, independently implemented:[/b] independent work.
+
+[b]CIGAR code modified under the GPL:[/b] a fork or derivative that must follow the applicable license terms.
+
+[b]CIGAR redistributed or modified while being presented as somebody else's original official work:[/b] not an official CIGAR release.
+
+CIGAR asks for the same standard it applies to itself:
+
+[b][color=#FFFFFF]Ideas and general gameplay patterns are not proprietary. Actual code, assets, authorship and license obligations matter.[/color][/b]
+[/color]
+
+
+[size=4][b][color=#D6A24A]Disclaimer — AI-Assisted Development[/color][/b][/size]
+
+[color=#D4D4D8]
+[b][color=#FFFFFF]Yes. This project contains AI-generated code.[/color][/b]
+
+Most of CIGAR's implementation was written with [b]Claude Opus 5.5[/b] under human design, direction, architecture, review, in-game testing and final QA.
+
+I do not consider AI-generated code inherently inferior to human-written code.
+
+In 2026, I consider frontier commercial LLMs more than capable of producing C++ at the level required for this project when the objective, architecture, constraints and acceptance criteria are clearly defined and the resulting implementation is actually tested.
+
+My own view is that current frontier commercial models already exceed the C++ implementation ability of an ordinary programmer in many tasks.
+
+That does not mean they exceed the very best human engineers, nor does it mean generated code should be trusted without review and testing.
+
+There are exceptional human programmers operating at a level current models cannot reliably reproduce. I am not claiming otherwise.
+
+CIGAR is also not presented as a demonstration of human C++ craftsmanship.
+
+It is a gameplay project.
+
+The objective is to:
+
+- Identify bad UX
+- Find the actual underlying problem
+- Study proven solutions
+- Design a better interaction
+- Define the architecture and acceptance criteria
+- Use appropriate tools to implement it
+- Test the result in the actual game
+
+[b][color=#E6B85C]If AI-assisted development is, by itself, unacceptable to you, then this mod is probably not for you.[/color][/b]
+
+I cannot offer an alternative human-written edition.
+[/color]
+
+
+[size=4][b][color=#D6A24A]Compatibility, Stability & Support[/color][/b][/size]
+
+[color=#D4D4D8]
+CIGAR interacts with Skyrim gameplay state at runtime through SKSE.
+
+No heavily modded Skyrim installation is identical, so compatibility with every possible combination of mods, animation frameworks, combat overhauls and runtime modifications cannot be guaranteed.
+
+Back up important saves before installing or updating SKSE plugins.
+
+Support is primarily intended for the [b]official, unmodified CIGAR release[/b].
+
+Issues caused by the following may fall outside the scope of support:
+
+- Modified or recompiled CIGAR binaries
+- Unsupported Skyrim or SKSE versions
+- Outdated dependencies
+- Conflicting third-party mods
+- Manually altered configurations
+- Incomplete installations
+
+When reporting an issue, please include whenever possible:
+
+- CIGAR version
+- Skyrim runtime version
+- SKSE version
+- Relevant logs (Documents/My Games/Skyrim Special Edition/SKSE/CIGAR.log)
+- A reproducible description of the problem
+
+CIGAR is tested before release, but no software can guarantee flawless operation across every heavily modded Skyrim environment.
+[/color]
+
+
+[center]
+[size=5][b][color=#D6A24A]CIGAR[/color][/b][/size]
+
+[b]Context decides the action.[/b]
+
+[b][color=#E6B85C]One button. Whole action. Keep playing.[/color][/b]
+[/center]

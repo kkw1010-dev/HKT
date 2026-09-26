@@ -1,0 +1,1 @@
+CIGAR is an ESP-less SKSE plugin for heavily modded Skyrim that replaces repetitive hotkeys and menu friction with context-sensitive prompts. Inspired by modern AAA interaction design such as RDR2 and Monster Hunter, it lets the game infer the right action—one button, whole action.

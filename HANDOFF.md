@@ -21,6 +21,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 - **The Nexus build is in the load order** (2026-09-26, for the user's video): `+CIGAR 2.0.1 Nexus`,
   `-CIGAR`, `-CIGAR 2.0.1` (backup `modlist.txt.bak_20260926_nexus-video`). `Build.ps1 -Deploy` fails
   `verify_deploy.py` until `+CIGAR` / `-CIGAR 2.0.1 Nexus` are set back with MO2 closed.
+- **Nexus page live** (mod 193080), reviewed and corrected 2026-09-26 (`docs/035`, last section;
+  page texts in `dist/nexus-page/`).
 - **GitHub:** branch `nexus` and tag `v2.0.1-nexus` mark the Nexus edition's source (build it with
   `tools\Build.ps1 -Nexus`); the tag's GitHub release carries `CIGAR 2.0.1 Nexus.7z`.
 - **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
