@@ -1,16 +1,21 @@
 # Nexus requirements for CIGAR 2.1.0 (mod 193080)
 
-What to enter on the page's Requirements tab. Every Nexus ID and off-site URL below was checked on
+**What was done (2026-09-26, published):** the page keeps Nexus's file-to-file requirements, which
+hold only the three hard requirements, carried over from the 2.0.1 file to 2.1.0: SkyPrompt >= 2.4.0,
+SKSE64 (Steam 2.3.1 or GOG 2.2.6) and Address Library >= 13. The optional mods below are listed in the
+description only. The user's call: LoversLab integrations are normally written in the description,
+not the requirements, and file-to-file requirements can hold neither an "optional" mark nor an
+off-site link (a mod manager would treat every entry as required). The public API's legacy
+`modRequirements` field is empty for that reason.
+
+The tables below are the checked list the description links to; they were drafted for the legacy
+requirements form and are kept as the reference for IDs and URLs.
+
+Every Nexus ID and off-site URL below was checked on
 2026-09-26: the Nexus IDs by name through the public v2 GraphQL API; BaboDialogue's and Fill Her Up's
 URLs are the ones other Nexus files already use for the same mods (BaboDialogue PT-BR 79571; the Fill
 Her Up Spanish translation 148200, uploaded by BakaFactory); Yamete Kudasai and Private Needs - Orgasm
 from the installed mods' `meta.ini`.
-
-As of 2026-09-26 the page lists **no** requirements, and its summary still says "Base-game edition: no
-other mods needed".
-
-Nexus has no "optional" flag, so optional entries say so in their notes. Notes are what players see
-next to each entry.
 
 ## Nexus requirements
 

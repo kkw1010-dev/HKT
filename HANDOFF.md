@@ -31,7 +31,18 @@ history of each module are in `docs/`, one file per module, and each file starts
    `-Package` makes `Downloads\CIGAR 2.1.0` (+ `.7z`) with English and Korean readmes, and fails on
    any file but CIGAR's own six. Helmet Toggle 2's clips stay author-only (the user: "헬멧토글은 나만
    쓸거"). ChairDrink knows alcohol by base-game FormIDs and other mods' keywords together.
-   **Passed in game on 2026-09-26 (11:12-11:24 log, the user: all normal); not uploaded, not pushed.**
+   **Passed in game on 2026-09-26 (11:12-11:24 log, the user: all normal). Pushed (master, v2) and
+   published on Nexus 193080 the same day** (see item 7).
+7. **Nexus 2.1.0 published** (the user's go-ahead, through their Chrome): "CIGAR 2.1.0" uploaded as an
+   Update of the 2.0.1 file (now Main/Primary; 2.0.1 moved to old versions, not archived), mod version
+   2.1.0, new summary and description (`dist/nexus-page/summary-2.1.0.txt`,
+   `description-2.1.0.bbcode`), file description and changelog. Adult tag **not** set (the user).
+   Requirements: only the three hard ones stay as Nexus file-to-file requirements (SkyPrompt >= 2.4.0,
+   SKSE64, Address Library >= 13); optional mods are in the description only, as LoversLab
+   integrations usually are (the user). **Grapple is not named anywhere on the Nexus page** (the
+   user); the module and the readmes keep it. The archive now has `SKSE\` at its root
+   (`make_release.py` checks it); up to 2.0.1 it wrapped a folder, which Vortex would install as
+   `Data\CIGAR <ver>\SKSE`. All of it was read back through the public API afterwards.
 
 ### State now
 
@@ -61,10 +72,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 ### Next, in order
 
-0. **2.1.0 release**: the user decides when to upload it to Nexus (a new main file on 193080,
-   requirements marked off-site; the page texts in `dist/nexus-page/` still describe 2.0.1 and need
-   rewriting from `dist/README-en.md`) and when to push. The readmes already say "tested with
-   SkyPrompt 2.4.0"; the GitHub release notes of `v2.0.1-nexus` still say 2.3.15.
+0. **2.1.0 is out** (item 7 above). Not done: a GitHub release or tag for 2.1.0 (ask first), and the
+   `v2.0.1-nexus` release notes still say SkyPrompt 2.3.15.
 1. **SkyPrompt 2.4.0 passed with 2.1.0** (2026-09-26): `SkyPrompt.log` shows `2-4-0-0`; the user saw
    the Hangul prompts and panel as before. Its one warning, `Failed to import translation for
    SkyPrompt`, is harmless here: CommonLibSSE-NG's `ParseTranslation` gives up because Scaleform
