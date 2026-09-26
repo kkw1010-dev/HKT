@@ -16,7 +16,7 @@
 - [SKSE Menu Framework](https://www.nexusmods.com/skyrimspecialedition/mods/120352) — 게임 안에서 설정을 바꾸는 CIGAR 패널도 여기에 생깁니다. 패널이 없어도 기능은 그대로 동작합니다.
 
 나머지는 모두 선택입니다. 아래 "연동 모드"를 보세요. Skyrim 1.6.1170(Anniversary Edition),
-SkyPrompt 2.3.15에서 시험했습니다. SkyPrompt 2.4.0도 API(2.0)가 같습니다.
+SkyPrompt 2.4.0에서 시험했습니다. 2.3.15도 API(2.0)가 같아 동작합니다.
 키보드·마우스 기준으로 만들었습니다. 게임패드는 지원 대상이 아닙니다.
 
 ## 설치

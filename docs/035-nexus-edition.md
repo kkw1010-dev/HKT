@@ -31,6 +31,13 @@ The user's decision: other-mod integrations go back into the Nexus upload, as re
   another mod (Grapple F13, Acheron F14, Valhalla F15, FHU and PNO keys cleared, Grapple's lock key
   set to TDM's).
 - Version 2.1.0.
+- **In game, 2026-09-26 (11:12-11:24, with SkyPrompt 2.4.0): passed.** The user saw nothing wrong;
+  the log agrees. All 24 modules `ready`, every integration found (TDM, Grapple, Valhalla, Acheron with
+  YK and the BaboDialogue patch, Survival + SMI + Gourmet, FHU, PNO, BaboDialogue, BiS). Grapple's key
+  went to F13 and its lock key to TDM's 258; Acheron's key was already F14, Valhalla's F15. Helmet:
+  `take off without the clip (... clips=false)`, put on twice. ChairDrink: `29 of 29 base-game drinks`
+  plus six mod keywords; ale offered, drunk at the Sleeping Giant Inn, a double tap declined it.
+  Jujutsu: the first press was refused before anyone had died (the known issue), then 4 of 4 played.
 
 ## The user's decisions (2026-09-26)
 

@@ -31,7 +31,7 @@ history of each module are in `docs/`, one file per module, and each file starts
    `-Package` makes `Downloads\CIGAR 2.1.0` (+ `.7z`) with English and Korean readmes, and fails on
    any file but CIGAR's own six. Helmet Toggle 2's clips stay author-only (the user: "헬멧토글은 나만
    쓸거"). ChairDrink knows alcohol by base-game FormIDs and other mods' keywords together.
-   **Not run in game yet, not uploaded, not pushed.**
+   **Passed in game on 2026-09-26 (11:12-11:24 log, the user: all normal); not uploaded, not pushed.**
 
 ### State now
 
@@ -63,13 +63,15 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 0. **2.1.0 release**: the user decides when to upload it to Nexus (a new main file on 193080,
    requirements marked off-site; the page texts in `dist/nexus-page/` still describe 2.0.1 and need
-   rewriting from `dist/README-en.md`) and when to push. Before that, one in-game run of the release
-   DLL is worth having: copy `Downloads\CIGAR 2.1.0` into a mod folder in place of the Nexus copy.
-1. **In-game check of SkyPrompt 2.4.0** (the user runs it; read `SKSE\CIGAR.log` and
-   `SKSE\SkyPrompt.log` first): prompts keep the Hangul font and position, SkyPrompt's panel is
-   Korean, CIGAR prompts offer and accept. If it passes, change "tested with SkyPrompt 2.3.15" to
-   2.4.0 in `dist/README-nexus*.md`, the Nexus description (`dist/nexus-page/description-2.0.1.bbcode`)
-   and the GitHub release notes; ask before re-uploading a package for a readme-only change.
+   rewriting from `dist/README-en.md`) and when to push. The readmes already say "tested with
+   SkyPrompt 2.4.0"; the GitHub release notes of `v2.0.1-nexus` still say 2.3.15.
+1. **SkyPrompt 2.4.0 passed with 2.1.0** (2026-09-26): `SkyPrompt.log` shows `2-4-0-0`; the user saw
+   the Hangul prompts and panel as before. Its one warning, `Failed to import translation for
+   SkyPrompt`, is harmless here: CommonLibSSE-NG's `ParseTranslation` gives up because Scaleform
+   Translation Plus Plus replaced the game's translator (the `skyrim_cast` to `BSScaleformTranslator`
+   fails), but `Translate()` asks that replacement, which has already loaded `SkyPrompt_ENGLISH.txt`
+   (the KR mod's Korean file). An `Observe` hold logs `accepted` every frame (274 lines in 3 s);
+   hold-mode prompts ignore accepted events, so it is log noise only.
 2. **Back to the author build** after the user's video (see State).
 3. **CIGAR 3.0, MannequinSwap** on branch `v3`: plan `docs/030-mannequin-swap.md`, PromptID 40, all
    decisions made (stowed helmet goes with the outfit and the mannequin's helmet arrives stowed; `Dress`

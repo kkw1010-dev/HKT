@@ -17,7 +17,7 @@ Text is in English or Korean, following your game's language.
   in-game settings panel. CIGAR works without the panel.
 
 Everything else is optional; see "Other mods" below. Tested on Skyrim 1.6.1170 (Anniversary Edition)
-with SkyPrompt 2.3.15; SkyPrompt 2.4.0 keeps the same API (2.0). Made for keyboard and mouse;
+with SkyPrompt 2.4.0 (2.3.15 works too; both use API 2.0). Made for keyboard and mouse;
 gamepads are not supported.
 
 Prompt text follows the language CIGAR uses; item, quest and character names come from your game,
