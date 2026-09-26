@@ -1,6 +1,6 @@
 # 030 · MannequinSwap (의상 교환 with a mannequin), plan
 
-Status (2026-09-25): **planned, not started; work is on branch `v3`.** The user files it under
+Status (2026-09-26): **built (`src/MannequinSwap.*`, 3.0.0, branch `v3`), awaiting the first in-game test** (`TEST-3.0.0-mannequin.md`). Earlier (2026-09-25): planned; work is on branch `v3`. The user files it under
 **CIGAR 3.0**: CIGAR 2.0.0 is released and was tested by the user with no problems, and MannequinSwap is the first 3.0 feature. The author build is back in the load order.
 
 Sources: a plan GPT wrote (`claude.md` in the repo root, removed on the user's permission once this
