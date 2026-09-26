@@ -28,30 +28,16 @@ then read `SKSE\CIGAR.log` before anything else.
 - **Still not exercised anywhere:** the vanilla script path (no USSEP, no fix). The vanilla script
   records nothing when full; the capacity preflight covers that (`docs/030`, second review).
 
-### Also pending: MCM Memory re-triggers BaboDialogue's kidnap test
+### Solved elsewhere: MCM Memory re-triggered BaboDialogue's kidnap test
 
-This was found at the end of the session and is **not fixed**. The user reported that a new game
-jumps straight into BaboDialogue's kidnap cell.
+A new game jumped straight into BaboDialogue's kidnap cell, because MCM Memory replayed the recorded
+`$BaboTestQuestBaboKidnap` click. This was solved in another session as **Installation and
+Modification case 036** (`cases/036-mcm-memory-guard-babo-debug-buttons.md`).
 
-- **Cause:** the user once used BaboDialogue's debug "start kidnap event now" option. MCM Memory
-  recorded it, and replays it on every new game.
-- **The entries:** `mods\TAKEALOOK - MCM Memory Profile\SKSE\Plugins\MCMMemory\Profiles\Default.json`,
-  `settings`, page `$BaboDebug`:
-  - index 3438, `$BaboTestQuestBaboKidnap` = **true**, `valueSource: menu.option.numValue`. This is
-    the one that fires.
-  - index 3439, the same option = false.
-  - index 3437, `$BaboTestQuestBaboBadEnd` = false.
-- **MCM Memory has no per-option exclusion.** Its `Settings.json` has only
-  `autoRestoreExcludedMCMs`, which excludes a whole MCM and would drop every BaboDialogue setting. A
-  scan of the DLL's strings found nothing finer, but `Translation.json` did not parse, so that is
-  not certain.
-- **Planned fix:**
-  1. With MO2 and the game closed, back up the profile (`Default.json.bak_<date>_babo-kidnap-test`).
-  2. Remove those `$BaboDebug` test entries.
-  3. Add a check to `tools/verify_deploy.py` (next to the hotkey rows it already checks) that fails
-     when the profile holds a `$BaboTestQuest*` entry, so a later debug click is caught at the next
-     build.
-  4. Record it in Installation and Modification (a new case).
+- The fix is the MO2 plugin `MCM Memory Guard` (`C:\TAKEALOOK\plugins\MCM_Memory_Guard\`). It
+  strips BaboDialogue's `$BaboDebug` entries from the profile.
+- The case says it has not been loaded by MO2 or exercised in game yet. If a new game still jumps to
+  the kidnap cell, read that case first.
 
 ### What this session did (2026-09-26)
 
@@ -133,7 +119,7 @@ In order. Every item is committed; the versions are also in `CMakeLists.txt` his
 ### Next, in order
 
 1. The USSEP test result (above), then restore the fix in the load order.
-2. The MCM Memory / BaboDialogue kidnap entry (above).
+2. (Done elsewhere: case 036.) If the kidnap cell still appears on a new game, see case 036.
 3. MannequinSwap for release: decide 3.0.0 packaging and upload with the user.
    - A capacity or duplicate block notifies once and logs the reason.
    - The Nexus description will need a "Mannequin Outfit Swap" line.
