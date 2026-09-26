@@ -21,6 +21,9 @@ history of each module are in `docs/`, one file per module, and each file starts
 - **The Nexus build is in the load order** (2026-09-26, for the user's video): `+CIGAR 2.0.1 Nexus`,
   `-CIGAR`, `-CIGAR 2.0.1` (backup `modlist.txt.bak_20260926_nexus-video`). `Build.ps1 -Deploy` fails
   `verify_deploy.py` until `+CIGAR` / `-CIGAR 2.0.1 Nexus` are set back with MO2 closed.
+- **SkyPrompt 2.4.0 installed** (2026-09-26, Installation and Modification case 035): the user's
+  Hangul-font themes kept, Korean translation in the new mod `SkyPrompt - KR`. CIGAR has not yet run
+  on 2.4.0 in game (API 2.0 unchanged by static check).
 - **Nexus page live** (mod 193080), reviewed and corrected 2026-09-26 (`docs/035`, last section;
   page texts in `dist/nexus-page/`).
 - **GitHub:** branch `nexus` and tag `v2.0.1-nexus` mark the Nexus edition's source (build it with
