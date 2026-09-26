@@ -1,15 +1,14 @@
 """Assemble the installable CIGAR folder (and its .7z) from a player-facing build.
 
 What a player installs is the mod folder and nothing else: the DLL, the default settings the
-control panel writes back to, and a readme. Everything an author reads -- the source, docs/,
-HANDOFF.md, tools/, the CMake files, the .pdb, MO2's meta.ini -- stays out.
+control panel writes back to, the readmes and the license files. Everything an author reads -- the
+source, docs/, HANDOFF.md, tools/, the CMake files, the .pdb, MO2's meta.ini -- stays out.
 
-Two editions:
-- --standard: the CIGAR_RELEASE build (preset "dist"), "CIGAR <version>", Korean readme.
-- --nexus: the CIGAR_NEXUS build (preset "nexus"), "CIGAR <version> Nexus", base game only,
-  English readme plus a Korean one. The DLL must name no other mod (docs/035-nexus-edition.md).
+One package serves Nexus and every other host: the CIGAR_RELEASE build (preset "dist"), "CIGAR
+<version>", an English README.md and a Korean README-ko.md. Other mods are integrated at runtime
+only, so the package must hold no file of theirs; the folder is checked against PACKAGE_FILES.
 
-Usage: python tools/make_release.py --standard|--nexus <path to CIGAR.dll>
+Usage: python tools/make_release.py <path to CIGAR.dll>
 """
 import glob
 import hashlib
@@ -26,17 +25,12 @@ OUT_ROOT = os.path.join(os.path.expanduser("~"), "Downloads")
 DEFAULTS = os.path.join(REPO, "dist", "CIGAR.json")
 SEVEN_ZIP = r"C:\Program Files\7-Zip\7z.exe"
 
-# Strings that give another mod away. The Nexus edition's DLL must carry none of them: a hit means an
-# integration was compiled in. Base-game and Creation Club names (Skyrim.esm, Dragonborn.esm,
-# ccqdrsse001-survivalmode.esl, ccBGSSSE001_FishingPoleKW) are allowed. SkyPrompt is the requirement
-# and SKSE Menu Framework the optional panel, so both are allowed too.
-NEXUS_FORBIDDEN = [
-    "SexLab", "OStim", "zad_", "ValhallaCombat", "Valhalla Combat", "TrueDirectionalMovement", "TDM_API",
-    "Acheron", "YameteKudasai", "Kudasai", "BaboInteractiveDia", "BaboDialogue", "sr_FillHerUp",
-    "Fill Her Up", "FH_Grapple", "Private Needs", "PNO_", "Bathing in Skyrim", "mzin",
-    "TorchesCandlelightLanterns", "Helmet Toggle", "SurvivalModeImproved", "Gourmet", "MAG_FoodType",
-    "OCF_", "_SH_Alcohol", "bIsDodging", "bInIframe", "valhalla=", "tdm=",
-]
+# Everything the package may hold. Anything else (a mesh, a script, another mod's file) fails the
+# build: CIGAR integrates other mods at runtime and ships none of their files (docs/035).
+PACKAGE_FILES = {
+    "SKSE/Plugins/CIGAR.dll", "SKSE/Plugins/CIGAR.json", "README.md", "README-ko.md", "LICENSE.txt",
+    "THIRD-PARTY-NOTICES.txt",
+}
 
 
 def version():
@@ -80,10 +74,9 @@ def notices(dll):
 
 
 def main():
-    if len(sys.argv) != 3 or sys.argv[1] not in ("--standard", "--nexus"):
+    if len(sys.argv) != 2:
         raise SystemExit(__doc__)
-    nexus = sys.argv[1] == "--nexus"
-    dll = sys.argv[2]
+    dll = sys.argv[1]
     if not os.path.isfile(dll):
         raise SystemExit("no DLL at " + dll)
 
@@ -94,19 +87,10 @@ def main():
     if marker in blob:
         raise SystemExit(
             "this DLL still carries the author-side gate line, so it was built without "
-            "CIGAR_RELEASE. Build with: tools\\Build.ps1 -Package (or -Nexus)"
+            "CIGAR_RELEASE. Build with: tools\\Build.ps1 -Package"
         )
-    if nexus:
-        leaks = [s for s in NEXUS_FORBIDDEN if s.encode("utf-8") in blob]
-        if leaks:
-            raise SystemExit("the Nexus DLL still names other mods: " + ", ".join(leaks))
-        if b"Nexus edition, base game only" not in blob:
-            raise SystemExit("this DLL was not built with CIGAR_NEXUS. Build with: tools\\Build.ps1 -Nexus")
-        print("PASS the Nexus DLL names none of %d other-mod strings" % len(NEXUS_FORBIDDEN))
-    elif b"Nexus edition, base game only" in blob:
-        raise SystemExit("this is the Nexus DLL; package it with --nexus")
 
-    name = "CIGAR %s%s" % (version(), " Nexus" if nexus else "")
+    name = "CIGAR %s" % version()
     out = os.path.join(OUT_ROOT, name)
     if os.path.isdir(out):
         shutil.rmtree(out)
@@ -121,23 +105,25 @@ def main():
     # target mod is absent.
     settings["modules"] = {}
     settings["language"] = "auto"
-    if nexus:
-        # Keys for the modules and hotkey takeovers the Nexus edition does not have.
-        for key in ("promptOnly", "eat", "needs"):
-            settings.pop(key, None)
     with open(os.path.join(plugins, "CIGAR.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(settings, f, ensure_ascii=False, indent=2)
         f.write("\n")
-    if nexus:
-        shutil.copyfile(os.path.join(REPO, "dist", "README-nexus.md"), os.path.join(out, "README.md"))
-        shutil.copyfile(os.path.join(REPO, "dist", "README-nexus-ko.md"), os.path.join(out, "README-ko.md"))
-    else:
-        shutil.copyfile(os.path.join(REPO, "dist", "README-release.md"), os.path.join(out, "README.md"))
+    shutil.copyfile(os.path.join(REPO, "dist", "README-en.md"), os.path.join(out, "README.md"))
+    shutil.copyfile(os.path.join(REPO, "dist", "README-ko.md"), os.path.join(out, "README-ko.md"))
 
     # GPL-3.0 asks for the license text with every copy, and the permissive licenses for their notices.
     shutil.copyfile(os.path.join(REPO, "LICENSE"), os.path.join(out, "LICENSE.txt"))
     with open(os.path.join(out, "THIRD-PARTY-NOTICES.txt"), "w", encoding="utf-8", newline="\n") as f:
         f.write(notices(dll))
+
+    found = set()
+    for root, _, files in os.walk(out):
+        for f in files:
+            found.add(os.path.relpath(os.path.join(root, f), out).replace(os.sep, "/"))
+    if found != PACKAGE_FILES:
+        raise SystemExit("the package does not hold exactly its own files: extra %s, missing %s"
+                         % (sorted(found - PACKAGE_FILES), sorted(PACKAGE_FILES - found)))
+    print("PASS the package holds only CIGAR's own %d files" % len(PACKAGE_FILES))
 
     print("release folder:", out)
     total = 0

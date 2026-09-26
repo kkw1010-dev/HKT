@@ -202,5 +202,6 @@ on page 3 the potion-detection, stagger-gauge and game-speed internals, replaced
 ## Language and editions (2026-09-26)
 
 Every panel string has Korean and English (`src/Text.*`); page 1 has the language choice, and the panel
-is registered at kDataLoaded so the page titles follow the resolved language. The Nexus edition hides
-the prompt-only section and the other-mod options. See `docs/035-nexus-edition.md`.
+is registered at kDataLoaded so the page titles follow the resolved language. The 2.0.1 Nexus edition hid
+the prompt-only section and the other-mod options; since 2.1.0 there is one release build, which shows
+them. See `docs/035-nexus-edition.md`.

@@ -25,7 +25,6 @@ namespace CIGAR::Settings
 	// Saves the file and takes every prompt off the screen, so each is offered again with its new key.
 	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key);
 
-#ifndef CIGAR_NEXUS
 	// Prompt-only mode for another mod's own key ("grapple", "surrender", "valhalla", "fillherup"): the module moves that
 	// mod's key to a key no keyboard sends (F13/F14), so only CIGAR's prompt triggers it and the
 	// real key is free for prompts. ManualKey is the key it had before, restored when switched off.
@@ -46,7 +45,6 @@ namespace CIGAR::Settings
 	// The Private Needs bladder/bowel fill (percent) the needs prompts start at; default 50, the user's choice.
 	int NeedsMinPercent();
 	void SetNeedsMinPercent(int a_percent);
-#endif
 
 	// The enemy distance at which the weapon swap offers a ranged weapon (beyond) or a melee weapon
 	// (inside); default 800, the user's choice.

@@ -7,10 +7,9 @@ namespace CIGAR
 {
 	namespace
 	{
-#ifdef CIGAR_NEXUS
-		// The base game tags no drink as alcohol, so the Nexus edition knows its 29 by FormID (read from
-		// Skyrim.esm, HearthFires.esm and Dragonborn.esm with houseCARL, 2026-09-26). Drinks added by
-		// other mods are not offered.
+		// The base game tags no drink as alcohol, so its 29 are known by FormID (read from Skyrim.esm,
+		// HearthFires.esm and Dragonborn.esm with houseCARL, 2026-09-26). The keywords below add the
+		// drinks other mods tag.
 		struct DrinkRef
 		{
 			RE::FormID id;
@@ -47,13 +46,11 @@ namespace CIGAR
 			DrinkRef{ 0x0248CC, "Dragonborn.esm"sv },   // Shein
 			DrinkRef{ 0x0207E5, "Dragonborn.esm"sv },   // Flin
 		};
-#else
 		// Alcohol on this order: Gourmet tags vanilla ale, mead and wine MAG_FoodTypeAle / Wine; OCF,
 		// Hunterborn-style and vendor keywords cover the rest. Resolved by editor ID, so a missing one
 		// is simply skipped.
 		constexpr std::array kAlcoholKeywords{ "MAG_FoodTypeAle"sv, "MAG_FoodTypeWine"sv, "OCF_AlchDrinkAlcohol"sv,
 			"VendorItemDrinkAlcoholModerate"sv, "VendorItemDrinkAlcoholStrong"sv, "_SH_AlcoholDrinkKeyword"sv };
-#endif
 		// The places the user named: inns and houses (the player's own included).
 		constexpr std::array kPlaceKeywords{ "LocTypeInn"sv, "LocTypeHouse"sv, "LocTypePlayerHouse"sv };
 		constexpr auto kDrinkEvent = "ChairDrinkingStart"sv;
@@ -87,7 +84,6 @@ namespace CIGAR
 		alcoholForms.clear();
 		placeKeywords.clear();
 		std::string found;
-#ifdef CIGAR_NEXUS
 		if (auto* handler = RE::TESDataHandler::GetSingleton()) {
 			for (const auto& ref : kBaseGameDrinks) {
 				if (const auto id = handler->LookupFormID(ref.id, ref.plugin); id != 0) {
@@ -95,17 +91,14 @@ namespace CIGAR
 				}
 			}
 		}
-		found = std::format(" {} of {} base-game drinks", alcoholForms.size(), kBaseGameDrinks.size());
-		const bool noAlcohol = alcoholForms.empty();
-#else
+		found = std::format(" {} of {} base-game drinks;", alcoholForms.size(), kBaseGameDrinks.size());
 		for (const auto name : kAlcoholKeywords) {
 			if (auto* keyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(name)) {
 				alcoholKeywords.push_back(keyword);
 				found += std::format(" {}", name);
 			}
 		}
-		const bool noAlcohol = alcoholKeywords.empty();
-#endif
+		const bool noAlcohol = alcoholForms.empty() && alcoholKeywords.empty();
 		for (const auto name : kPlaceKeywords) {
 			if (auto* keyword = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(name)) {
 				placeKeywords.push_back(keyword);
@@ -138,11 +131,8 @@ namespace CIGAR
 		if (!a_item || a_item->IsPoison()) {
 			return false;
 		}
-#ifdef CIGAR_NEXUS
-		return std::ranges::find(alcoholForms, a_item->GetFormID()) != alcoholForms.end();
-#else
-		return std::ranges::any_of(alcoholKeywords, [a_item](RE::BGSKeyword* a_keyword) { return a_item->HasKeyword(a_keyword); });
-#endif
+		return std::ranges::find(alcoholForms, a_item->GetFormID()) != alcoholForms.end() ||
+		       std::ranges::any_of(alcoholKeywords, [a_item](RE::BGSKeyword* a_keyword) { return a_item->HasKeyword(a_keyword); });
 	}
 
 	RE::AlchemyItem* ChairDrink::PickDrink(RE::PlayerCharacter* a_player) const

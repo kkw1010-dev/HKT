@@ -1,9 +1,7 @@
 #include "Settings.h"
 
-#ifndef CIGAR_NEXUS
-#	include "Eat.h"
-#	include "Needs.h"
-#endif
+#include "Eat.h"
+#include "Needs.h"
 #include "Module.h"
 #include "Jujutsu.h"
 #include "Potion.h"
@@ -27,10 +25,8 @@ namespace CIGAR::Settings
 		std::map<std::string, bool, std::less<>> enabled;
 		float placeRange = kPlaceRangeDefault;
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
-#ifndef CIGAR_NEXUS
 		int eatMinStage = Eat::kMinStageDefault;
 		int needsMinPercent = Needs::kMinPercentDefault;
-#endif
 		float swapRange = WeaponSwap::kRangeDefault;
 		float jujutsuReach = Jujutsu::kReachDefault;
 		JujutsuTuning jujutsuTuning;
@@ -67,7 +63,6 @@ namespace CIGAR::Settings
 			return a_t;
 		}
 
-#ifndef CIGAR_NEXUS
 		struct PromptOnlyState
 		{
 			bool on{ true };
@@ -85,7 +80,6 @@ namespace CIGAR::Settings
 				promptOnly.emplace(std::string(target), PromptOnlyState{});
 			}
 		}
-#endif
 		std::string source = "not loaded";
 
 		void SaveLocked()
@@ -96,10 +90,8 @@ namespace CIGAR::Settings
 			}
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
-#ifndef CIGAR_NEXUS
 			j["eat"]["minStage"] = eatMinStage;
 			j["needs"]["minPercent"] = needsMinPercent;
-#endif
 			j["language"] = language;
 			j["weaponSwap"]["range"] = swapRange;
 			j["jujutsu"]["reach"] = jujutsuReach;
@@ -117,7 +109,6 @@ namespace CIGAR::Settings
 			j["potion"]["urgentHealthThreshold"] = potionTuning.urgentHealthThreshold;
 			j["potion"]["staminaThreshold"] = potionTuning.staminaThreshold;
 			j["potion"]["magickaThreshold"] = potionTuning.magickaThreshold;
-#ifndef CIGAR_NEXUS
 			for (const auto& [target, state] : promptOnly) {
 				j["promptOnly"][target]["enabled"] = state.on;
 				j["promptOnly"][target]["manualKey"] = state.manualKey;
@@ -125,7 +116,6 @@ namespace CIGAR::Settings
 					j["promptOnly"][target]["manualKeys"][name] = key;
 				}
 			}
-#endif
 			std::error_code ec;
 			std::filesystem::create_directories(kPath.parent_path(), ec);
 			std::ofstream out(kPath, std::ios::binary | std::ios::trunc);
@@ -148,11 +138,9 @@ namespace CIGAR::Settings
 		}
 		placeRange = kPlaceRangeDefault;
 		promptKeys = kDefaultPromptKeys;
-#ifndef CIGAR_NEXUS
 		eatMinStage = Eat::kMinStageDefault;
 		needsMinPercent = Needs::kMinPercentDefault;
 		ResetPromptOnly();
-#endif
 		language = "auto";
 		swapRange = WeaponSwap::kRangeDefault;
 		jujutsuReach = Jujutsu::kReachDefault;
@@ -191,11 +179,9 @@ namespace CIGAR::Settings
 					}
 				}
 			}
-#ifndef CIGAR_NEXUS
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
 			}
-#endif
 			if (const auto it = j.find("language"); it != j.end() && it->is_string()) {
 				const auto value = it->get<std::string>();
 				language = value == "ko" || value == "en" ? value : "auto";
@@ -203,11 +189,9 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("rest"); it != j.end() && it->is_object()) {
 				restGameSpeed = SnappedGameSpeed(it->value("gameSpeedMax", kRestGameSpeedDefault));
 			}
-#ifndef CIGAR_NEXUS
 			if (const auto it = j.find("needs"); it != j.end() && it->is_object()) {
 				needsMinPercent = std::clamp(it->value("minPercent", Needs::kMinPercentDefault), Needs::kMinPercentLow, Needs::kMinPercentHigh);
 			}
-#endif
 			if (const auto it = j.find("jujutsu"); it != j.end() && it->is_object()) {
 				jujutsuReach = std::clamp(it->value("reach", Jujutsu::kReachDefault), Jujutsu::kReachLow, Jujutsu::kReachHigh);
 				const JujutsuTuning d;
@@ -226,7 +210,6 @@ namespace CIGAR::Settings
 			if (const auto it = j.find("weaponSwap"); it != j.end() && it->is_object()) {
 				swapRange = std::clamp(it->value("range", WeaponSwap::kRangeDefault), WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
 			}
-#ifndef CIGAR_NEXUS
 			if (const auto it = j.find("promptOnly"); it != j.end() && it->is_object()) {
 				for (auto& [target, state] : promptOnly) {
 					if (const auto t = it->find(target); t != it->end() && t->is_object()) {
@@ -242,7 +225,6 @@ namespace CIGAR::Settings
 					}
 				}
 			}
-#endif
 			source = "CIGAR.json";
 		} catch (const std::exception& e) {
 			source = "defaults (CIGAR.json unreadable)";
@@ -255,7 +237,6 @@ namespace CIGAR::Settings
 		logs::info("settings: dress place range {:.0f}", placeRange);
 		logs::info("settings: prompt keys {} {} {} {}", promptKeys[0], promptKeys[1], promptKeys[2], promptKeys[3]);
 		logs::info("settings: language {}", language);
-#ifndef CIGAR_NEXUS
 		for (const auto& [target, state] : promptOnly) {
 			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
 			for (const auto& [name, key] : state.manualKeys) {
@@ -264,7 +245,6 @@ namespace CIGAR::Settings
 		}
 		logs::info("settings: eat from hunger stage {}", eatMinStage);
 		logs::info("settings: needs from {}%", needsMinPercent);
-#endif
 		logs::info("settings: pass time game speed up to x{:.1f}{}", restGameSpeed, restGameSpeed <= 1.0f ? " (off)" : "");
 		logs::info("settings: weapon swap range {:.0f}", swapRange);
 		logs::info("settings: jujutsu reach {:.0f}", jujutsuReach);
@@ -337,7 +317,6 @@ namespace CIGAR::Settings
 		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
 	}
 
-#ifndef CIGAR_NEXUS
 	int EatMinStage()
 	{
 		std::scoped_lock guard(lock);
@@ -349,7 +328,6 @@ namespace CIGAR::Settings
 		std::scoped_lock guard(lock);
 		eatMinStage = std::clamp(a_stage, Eat::kMinStageLow, Eat::kMinStageHigh);
 	}
-#endif
 
 	float RestGameSpeed()
 	{
@@ -363,7 +341,6 @@ namespace CIGAR::Settings
 		restGameSpeed = SnappedGameSpeed(a_speed);
 	}
 
-#ifndef CIGAR_NEXUS
 	int NeedsMinPercent()
 	{
 		std::scoped_lock guard(lock);
@@ -375,7 +352,6 @@ namespace CIGAR::Settings
 		std::scoped_lock guard(lock);
 		needsMinPercent = std::clamp(a_percent, Needs::kMinPercentLow, Needs::kMinPercentHigh);
 	}
-#endif
 
 	float JujutsuReach()
 	{
@@ -425,7 +401,6 @@ namespace CIGAR::Settings
 		swapRange = std::clamp(a_range, WeaponSwap::kRangeLow, WeaponSwap::kRangeHigh);
 	}
 
-#ifndef CIGAR_NEXUS
 	bool PromptOnly(std::string_view a_target)
 	{
 		std::scoped_lock guard(lock);
@@ -487,17 +462,12 @@ namespace CIGAR::Settings
 		SaveLocked();
 		logs::info("settings: {} manual key {} remembered as {}", a_target, a_name, a_key);
 	}
-#endif
 
 	void Save()
 	{
 		std::scoped_lock guard(lock);
 		SaveLocked();
-#ifndef CIGAR_NEXUS
 		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, needs from {}%, weapon swap range {:.0f}, jujutsu reach {:.0f}", placeRange, eatMinStage, needsMinPercent, swapRange, jujutsuReach);
-#else
-		logs::info("control panel: dress place range {:.0f}, weapon swap range {:.0f}, jujutsu reach {:.0f}", placeRange, swapRange, jujutsuReach);
-#endif
 	}
 
 	std::string SourceDescription()

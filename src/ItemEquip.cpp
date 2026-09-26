@@ -237,7 +237,6 @@ namespace CIGAR
 				return;
 			}
 		}
-#ifndef CIGAR_NEXUS
 		// Torches Candlelight and Lanterns swaps lit and unlit lantern armors in and out of the
 		// inventory on every toggle, which would offer them here each time. TCL is run by its own
 		// hotkey (the user, 2026-09-25).
@@ -245,7 +244,6 @@ namespace CIGAR
 			Log("acquired {} ({:08X}) from TCL: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
-#endif
 		// A woodcutter's axe is a tool carried for Woodcutting Tweaks' tree harvest and the chopping
 		// block, never wielded (the user, 2026-09-24).
 		if (woodAxes && woodAxes->HasForm(item)) {
@@ -264,13 +262,11 @@ namespace CIGAR
 			Log("acquired {} ({:08X}) during a scene: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
-#ifndef CIGAR_NEXUS
 		// Fill Her Up's leak and inflater armors are its visual state, put on by its scripts.
 		if (const auto* file = item->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "sr_FillHerUp")) {
 			Log("acquired {} ({:08X}) from Fill Her Up: not offered", Util::NameOf(item), a_itemID);
 			return;
 		}
-#endif
 		if (offeredItem != a_itemID) {
 			equip.Withdraw();
 			equip.Reset();

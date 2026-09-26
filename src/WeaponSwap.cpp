@@ -2,9 +2,7 @@
 
 #include "Settings.h"
 #include "Util.h"
-#ifndef CIGAR_NEXUS
-#	include "TDM/TrueDirectionalMovementAPI.h"
-#endif
+#include "TDM/TrueDirectionalMovementAPI.h"
 
 namespace CIGAR
 {
@@ -84,20 +82,14 @@ namespace CIGAR
 		expected = nullptr;
 		checkPending = false;
 
-#ifndef CIGAR_NEXUS
 		if (!tdm) {
 			tdm = TDM_API::RequestPluginAPI();
 		}
-#endif
 		auto* defaults = RE::BGSDefaultObjectManager::GetSingleton();
 		rightSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kRightHandEquip) : nullptr;
 		leftSlot = defaults ? defaults->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kLeftHandEquip) : nullptr;
-#ifdef CIGAR_NEXUS
-		Log("rightSlot={} leftSlot={} range={:.0f}", rightSlot != nullptr, leftSlot != nullptr, Settings::WeaponSwapRange());
-#else
 		Log("tdm={}{} rightSlot={} leftSlot={} range={:.0f}", tdm != nullptr, Util::DescribeScenes(),
 			rightSlot != nullptr, leftSlot != nullptr, Settings::WeaponSwapRange());
-#endif
 		if (!rightSlot || !leftSlot) {
 			Log("WARN hand equip slots did not resolve; one-handed weapons use their default hand");
 		}
@@ -107,7 +99,6 @@ namespace CIGAR
 	RE::NiPointer<RE::Actor> WeaponSwap::FindTarget(RE::PlayerCharacter* a_player, bool& a_locked) const
 	{
 		a_locked = false;
-#ifndef CIGAR_NEXUS
 		if (tdm && tdm->GetTargetLockState()) {
 			auto target = tdm->GetCurrentTarget().get();
 			if (target && !target->IsDead()) {
@@ -115,7 +106,6 @@ namespace CIGAR
 				return target;
 			}
 		}
-#endif
 		for (auto* actor : Util::NearbyHostiles(a_player, kSearchRadius)) {
 			if (actor->IsInCombat()) {
 				return RE::NiPointer<RE::Actor>(actor);

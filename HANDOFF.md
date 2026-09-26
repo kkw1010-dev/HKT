@@ -25,6 +25,13 @@ history of each module are in `docs/`, one file per module, and each file starts
    section; page texts (original and corrected) in `dist/nexus-page/`.
 5. **SkyPrompt 2.3.15 -> 2.4.0** in the modlist, with a Korean translation mod `SkyPrompt - KR`
    (Installation and Modification case 035). The user's Hangul-font themes were kept.
+6. **2.1.0, one release for every host** (later the same day, `docs/035` first section): the user
+   decided integrations return to the Nexus upload as off-site requirements (Smooth and BakaFactory
+   permissions; Nexus already hosts LoversLab-dependent files). `CIGAR_NEXUS` and `-Nexus` are gone;
+   `-Package` makes `Downloads\CIGAR 2.1.0` (+ `.7z`) with English and Korean readmes, and fails on
+   any file but CIGAR's own six. Helmet Toggle 2's clips stay author-only (the user: "헬멧토글은 나만
+   쓸거"). ChairDrink knows alcohol by base-game FormIDs and other mods' keywords together.
+   **Not run in game yet, not uploaded, not pushed.**
 
 ### State now
 
@@ -53,6 +60,10 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 ### Next, in order
 
+0. **2.1.0 release**: the user decides when to upload it to Nexus (a new main file on 193080,
+   requirements marked off-site; the page texts in `dist/nexus-page/` still describe 2.0.1 and need
+   rewriting from `dist/README-en.md`) and when to push. Before that, one in-game run of the release
+   DLL is worth having: copy `Downloads\CIGAR 2.1.0` into a mod folder in place of the Nexus copy.
 1. **In-game check of SkyPrompt 2.4.0** (the user runs it; read `SKSE\CIGAR.log` and
    `SKSE\SkyPrompt.log` first): prompts keep the Hangul font and position, SkyPrompt's panel is
    Korean, CIGAR prompts offer and accept. If it passes, change "tested with SkyPrompt 2.3.15" to
@@ -66,13 +77,12 @@ history of each module are in `docs/`, one file per module, and each file starts
    (`Text::L`/`Text::F`). Follow `docs/000-adding-a-module.md` and memory
    `cigar-declined-prompt-stays-hidden`.
 
-### Three editions, one source
+### Two builds, one source (since 2.1.0)
 
-| Edition | Build | Output | Notes |
+| Build | Command | Output | Notes |
 |---|---|---|---|
-| Author | `tools\Build.ps1 -Deploy` | `mods\CIGAR` | panel shows gate lines; runs `verify_deploy.py` |
-| Standard release | `tools\Build.ps1 -Package` | `Downloads\CIGAR <ver>` + `.7z` | all 24 modules, Korean readme |
-| Nexus | `tools\Build.ps1 -Nexus` | `Downloads\CIGAR <ver> Nexus` + `.7z` | 15 modules, English + Korean readmes, leak check |
+| Author | `tools\Build.ps1 -Deploy` | `mods\CIGAR` | panel shows gate lines; helmet clips; runs `verify_deploy.py` |
+| Release (Nexus and elsewhere) | `tools\Build.ps1 -Package` | `Downloads\CIGAR <ver>` + `.7z` | all 24 modules, English + Korean readmes, file allowlist |
 
 ### Pitfalls met this session
 

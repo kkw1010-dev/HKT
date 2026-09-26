@@ -29,7 +29,6 @@ namespace CIGAR
 		// GetRandomPercent <= 50, which a retry re-rolls. docs/012, test 22.
 		// The neck break kills (the user, 2026-09-25): kept alive, its victim got up and replayed a
 		// kill move on its own (test 22), and a broken neck is not something to stand up from.
-#ifndef CIGAR_NEXUS
 		constexpr std::array kValhallaIdles{
 			IdleRef{ "KneeThrow", 0xAA3A, "ValhallaCombat.esp"sv },
 			IdleRef{ "BodySlam", 0xAA3B, "ValhallaCombat.esp"sv },
@@ -37,7 +36,6 @@ namespace CIGAR
 			IdleRef{ "SlamA", 0xAA3D, "ValhallaCombat.esp"sv },
 			IdleRef{ "NeckBreak", 0x815, "Update.esm"sv, true },  // KillMoveSneakH2HNeckBreak
 		};
-#endif
 		constexpr std::array kVanillaIdles{
 			IdleRef{ "KneeThrow", 0x821, "Update.esm"sv },     // H2HKillMoveKneeThrow
 			IdleRef{ "BodySlam", 0x820, "Update.esm"sv },      // H2HKillMoveBodySlam
@@ -67,11 +65,7 @@ namespace CIGAR
 
 		bool IsDodging([[maybe_unused]] RE::Actor* a_actor)
 		{
-#ifdef CIGAR_NEXUS
-			return false;
-#else
 			return GraphBool(a_actor, "bIsDodging");
-#endif
 		}
 		constexpr auto kStartWindow = 1s;
 		constexpr auto kPairTimeout = 10s;
@@ -238,14 +232,9 @@ namespace CIGAR
 		idleLethal.clear();
 
 		auto* handler = RE::TESDataHandler::GetSingleton();
-#ifdef CIGAR_NEXUS
-		const auto table = std::span<const IdleRef>(kVanillaIdles);
-		idleSource = "Skyrim.esm/Update.esm";
-#else
 		const bool valhallaEsp = handler && handler->LookupModByName("ValhallaCombat.esp"sv);
 		const auto& table = valhallaEsp ? std::span<const IdleRef>(kValhallaIdles) : std::span<const IdleRef>(kVanillaIdles);
 		idleSource = valhallaEsp ? "ValhallaCombat.esp (no conditions) + Update.esm sneak moves" : "Skyrim.esm/Update.esm";
-#endif
 		std::string found;
 		for (const auto& ref : table) {
 			auto* idle = handler ? handler->LookupForm<RE::TESIdleForm>(ref.id, ref.plugin) : nullptr;
@@ -256,17 +245,9 @@ namespace CIGAR
 				idleLethal.push_back(ref.lethal);
 			}
 		}
-#ifdef CIGAR_NEXUS
-		valhalla = nullptr;
-#else
 		valhalla = GetModuleHandleW(L"ValhallaCombat.dll") ? VAL_API::RequestPluginAPI() : nullptr;
-#endif
 		const bool hooked = originalKillActor && originalKillMoveStart && originalKillMoveEnd;
-#ifdef CIGAR_NEXUS
-		Log("idles from {}:{}; hooks={}", idleSource, found, hooked);
-#else
 		Log("idles from {}:{}; hooks={} valhalla={}{}", idleSource, found, hooked, valhalla != nullptr, Util::DescribeScenes());
-#endif
 		if (idles.empty() || !hooked) {
 			Log("WARN {}; the 유술 prompt is off", idles.empty() ? "no kill-move idle resolved" : "the anim-handler hooks are not installed");
 			return;
@@ -431,9 +412,7 @@ namespace CIGAR
 			a_actor->GetGraphVariableBool("IsAttacking", graphAttacking);
 			// TK Dodge RE's graph variables (its Nemesis patch adds them to 1hm_behavior and magicbehavior).
 			bool iframe = false;
-#ifndef CIGAR_NEXUS
 			a_actor->GetGraphVariableBool("bInIframe", iframe);
-#endif
 			return std::format(
 				"attack={} knock={} stagger={} synced={} killmove={} sprint={} ragdoll={} speed={:.0f} gBlock={} gAttack={} dodge={} iframe={}",
 				s ? static_cast<int>(s->GetAttackState()) : -1, s ? static_cast<int>(s->GetKnockState()) : -1, staggered, synced,
@@ -453,9 +432,7 @@ namespace CIGAR
 		const auto* base = a_player->GetActorBase();
 		const auto* controls = RE::ControlMap::GetSingleton();
 		std::int32_t pnoIdx = 0;
-#ifndef CIGAR_NEXUS
 		a_player->GetGraphVariableInt("PNO_Animation_Idx", pnoIdx);
-#endif
 		bool animDriven = false;
 		a_player->GetGraphVariableBool("bAnimationDriven", animDriven);
 		std::string effects;

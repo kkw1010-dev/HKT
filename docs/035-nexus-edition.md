@@ -1,7 +1,36 @@
 # 035 · Nexus edition (base game only), English text, 유술 damage
 
-Status (2026-09-26): built and packaged as `CIGAR 2.0.1 Nexus`. **First in-game test: the user
-reported every item passed** (see "Test 1" at the end for what the log shows).
+Status (2026-09-26): **superseded by 2.1.0, one release for every host.** The base-game-only build
+below shipped as `CIGAR 2.0.1 Nexus` (Nexus mod 193080, tag `v2.0.1-nexus`) and passed the user's
+in-game test. The rest of this file is its record; the English text and the 유술 damage settings it
+introduced stay.
+
+## 2.1.0: integrations return, one package (2026-09-26, later the same day)
+
+The user's decision: other-mod integrations go back into the Nexus upload, as requirements.
+- Why it is allowed. CIGAR ships no file of another mod and touches them only at runtime (reads
+  forms, settings and script properties, calls their functions, presses their keys). Two authors
+  gave direct permission: Smooth (Grapple: "setting my mod as a requirement needs no permission") and
+  BakaFactory (hotkey and data scanning, given for BaboPrism). A concern that Nexus would reject links
+  to LoversLab adult mods did not hold: Nexus hosts 613 SexLab-named mods and files with off-site
+  LoversLab / SubscribeStar requirements, among them BaboDialogue PT-BR (79571), Yamete Kudasai 2.2.3
+  PT-BR (190878) and a Fill Her Up translation uploaded by BakaFactory (148200).
+- **The Helmet Toggle 2 clips stay the author's** ("헬멧토글은 나만 쓸거"). Only the author build
+  (no `CIGAR_RELEASE`) plays them; every release takes the helmet off at once. They were never in a
+  package.
+- `CIGAR_NEXUS` is gone. The `nexus` preset, `Build.ps1 -Nexus` and `make_release.py --nexus` with its
+  other-mod string list are removed; with every integration compiled in, the two release DLLs would
+  have been the same. `tools\Build.ps1 -Package` makes `Downloads\CIGAR <version>` with the English
+  `README.md` and the Korean `README-ko.md`.
+- The hard line is now **other mods' files**, not their names: `make_release.py` fails when the
+  package holds anything but `CIGAR.dll`, `CIGAR.json`, the two readmes, `LICENSE.txt` and
+  `THIRD-PARTY-NOTICES.txt`.
+- `ChairDrink` knows alcohol by both routes: the 29 base-game FormIDs from the Nexus edition and the
+  other mods' keywords, so a game without Gourmet or OCF still gets the prompt.
+- The readmes list every optional mod with where to get it, and every setting CIGAR changes in
+  another mod (Grapple F13, Acheron F14, Valhalla F15, FHU and PNO keys cleared, Grapple's lock key
+  set to TDM's).
+- Version 2.1.0.
 
 ## The user's decisions (2026-09-26)
 

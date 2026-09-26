@@ -1,13 +1,11 @@
 #include "Panel.h"
 
-#ifndef CIGAR_NEXUS
-#	include "Deflate.h"
-#	include "Eat.h"
-#	include "Execute.h"
-#	include "Grapple.h"
-#	include "Needs.h"
-#	include "Surrender.h"
-#endif
+#include "Deflate.h"
+#include "Eat.h"
+#include "Execute.h"
+#include "Grapple.h"
+#include "Needs.h"
+#include "Surrender.h"
 #include "BookRead.h"
 #include "ItemEquip.h"
 #include "Jujutsu.h"
@@ -57,7 +55,6 @@ namespace CIGAR::Panel
 
 		// Modules missing here still get a switch, titled with their own name.
 		constexpr Label kLabels[]{
-#ifndef CIGAR_NEXUS
 			Label{ "Bathe", "목욕", "Bathing", "Bathing in Skyrim - Renewed",
 				"물에 들어가면 목욕, 폭포 아래에서는 샤워 프롬프트가 뜹니다. 씻으면 때가 사라집니다.",
 				"In water a bathe prompt shows, under a waterfall a shower prompt. Washing removes the dirt." },
@@ -85,7 +82,6 @@ namespace CIGAR::Panel
 			Label{ "Needs", "용변", "Relief", "Private Needs - Orgasm",
 				"방광이나 장이 차면 용변 프롬프트가 뜹니다. 전투 중, 물속, 앉은 상태에서는 뜨지 않습니다.",
 				"With a full bladder or bowel a relief prompt shows; not in combat, in water or seated." },
-#endif
 			Label{ "Dress", "탈의·착용", "Undress & Dress", "",
 				"침대나 옷장 앞, 그리고 물속에서 탈의 프롬프트가 뜹니다. 벗은 옷은 기억해 두었다가 착용 프롬프트로 그대로 입습니다.",
 				"At a bed or wardrobe, and in water, an undress prompt shows. The clothes taken off are remembered and put back on with the dress prompt." },
@@ -217,7 +213,6 @@ namespace CIGAR::Panel
 			return changed;
 		}
 
-#ifndef CIGAR_NEXUS
 		void RenderPromptOnlyItem(std::string_view a_target, const char* a_label, const char* a_hidden, void (*a_apply)())
 		{
 			bool on = Settings::PromptOnly(a_target);
@@ -311,7 +306,6 @@ namespace CIGAR::Panel
 			Help(L("키는 불러오기 때와 이 버튼을 누를 때만 확인. MCM에서 키를 바꾼 뒤 누를 것. 프롬프트 전용이 켜져 있으면 바꾼 키를 기억하고 숨김 키로 되돌림",
 				"Keys are checked at load and when this button is pressed. Press it after changing a key in an MCM. With prompt only on, the new key is remembered and moved back to the hidden key"));
 		}
-#endif
 
 		void RenderKeys()
 		{
@@ -360,7 +354,6 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-#ifndef CIGAR_NEXUS
 			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
 				{ L("그래플", "Grapple"), Grapple::GetSingleton()->Key() },
 				{ L("Acheron 항복", "Acheron surrender"), Surrender::GetSingleton()->SurrenderKey() },
@@ -374,7 +367,6 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-#endif
 		}
 
 		void RenderModule(const Module* a_module)
@@ -475,16 +467,13 @@ namespace CIGAR::Panel
 			LogFirstDraw("keys");
 			ImGui::SeparatorText(L("프롬프트 키", "Prompt keys"));
 			RenderKeys();
-#ifndef CIGAR_NEXUS
 			ImGui::SeparatorText(L("모드 단축키", "Mod hotkeys"));
 			RenderPromptOnly();
-#endif
 		}
 
 		void __stdcall RenderOptions()
 		{
 			LogFirstDraw("options");
-#ifndef CIGAR_NEXUS
 			ImGui::SeparatorText(L("먹기", "Eating"));
 			int stage = Settings::EatMinStage();
 			if (ImGui::SliderInt(L("표시 시작 허기 단계##eat-stage", "Hunger stage to start##eat-stage"), &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
@@ -504,7 +493,6 @@ namespace CIGAR::Panel
 				Settings::Save();
 			}
 			Help(L("기본 50%. Private Needs의 방광·장 수치가 이 이상이면 프롬프트 표시", "Default 50%. The prompts show once Private Needs' bladder or bowel is this full"));
-#endif
 
 			ImGui::SeparatorText(L("물약", "Potions"));
 			{
@@ -576,7 +564,6 @@ namespace CIGAR::Panel
 			Help(L("기본 250. 가드 중인 인간형 적이 이 거리 안이면 프롬프트 표시", "Default 250. The prompt shows for a blocking humanoid enemy within this distance"));
 
 			auto tune = Settings::JujutsuTune();
-#ifndef CIGAR_NEXUS
 			if (SharePercent(L("게이지 피해##jj-stun", "Stun damage##jj-stun"), tune.guardStun)) {
 				Settings::SetJujutsuTune(tune);
 			}
@@ -585,19 +572,14 @@ namespace CIGAR::Panel
 			}
 			Help(kRelease ? L("기본 15%. 유술이 적의 스태거 게이지를 깎는 양 (Valhalla Combat이 있을 때)", "Default 15%. How much of the enemy's stun meter jujutsu takes (with Valhalla Combat)") :
 			                "기본 15%. 발할라 최대 스태거 게이지 대비. 래그돌은 별도");
-#endif
 			if (SharePercent(L("기력 피해##jj-stamina", "Stamina damage##jj-stamina"), tune.staminaDamage)) {
 				Settings::SetJujutsuTune(tune);
 			}
 			if (ImGui::IsItemDeactivatedAfterEdit()) {
 				Settings::Save();
 			}
-#ifdef CIGAR_NEXUS
-			Help(L("기본 100%. 넘어진 적이 잃는 기력 (최대 기력 대비)", "Default 100%. Stamina the thrown enemy loses, as a share of its maximum"));
-#else
 			Help(L("기본 100%. 넘어진 적이 잃는 기력 (최대 기력 대비, Valhalla Combat이 없을 때)",
 				"Default 100%. Stamina the thrown enemy loses, as a share of its maximum (without Valhalla Combat)"));
-#endif
 			if (SharePercent(L("체력 피해##jj-health", "Health damage##jj-health"), tune.healthDamage)) {
 				Settings::SetJujutsuTune(tune);
 			}

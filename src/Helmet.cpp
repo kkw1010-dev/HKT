@@ -66,12 +66,10 @@ namespace CIGAR
 				dungeonKeywords.push_back(keyword);
 			}
 		}
-#ifndef CIGAR_NEXUS
 		if (auto* handler = RE::TESDataHandler::GetSingleton(); handler && handler->LookupModByName("Helmet Toggle 2.esp")) {
 			Log("WARN Helmet Toggle 2 is loaded: its scripts re-hide or re-equip headgear on every change");
 			Util::Notify(Text::L("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음", "CIGAR: Helmet Toggle 2 is on. Helmet changes may conflict"));
 		}
-#endif
 		Log("ready: keywords helmet={} head={} circlet={}, dungeon types {} of {}, stowed {}", armorHelmet != nullptr,
 			clothingHead != nullptr, clothingCirclet != nullptr, dungeonKeywords.size(), kDungeonTypes.size(), stowed.size());
 	}
@@ -138,8 +136,9 @@ namespace CIGAR
 		const auto* state = a_player->AsActorState();
 		const bool seated = state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal;
 		const bool drawn = state && state->IsWeaponDrawn();
-#ifdef CIGAR_NEXUS
-		// The Nexus edition ships no take-off clip (the clips are Helmet Toggle 2's): off at once.
+#ifdef CIGAR_RELEASE
+		// The take-off clips are Helmet Toggle 2's and stay with the author (the user, 2026-09-26):
+		// release builds take the helmet off at once.
 		constexpr bool kNoClip = true;
 #else
 		constexpr bool kNoClip = false;
