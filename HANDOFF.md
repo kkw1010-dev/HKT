@@ -16,7 +16,7 @@ history of each module are in `docs/`, one file per module, and each file starts
 3. **Nexus edition** (`CIGAR_NEXUS`, `tools\Build.ps1 -Nexus`, `docs/035-nexus-edition.md`): 15
    base-game modules, no other-mod reference (SexLab included), helmet without a clip, base-game drinks
    by FormID; `make_release.py --nexus` refuses a DLL naming another mod (30 strings). The user tested
-   it in game: all passed. Memory `cigar-nexus-edition-base-game-only`.
+   it in game: all passed. Later that day the user decided integrations may return to the Nexus edition as asset-free requirements (module list not chosen yet); memory `cigar-nexus-edition-integrations`.
 4. **Published** (the user's authorization): Nexus mod 193080 and GitHub release `v2.0.1-nexus`.
    A review of the Nexus page found and fixed: requirements grouped SKSE/SkyPrompt as "pick one",
    every readme linked SkyPrompt to the wrong mod (149963 = Slower Swimming; SkyPrompt is 148703),
