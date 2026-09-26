@@ -39,10 +39,9 @@ history of each module are in `docs/`, one file per module, and each file starts
 - **Packages** in `%USERPROFILE%\Downloads`: `CIGAR 2.0.1` (+ `.7z`, the personal Korean release) and
   `CIGAR 2.0.1 Nexus` (+ `.7z`, the uploaded file; DLL sha256 `3950258b...`). Copies in
   `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`. The SkyPrompt 2.4.0 archive is in Downloads too.
-- **Git** (`kkw1010-dev/HKT`): `master` `80ff911` is **1 commit ahead of origin** (handoff lines only,
-  unpushed); `nexus`, `v2` and origin are at `256ea16`; tag `v2.0.1-nexus` is at `f9227ef` (the DLL is
-  identical in later commits; only docs and license files changed). Local `v3` is at `256ea16`, behind
-  master by docs only: fast-forward it before 3.0 work. Commit locally on every change; push only when
+- **Git** (`kkw1010-dev/HKT`): local `master` and `v3` are ahead of origin by handoff-only commits
+  (unpushed); `origin/master`, `nexus` and `v2` are at `256ea16`; tag `v2.0.1-nexus` is at `f9227ef`
+  (the DLL is identical in later commits; only docs and license files changed). 3.0 work goes on `v3`. Commit locally on every change; push only when
   the user asks (they asked every time this session).
 - **GitHub release assets:** `CIGAR-2.0.1-Nexus.7z` (current) and
   `superseded-do-not-use-CIGAR.2.0.1.Nexus.7z` (old readme with the wrong SkyPrompt link). Deleting the
