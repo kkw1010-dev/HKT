@@ -72,6 +72,9 @@ history of each module are in `docs/`, one file per module, and each file starts
    `00107EDE`, iron and steel scaled sets). Only the Another Mannequin Script Fix path can be
    exercised here; USSEP's array path and vanilla's are code-reviewed only. `master` stays the 2.x
    line (2.1.2, pushed); `v3` is local only.
+   **USSEP path test set up** (`TEST-3.0.0-ussep.md`): `-Another Mannequin Script Fix (AE.SE)` in
+   `modlist.txt` (backup `modlist.txt.bak_20260926_ussep-mannequin-test`), so USSEP's script wins;
+   turn it back on (`+`, MO2 closed) once the test is read.
 
 ### State now
 
