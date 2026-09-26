@@ -136,13 +136,17 @@ players run **USSEP's** version instead (`scripts\mannequinactivatorscript.pex` 
 `unofficial skyrim special edition patch.bsa`, decompiled 2026-09-26; copy in the session
 scratchpad, not in the repo). It differs where the plan depends on it:
 
-| | Another Mannequin Script Fix | USSEP |
-|---|---|---|
-| Slot storage | 20 properties `ArmorSlot01`-`20` | a script **variable** `Form[] ArmorSlot` (10); `ConvertArmorSlots()` copies the 10 old properties into it on the first load and sets every property to `EmptySlot` |
-| Capacity | 20 | 10 |
-| Same base form twice | accepted | `IsDuplicated` refuses the second one and bounces it to the player |
-| Full | bounced | bounced (`RemoveItem(base, n, true, player)`, by base form) |
-| Cell load | re-equips from the properties | `UnequipAll()`, then re-equips from the array |
+| | Vanilla (`Skyrim - Misc.bsa`) | Another Mannequin Script Fix | USSEP |
+|---|---|---|---|
+| Slot storage | 10 properties `ArmorSlot01`-`10` | 20 properties `ArmorSlot01`-`20` | a script **variable** `Form[] ArmorSlot` (10); `ConvertArmorSlots()` copies the 10 old properties into it on the first load and sets every property to `EmptySlot` |
+| Capacity | 10 | 20 | 10 |
+| Same base form twice | accepted (two slots) | accepted | `IsDuplicated` refuses the second one and bounces it to the player |
+| Full | **not bounced**: `AddToArmorSlot` records nothing but `EquipItem` still runs, so the piece is worn now and gone after the next cell load | bounced | bounced (`RemoveItem(base, n, true, player)`, by base form) |
+| Cell load | disable/enable, then re-equips from the properties | re-equips from the properties | `UnequipAll()`, then re-equips from the array |
+
+All three bounce non-armor to the player and empty a slot on `OnObjectUnequipped`. The vanilla
+overflow is silent, so CIGAR's capacity preflight (free slots >= pieces to store) is what keeps a
+swap from losing an item there.
 
 What this changes in the plan:
 
@@ -153,8 +157,8 @@ What this changes in the plan:
    true before the script's `OnObjectUnequipped` has cleared B's slot. On USSEP a piece of A with the
    same base form as a piece of B would then be refused as a duplicate. Poll until B's forms are gone
    from the slots too, then start phase 2.
-3. **The vanilla script** (no USSEP, no fix) is the third variant and has not been read yet; read it
-   from `Skyrim - Misc.bsa` before writing the resolver.
+3. **The vanilla script** (no USSEP, no fix), read the same day: 10 properties, no duplicate check,
+   and a silent overflow (column above). The preflight must refuse a swap that does not fit.
 4. **The OStim gate** has nothing behind it: CIGAR detects SexLab scenes only (`Util::InScene`);
    OStim appears only as a no-strip keyword. Either add OStim scene detection to `Util` (it would
    serve every module, and a Nexus comment asked for it) or drop OStim from this gate.
