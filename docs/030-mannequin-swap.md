@@ -166,3 +166,15 @@ What this changes in the plan:
 Still sound: instance transfer with the extra list, never driving the script, the mannequin's items
 out before the player's go in, polling instead of fixed waits, hard/soft failure, its own module,
 PromptID 40 (still free; 39 is the last used), and the user's Helmet/Dress/Almsivi decisions.
+
+## Test 1 (2026-09-26, 14:07-14:26 log, JK's Riverfall Cottage)
+
+No swap ran. Every mannequin was found (`via near 마네킹` / `near 무기 거치대`, the activator and a
+weapon rack next to it; `slots=properties 1/20`, the fix's script), but each gate was
+`block=kept item: HDTSMPObjectBase would need a slot the player keeps occupied`: this modlist puts the
+Softbody SMP carrier on every actor, mannequins included, and `MannequinPieces` took every worn armor,
+so the carrier counted as the mannequin's outfit and collided with the player's own. The one occupied
+slot (`1/20`) is that carrier, which the script recorded when it arrived. Fix: the mannequin's side
+uses `Util::GetStrippable` like the player's (non-playable items and the body slots stay). Dawnstar
+Sanctuary's vanilla mannequin (`00107EDE`, overridden by no plugin; the cell by 24) was not found by
+the user; the test moved to the cottage.

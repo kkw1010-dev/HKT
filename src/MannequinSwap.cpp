@@ -268,14 +268,14 @@ namespace CIGAR
 
 	std::vector<MannequinSwap::Piece> MannequinSwap::MannequinPieces(RE::Actor* a_mannequin) const
 	{
+		// The same rule as the player's side: mannequins wear the Softbody SMP carrier
+		// (HDTSMPObjectBase, non-playable) too, and it must stay on them (first test, 2026-09-26: it
+		// counted as the mannequin's outfit and collided with the player's own carrier).
 		std::vector<Piece> pieces;
-		const auto inventory = a_mannequin->GetInventory([](RE::TESBoundObject& a_obj) { return a_obj.IsArmor(); });
-		for (const auto& [object, data] : inventory) {
-			auto* armor = object ? object->As<RE::TESObjectARMO>() : nullptr;
-			if (!armor || armor->IsShield() || data.first <= 0 || !data.second || !data.second->IsWorn()) {
-				continue;
+		for (auto* armor : Util::GetStrippable(a_mannequin)) {
+			if (!armor->IsShield()) {
+				pieces.push_back(MakePiece(armor, WornExtra(a_mannequin, armor)));
 			}
-			pieces.push_back(MakePiece(armor, WornExtra(a_mannequin, armor)));
 		}
 		return pieces;
 	}
