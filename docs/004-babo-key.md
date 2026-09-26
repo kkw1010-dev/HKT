@@ -17,7 +17,7 @@ Status (2026-09-17): tested in game.
   `BaboDialogue - Acheron Patch` overrides `BaboDiaMonitorScript.pex`. It
   adds one call in `OnUpdateGameTime` and leaves `OnKeyDown`, its properties
   and states unchanged (its own gate, `tools/verify.py` in
-  `TKL-Agent\BaboDialogue 6.2 Acheron Patch`, passes). `verify_deploy.py`
+  `TKL-Agent\Installation and Modification\overrides\babodialogue-6.2-acheron-patch`, passes). `verify_deploy.py`
   now checks the winning `.pex` across all enabled mods, not only
   BaboDialogue's own folder.
 - **`NotificationKey` = -1** on this modlist (no key bound in BaboDialogue's
