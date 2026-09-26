@@ -187,4 +187,5 @@ The key backstop above polled the listed *keyboard* key, so a hold on a gamepad 
 that key down) stopped after 0.3 s every time. Since 2.1.1 the backstop applies only when the hold
 began with the keyboard key down (`pass time held (keyboard)` in the log); a hold from another device
 ends on SkyPrompt's key-up event (`pass time held (another device; ends on key up)`). The user has a
-gamepad and can test it. **Untested in game at the time of writing.**
+gamepad and can test it. **Passed in game (2026-09-26, 13:21 log):** two gamepad holds ran 1.9 s and
+2.1 s and stopped on `key released`; a keyboard hold ran 2.7 s.

@@ -33,4 +33,6 @@ run says `(third person)`).
 
 2.1.1 eases `worldFOV` in both cameras. It also reads the FOV back once the zoom is reached: if the
 camera no longer holds CIGAR's value (a camera or FOV mod setting it every frame), the log gets a
-WARN and the player one notification per session. **Untested in game at the time of writing.**
+WARN and the player one notification per session. **Passed in game (2026-09-26, 13:09-13:21 log; the
+user: all normal):** `observing scenery: fov 90.0 -> 50.0 ... (first person)` twice and `(third person)`
+twice, keyboard and gamepad; no WARN.

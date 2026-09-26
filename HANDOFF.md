@@ -49,7 +49,8 @@ history of each module are in `docs/`, one file per module, and each file starts
    `worldFOV`, with a WARN if another mod overrides it. Pass Time on a gamepad stopped after 0.3 s
    because the keyboard key was polled (`docs/019` last section). Readmes now say gamepads work
    through SkyPrompt's buttons. In the load order as `+CIGAR 2.1.1` (`-CIGAR 2.1.0`; backup
-   `modlist.txt.bak_20260926_cigar-2.1.1`). **Awaiting the user's in-game test**, then Nexus update
+   `modlist.txt.bak_20260926_cigar-2.1.1`). **Passed in game (13:09-13:21 log; the pad helmet step of
+   `TEST-2.1.1.md` left no line in the log). Pushed.** Not yet on Nexus: the Nexus update
    (also: gamepad wording on the page, AI Media tag, summary "Works with Skyrim alone" wording).
 
 ### State now
