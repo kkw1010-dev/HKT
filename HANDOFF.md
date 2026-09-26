@@ -433,6 +433,23 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
 - Player-facing Korean is short and administrative. Repo docs are in English.
   Reply to the user in Korean.
 
+## Working style (the user asked to keep it)
+
+The user named the brace-QTE answer of 2026-09-27 as the standard for recommendations and
+reviews. Keep it across sessions:
+
+- Lead with the verdict (yes/no and the chosen approach), then the reasons.
+- Build from parts CIGAR already has (Surrender's slow motion, Jujutsu's `KnockExplosion`,
+  SkyPrompt conventions) rather than inventing a new system.
+- When disagreeing with an outside plan (a GPT draft and the like), argue from game feel and
+  the plan's own text.
+- For each failure case (accidental success from key mashing, overlapping prompts, what a
+  decline means), give a concrete countermeasure.
+- Leave taste values (a window length and the like) to the user: propose a starting value only,
+  and record the chosen value as the user's choice.
+- State the core risk openly and put a verification step first.
+- End with a concrete next step.
+
 ## How to work on it
 
 ```powershell
