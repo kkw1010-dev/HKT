@@ -1,15 +1,16 @@
 # Nexus requirements for CIGAR 2.1.0 (mod 193080)
 
-**What was done (2026-09-26, published):** the page keeps Nexus's file-to-file requirements, which
-hold only the three hard requirements, carried over from the 2.0.1 file to 2.1.0: SkyPrompt >= 2.4.0,
-SKSE64 (Steam 2.3.1 or GOG 2.2.6) and Address Library >= 13. The optional mods below are listed in the
-description only. The user's call: LoversLab integrations are normally written in the description,
-not the requirements, and file-to-file requirements can hold neither an "optional" mark nor an
-off-site link (a mod manager would treat every entry as required). The public API's legacy
-`modRequirements` field is empty for that reason.
+**What is on the page (2026-09-26, read back through the public API):** Nexus's legacy "Mod
+requirements" method, with ten Nexus entries: SKSE64, Address Library, SkyPrompt ("Tested with
+2.4.0") and SKSE Menu Framework noted "Required", and Bathing in Skyrim - Renewed, True Directional
+Movement, Valhalla Combat, Acheron, Survival Mode Improved and Gourmet noted "Not necessary, but
+recommended" with the prompt each enables. That is the user's rule: Nexus-hosted integrations go in
+the Requirements tab with that note; LoversLab-only ones (Yamete Kudasai, Fill Her Up, Private
+Needs - Orgasm, BaboDialogue) stay in the description only, and Grapple is not named on the page.
+The legacy method was needed for the notes; the file-to-file method it replaced (SkyPrompt >= 2.4.0,
+SKSE64, Address Library >= 13, set for 2.0.1) has no notes field and no optional entries.
 
-The tables below are the checked list the description links to; they were drafted for the legacy
-requirements form and are kept as the reference for IDs and URLs.
+The tables below are the checked IDs and URLs; the off-site table is what the description links to.
 
 Every Nexus ID and off-site URL below was checked on
 2026-09-26: the Nexus IDs by name through the public v2 GraphQL API; BaboDialogue's and Fill Her Up's

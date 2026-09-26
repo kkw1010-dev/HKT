@@ -37,9 +37,9 @@ history of each module are in `docs/`, one file per module, and each file starts
    Update of the 2.0.1 file (now Main/Primary; 2.0.1 moved to old versions, not archived), mod version
    2.1.0, new summary and description (`dist/nexus-page/summary-2.1.0.txt`,
    `description-2.1.0.bbcode`), file description and changelog. Adult tag **not** set (the user).
-   Requirements: only the three hard ones stay as Nexus file-to-file requirements (SkyPrompt >= 2.4.0,
-   SKSE64, Address Library >= 13); optional mods are in the description only, as LoversLab
-   integrations usually are (the user). **Grapple is not named anywhere on the Nexus page** (the
+   Requirements (legacy method, for its notes): SKSE64, Address Library, SkyPrompt and SKSE Menu
+   Framework "Required"; BiS, TDM, Valhalla, Acheron, SMI and Gourmet "Not necessary, but
+   recommended" (the user's rule); LoversLab-only mods in the description only. **Grapple is not named anywhere on the Nexus page** (the
    user); the module and the readmes keep it. The archive now has `SKSE\` at its root
    (`make_release.py` checks it); up to 2.0.1 it wrapped a folder, which Vortex would install as
    `Data\CIGAR <ver>\SKSE`. All of it was read back through the public API afterwards.
