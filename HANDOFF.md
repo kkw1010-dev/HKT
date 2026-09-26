@@ -35,11 +35,12 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 ### State now
 
-- **Load order runs the Nexus build** (for the user's video): `+CIGAR 2.0.1 Nexus`, `-CIGAR`,
-  `-CIGAR 2.0.1` (backups `modlist.txt.bak_20260926_*`). While this holds, `Build.ps1 -Deploy` fails
-  `verify_deploy.py`. To go back: close MO2 gracefully (`taskkill /IM ModOrganizer.exe`, no `/F`),
-  set `+CIGAR` and `-CIGAR 2.0.1 Nexus` in `modlist.txt`, relaunch `C:\TAKEALOOK\ModOrganizer.exe`.
-  The Nexus mod folder's `CIGAR.json` was left on `"language": "en"` by the user's test.
+- **Load order runs the 2.1.0 release** (since 2026-09-26, for its first in-game run):
+  `+CIGAR 2.1.0` (the package copied to `mods\CIGAR 2.1.0`), `-CIGAR 2.0.1 Nexus`, `-CIGAR 2.0.1`,
+  `-CIGAR` (backup `modlist.txt.bak_20260926_cigar-2.1.0`). While this holds, `Build.ps1 -Deploy` fails
+  `verify_deploy.py`. To go back to the author build: MO2 closed gracefully (`taskkill /IM
+  ModOrganizer.exe`, no `/F`), set `+CIGAR` and `-CIGAR 2.1.0` in `modlist.txt`, relaunch
+  `C:\TAKEALOOK\ModOrganizer.exe`.
 - **SkyPrompt 2.4.0** is installed (`[NoDelete] 0007 SkyPrompt NEW`, meta 2.4.0) plus `+SkyPrompt - KR`
   directly above it. Backup of 2.3.15: `C:\TAKEALOOK\_removed\SkyPrompt 2.3.15 backup 20260926`.
   API 2.0 is unchanged (exports and header compared), but **CIGAR has not run on 2.4.0 yet**.
