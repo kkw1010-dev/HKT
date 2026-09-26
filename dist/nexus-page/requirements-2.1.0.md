@@ -4,7 +4,7 @@ What to enter on the page's Requirements tab. Every Nexus ID and off-site URL be
 2026-09-26: the Nexus IDs by name through the public v2 GraphQL API; BaboDialogue's and Fill Her Up's
 URLs are the ones other Nexus files already use for the same mods (BaboDialogue PT-BR 79571; the Fill
 Her Up Spanish translation 148200, uploaded by BakaFactory); Yamete Kudasai and Private Needs - Orgasm
-from the installed mods' `meta.ini`; Grapple from Smooth's Patreon.
+from the installed mods' `meta.ini`.
 
 As of 2026-09-26 the page lists **no** requirements, and its summary still says "Base-game edition: no
 other mods needed".
@@ -31,13 +31,16 @@ next to each entry.
 
 | Mod | URL | Notes |
 |---|---|---|
-| For Honor in Skyrim - Grapple (Smooth) | https://www.patreon.com/SmoothAanimation/posts/for-honor-in-146661018 | Optional. Grapple prompt. Patreon supporters |
 | Yamete Kudasai | https://www.loverslab.com/files/file/23123-yamete-kudasai/ | Optional. Surrender respects its 3-minute rule |
 | Fill Her Up Baka Edition (BakaFactory) | https://subscribestar.adult/posts/118628 | Optional. Deflate prompt |
 | Private Needs - Orgasm | https://www.loverslab.com/files/file/39023-private-needs-orgasm/ | Optional. Urinate and defecate prompts |
 | BaboDialogue (BakaFactory) | https://www.loverslab.com/files/file/17496-babodialogue/ | Optional. Kidnap-room action prompt |
 
 ## Not entered
+
+- **Grapple** (Smooth's Patreon mod, "For Honor in Skyrim - Grapple",
+  <https://www.patreon.com/SmoothAanimation/posts/for-honor-in-146661018>): the user left it off the
+  Nexus page (2026-09-26). The module and the readmes keep it; the Nexus description does not name it.
 
 - **Survival Mode** (Creation Club, `ccqdrsse001-survivalmode.esl`) comes with the current game
   (Anniversary Upgrade and the free Creation Club content), so it is not a Nexus mod. The Eat and Warm
