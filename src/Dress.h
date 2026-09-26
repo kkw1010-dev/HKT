@@ -23,6 +23,10 @@ namespace CIGAR
 
 		void RegisterEvents();
 
+		// Another module changed what the player wears (MannequinSwap): remember the new outfit, or
+		// forget it when nothing strippable is worn, and drop the "CIGAR undressed you" state.
+		void OutfitChanged(RE::PlayerCharacter* a_player);
+
 		// Co-save: the remembered outfit and whether CIGAR undressed the player.
 		void Save(SKSE::SerializationInterface* a_intfc) const;
 		void Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);

@@ -23,6 +23,13 @@ namespace CIGAR
 		void OnDeclined(std::uint16_t a_eventID) override;
 		void OnDisabled() override;
 
+		// MannequinSwap: the stowed headgear leaves with the player's outfit, and headgear the player
+		// receives arrives stowed (the user, 2026-09-25). Busy while a take-off is in progress.
+		const std::vector<RE::FormID>& Stowed() const { return stowed; }
+		std::vector<RE::FormID> TakeStowed();
+		void Stow(RE::FormID a_id);
+		bool Busy() const { return step != Step::kIdle; }
+
 		void Save(SKSE::SerializationInterface* a_intfc) const;
 		void Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);
 		void Revert();

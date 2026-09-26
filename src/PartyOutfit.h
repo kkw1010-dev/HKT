@@ -18,6 +18,9 @@ namespace CIGAR
 		void Tick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 
+		// The party clothes are on and the previous gear is stored.
+		bool Active() const { return !stored.empty(); }
+
 		void Save(SKSE::SerializationInterface* a_intfc) const;
 		void Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);
 		void Revert();

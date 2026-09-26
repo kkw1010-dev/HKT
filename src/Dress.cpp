@@ -130,6 +130,20 @@ namespace CIGAR
 		}
 	}
 
+	void Dress::OutfitChanged(RE::PlayerCharacter* a_player)
+	{
+		const auto worn = Util::GetStrippable(a_player);
+		undressedByCIGAR = false;
+		if (worn.empty()) {
+			if (!outfit.empty()) {
+				outfit.clear();
+				Log("outfit memory cleared: the player wears nothing strippable after an outfit change");
+			}
+			return;
+		}
+		Remember(worn);
+	}
+
 	bool Dress::OutfitAvailable(RE::PlayerCharacter* a_player) const
 	{
 		return std::ranges::any_of(outfit, [a_player](RE::FormID a_id) {

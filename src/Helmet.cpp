@@ -158,6 +158,24 @@ namespace CIGAR
 		stepAt = Clock::now() + kReachHead;
 	}
 
+	std::vector<RE::FormID> Helmet::TakeStowed()
+	{
+		auto taken = std::move(stowed);
+		stowed.clear();
+		if (!taken.empty()) {
+			Log("stowed headgear handed over ({} pieces)", taken.size());
+		}
+		return taken;
+	}
+
+	void Helmet::Stow(RE::FormID a_id)
+	{
+		if (std::ranges::find(stowed, a_id) == stowed.end() && stowed.size() < kMaxStowed) {
+			stowed.push_back(a_id);
+			Log("stowed {:08X} (handed over by another module)", a_id);
+		}
+	}
+
 	void Helmet::PutOn(RE::PlayerCharacter* a_player)
 	{
 		auto* manager = RE::ActorEquipManager::GetSingleton();
