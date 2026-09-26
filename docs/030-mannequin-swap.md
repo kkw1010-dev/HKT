@@ -190,9 +190,9 @@ in 291-507 ms; the item count check never tripped. The squire's helmet went both
 mannequin from Helmet's stowed list, back to the player `arrives stowed`.
 
 Two faults, fixed the same day:
-- **A helmet hidden by a slot collision.** `북부 철 투구` (Warden's Wardrobe) sits on slots 31 (hair,
-  a kept slot) and 42 (circlet); the slot-by-slot scan (`Util::GetStrippable`) got the scarf at 42
-  first, so the helmet was never in the mannequin's outfit (`take=5` right after it was given six).
+- **A helmet left out** (the explanation first written here was wrong; see test 3).
+  `북부 철 투구` (Warden's Wardrobe) sits on slots 31 (hair, a kept slot) and 42 (circlet); it
+  was never in the mannequin's outfit (`take=5` right after it was given six).
   When the squire's helmet came in, it displaced the iron one, which is now in the mannequin's
   inventory, unworn and unrecorded (retrievable by activating the mannequin). Both sides now collect
   worn armor per inventory item (`WornOutfit`): a piece moves when any of its slots may be stripped.
@@ -200,3 +200,22 @@ Two faults, fixed the same day:
   `ItemEquip` does.
 
 Not seen in this log: the cell-reload check (test step 4) and a double-tap decline (step 5).
+
+## Test 3 (2026-09-26, 14:49-15:02 log)
+
+The lantern stayed with the player (fixed), the double-tap decline worked (the user). Three swaps,
+`0 problems`, but **the helmet still did not move**: at 14:59:06 Helmet saw the player wearing
+`북부 철 투구`, yet the 14:59:13 swap gave only the four squire pieces. The scarf is on slot 45, so the
+test-2 idea of a slot-42 collision was wrong: `WornOutfit`, which checks each item's own mask,
+left it out too, so `Util::IsStrippable` found none of its slots strippable at runtime. No KID rule
+puts a no-strip keyword on helmets and SkyPatcher leaves its slots at 31 + 42, so the likeliest cause
+is a runtime slot mask without 42. Not confirmed.
+
+Side effect seen: the squire's helmet arrived stowed while the player still wore the iron one, and
+Helmet then cleared its stowed list ("headgear worn again"); the squire's helmet stayed in the
+inventory, just no longer offered by 투구 쓰기.
+
+Change: headgear (ArmorHelmet / ClothingHead, not circlets) moves whatever its slots, if playable
+and without a no-strip keyword; and the gate line now lists every worn piece that stays on either
+side with its reason and runtime slot mask (`stays on player:` / `stays on mannequin:`), so the next
+log shows the cause instead of an inference.

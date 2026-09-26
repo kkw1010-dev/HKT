@@ -248,32 +248,58 @@ namespace CIGAR
 		return a_actor && a_armor && a_actor->GetWornArmor(a_armor->GetFormID()) != nullptr;
 	}
 
-	std::vector<RE::TESObjectARMO*> MannequinSwap::WornOutfit(RE::Actor* a_actor)
+	std::vector<RE::TESObjectARMO*> MannequinSwap::WornOutfit(RE::Actor* a_actor, std::string* a_skipped) const
 	{
-		// Every worn armor once, from the inventory. Asking slot by slot (Util::GetStrippable) hides a
-		// piece whose slots another piece answers first: a helmet on hair + circlet (31, 42) next to a
-		// scarf on 42 never showed up (test 2, 2026-09-26). A piece moves when any of its slots may be
-		// stripped; hair-only wigs, non-playable items (the SMP carrier), no-strip items, shields
-		// and TCL lanterns (a light, not clothing) stay.
+		// Every worn armor once, from the inventory, not slot by slot (Util::GetStrippable asks each
+		// slot for its piece). Headgear moves on any slot: a helmet on hair + circlet (31, 42) stayed
+		// behind in test 2 and again in test 3 (2026-09-26). Otherwise a piece moves when any of its
+		// slots may be stripped. Non-playable items (the SMP carrier), no-strip items, shields and
+		// TCL lanterns (a light, not clothing) stay; a_skipped says which and why.
 		std::vector<RE::TESObjectARMO*> worn;
 		auto* changes = a_actor ? a_actor->GetInventoryChanges() : nullptr;
 		if (!changes || !changes->entryList) {
 			return worn;
 		}
+		const auto skip = [a_skipped](const RE::TESObjectARMO* a_armor, std::string_view a_why) {
+			if (a_skipped) {
+				*a_skipped += std::format(" {}:{} ({:08X})", Util::NameOf(a_armor), a_why, a_armor->GetSlotMask().underlying());
+			}
+		};
 		for (auto* entry : *changes->entryList) {
 			auto* armor = entry && entry->object ? entry->object->As<RE::TESObjectARMO>() : nullptr;
-			if (!armor || armor->IsShield() || !entry->IsWorn() || std::ranges::find(worn, armor) != worn.end()) {
+			if (!armor || !entry->IsWorn() || std::ranges::find(worn, armor) != worn.end()) {
+				continue;
+			}
+			if (armor->IsShield()) {
+				skip(armor, "shield");
 				continue;
 			}
 			if (const auto* file = armor->GetFile(0); file && Util::ContainsNoCase(file->GetFilename(), "TorchesCandlelightLanterns")) {
+				skip(armor, "lantern");
+				continue;
+			}
+			if (!armor->GetPlayable()) {
+				skip(armor, "non-playable");
+				continue;
+			}
+			// Slot 32 is never a kept slot, so a false here is a no-strip keyword.
+			if (!Util::IsStrippable(armor, 32)) {
+				skip(armor, "no-strip keyword");
+				continue;
+			}
+			if (IsHead(armor)) {
+				worn.push_back(armor);
 				continue;
 			}
 			const auto mask = armor->GetSlotMask().underlying();
-			for (std::uint32_t slot = 30; slot < 62; ++slot) {
-				if ((mask & (1u << (slot - 30))) != 0 && Util::IsStrippable(armor, slot)) {
-					worn.push_back(armor);
-					break;
-				}
+			bool strippable = false;
+			for (std::uint32_t slot = 30; slot < 62 && !strippable; ++slot) {
+				strippable = (mask & (1u << (slot - 30))) != 0 && Util::IsStrippable(armor, slot);
+			}
+			if (strippable) {
+				worn.push_back(armor);
+			} else {
+				skip(armor, "body slots only");
 			}
 		}
 		return worn;
@@ -282,7 +308,7 @@ namespace CIGAR
 	std::vector<MannequinSwap::Piece> MannequinSwap::PlayerPieces(RE::PlayerCharacter* a_player) const
 	{
 		std::vector<Piece> pieces;
-		for (auto* armor : WornOutfit(a_player)) {
+		for (auto* armor : WornOutfit(a_player, nullptr)) {
 			pieces.push_back(MakePiece(armor, WornExtra(a_player, armor)));
 		}
 		for (const auto id : Helmet::GetSingleton()->Stowed()) {
@@ -301,7 +327,7 @@ namespace CIGAR
 		// (HDTSMPObjectBase, non-playable) too, and it must stay on them (first test, 2026-09-26: it
 		// counted as the mannequin's outfit and collided with the player's own carrier).
 		std::vector<Piece> pieces;
-		for (auto* armor : WornOutfit(a_mannequin)) {
+		for (auto* armor : WornOutfit(a_mannequin, nullptr)) {
 			pieces.push_back(MakePiece(armor, WornExtra(a_mannequin, armor)));
 		}
 		return pieces;
@@ -338,7 +364,7 @@ namespace CIGAR
 		// A piece the player keeps on (a device, the SMP carrier, a shield) must not sit where the
 		// mannequin's pieces go; the helmet arrives stowed, so it needs no slot.
 		std::uint32_t kept = 0;
-		const auto outfit = WornOutfit(a_player);
+		const auto outfit = WornOutfit(a_player, nullptr);
 		for (std::uint32_t slot = 30; slot < 62; ++slot) {
 			auto* worn = a_player->GetWornArmor(SlotMask(slot));
 			if (worn && std::ranges::find(outfit, worn) == outfit.end()) {
@@ -386,9 +412,14 @@ namespace CIGAR
 		const bool anything = !mine.empty() || !theirs.empty();
 		const std::string block = anything ? Preflight(player, mine, theirs, slots) : std::string{};
 
-		LogGate(std::format("mannequin={} ({:08X}) via {} slots={} {}/{} give={} take={} combat={} scene={} party={} helmetBusy={} dismissed={} block={}",
+		std::string keptMine;
+		std::string keptTheirs;
+		WornOutfit(player, &keptMine);
+		WornOutfit(mannequin, &keptTheirs);
+		LogGate(std::format("mannequin={} ({:08X}) via {} slots={} {}/{} give={} take={} combat={} scene={} party={} helmetBusy={} dismissed={} block={} stays on player:{} stays on mannequin:{}",
 			Util::NameOf(mannequin), mannequin->GetFormID(), how, slots.variant, slots.Occupied(), slots.forms.size(), mine.size(), theirs.size(),
-			combat, scene ? scene : "-", party, helmetBusy, dismissed, block.empty() ? "-" : block));
+			combat, scene ? scene : "-", party, helmetBusy, dismissed, block.empty() ? "-" : block, keptMine.empty() ? " -" : keptMine,
+			keptTheirs.empty() ? " -" : keptTheirs));
 
 		if (!block.empty()) {
 			const auto key = std::format("{:08X} {}", mannequin->GetFormID(), block.substr(0, block.find(':')));

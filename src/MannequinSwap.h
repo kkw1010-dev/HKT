@@ -72,8 +72,9 @@ namespace CIGAR
 		static RE::ExtraDataList* AnyExtra(RE::Actor* a_actor, RE::TESBoundObject* a_item);
 		static bool HasExtra(RE::Actor* a_actor, RE::TESBoundObject* a_item, const RE::ExtraDataList* a_extra);
 		static bool IsWearing(RE::Actor* a_actor, RE::TESObjectARMO* a_armor);
-		// Worn armor that is clothing for the swap, each piece once.
-		static std::vector<RE::TESObjectARMO*> WornOutfit(RE::Actor* a_actor);
+		// Worn armor that is clothing for the swap, each piece once; a_skipped (optional) gets every
+		// worn piece that stays, with the reason and its runtime slot mask.
+		std::vector<RE::TESObjectARMO*> WornOutfit(RE::Actor* a_actor, std::string* a_skipped) const;
 		// The player's side: worn strippable armor (no shields) plus the helmet Helmet keeps stowed.
 		std::vector<Piece> PlayerPieces(RE::PlayerCharacter* a_player) const;
 		// The mannequin's side: armor it wears (no shields). Leftovers in its inventory stay.
