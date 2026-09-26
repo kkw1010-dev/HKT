@@ -50,7 +50,6 @@ namespace CIGAR
 		std::array<RE::EffectSetting*, 4> hungerEffects{};
 		RE::BGSListForm* rawMeat{ nullptr };
 		std::vector<RE::BGSKeyword*> excludedKeywords;
-		RE::TESFaction* sexlabAnimating{ nullptr };
 
 		RE::AlchemyItem* offeredFood{ nullptr };
 		Clock::time_point quietUntil{};

@@ -77,7 +77,6 @@ namespace CIGAR
 		RE::BSTSmartPointer<RE::BSScript::Object> utility;
 		RE::BSTSmartPointer<RE::BSScript::Object> main;
 		RE::EffectSetting* excreteEffect{ nullptr };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 
 		int offeredBladder{ -1 };
 		int offeredBowel{ -1 };

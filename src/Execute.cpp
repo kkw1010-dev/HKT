@@ -18,9 +18,6 @@ namespace CIGAR
 		constexpr auto kMCMScript = "valhallaCombat_MCM";
 		constexpr auto kPromptOnlyTarget = "valhalla"sv;
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		// executionHandler::tryPcExecution: the nearest stun-broken actor strictly within 250 units.
 		constexpr float kReach = 250.0f;
 		// Valhalla queues the kill-move idle from a thread in 50 ms steps; allow for a slow frame.
@@ -243,12 +240,8 @@ namespace CIGAR
 		if (!api) {
 			api = VAL_API::RequestPluginAPI();
 		}
-		auto* handler = RE::TESDataHandler::GetSingleton();
-		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
-		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
-		                      nullptr;
 		LoadRaceMap();
-		Log("Valhalla api={} races={} sexlab={}", api != nullptr, races.size(), sexlabAnimating != nullptr);
+		Log("Valhalla api={} races={}{}", api != nullptr, races.size(), Util::DescribeScenes());
 		if (!api || races.empty()) {
 			Log("WARN Valhalla Combat is loaded but {}; the execution prompt is off", !api ? "its API (V2) was not returned" : "no race mapping was read");
 			if (!warned) {
@@ -303,8 +296,8 @@ namespace CIGAR
 			why = "no-key";
 		} else if (!controls || !controls->IsMovementControlsEnabled()) {
 			why = "no-controls";
-		} else if (sexlabAnimating && a_player->IsInFaction(sexlabAnimating)) {
-			why = "sexlab";
+		} else if (const char* scene = Util::SceneOf(a_player)) {
+			why = scene;
 		} else if (a_player->IsDead() || a_player->IsInKillMove() || a_player->IsOnMount() || !IsHumanoid(a_player)) {
 			why = "player";  // executionHandler::attemptExecute's executor checks
 		} else if (a_victim = FindVictim(a_player, distance); !a_victim) {

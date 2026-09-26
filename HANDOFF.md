@@ -55,9 +55,20 @@ history of each module are in `docs/`, one file per module, and each file starts
    the AI Media tag (the page texts in `dist/nexus-page/*-live.*` are the live ones). Was: the Nexus update
    (also: gamepad wording on the page, AI Media tag, summary "Works with Skyrim alone" wording).
 
+9. **2.1.2 (local, not published): OStim scenes.** `Util::InScene` / `Util::SceneOf` now see SexLab
+   (`SexLabAnimatingFaction`) **and OStim** (`OStimActorCountFaction` 0xECA in `OStim.esp`, which OStim
+   Standalone documents as held only during scenes). BaboKey, Eat, Execute, Needs and Surrender
+   dropped their own SexLab lookups for it; Deflate keeps FHU's SexLab faction and adds `InScene`.
+   Gate lines say `scene=` and the ready lines ` sexlab=... ostim=...`. OStim is **not installed** on
+   this modlist, so its path is untested; the in-game check is a regression one (the load line
+   `scene frameworks: sexlab=true ostim=false`, SexLab gating unchanged). Readmes note it. In the
+   load order as `+CIGAR 2.1.2` (backup `modlist.txt.bak_20260926_cigar-2.1.2`); MO2 left closed.
+   `v3` was deleted locally: it had no commit of its own and is made again with the first
+   MannequinSwap commit (the user: v3 starts when mannequin code does).
+
 ### State now
 
-- **Load order runs the 2.1.1 release** (since 2026-09-26, for its in-game test): `+CIGAR 2.1.1`
+- **Load order runs the 2.1.2 release** (was 2.1.1; see item 9) (since 2026-09-26, for its in-game test): `+CIGAR 2.1.1`
   (the package copied to `mods\CIGAR 2.1.1`, with the 2.1.0 copy's `CIGAR.json`), `-CIGAR 2.1.0`,
   `-CIGAR 2.0.1 Nexus`, `-CIGAR 2.0.1`, `-CIGAR` (backup `modlist.txt.bak_20260926_cigar-2.1.1`).
   While this holds, `Build.ps1 -Deploy` fails `verify_deploy.py`. To go back to the author build:

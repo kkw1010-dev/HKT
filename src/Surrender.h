@@ -57,7 +57,6 @@ namespace CIGAR
 		std::atomic<std::int64_t> surrenderKey{ -1 };
 		RE::BGSKeyword* defeated{ nullptr };
 		RE::EffectSetting* ykTimeout{ nullptr };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 		RE::BSTSmartPointer<RE::BSScript::Object> baboController;
 		Clock::time_point quietUntil{};
 		bool warned{ false };

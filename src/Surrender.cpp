@@ -24,9 +24,6 @@ namespace CIGAR
 		constexpr RE::FormID kYKTimeoutEffectID = 0x808;
 		constexpr float kEnemyRadius = 3000.0f;
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		constexpr auto kQuietAfterPress = 5s;
 
 		// The BaboDialogue 6.2 Acheron patch calls Acheron.DisableProcessing(true) while BaboDialogue
@@ -129,7 +126,6 @@ namespace CIGAR
 		acheronPresent = true;
 		defeated = handler->LookupForm<RE::BGSKeyword>(kDefeatedKeywordID, kAcheronPlugin);
 		ykTimeout = handler->LookupModByName(kYKPlugin) ? handler->LookupForm<RE::EffectSetting>(kYKTimeoutEffectID, kYKPlugin) : nullptr;
-		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
 		baboController = nullptr;
 		if (handler->LookupModByName(kBaboPlugin)) {
@@ -195,8 +191,8 @@ namespace CIGAR
 			a_why = "down";
 		} else if (defeated && a_player->HasKeyword(defeated)) {
 			a_why = "defeated";
-		} else if (sexlabAnimating && a_player->IsInFaction(sexlabAnimating)) {
-			a_why = "sexlab";
+		} else if (const char* scene = Util::SceneOf(a_player)) {
+			a_why = scene;
 		} else if (!controls || !controls->IsMovementControlsEnabled()) {
 			a_why = "no-movement";
 		} else if (BaboSuspendedAcheron()) {

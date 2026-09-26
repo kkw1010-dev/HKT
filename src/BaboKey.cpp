@@ -12,9 +12,6 @@ namespace CIGAR
 		constexpr auto kKidnapScript = "BaboKidnapEvenScript";
 		constexpr RE::FormID kMonitorQuestID = 0x7E22B8;  // BaboMonitorScript
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
-
 		// BaboDiaMonitorScript.OnKeyDown hands the key to BaboKidnapEvenScript.KeyPress() once the
 		// kidnap quest reaches stage 8, where BaboDialogue shows its own hotkey tutorial. Stage 250
 		// releases the player and 255 shuts the quest down.
@@ -71,7 +68,6 @@ namespace CIGAR
 			return false;
 		}
 		monitor = handler->LookupForm<RE::TESQuest>(kMonitorQuestID, kBaboPlugin);
-		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
 		const auto monitorScript = Util::ScriptObject(monitor, kMonitorScript);
 		configQuest = Util::ScriptProperty<RE::TESQuest>(monitorScript, "BDConfig");
@@ -84,11 +80,11 @@ namespace CIGAR
 		centerMarker = Util::ScriptProperty<RE::BGSRefAlias>(kidnapScript, "CenterMarkerPlayer");
 		const bool hasCaptured = kidnapScript && kidnapScript->GetVariable("bCaptured");
 
-		Log("Babo monitor={} script={} config={} kidnap={} kidnapScript={} npcAnimating={} tiedUp={} scenario={} centerMarker={} bCaptured={} sexlab={} key={}",
+		Log("Babo monitor={} script={} config={} kidnap={} kidnapScript={} npcAnimating={} tiedUp={} scenario={} centerMarker={} bCaptured={}{} key={}",
 			monitor ? std::format("{:08X}", monitor->GetFormID()) : "-", static_cast<bool>(monitorScript),
 			configQuest != nullptr, kidnap ? std::format("{:08X}", kidnap->GetFormID()) : "-",
 			static_cast<bool>(kidnapScript), npcAnimating != nullptr, tiedUp != nullptr, scenario != nullptr,
-			centerMarker != nullptr, hasCaptured, sexlabAnimating != nullptr, NotificationKey());
+			centerMarker != nullptr, hasCaptured, Util::DescribeScenes(), NotificationKey());
 		return monitorScript && kidnapScript && npcAnimating && centerMarker && hasCaptured;
 	}
 
@@ -149,9 +145,9 @@ namespace CIGAR
 		const bool inRoom = playerCell && playerCell == roomCell;
 
 		const bool babo = player->IsInFaction(npcAnimating);
-		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);
+		const bool sexlab = Util::InScene(player);
 
-		a_gate = std::format("kidnap=on stage={} state='{}' captured={} tied={} scenario={} cell={} room={} babo-anim={} sexlab={}",
+		a_gate = std::format("kidnap=on stage={} state='{}' captured={} tied={} scenario={} cell={} room={} babo-anim={} scene={}",
 			stage, state, isCaptured, tiedUp ? tiedUp->value : -1.0f, scenario ? scenario->value : -1.0f,
 			CellName(playerCell), CellName(roomCell), babo, sexlab);
 

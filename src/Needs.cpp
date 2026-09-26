@@ -42,9 +42,6 @@ namespace CIGAR
 			KeyVar{ "Toilet_Keycode", "toilet", false },
 		};
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		// UrinateAndDefecate waits 0.2 s and casts its handler, which strips and plays before the
 		// fill resets; give it time before the gate is read again.
 		constexpr auto kQuietAfterStart = 3s;
@@ -143,10 +140,9 @@ namespace CIGAR
 		config = Util::ScriptObject(configQuest, kConfigScript);
 		utility = Util::ScriptObject(configQuest, kUtilityScript);
 		main = Util::ScriptObject(mainQuest, kMainScript);
-		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
-		Log("PNO config={} utility={} main={} excreteEffect={} sexlab={}", static_cast<bool>(config), static_cast<bool>(utility),
-			static_cast<bool>(main), excreteEffect != nullptr, sexlabAnimating != nullptr);
+		Log("PNO config={} utility={} main={} excreteEffect={}{}", static_cast<bool>(config), static_cast<bool>(utility),
+			static_cast<bool>(main), excreteEffect != nullptr, Util::DescribeScenes());
 		if (!config || !utility || !main || !excreteEffect) {
 			Log("WARN PNO found but its quests/scripts did not resolve; the needs prompts are off");
 			Util::Notify(Text::L("CIGAR: Private Needs 연동 실패. 용변 프롬프트 비활성", "CIGAR: Private Needs link failed. Relief prompts off"));
@@ -238,7 +234,7 @@ namespace CIGAR
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
 		// PNO turns its excrete keys into an orgasm during a scene; the prompts stay out of scenes.
-		const bool scene = Util::ScriptBool(utility, "IsInSexScene") || (sexlabAnimating && a_player->IsInFaction(sexlabAnimating));
+		const bool scene = Util::ScriptBool(utility, "IsInSexScene") || Util::InScene(a_player);
 		const bool quiet = Clock::now() < quietUntil;
 		const int minPercent = Settings::NeedsMinPercent();
 

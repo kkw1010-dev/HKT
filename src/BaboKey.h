@@ -37,7 +37,6 @@ namespace CIGAR
 		RE::TESQuest* configQuest{ nullptr };
 		RE::TESQuest* kidnap{ nullptr };
 		RE::TESFaction* npcAnimating{ nullptr };
-		RE::TESFaction* sexlabAnimating{ nullptr };
 		RE::TESGlobal* tiedUp{ nullptr };
 		RE::TESGlobal* scenario{ nullptr };
 		RE::BGSRefAlias* centerMarker{ nullptr };

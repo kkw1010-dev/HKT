@@ -11,6 +11,13 @@ namespace CIGAR::Util
 		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;  // SexLabAnimatingFaction
 		std::atomic<RE::TESFaction*> sexlabAnimating{ nullptr };
 
+		// OStim Standalone puts every actor of a running scene in OStimActorCountFaction (rank = the
+		// scene's actor count) and takes them out when it ends ("actors will only be in these
+		// factions during scenes", data/SKSE/Plugins/OStim/list of API forms.txt, VersuchDrei/OStimNG).
+		constexpr auto kOStimPlugin = "OStim.esp"sv;
+		constexpr RE::FormID kOStimActorCountID = 0xECA;  // OStimActorCountFaction
+		std::atomic<RE::TESFaction*> ostimInScene{ nullptr };
+
 		RE::BGSBipedObjectForm::BipedObjectSlot SlotMask(std::uint32_t a_slot)
 		{
 			return static_cast<RE::BGSBipedObjectForm::BipedObjectSlot>(1u << (a_slot - 30));
@@ -63,18 +70,34 @@ namespace CIGAR::Util
 		sexlabAnimating = handler && handler->LookupModByName(kSexLabPlugin) ?
 		                      handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) :
 		                      nullptr;
-		logs::info("scene frameworks: sexlab={}", sexlabAnimating.load() != nullptr);
+		ostimInScene = handler && handler->LookupModByName(kOStimPlugin) ?
+		                   handler->LookupForm<RE::TESFaction>(kOStimActorCountID, kOStimPlugin) :
+		                   nullptr;
+		logs::info("scene frameworks: sexlab={} ostim={}", sexlabAnimating.load() != nullptr, ostimInScene.load() != nullptr);
+	}
+
+	const char* SceneOf(RE::Actor* a_actor)
+	{
+		if (!a_actor) {
+			return nullptr;
+		}
+		if (auto* faction = sexlabAnimating.load(); faction && a_actor->IsInFaction(faction)) {
+			return "sexlab";
+		}
+		if (auto* faction = ostimInScene.load(); faction && a_actor->IsInFaction(faction)) {
+			return "ostim";
+		}
+		return nullptr;
 	}
 
 	bool InScene(RE::Actor* a_actor)
 	{
-		auto* faction = sexlabAnimating.load();
-		return faction && a_actor && a_actor->IsInFaction(faction);
+		return SceneOf(a_actor) != nullptr;
 	}
 
 	std::string DescribeScenes()
 	{
-		return std::format(" sexlab={}", sexlabAnimating.load() != nullptr);
+		return std::format(" sexlab={} ostim={}", sexlabAnimating.load() != nullptr, ostimInScene.load() != nullptr);
 	}
 
 	bool IsStrippable(const RE::TESObjectARMO* a_armor, std::uint32_t a_slot)

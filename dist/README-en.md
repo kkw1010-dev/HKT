@@ -149,6 +149,8 @@ Your choices are saved to `SKSE/Plugins/CIGAR.json`.
 - **Chair drinking** knows the 29 drinks of the base game and its DLCs, plus any drink another mod
   tags as alcohol (Gourmet, Object Categorization Framework, SunHelm).
 - **The helmet** comes off at once, without an animation.
+- **Scenes:** while a SexLab or OStim scene plays the player, combat, gear and needs prompts stay
+  away (detected at runtime; neither framework is needed).
 - Page names in the settings panel switch language at the next launch; everything else switches at
   once.
 

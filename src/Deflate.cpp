@@ -196,7 +196,7 @@ namespace CIGAR
 		}
 		const auto type = inflationType.load();
 		const bool animating = player->IsInFaction(animatingFaction);
-		const bool sexlab = sexlabAnimating && player->IsInFaction(sexlabAnimating);
+		const bool sexlab = (sexlabAnimating && player->IsInFaction(sexlabAnimating)) || Util::InScene(player);
 		const auto now = std::chrono::steady_clock::now();
 		if (animating || sexlab) {
 			busyUntil = now + kSettle;

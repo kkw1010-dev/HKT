@@ -90,7 +90,6 @@ namespace CIGAR
 		std::atomic<std::int64_t> executionKey{ -1 };
 		bool stunEnabled{ true };
 		std::unordered_map<RE::TESRace*, Category> races;
-		RE::TESFaction* sexlabAnimating{ nullptr };
 		bool warned{ false };
 
 		RE::Actor* offeredVictim{ nullptr };

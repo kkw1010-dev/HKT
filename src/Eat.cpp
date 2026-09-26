@@ -32,9 +32,6 @@ namespace CIGAR
 		constexpr auto kGourmetPlugin = "Gourmet.esp"sv;
 		constexpr std::array<RE::FormID, 6> kGourmetExcludedIDs{ 0x808, 0xA6A, 0x969, 0xA4D, 0xA4B, 0xA4C };
 
-		constexpr auto kSexLabPlugin = "SexLab.esm"sv;
-		constexpr RE::FormID kSexLabAnimatingID = 0xE50F;
-
 		// SMI lowers hunger on the equip event; give it and the eating animation time before the
 		// gate is read again, so the same prompt is not offered for a second bite.
 		constexpr auto kQuietAfterEat = 3s;
@@ -80,7 +77,6 @@ namespace CIGAR
 			effectsOk = effectsOk && hungerEffects[i];
 		}
 		smiHungerEnabled = handler->LookupModByName(kSMIPlugin) ? handler->LookupForm<RE::TESGlobal>(kSMIHungerEnabledID, kSMIPlugin) : nullptr;
-		sexlabAnimating = handler->LookupModByName(kSexLabPlugin) ? handler->LookupForm<RE::TESFaction>(kSexLabAnimatingID, kSexLabPlugin) : nullptr;
 
 		if (auto* kw = handler->LookupForm<RE::BGSKeyword>(kVendorItemFoodRawID, kSkyrimPlugin)) {
 			excludedKeywords.push_back(kw);
@@ -94,9 +90,9 @@ namespace CIGAR
 			}
 		}
 
-		Log("Survival mode={} hunger={} stages={} effects={} rawList={} smi={} gourmet={} excludedKeywords={} sexlab={}",
+		Log("Survival mode={} hunger={} stages={} effects={} rawList={} smi={} gourmet={} excludedKeywords={}{}",
 			modeEnabled != nullptr, hungerValue != nullptr, stagesOk, effectsOk, rawMeat != nullptr,
-			smiHungerEnabled != nullptr, gourmet, excludedKeywords.size(), sexlabAnimating != nullptr);
+			smiHungerEnabled != nullptr, gourmet, excludedKeywords.size(), Util::DescribeScenes());
 		if (!modeEnabled || !hungerValue || !stagesOk || !effectsOk) {
 			Log("WARN Survival Mode found but its hunger forms did not resolve; the eat prompt is off");
 			if (!warnedOff) {
@@ -188,7 +184,7 @@ namespace CIGAR
 		const bool combat = a_player->IsInCombat();
 		const auto* controls = RE::ControlMap::GetSingleton();
 		const bool movable = controls && controls->IsMovementControlsEnabled();
-		const bool sexlab = sexlabAnimating && a_player->IsInFaction(sexlabAnimating);
+		const bool sexlab = Util::InScene(a_player);
 		const bool quiet = Clock::now() < quietUntil;
 
 		const bool hungry = enabled && stage >= minStage;
@@ -199,7 +195,7 @@ namespace CIGAR
 			a_food = PickFood(a_player, candidates);
 		}
 		// The hunger value itself changes every few seconds; the gate logs the stage only.
-		a_gate = std::format("survival={} stage={} min={} combat={} movable={} sexlab={} quiet={} foods={} pick={}",
+		a_gate = std::format("survival={} stage={} min={} combat={} movable={} scene={} quiet={} foods={} pick={}",
 			enabled, stage, minStage, combat, movable, sexlab, quiet, ready ? std::to_string(candidates) : "-"s,
 			a_food ? Util::NameOf(a_food) : "-"s);
 		return ready && a_food;

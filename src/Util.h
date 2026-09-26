@@ -4,11 +4,13 @@ namespace CIGAR::Util
 {
 	RE::PlayerCharacter* Player();
 
-	// Scene frameworks that animate the player (SexLab): while one runs, the modules offer nothing.
-	// Resolved at every game load, before the modules. The Nexus edition has none: always false.
+	// Scene frameworks that animate the player (SexLab, OStim): while one runs, the modules offer
+	// nothing. Resolved at every game load, before the modules; a framework not installed is skipped.
 	void ResolveScenes();
 	bool InScene(RE::Actor* a_actor);
-	// "sexlab=<bool>" style text for the gate lines; empty in the Nexus edition.
+	// "sexlab" or "ostim" while a_actor is in that framework's scene, else nullptr (for gate lines).
+	const char* SceneOf(RE::Actor* a_actor);
+	// " sexlab=<bool> ostim=<bool>": which frameworks were found, for the ready lines.
 	std::string DescribeScenes();
 
 	// Shows a HUD notification (UTF-8).
