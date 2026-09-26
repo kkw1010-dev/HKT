@@ -1,133 +1,158 @@
-# CIGAR — session handoff (updated 2026-09-26, end of the Nexus release session)
+# CIGAR — session handoff (updated 2026-09-26, end of the 2.1.x / 3.0 MannequinSwap session)
 
 ## Start here
 
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
 
-### What the last session did (2026-09-26), in one place
+### First thing next session: the USSEP mannequin test
 
-1. **SI decoupling** (the user's task file): every Streamlined Interactions reader, warning, deploy
-   sync, verify check and README section removed; `SI/` and `docs/029` deleted (their module records
-   moved to `docs/031`-`034`). CIGAR 0.2.0 removed locally and from GitHub. Memory
-   `cigar-independent-of-streamlined-interactions`.
-2. **2.0.1** = 2.0.0 made standalone, then extended the same day with Korean/English text
-   (`src/Text.*`, auto from the game's own names) and adjustable 유술 stamina/health damage.
-3. **Nexus edition** (`CIGAR_NEXUS`, `tools\Build.ps1 -Nexus`, `docs/035-nexus-edition.md`): 15
-   base-game modules, no other-mod reference (SexLab included), helmet without a clip, base-game drinks
-   by FormID; `make_release.py --nexus` refuses a DLL naming another mod (30 strings). The user tested
-   it in game: all passed. Later that day the user decided integrations may return to the Nexus edition as asset-free requirements (module list not chosen yet); memory `cigar-nexus-edition-integrations`.
-4. **Published** (the user's authorization): Nexus mod 193080 and GitHub release `v2.0.1-nexus`.
-   A review of the Nexus page found and fixed: requirements grouped SKSE/SkyPrompt as "pick one",
-   every readme linked SkyPrompt to the wrong mod (149963 = Slower Swimming; SkyPrompt is 148703),
-   permissions contradicted GPL-3.0, the description promised features this edition lacks. Packages
-   now carry `LICENSE.txt` and a generated `THIRD-PARTY-NOTICES.txt`. Details in `docs/035`, last
-   section; page texts (original and corrected) in `dist/nexus-page/`.
-5. **SkyPrompt 2.3.15 -> 2.4.0** in the modlist, with a Korean translation mod `SkyPrompt - KR`
-   (Installation and Modification case 035). The user's Hangul-font themes were kept.
-6. **2.1.0, one release for every host** (later the same day, `docs/035` first section): the user
-   decided integrations return to the Nexus upload as off-site requirements (Smooth and BakaFactory
-   permissions; Nexus already hosts LoversLab-dependent files). `CIGAR_NEXUS` and `-Nexus` are gone;
-   `-Package` makes `Downloads\CIGAR 2.1.0` (+ `.7z`) with English and Korean readmes, and fails on
-   any file but CIGAR's own six. Helmet Toggle 2's clips stay author-only (the user: "헬멧토글은 나만
-   쓸거"). ChairDrink knows alcohol by base-game FormIDs and other mods' keywords together.
-   **Passed in game on 2026-09-26 (11:12-11:24 log, the user: all normal). Pushed (master, v2) and
-   published on Nexus 193080 the same day** (see item 7).
-7. **Nexus 2.1.0 published** (the user's go-ahead, through their Chrome): "CIGAR 2.1.0" uploaded as an
-   Update of the 2.0.1 file (now Main/Primary; 2.0.1 moved to old versions, not archived), mod version
-   2.1.0, new summary and description (`dist/nexus-page/summary-live.txt`,
-   `description-live.bbcode`, kept current), file description and changelog. Adult tag **not** set (the user).
-   Requirements (legacy method, for its notes): SKSE64, Address Library, SkyPrompt and SKSE Menu
-   Framework "Required"; BiS, TDM, Valhalla, Acheron, SMI and Gourmet "Not necessary, but
-   recommended" (the user's rule); LoversLab-only mods in the description only. **Grapple is not named anywhere on the Nexus page** (the
-   user); the module and the readmes keep it. The archive now has `SKSE\` at its root
-   (`make_release.py` checks it); up to 2.0.1 it wrapped a folder, which Vortex would install as
-   `Data\CIGAR <ver>\SKSE`. All of it was read back through the public API afterwards.
+The user starts the next session from **whether the USSEP test is complete**. Ask for their result,
+then read `SKSE\CIGAR.log` before anything else.
 
-8. **2.1.1 (local, not published):** Observe zoomed `firstPersonFOV` (only the arms model) in first
-   person, so it never zoomed there (two Nexus reports; `docs/031` last section), now always
-   `worldFOV`, with a WARN if another mod overrides it. Pass Time on a gamepad stopped after 0.3 s
-   because the keyboard key was polled (`docs/019` last section). Readmes now say gamepads work
-   through SkyPrompt's buttons. In the load order as `+CIGAR 2.1.1` (`-CIGAR 2.1.0`; backup
-   `modlist.txt.bak_20260926_cigar-2.1.1`). **Passed in game (13:09-13:21 log; the pad helmet step of
-   `TEST-2.1.1.md` left no line in the log). Pushed. On Nexus since 2026-09-26** as an Update of the 2.1.0 file (2.1.0 moved to old versions), with a
-   changelog, the gamepad wording in the description, the summary "No gameplay mods required" and
-   the AI Media tag (the page texts in `dist/nexus-page/*-live.*` are the live ones). Was: the Nexus update
-   (also: gamepad wording on the page, AI Media tag, summary "Works with Skyrim alone" wording).
+- **What it tests:** `TEST-3.0.0-ussep.md`. It checks MannequinSwap on USSEP's
+  `MannequinActivatorSCRIPT`, the one most Nexus players have: slots in a `Form[] ArmorSlot`
+  variable, 10 of them, and a second piece of the same base form bounced back to the player.
+- **What to look for in the log:** the gate line should say `slots=array 1/10` (the 1 is the SMP
+  carrier). Then `swap done: ... 0 problems`, no `[MannequinSwap] WARN`, and step 4 (a same-base
+  cuirass on both sides) swapping without a bounce.
+- **Load order is set for it:** `-Another Mannequin Script Fix (AE.SE)` (backup
+  `modlist.txt.bak_20260926_ussep-mannequin-test`), so USSEP's BSA copy wins. This was checked with
+  `housecarl_asset_status scripts/MannequinActivatorSCRIPT.pex`. It needs a **new game**, because a
+  save from the fix's script holds 20-slot data.
+- **After the test is read:** turn the fix back on (`+Another Mannequin Script Fix (AE.SE)`, MO2
+  closed), and leave MO2 closed (memory `leave-mo2-closed-after-work`).
+- **If it fails:** the array path is `MannequinSwap::ReadSlots` (the variable first, then the
+  properties), and the duplicate handling is the `kTakeWait` poll in `FastTick`, which waits until
+  the script has emptied the taken pieces' slots.
+- **Still not exercised anywhere:** the vanilla script path (no USSEP, no fix). The vanilla script
+  records nothing when full; the capacity preflight covers that (`docs/030`, second review).
 
-9. **2.1.2 (local, not published): OStim scenes.** `Util::InScene` / `Util::SceneOf` now see SexLab
-   (`SexLabAnimatingFaction`) **and OStim** (`OStimActorCountFaction` 0xECA in `OStim.esp`, which OStim
-   Standalone documents as held only during scenes). BaboKey, Eat, Execute, Needs and Surrender
-   dropped their own SexLab lookups for it; Deflate keeps FHU's SexLab faction and adds `InScene`.
-   Gate lines say `scene=` and the ready lines ` sexlab=... ostim=...`. OStim is **not installed** on
-   this modlist, so its path is untested; the in-game check is a regression one (the load line
-   `scene frameworks: sexlab=true ostim=false`, SexLab gating unchanged). Readmes note it. In the
-   load order as `+CIGAR 2.1.2` (backup `modlist.txt.bak_20260926_cigar-2.1.2`); MO2 left closed.
-   `v3` was deleted locally: it had no commit of its own and is made again with the first
-   MannequinSwap commit (the user: v3 starts when mannequin code does).
+### Also pending: MCM Memory re-triggers BaboDialogue's kidnap test
 
-10. **3.0.0 MannequinSwap, branch `v3`** (first commit `8c2f3fa`): built and deployed as the author
-   build (`+CIGAR`, 2.1.2 copy off; backup `modlist.txt.bak_20260926_cigar-author-3.0`), MO2 left
-   closed. **Passed in game (test 4, 2026-09-26)** on the fix's script path; `TEST-3.0.0-mannequin.md` (Dawnstar Sanctuary mannequin
-   `00107EDE`, iron and steel scaled sets). Only the Another Mannequin Script Fix path can be
-   exercised here; USSEP's array path and vanilla's are code-reviewed only. `master` stays the 2.x
-   line (2.1.2, pushed); `v3` is local only.
-   **USSEP path test set up** (`TEST-3.0.0-ussep.md`): `-Another Mannequin Script Fix (AE.SE)` in
-   `modlist.txt` (backup `modlist.txt.bak_20260926_ussep-mannequin-test`), so USSEP's script wins;
-   turn it back on (`+`, MO2 closed) once the test is read.
+This was found at the end of the session and is **not fixed**. The user reported that a new game
+jumps straight into BaboDialogue's kidnap cell.
+
+- **Cause:** the user once used BaboDialogue's debug "start kidnap event now" option. MCM Memory
+  recorded it, and replays it on every new game.
+- **The entries:** `mods\TAKEALOOK - MCM Memory Profile\SKSE\Plugins\MCMMemory\Profiles\Default.json`,
+  `settings`, page `$BaboDebug`:
+  - index 3438, `$BaboTestQuestBaboKidnap` = **true**, `valueSource: menu.option.numValue`. This is
+    the one that fires.
+  - index 3439, the same option = false.
+  - index 3437, `$BaboTestQuestBaboBadEnd` = false.
+- **MCM Memory has no per-option exclusion.** Its `Settings.json` has only
+  `autoRestoreExcludedMCMs`, which excludes a whole MCM and would drop every BaboDialogue setting. A
+  scan of the DLL's strings found nothing finer, but `Translation.json` did not parse, so that is
+  not certain.
+- **Planned fix:**
+  1. With MO2 and the game closed, back up the profile (`Default.json.bak_<date>_babo-kidnap-test`).
+  2. Remove those `$BaboDebug` test entries.
+  3. Add a check to `tools/verify_deploy.py` (next to the hotkey rows it already checks) that fails
+     when the profile holds a `$BaboTestQuest*` entry, so a later debug click is caught at the next
+     build.
+  4. Record it in Installation and Modification (a new case).
+
+### What this session did (2026-09-26)
+
+In order. Every item is committed; the versions are also in `CMakeLists.txt` history.
+
+1. **2.1.0, one release for every host.** The user decided every other-mod integration goes back into
+   the Nexus upload as off-site requirements. It relies on the Smooth (Grapple) and BakaFactory
+   permissions, and on the LoversLab-dependent files Nexus already hosts. Details:
+   - `CIGAR_NEXUS` and `Build.ps1 -Nexus` are gone.
+   - `-Package` makes one package with `README.md` (English) and `README-ko.md`, and fails on any
+     file but CIGAR's own six.
+   - The archive has `SKSE\` at its root (up to 2.0.1 it wrapped a folder).
+   - Helmet Toggle 2's clips play in the author build only (the user: "헬멧토글은 나만 쓸거").
+   - ChairDrink knows alcohol by base-game FormIDs and mod keywords together.
+   - Record: `docs/035`, first section.
+2. **2.1.1.** Two fixes:
+   - Observe zoomed `firstPersonFOV` (only the first-person arms model), so it never zoomed in first
+     person. Two Nexus comments reported it (`docs/031`). It now uses `worldFOV`, with a WARN if
+     another mod overrides it.
+   - Pass Time on a gamepad stopped after 0.3 s (`docs/019`). The user now has a pad and tested it.
+3. **2.1.2.** OStim scenes gate prompts like SexLab ones:
+   - `Util::InScene` / `Util::SceneOf` check `OStimActorCountFaction` 0xECA in `OStim.esp`.
+   - BaboKey, Eat, Execute, Needs and Surrender use that shared check.
+   - OStim is not installed here. Only the SexLab regression path is covered, and 2.1.2 itself was
+     published without an in-game run.
+4. **Nexus 193080** (through the user's Chrome) is at **2.1.2**. Each version went up as an Update
+   of the previous file. The page now has:
+   - summary "No gameplay mods required; optional mods add their own prompts"
+   - gamepad wording "Keyboard and mouse, or a gamepad through SkyPrompt's own gamepad buttons"
+   - an OStim/SexLab scene line
+   - tags AI-Generated Content + AI Media
+   - no adult tag
+   - requirements by the legacy method with notes: SKSE64, Address Library, SkyPrompt and SKSE Menu
+     Framework "Required"; BiS, TDM, Valhalla, Acheron, SMI and Gourmet "Not necessary, but
+     recommended"
+   - LoversLab-only mods in the description only; **Grapple nowhere on the page** (the user)
+
+   Live texts: `dist/nexus-page/description-live.bbcode` and `summary-live.txt`; checked IDs and
+   URLs: `requirements-2.1.0.md`. Memory `cigar-nexus-edition-integrations`. Permissions stay a
+   custom GPL statement, not Nexus's checkboxes, because CIGAR must be GPL-3.0-or-later
+   (CommonLibSSE-NG).
+5. **GitHub:** `master` and `v2` were pushed up to 2.1.2 (`232b391`). The `nexus` branch is deleted;
+   the 2.0.1 source stays under tag `v2.0.1-nexus`.
+6. **3.0.0 MannequinSwap on `v3`**: `src/MannequinSwap.*`, PromptID 40, and small hooks in Dress
+   (`OutfitChanged`), Helmet (`Stowed`/`TakeStowed`/`Stow`/`Busy`) and PartyOutfit (`Active`).
+   - The plan was reviewed against all three mannequin scripts (vanilla, USSEP, Another Mannequin
+     Script Fix; `docs/030` table).
+   - Four test rounds in JK's Riverfall Cottage (`coc XJKRiverFallCottage`, mannequin `6307B2E8`).
+     **Test 4 passed:** 의상 보관/착용/교환, enchanted pieces moved as `the same instance`, the helmet
+     both ways (it arrives stowed), a cell re-entry, the double-tap decline, and the TCL lantern left
+     out.
+   - Faults found and fixed along the way (all in `docs/030`): the mannequin's own SMP carrier counted
+     as its outfit; outfits are now collected per worn item, not per slot; headgear moves on any
+     slot. Why the iron helmet (slots 31+42) was left out before stays unconfirmed; the gate line
+     now logs every piece that stays, with its reason and runtime slot mask.
+7. Readmes and the in-game text say gamepads work and scenes are gated. Memory `leave-mo2-closed-after-work`
+   is new (see "State now").
 
 ### State now
 
-- **Load order runs the 2.1.2 release** (was 2.1.1; see item 9) (since 2026-09-26, for its in-game test): `+CIGAR 2.1.1`
-  (the package copied to `mods\CIGAR 2.1.1`, with the 2.1.0 copy's `CIGAR.json`), `-CIGAR 2.1.0`,
-  `-CIGAR 2.0.1 Nexus`, `-CIGAR 2.0.1`, `-CIGAR` (backup `modlist.txt.bak_20260926_cigar-2.1.1`).
-  While this holds, `Build.ps1 -Deploy` fails `verify_deploy.py`. To go back to the author build:
-  close MO2 gracefully (`taskkill /IM ModOrganizer.exe`, no `/F`), set `+CIGAR` and `-CIGAR 2.1.1` in
-  `modlist.txt`, and **leave MO2 closed** (the user, 2026-09-26: an MO2 that Claude launched cannot
-  start the game, so the user starts it themselves).
-- **SkyPrompt 2.4.0** is installed (`[NoDelete] 0007 SkyPrompt NEW`, meta 2.4.0) plus `+SkyPrompt - KR`
-  directly above it. Backup of 2.3.15: `C:\TAKEALOOK\_removed\SkyPrompt 2.3.15 backup 20260926`.
-  API 2.0 is unchanged (exports and header compared), but **CIGAR has not run on 2.4.0 yet**.
-- **Packages** in `%USERPROFILE%\Downloads`: `CIGAR 2.0.1` (+ `.7z`, the personal Korean release) and
-  `CIGAR 2.0.1 Nexus` (+ `.7z`, the uploaded file; DLL sha256 `3950258b...`). Copies in
-  `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`. The SkyPrompt 2.4.0 archive is in Downloads too.
-- **Git** (`kkw1010-dev/HKT`): local `master` and `v3` are ahead of origin by handoff-only commits
-  (unpushed); `origin/master`, `nexus` and `v2` are at `256ea16`; tag `v2.0.1-nexus` is at `f9227ef`
-  (the DLL is identical in later commits; only docs and license files changed). 3.0 work goes on `v3`. Commit locally on every change; push only when
-  the user asks (they asked every time this session).
-- **GitHub release assets:** `CIGAR-2.0.1-Nexus.7z` (current) and
-  `superseded-do-not-use-CIGAR.2.0.1.Nexus.7z` (old readme with the wrong SkyPrompt link). Deleting the
-  old one is left to the user; Claude does not delete published files.
-- **Nexus:** the corrected file is the MAIN/primary file; the first upload is archived (it had 7
-  downloads before the fix).
+- **Branches:** `v3` is checked out, **local only**, head `5dcbc8c`.
+  - `master` is `da34ec3`: 2.1.2 plus one docs commit, ahead of origin by that one commit.
+  - `v2` = `origin/v2` = `232b391` (2.1.2).
+  - Commit locally on every change; push only when the user asks.
+- **Load order** (profile `TKL - MUNG ADDON`):
+  - `+CIGAR`: the author build 3.0.0, deployed, `verify_deploy` passed.
+  - The release copies are off: `-CIGAR 2.1.2`, `-2.1.1`, `-2.1.0`, `-2.0.1 Nexus`, `-2.0.1`.
+  - `-Another Mannequin Script Fix (AE.SE)`, for the USSEP test (see above).
+- **MO2 and Skyrim are closed.** Leave MO2 closed after any profile edit; the user starts it
+  themselves, because an MO2 that Claude launched cannot start the game.
+- **Packages** in `%USERPROFILE%\Downloads`: `CIGAR 2.1.0`, `2.1.1`, `2.1.2` (+ `.7z`). The 2.1.2 DLL
+  sha256 is `8cf01ec4...`. The same copies are in `mods\CIGAR 2.1.x`.
+- **SkyPrompt 2.4.0** runs fine with CIGAR. Its log warning `Failed to import translation for
+  SkyPrompt` is harmless: Scaleform Translation Plus Plus replaces the translator, and the KR text
+  still loads.
 - Untracked files in the repo root (three analysis `.md` files by other agents, and `scratch/`) are
   not ours. Leave them.
 
 ### Next, in order
 
-0. **2.1.0 is out** (item 7 above). Not done: a GitHub release or tag for 2.1.0 (ask first), and the
-   `v2.0.1-nexus` release notes still say SkyPrompt 2.3.15.
-1. **SkyPrompt 2.4.0 passed with 2.1.0** (2026-09-26): `SkyPrompt.log` shows `2-4-0-0`; the user saw
-   the Hangul prompts and panel as before. Its one warning, `Failed to import translation for
-   SkyPrompt`, is harmless here: CommonLibSSE-NG's `ParseTranslation` gives up because Scaleform
-   Translation Plus Plus replaced the game's translator (the `skyrim_cast` to `BSScaleformTranslator`
-   fails), but `Translate()` asks that replacement, which has already loaded `SkyPrompt_ENGLISH.txt`
-   (the KR mod's Korean file). An `Observe` hold logs `accepted` every frame (274 lines in 3 s);
-   hold-mode prompts ignore accepted events, so it is log noise only.
-2. **Back to the author build** after the user's video (see State).
-3. **CIGAR 3.0, MannequinSwap** on branch `v3`: plan `docs/030-mannequin-swap.md`, PromptID 40, all
-   decisions made (stowed helmet goes with the outfit and the mannequin's helmet arrives stowed; `Dress`
-   remembers the post-swap outfit; Almsivi CC mannequins included). New code must keep the Nexus
-   edition clean (`#ifndef CIGAR_NEXUS` for anything touching another mod) and bilingual
-   (`Text::L`/`Text::F`). Follow `docs/000-adding-a-module.md` and memory
-   `cigar-declined-prompt-stays-hidden`.
+1. The USSEP test result (above), then restore the fix in the load order.
+2. The MCM Memory / BaboDialogue kidnap entry (above).
+3. MannequinSwap for release: decide 3.0.0 packaging and upload with the user.
+   - A capacity or duplicate block notifies once and logs the reason.
+   - The Nexus description will need a "Mannequin Outfit Swap" line.
+   - `v3` merges into `master` when 3.0.0 ships.
+4. Minor, open: a GitHub release for 2.1.x (ask first); the `v2.0.1-nexus` release notes still say
+   SkyPrompt 2.3.15; the Nexus comment asking for modifier keys and arrow keys (the user answered
+   "on my list").
 
 ### Two builds, one source (since 2.1.0)
 
 | Build | Command | Output | Notes |
 |---|---|---|---|
 | Author | `tools\Build.ps1 -Deploy` | `mods\CIGAR` | panel shows gate lines; helmet clips; runs `verify_deploy.py` |
-| Release (Nexus and elsewhere) | `tools\Build.ps1 -Package` | `Downloads\CIGAR <ver>` + `.7z` | all 24 modules, English + Korean readmes, file allowlist |
+| Release (Nexus and elsewhere) | `tools\Build.ps1 -Package` | `Downloads\CIGAR <ver>` + `.7z` | all modules, English + Korean readmes, file allowlist, `SKSE\` at the archive root |
+
+- `-Deploy` needs Skyrim closed; MO2 may stay open when only the DLL changes.
+- A load-order swap needs MO2 closed, and MO2 stays closed afterwards.
+- Put a new release on Nexus as an **Update** of the current main file. That moves the old file to
+  old versions and lets mod managers see an update.
 
 ### Pitfalls met this session
 
@@ -140,6 +165,12 @@ history of each module are in `docs/`, one file per module, and each file starts
   click a page's upload button (it opens a native picker); feed the hidden `input[type=file]`.
 - Korean game text on this modlist runs with `sLanguage=ENGLISH` (the Korean patch replaces the
   English strings), so a Korean translation of another mod goes in its `_ENGLISH` file.
+- Every actor on this modlist, mannequins included, wears the non-playable Softbody SMP carrier
+  (`HDTSMPObjectBase`). Any "what does this actor wear" code must skip non-playable items.
+- Collect worn armor per inventory item, not by asking each biped slot for its piece: the slot scan
+  hid a helmet in MannequinSwap's tests 2-3.
+- Which copy of a script or asset the game uses: `housecarl_asset_status` (loose beats BSA, then
+  priority), before assuming a mod's script behaviour.
 
 ### Standing facts worth keeping in view
 
