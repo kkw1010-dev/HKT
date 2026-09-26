@@ -178,3 +178,25 @@ slot (`1/20`) is that carrier, which the script recorded when it arrived. Fix: t
 uses `Util::GetStrippable` like the player's (non-playable items and the body slots stay). Dawnstar
 Sanctuary's vanilla mannequin (`00107EDE`, overridden by no plugin; the cell by 24) was not found by
 the user; the test moved to the cottage.
+
+## Test 2 (2026-09-26, 14:31-14:44 log, JK's Riverfall Cottage, mannequin 6307B2E8)
+
+**Four swaps ran, each `0 problems`, no WARN** (the user: it seems to work): 의상 보관 (6 pieces, the
+Helmet-stowed 북부 철 투구 among them), then three 의상 교환 with enchanted pieces
+(`강철 미늘 방어구 - 최하급 체력 증가`, `북부 강철 장갑 - 중급 궁술`, `강철 긴 전투화 - 최하급 화염 저항`).
+Every taken piece was re-equipped as `the same instance`; every given piece was worn and recorded
+by the script (`properties` slots); the mannequin let go in 12-117 ms and took the player's pieces
+in 291-507 ms; the item count check never tripped. The squire's helmet went both ways: to the
+mannequin from Helmet's stowed list, back to the player `arrives stowed`.
+
+Two faults, fixed the same day:
+- **A helmet hidden by a slot collision.** `북부 철 투구` (Warden's Wardrobe) sits on slots 31 (hair,
+  a kept slot) and 42 (circlet); the slot-by-slot scan (`Util::GetStrippable`) got the scarf at 42
+  first, so the helmet was never in the mannequin's outfit (`take=5` right after it was given six).
+  When the squire's helmet came in, it displaced the iron one, which is now in the mannequin's
+  inventory, unworn and unrecorded (retrievable by activating the mannequin). Both sides now collect
+  worn armor per inventory item (`WornOutfit`): a piece moves when any of its slots may be stripped.
+- **The TCL lantern moved** (`기본 랜턴 (불 꺼진)`, slot 55): a light, not clothing; now skipped, as
+  `ItemEquip` does.
+
+Not seen in this log: the cell-reload check (test step 4) and a double-tap decline (step 5).
