@@ -29,6 +29,13 @@ namespace CIGAR
 			return static_cast<RE::BGSBipedObjectForm::BipedObjectSlot>(1u << (a_slot - 30));
 		}
 
+		// HDT SMP Object's carriers (HDTSMPObjectBase and its collision variants): non-playable, slot 60.
+		bool IsSmpCarrier(const RE::TESObjectARMO* a_armor)
+		{
+			const auto* file = a_armor && !a_armor->GetPlayable() ? a_armor->GetFile(0) : nullptr;
+			return file && Util::ContainsNoCase(file->GetFilename(), "HDT SMP Object");
+		}
+
 		RE::TESForm* FormOf(const RE::BSScript::Variable* a_var)
 		{
 			return a_var && a_var->IsObject() ? a_var->Unpack<RE::TESForm*>() : nullptr;
@@ -361,13 +368,15 @@ namespace CIGAR
 				}
 			}
 		}
-		// A piece the player keeps on (a device, the SMP carrier, a shield) must not sit where the
-		// mannequin's pieces go; the helmet arrives stowed, so it needs no slot.
+		// A piece the player keeps on (a device, a shield) must not sit where the mannequin's pieces
+		// go; the helmet arrives stowed, so it needs no slot. The SMP carrier is not protected: it
+		// sits on slot 60, which modded outfit extras also use (the Eclipse Mage leg plates, USSEP
+		// test 2026-09-26), and equipping such a piece by hand displaces it the same way.
 		std::uint32_t kept = 0;
 		const auto outfit = WornOutfit(a_player, nullptr);
 		for (std::uint32_t slot = 30; slot < 62; ++slot) {
 			auto* worn = a_player->GetWornArmor(SlotMask(slot));
-			if (worn && std::ranges::find(outfit, worn) == outfit.end()) {
+			if (worn && std::ranges::find(outfit, worn) == outfit.end() && !IsSmpCarrier(worn)) {
 				kept |= worn->GetSlotMask().underlying();
 			}
 		}
