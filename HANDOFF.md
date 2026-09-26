@@ -28,6 +28,13 @@ then read `SKSE\CIGAR.log` before anything else.
 - **Still not exercised anywhere:** the vanilla script path (no USSEP, no fix). The vanilla script
   records nothing when full; the capacity preflight covers that (`docs/030`, second review).
 
+### A CTD interrupted the USSEP test (not CIGAR)
+
+2026-09-26 20:38:44, opening the Journal Menu 17 minutes into the test's new game. It is tracked in
+`../Crash Triage` as signature S001 (the third occurrence): a Scaleform render-heap crash as the
+Journal Menu opens. The two suspects are DBReV's Journal Menu translator and MCM Memory. CIGAR is not
+in the stack. The USSEP test itself had not reached a swap yet, so it is still to do.
+
 ### Solved elsewhere: MCM Memory re-triggered BaboDialogue's kidnap test
 
 A new game jumped straight into BaboDialogue's kidnap cell, because MCM Memory replayed the recorded
