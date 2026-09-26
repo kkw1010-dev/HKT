@@ -1,6 +1,6 @@
 # 030 · MannequinSwap (의상 교환 with a mannequin), plan
 
-Status (2026-09-26): **built (`src/MannequinSwap.*`, 3.0.0, branch `v3`), awaiting the first in-game test** (`TEST-3.0.0-mannequin.md`). Earlier (2026-09-25): planned; work is on branch `v3`. The user files it under
+Status (2026-09-26): **passed in game on the Another Mannequin Script Fix path (test 4)**; `src/MannequinSwap.*`, 3.0.0, branch `v3`. The USSEP and vanilla script paths are code-reviewed only. Earlier (2026-09-25): planned; work is on branch `v3`. The user files it under
 **CIGAR 3.0**: CIGAR 2.0.0 is released and was tested by the user with no problems, and MannequinSwap is the first 3.0 feature. The author build is back in the load order.
 
 Sources: a plan GPT wrote (`claude.md` in the repo root, removed on the user's permission once this
@@ -219,3 +219,15 @@ Change: headgear (ArmorHelmet / ClothingHead, not circlets) moves whatever its s
 and without a no-strip keyword; and the gate line now lists every worn piece that stays on either
 side with its reason and runtime slot mask (`stays on player:` / `stays on mannequin:`), so the next
 log shows the cause instead of an inference.
+
+## Test 4 (2026-09-26, 15:21-15:30 log): passed
+
+The user: the helmet and the cell re-entry both work. The log agrees: three swaps, `0 problems`, no
+WARN. `북부 철 투구` went to the player (`take ... [head]`, `arrives stowed`), back to the mannequin on
+the next swap (`give ... [head]`), and was taken again after the player left the cottage (15:29:11)
+and came back (15:29:36): the mannequin still held 7 of 20 slots and gave all five pieces back. The
+only worn pieces left in place were the SMP carrier (non-playable, both sides), the player's shield
+and the lantern the mannequin got in test 2.
+
+Open: why the helmet was left out before (the runtime slot mask is still not logged for pieces that
+move); the USSEP and vanilla script paths (test on a new game with Another Mannequin Script Fix off).

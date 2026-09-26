@@ -68,7 +68,7 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 10. **3.0.0 MannequinSwap, branch `v3`** (first commit `8c2f3fa`): built and deployed as the author
    build (`+CIGAR`, 2.1.2 copy off; backup `modlist.txt.bak_20260926_cigar-author-3.0`), MO2 left
-   closed. **Awaiting the user's test**, `TEST-3.0.0-mannequin.md` (Dawnstar Sanctuary mannequin
+   closed. **Passed in game (test 4, 2026-09-26)** on the fix's script path; `TEST-3.0.0-mannequin.md` (Dawnstar Sanctuary mannequin
    `00107EDE`, iron and steel scaled sets). Only the Another Mannequin Script Fix path can be
    exercised here; USSEP's array path and vanilla's are code-reviewed only. `master` stays the 2.x
    line (2.1.2, pushed); `v3` is local only.
