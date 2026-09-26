@@ -837,6 +837,11 @@ namespace CIGAR
 		}
 		passHolding = true;
 		passHeldSince = Clock::now();
+		// A gamepad hold never has the listed keyboard key down, so the key backstop below would stop
+		// it after 0.3 s; such a hold ends on SkyPrompt's key-up event alone.
+		const auto key = passTime.Key();
+		passByKeyboard = key != 0 && KeyDown(key);
+		Log("pass time held ({})", passByKeyboard ? "keyboard" : "another device; ends on key up");
 	}
 
 	bool Rest::InChair(RE::PlayerCharacter* a_player, std::string* a_why)
@@ -873,7 +878,7 @@ namespace CIGAR
 			return;
 		}
 		// Key up may not be reported for every prompt type; the key's own state is the backstop.
-		if (const auto key = passTime.Key(); key != 0 && !KeyDown(key) && Clock::now() - passHeldSince > 300ms) {
+		if (const auto key = passTime.Key(); passByKeyboard && key != 0 && !KeyDown(key) && Clock::now() - passHeldSince > 300ms) {
 			StopPassTime("key no longer down");
 			return;
 		}

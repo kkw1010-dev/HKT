@@ -126,6 +126,8 @@ namespace CIGAR
 		// 2026-09-25). Cleared whenever the player is standing outside a chair.
 		bool passDismissed{ false };
 		Clock::time_point passHeldSince{};
+		// The hold began with the listed keyboard key down; only then is that key polled as a backstop.
+		bool passByKeyboard{ false };
 		float passBase{ 0.0f };
 		float passHoursAtStart{ 0.0f };
 		// Game speed (the global time multiplier) CIGAR set for pass time, 0 when it owns none, and

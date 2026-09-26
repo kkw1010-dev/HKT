@@ -44,6 +44,14 @@ history of each module are in `docs/`, one file per module, and each file starts
    (`make_release.py` checks it); up to 2.0.1 it wrapped a folder, which Vortex would install as
    `Data\CIGAR <ver>\SKSE`. All of it was read back through the public API afterwards.
 
+8. **2.1.1 (local, not published):** Observe zoomed `firstPersonFOV` (only the arms model) in first
+   person, so it never zoomed there (two Nexus reports; `docs/031` last section), now always
+   `worldFOV`, with a WARN if another mod overrides it. Pass Time on a gamepad stopped after 0.3 s
+   because the keyboard key was polled (`docs/019` last section). Readmes now say gamepads work
+   through SkyPrompt's buttons. In the load order as `+CIGAR 2.1.1` (`-CIGAR 2.1.0`; backup
+   `modlist.txt.bak_20260926_cigar-2.1.1`). **Awaiting the user's in-game test**, then Nexus update
+   (also: gamepad wording on the page, AI Media tag, summary "Works with Skyrim alone" wording).
+
 ### State now
 
 - **Load order runs the 2.1.0 release** (since 2026-09-26, for its first in-game run):

@@ -21,3 +21,16 @@ around.
   it was declined. SkyPrompt's hold-and-keep type sends no decline event (test: the double tap only
   zoomed), so CIGAR reads it: two presses shorter than 250 ms within 600 ms. The prompt stays up during
   that window so the second tap lands.
+
+## First-person zoom fix (2.1.1, 2026-09-26)
+
+Two Nexus users reported that holding 주시하기 zoomed nothing; one (SSE 1.5.97) added that it did
+zoom while bathing with Bathing in Skyrim - Renewed and stopped after the bath. The cause: in first
+person the module eased `firstPersonFOV`, which is only the first-person arms and weapon model (the
+console's `fov <world> <first person>`), so the view never changed. The bath plays in third person,
+where `worldFOV` was used. Every test so far had been in third person (the 11:21 log of the 2.1.0
+run says `(third person)`).
+
+2.1.1 eases `worldFOV` in both cameras. It also reads the FOV back once the zoom is reached: if the
+camera no longer holds CIGAR's value (a camera or FOV mod setting it every frame), the log gets a
+WARN and the player one notification per session. **Untested in game at the time of writing.**

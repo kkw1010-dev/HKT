@@ -180,3 +180,11 @@ neither `FurnitureSpecial` nor a workbench type. On this order the chopping bloc
 (`ResourceObjectSawmill`), grain mills and executioner blocks all carry `FurnitureSpecial`; plain
 chairs and benches carry no keyword. The rejection is logged once per piece of furniture
 (`pass time not offered: ... is a work station`).
+
+## Gamepad pass time fix (2.1.1, 2026-09-26)
+
+The key backstop above polled the listed *keyboard* key, so a hold on a gamepad (which never has
+that key down) stopped after 0.3 s every time. Since 2.1.1 the backstop applies only when the hold
+began with the keyboard key down (`pass time held (keyboard)` in the log); a hold from another device
+ends on SkyPrompt's key-up event (`pass time held (another device; ends on key up)`). The user has a
+gamepad and can test it. **Untested in game at the time of writing.**

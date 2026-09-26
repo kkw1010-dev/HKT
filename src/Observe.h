@@ -58,6 +58,7 @@ namespace CIGAR
 
 		bool zooming{ false };
 		bool firstPerson{ false };
+		bool warnedOverride{ false };
 		float baseFOV{ 0.0f };
 		float currentFOV{ 0.0f };
 		Ease ease;

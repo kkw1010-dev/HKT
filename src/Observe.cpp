@@ -87,8 +87,10 @@ namespace CIGAR
 	void Observe::SetFOV(float a_fov) const
 	{
 		if (auto* camera = RE::PlayerCamera::GetSingleton()) {
-			auto& data = camera->GetRuntimeData2();
-			(firstPerson ? data.firstPersonFOV : data.worldFOV) = a_fov;
+			// The world FOV zooms the view in both cameras; firstPersonFOV is only the first-person
+			// arms and weapon model, so zooming it in first person changed nothing on screen (Nexus
+			// reports, 2026-09-26: no zoom, except while Bathing in Skyrim's third-person bath).
+			camera->GetRuntimeData2().worldFOV = a_fov;
 		}
 	}
 
@@ -135,6 +137,16 @@ namespace CIGAR
 			if (moveInput || combat) {
 				Restore(moveInput ? "moved" : "combat");
 				return;
+			}
+			// Held and fully zoomed, but the camera no longer has CIGAR's FOV: another mod (a camera
+			// or FOV mod) sets it every frame, so the zoom cannot show. Said once per session.
+			if (!easing && !warnedOverride) {
+				const float nowFOV = camera->GetRuntimeData2().worldFOV;
+				if (std::abs(nowFOV - currentFOV) > 1.0f) {
+					warnedOverride = true;
+					Log("WARN the world FOV is {:.1f}, not the {:.1f} CIGAR set: another mod is overriding the camera FOV", nowFOV, currentFOV);
+					Util::Notify(Text::L("CIGAR: 다른 모드가 시야각을 덮어써 주시하기 줌이 보이지 않음", "CIGAR: Another mod overrides the camera FOV; Observe cannot zoom"));
+				}
 			}
 			const auto name = targetName;
 			look.Update(true, [name] { return Label(name); });
@@ -218,8 +230,7 @@ namespace CIGAR
 			// Pressed again while the last zoom is still easing out: keep that zoom's base, so the
 			// half-restored FOV is never taken for the player's own.
 			firstPerson = camera->IsInFirstPerson();
-			auto& data = camera->GetRuntimeData2();
-			baseFOV = firstPerson ? data.firstPersonFOV : data.worldFOV;
+			baseFOV = camera->GetRuntimeData2().worldFOV;
 			currentFOV = baseFOV;
 		}
 		zooming = true;
