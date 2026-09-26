@@ -1,54 +1,91 @@
-# CIGAR — session handoff (updated 2026-09-26)
+# CIGAR — session handoff (updated 2026-09-26, end of the Nexus release session)
 
 ## Start here
 
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
 
-### State
+### What the last session did (2026-09-26), in one place
 
-- **CIGAR 2.0.1 is released locally** (2026-09-26): `%USERPROFILE%\Downloads\CIGAR 2.0.1` and
-  `CIGAR 2.0.1.7z` (README in Korean with the known issues). 2.0.1 is 2.0.0 made standalone (below);
-  gameplay is unchanged. The 2.0.0 package, archive and `mods\CIGAR 2.0.0` copy were deleted, since
-  they carried the old coupling. The user tested 2.0.0 in game with no problems (2026-09-25); 2.0.1 was
-  not played. GitHub (`kkw1010-dev/HKT`, public): `master` and `v2` both hold the 2.0.1 source; there
-  is no GitHub release page (the user's choice).
-- **Nexus edition: passed its first in-game test** (2026-09-26, `docs/035-nexus-edition.md`).
-  Upload file: `Downloads\CIGAR 2.0.1 Nexus.7z` (15 base-game modules, no other-mod references,
-  English/Korean). All builds have Korean/English text (`src/Text.*`) and adjustable 유술
-  stamina/health damage; the standard `CIGAR 2.0.1` package was rebuilt with them. Copies live in
-  `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`, both disabled.
-- **The Nexus build is in the load order** (2026-09-26, for the user's video): `+CIGAR 2.0.1 Nexus`,
-  `-CIGAR`, `-CIGAR 2.0.1` (backup `modlist.txt.bak_20260926_nexus-video`). `Build.ps1 -Deploy` fails
-  `verify_deploy.py` until `+CIGAR` / `-CIGAR 2.0.1 Nexus` are set back with MO2 closed.
-- **SkyPrompt 2.4.0 installed** (2026-09-26, Installation and Modification case 035): the user's
-  Hangul-font themes kept, Korean translation in the new mod `SkyPrompt - KR`. CIGAR has not yet run
-  on 2.4.0 in game (API 2.0 unchanged by static check).
-- **Nexus page live** (mod 193080), reviewed and corrected 2026-09-26 (`docs/035`, last section;
-  page texts in `dist/nexus-page/`).
-- **GitHub:** branch `nexus` and tag `v2.0.1-nexus` mark the Nexus edition's source (build it with
-  `tools\Build.ps1 -Nexus`); the tag's GitHub release carries `CIGAR 2.0.1 Nexus.7z`.
-- **CIGAR 0.2.0 is gone** (2026-09-26, the user's request): the mod folder and its `modlist.txt` row
-  are removed, and so is the `release/0.2.0` branch, locally and on GitHub.
-- **CIGAR is a standalone system (2026-09-26).** It reads, writes and checks nothing of any other
-  interaction mod: no settings reader, no deploy sync, no profile anchor, no duplicate-module warning.
-  Do not add such coupling back; overlapping prompts from another mod are that modlist's problem.
-- Grapple's NPC grapples and CIGAR's Grapple module are on.
+1. **SI decoupling** (the user's task file): every Streamlined Interactions reader, warning, deploy
+   sync, verify check and README section removed; `SI/` and `docs/029` deleted (their module records
+   moved to `docs/031`-`034`). CIGAR 0.2.0 removed locally and from GitHub. Memory
+   `cigar-independent-of-streamlined-interactions`.
+2. **2.0.1** = 2.0.0 made standalone, then extended the same day with Korean/English text
+   (`src/Text.*`, auto from the game's own names) and adjustable 유술 stamina/health damage.
+3. **Nexus edition** (`CIGAR_NEXUS`, `tools\Build.ps1 -Nexus`, `docs/035-nexus-edition.md`): 15
+   base-game modules, no other-mod reference (SexLab included), helmet without a clip, base-game drinks
+   by FormID; `make_release.py --nexus` refuses a DLL naming another mod (30 strings). The user tested
+   it in game: all passed. Memory `cigar-nexus-edition-base-game-only`.
+4. **Published** (the user's authorization): Nexus mod 193080 and GitHub release `v2.0.1-nexus`.
+   A review of the Nexus page found and fixed: requirements grouped SKSE/SkyPrompt as "pick one",
+   every readme linked SkyPrompt to the wrong mod (149963 = Slower Swimming; SkyPrompt is 148703),
+   permissions contradicted GPL-3.0, the description promised features this edition lacks. Packages
+   now carry `LICENSE.txt` and a generated `THIRD-PARTY-NOTICES.txt`. Details in `docs/035`, last
+   section; page texts (original and corrected) in `dist/nexus-page/`.
+5. **SkyPrompt 2.3.15 -> 2.4.0** in the modlist, with a Korean translation mod `SkyPrompt - KR`
+   (Installation and Modification case 035). The user's Hangul-font themes were kept.
+
+### State now
+
+- **Load order runs the Nexus build** (for the user's video): `+CIGAR 2.0.1 Nexus`, `-CIGAR`,
+  `-CIGAR 2.0.1` (backups `modlist.txt.bak_20260926_*`). While this holds, `Build.ps1 -Deploy` fails
+  `verify_deploy.py`. To go back: close MO2 gracefully (`taskkill /IM ModOrganizer.exe`, no `/F`),
+  set `+CIGAR` and `-CIGAR 2.0.1 Nexus` in `modlist.txt`, relaunch `C:\TAKEALOOK\ModOrganizer.exe`.
+  The Nexus mod folder's `CIGAR.json` was left on `"language": "en"` by the user's test.
+- **SkyPrompt 2.4.0** is installed (`[NoDelete] 0007 SkyPrompt NEW`, meta 2.4.0) plus `+SkyPrompt - KR`
+  directly above it. Backup of 2.3.15: `C:\TAKEALOOK\_removed\SkyPrompt 2.3.15 backup 20260926`.
+  API 2.0 is unchanged (exports and header compared), but **CIGAR has not run on 2.4.0 yet**.
+- **Packages** in `%USERPROFILE%\Downloads`: `CIGAR 2.0.1` (+ `.7z`, the personal Korean release) and
+  `CIGAR 2.0.1 Nexus` (+ `.7z`, the uploaded file; DLL sha256 `3950258b...`). Copies in
+  `mods\CIGAR 2.0.1` and `mods\CIGAR 2.0.1 Nexus`. The SkyPrompt 2.4.0 archive is in Downloads too.
+- **Git** (`kkw1010-dev/HKT`): `master` `80ff911` is **1 commit ahead of origin** (handoff lines only,
+  unpushed); `nexus`, `v2` and origin are at `256ea16`; tag `v2.0.1-nexus` is at `f9227ef` (the DLL is
+  identical in later commits; only docs and license files changed). Local `v3` is at `256ea16`, behind
+  master by docs only: fast-forward it before 3.0 work. Commit locally on every change; push only when
+  the user asks (they asked every time this session).
+- **GitHub release assets:** `CIGAR-2.0.1-Nexus.7z` (current) and
+  `superseded-do-not-use-CIGAR.2.0.1.Nexus.7z` (old readme with the wrong SkyPrompt link). Deleting the
+  old one is left to the user; Claude does not delete published files.
+- **Nexus:** the corrected file is the MAIN/primary file; the first upload is archived (it had 7
+  downloads before the fix).
 - Untracked files in the repo root (three analysis `.md` files by other agents, and `scratch/`) are
-  not ours; they were never committed. Leave them.
+  not ours. Leave them.
 
-### Next: CIGAR 3.0, first feature MannequinSwap
+### Next, in order
 
-- Plan: `docs/030-mannequin-swap.md` (facts read from the load order: `MannequinActivatorSCRIPT` by
-  Another Mannequin Script Fix, 20 base-form slots, the `MannequinActivateTrig` activate parent;
-  PromptID 40; one build with self-verifying logs, one test session).
-- **Branch `v3`** holds all 3.0 code; do not build 3.0 on `master` or `v2`.
-- **Decisions made** (the user, 2026-09-25; `docs/030`, "The user's decisions"): the stowed helmet
-  goes with the outfit and the mannequin's helmet arrives stowed; `Dress` remembers the post-swap
-  outfit; the Almsivi CC mannequins are included. Nothing is left to ask; the next step is the build.
-- New modules follow `docs/000-adding-a-module.md` and the user's rules in memory, including
-  `cigar-declined-prompt-stays-hidden` (a double-tap decline hides the prompt until the situation
-  changes; hold-and-keep prompts must read the double tap themselves).
+1. **In-game check of SkyPrompt 2.4.0** (the user runs it; read `SKSE\CIGAR.log` and
+   `SKSE\SkyPrompt.log` first): prompts keep the Hangul font and position, SkyPrompt's panel is
+   Korean, CIGAR prompts offer and accept. If it passes, change "tested with SkyPrompt 2.3.15" to
+   2.4.0 in `dist/README-nexus*.md`, the Nexus description (`dist/nexus-page/description-2.0.1.bbcode`)
+   and the GitHub release notes; ask before re-uploading a package for a readme-only change.
+2. **Back to the author build** after the user's video (see State).
+3. **CIGAR 3.0, MannequinSwap** on branch `v3`: plan `docs/030-mannequin-swap.md`, PromptID 40, all
+   decisions made (stowed helmet goes with the outfit and the mannequin's helmet arrives stowed; `Dress`
+   remembers the post-swap outfit; Almsivi CC mannequins included). New code must keep the Nexus
+   edition clean (`#ifndef CIGAR_NEXUS` for anything touching another mod) and bilingual
+   (`Text::L`/`Text::F`). Follow `docs/000-adding-a-module.md` and memory
+   `cigar-declined-prompt-stays-hidden`.
+
+### Three editions, one source
+
+| Edition | Build | Output | Notes |
+|---|---|---|---|
+| Author | `tools\Build.ps1 -Deploy` | `mods\CIGAR` | panel shows gate lines; runs `verify_deploy.py` |
+| Standard release | `tools\Build.ps1 -Package` | `Downloads\CIGAR <ver>` + `.7z` | all 24 modules, Korean readme |
+| Nexus | `tools\Build.ps1 -Nexus` | `Downloads\CIGAR <ver> Nexus` + `.7z` | 15 modules, English + Korean readmes, leak check |
+
+### Pitfalls met this session
+
+- In this harness, inline `python - <<'EOF'` heredocs collapse backslash escapes (`\n`, `\\`) and
+  sometimes fail to parse; write Python to a scratchpad file and run it instead.
+- Nexus's editor (SCEditor) and some fields ignore values set by script: after setting them, make one
+  real keystroke (type a space, Backspace) so the form registers the change, then verify through the
+  public v2 GraphQL API (`https://api.nexusmods.com/v2/graphql`, keyless).
+- The Chrome file-upload tool cannot read `Downloads`; copy the file to the scratchpad first. Never
+  click a page's upload button (it opens a native picker); feed the hidden `input[type=file]`.
+- Korean game text on this modlist runs with `sLanguage=ENGLISH` (the Korean patch replaces the
+  English strings), so a Korean translation of another mod goes in its `_ENGLISH` file.
 
 ### Standing facts worth keeping in view
 
@@ -62,10 +99,8 @@ history of each module are in `docs/`, one file per module, and each file starts
   (the game's sit turns `fighting` off); nothing in CIGAR causes it. **Out of CIGAR's scope** (the
   user, 2026-09-25): Installation and Modification case 032.
 - CIGAR's lighting work is abandoned; TCL runs on its own hotkey (memory `cigar-no-light-module`).
-- The user's plan after that: a fishing module on Streamlined Fishing. Prep is in
-  `docs/027-fishing.md`: on this modlist Fish Anywhere's loose script already overrides Streamlined
-  Fishing's rod equip, and Fishing Preview's overrides SFO's animations. The module waits on the
-  decisions listed there.
+- A later plan: a fishing module on Streamlined Fishing (`docs/027-fishing.md`; waits on the decisions
+  listed there).
 - CIGAR's design philosophy (the user's, 2026-09-24): hotkey terminator, one-button interaction,
   UX sacrosanct; no player-authored rule framework (`docs/022`); a prompt performs the whole action,
   and nothing vanilla already does in one press is duplicated.
