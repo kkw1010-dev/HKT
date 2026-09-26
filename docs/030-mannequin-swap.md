@@ -127,3 +127,38 @@ All four run the same `Swap()`. Hold, as the project's prompt policy asks for no
 
 The first build also logs what the crosshair hit (trigger or actor) and which resolver path found the
 mannequin.
+
+## Second review (2026-09-26, before implementation)
+
+The plan above was checked against one script only: `Another Mannequin Script Fix`, which overrides
+`MannequinActivatorSCRIPT.pex` on this load order. CIGAR is now published on Nexus, where most
+players run **USSEP's** version instead (`scripts\mannequinactivatorscript.pex` in
+`unofficial skyrim special edition patch.bsa`, decompiled 2026-09-26; copy in the session
+scratchpad, not in the repo). It differs where the plan depends on it:
+
+| | Another Mannequin Script Fix | USSEP |
+|---|---|---|
+| Slot storage | 20 properties `ArmorSlot01`-`20` | a script **variable** `Form[] ArmorSlot` (10); `ConvertArmorSlots()` copies the 10 old properties into it on the first load and sets every property to `EmptySlot` |
+| Capacity | 20 | 10 |
+| Same base form twice | accepted | `IsDuplicated` refuses the second one and bounces it to the player |
+| Full | bounced | bounced (`RemoveItem(base, n, true, player)`, by base form) |
+| Cell load | re-equips from the properties | `UnequipAll()`, then re-equips from the array |
+
+What this changes in the plan:
+
+1. **Slot readback and capacity** read the `ArmorSlot` array variable when the script has it (USSEP),
+   else the `ArmorSlotNN` properties that exist (vanilla 10, the fix 20). Reading only the properties
+   on USSEP would see ten empty slots on a full mannequin.
+2. **Phase 1 must wait for the script, not only the engine.** "The mannequin no longer wears B" is
+   true before the script's `OnObjectUnequipped` has cleared B's slot. On USSEP a piece of A with the
+   same base form as a piece of B would then be refused as a duplicate. Poll until B's forms are gone
+   from the slots too, then start phase 2.
+3. **The vanilla script** (no USSEP, no fix) is the third variant and has not been read yet; read it
+   from `Skyrim - Misc.bsa` before writing the resolver.
+4. **The OStim gate** has nothing behind it: CIGAR detects SexLab scenes only (`Util::InScene`);
+   OStim appears only as a no-strip keyword. Either add OStim scene detection to `Util` (it would
+   serve every module, and a Nexus comment asked for it) or drop OStim from this gate.
+
+Still sound: instance transfer with the extra list, never driving the script, the mannequin's items
+out before the player's go in, polling instead of fixed waits, hard/soft failure, its own module,
+PromptID 40 (still free; 39 is the last used), and the user's Helmet/Dress/Almsivi decisions.
