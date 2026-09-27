@@ -4,3 +4,4 @@ New: In third person, prompts sit just ahead of your character's head, a little 
 Changed: The settings panel's module switches are split into Combat, Non-combat and Mod integrations.
 Fixed: Relief prompts no longer show while Bathing in Skyrim is washing you.
 Known issue: A weapon enchantment stays after End Wizard Warrior until it runs out; that is The Wizard Warrior's own design.
+Changed: The download now carries an English README only.

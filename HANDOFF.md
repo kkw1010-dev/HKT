@@ -80,8 +80,8 @@ history of each module are in `docs/`, one file per module, and each file starts
      (`WARN could not place the marker (load)`, the player is not in the world yet); recovery placed
      it 25 s later and prompts attached to it. Harmless, but the WARN reads like a failure; a quiet
      first retry for the new-game case is a candidate fix.
-2. **3.0.0 is live on Nexus 193080** as file 811289 (`CIGAR`, 3.0.0, Main, 922,079 bytes), an
-   Update of 2.1.2; mod version 3.0.0, changelog, description and The Wizard Warrior requirement
+2. **3.0.0 is live on Nexus 193080** as **file 811321** since 2026-09-28 (the trimmed release,
+   below). First upload: file 811289 (`CIGAR`, 3.0.0, Main, 922,079 bytes), an Update of 2.1.2; mod version 3.0.0, changelog, description and The Wizard Warrior requirement
    done. The session "CIGAR 3.0.0 Nexus 업로드" did the upload at the user's direct instruction,
    because this session's permission check kept refusing the Nexus edit page. Record:
    `dist/nexus-page/upload-3.0.0.md`. DLL sha256 `afef2eb1...`. The `Downloads\CIGAR 3.0.0` folder
@@ -92,13 +92,13 @@ history of each module are in `docs/`, one file per module, and each file starts
    - **Release texts trimmed (the user, 2026-09-28): English, feature descriptions only.** The
      Korean readme no longer ships (`dist/README-ko.md` deleted, `make_release.py` allows five
      files). README, CHANGELOG and the Nexus texts lost their system explanations; the user's own
-     page sections are cut to one or two paragraphs each. Ready to paste, not on Nexus yet (the
-     orchestrator does that with the user's approval):
-     - `dist/nexus-page/description-3.0.0-trimmed.bbcode` (the whole page);
-       `description-live.bbcode` stays the live text, for rollback
-     - `dist/nexus-page/changelog-3.0.0-trimmed.txt` (six lines)
-     - `Downloads\CIGAR 3.0.0 (docs trimmed).7z`, 917,088 bytes, the same DLL (sha256
-       `afef2eb1...`). Whether it replaces file 811289 is the user's call.
+     page sections are cut to one or two paragraphs each. **On Nexus since 2026-09-28**, applied
+     by the orchestrator with the user's approval (`dist/nexus-page/upload-3.0.0.md`, top):
+     - file 811321, `CIGAR 3.0.0 (docs trimmed).7z`, 917,088 bytes, the same DLL (sha256
+       `afef2eb1...`), an Update of 811289 (now Old versions)
+     - description = `description-live.bbcode` = `description-3.0.0-trimmed.bbcode`; the text
+       before the trim is `description-3.0.0-untrimmed.bbcode`
+     - Logs 3.0.0 = the seven lines of `changelog-3.0.0-trimmed.txt`
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
 5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).

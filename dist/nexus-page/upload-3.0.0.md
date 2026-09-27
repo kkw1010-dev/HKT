@@ -1,4 +1,21 @@
-# Nexus upload: CIGAR 3.0.0 (uploaded 2026-09-27)
+# Nexus upload: CIGAR 3.0.0 (uploaded 2026-09-27, file replaced 2026-09-28)
+
+## Current state (2026-09-28): the trimmed release
+
+The user decided the release is English with feature descriptions only. The orchestrator session
+applied it on Nexus with the user's approval:
+
+- File: `CIGAR 3.0.0 (docs trimmed).7z` uploaded as an Update of 811289, now **file 811321**
+  (`CIGAR`, 3.0.0, Main, primary, 917,088 bytes); 811289 is Old versions. Same DLL (sha256
+  `afef2eb1...`), no `README-ko.md`. Mod version stays 3.0.0.
+- Description: `description-3.0.0-trimmed.bbcode`, now also `description-live.bbcode` (checked
+  through the public GraphQL, sha256 `ba8b73bf...` after restoring entities and `<br />`). The text
+  before the trim is kept as `description-3.0.0-untrimmed.bbcode`.
+- Logs, 3.0.0: the seven lines of `changelog-3.0.0-trimmed.txt` (replaced whole with Edit changelog,
+  because the upload merged them with the old eight).
+- File page: https://www.nexusmods.com/skyrimspecialedition/mods/193080?tab=files&file_id=811321
+
+The rest of this file records the first upload of 2026-09-27.
 
 Uploaded on 2026-09-27 as Nexus file 811289 (`CIGAR`, 3.0.0, Main, primary, 922,079 bytes), an
 Update of 2.1.2 (now Old versions). Mod version is 3.0.0, the file changelog carries the eight
