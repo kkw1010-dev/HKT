@@ -145,3 +145,70 @@ so the side of the clip must match.
 No single vanilla clip mirrors: a right push and a left push come from different clips
 (`idletake` right, `mt_activatedoor` left). The clips are Bethesda's; shipping a copy in an OAR
 folder would add files to the package allowlist (the user's call, open decision B/A above).
+
+## The user's decisions (2026-09-28, through the orchestrator)
+
+Recorded as the user's choices; the numbers were the review's starting values and the user took them.
+
+- Clips: compare **A** (vanilla one-arm clips, no edit) and **C** (EVG Squeeze, from the user's own
+  install) in game, author build only.
+- Bump strength: **small**.
+- The bumped NPC's line: **not allowed** for now.
+- Blocked detection: a non-hostile humanoid within **70** units in the forward cone, speed collapsed
+  for **0.3 s**; one bump per NPC, then **1.5 s** cooldown.
+- Prompt name: **"비켜 지나가기 (누르고 있기)"**; English "Squeeze Past (hold)" (Claude's wording).
+
+## Must a vanilla clip ship in an OAR folder? (answered 2026-09-28)
+
+Yes, as a renamed copy, or not at all:
+
+- **How the clip is played.** Offset Movement Animation plays one clip file,
+  `meshes\actors\character\animations\GPMAOffsetAnimation.hkx` (its mod ships a default). The event
+  `OffsetGPMA` starts it and `OffsetGPMAStop` ends it. What changes the motion is an OAR submod that
+  replaces **that file** while its conditions hold. CIGAR's Helmet does exactly this: `CIGAR - Helmet
+  Motions` holds `OpenAnimationReplacer\CIGAR Helmet\Helmet Unequip\Actors\Character\Animations\
+  GPMAOffsetAnimation.hkx` (a copy of Helmet Toggle 2's clip) with the condition
+  `iGPMAAnimationType == 2`; CIGAR sets the variable, then sends the event.
+- **OAR binds a replacement by path and file name.** A submod's `.hkx` must mirror the original's path
+  (`character/GPMAOffsetAnimation.hkx`). `overrideAnimationsFolder` only lets a submod use **another
+  submod's** files, which must themselves be named `GPMAOffsetAnimation.hkx`. There is no key that
+  maps a differently named file (`mt_activatedoor.hkx`) or a path inside a BSA onto the original.
+  (OAR 3.0.0 schema, `housecarl:open-animation-replacer` §1-3. Whether OAR can read a submod packed in
+  a BSA was not checked; it does not matter, because the name still has to be the GPMA one.)
+- **Not shipping a file** would take CIGAR extracting the clip from `Skyrim - Animations.bsa` at run
+  time into its own OAR folder. OAR reads its submods when the game starts, so the first launch would
+  have no clip, and CIGAR would need a BSA reader and would write into the game's Data folder (MO2's
+  overwrite). Possible, not worth it.
+- **Shipping a copy.** It is a Bethesda file reused in a mod for the same game, which Skyrim mods on
+  Nexus routinely do (animation replacers ship vanilla-derived clips); the current Nexus and Bethesda
+  wording was not re-read for this answer. It changes CIGAR's package: `make_release.py`'s allowlist
+  grows an OAR folder with a `config.json` and one `GPMAOffsetAnimation.hkx` per clip. The Helmet
+  clips never shipped because they are another mod's; a vanilla clip is not.
+- **The EVG route (C)** cannot point at EVG's files either: its Squeeze file is named
+  `mt_leverfloorpull.hkx` and replaces the lever-pull, so a test copies it into CIGAR's own submod as
+  `GPMAOffsetAnimation.hkx`. That copy is for the user's game only; it never ships.
+
+## A/C comparison test plan (stage 0b)
+
+- **Assets** (author build only, inside `mods\CIGAR`, never packaged): an OAR mod `CIGAR Push Test`
+  with one submod per candidate, each a `GPMAOffsetAnimation.hkx` copy keyed on a CIGAR-only
+  `iGPMAAnimationType` value. Helmet Toggle 2 uses 1-12 and CIGAR's Helmet 2 and 6, so the test takes
+  3801-3806:
+
+  | Value | Clip | Source | `iGPMAOffsetType` |
+  |---|---|---|---|
+  | 3801 | `mt_activatedoor` | vanilla (A) | 2, left arm |
+  | 3802 | `shd_blockbash` | vanilla (A) | 2, left arm |
+  | 3803 | `idletake` | vanilla (A) | 1, right arm |
+  | 3804 | `idlegive` | vanilla (A) | 1, right arm |
+  | 3805 | EVG Squeeze | user's install (C) | 0, both arms and upper body |
+  | 3806 | EVG Squeeze | user's install (C) | 2, left arm |
+
+- **Probe buttons** (PushProbe, author panel): one per row. Arming waits until the player moves, then
+  sets `iGPMAOffsetType` and `iGPMAAnimationType`, sends `OffsetGPMA`, and sends `OffsetGPMAStop` after
+  the clip's length (2.7 / 0.4 / 2.4 / 2.4 s; the Squeeze length is read from the file). Logged: GPMA
+  installed (`bGPMAInstalled`), each variable set, the event accepted, the player's graph events
+  during the clip, the stop, and whether the player kept moving (speed before, during, after).
+- **In-game items** (for the checklist): walk past an NPC and fire each row once; the user compares by
+  eye. The log only proves each clip played on a moving player and stopped; which reads as "squeeze
+  past" is the user's judgement.
