@@ -17,8 +17,8 @@ Text is in English or Korean, following your game's language.
   in-game settings panel. CIGAR works without the panel.
 
 Everything else is optional; see "Other mods" below. Tested on Skyrim 1.6.1170 (Anniversary Edition)
-with SkyPrompt 2.4.0 (2.3.15 works too; both use API 2.0). Gamepads work through SkyPrompt's own
-gamepad buttons; CIGAR's key settings change the keyboard keys only.
+with SkyPrompt 2.4.0 and 2.3.15. Gamepads work through SkyPrompt's own gamepad buttons; CIGAR's key
+settings change the keyboard keys only.
 
 Prompt text follows the language CIGAR uses; item, quest and character names come from your game,
 so a translated game shows its own names inside English prompts.
@@ -94,8 +94,7 @@ Prompts marked with a mod name need that mod; the rest work with Skyrim alone.
 ## Other mods
 
 CIGAR **uses these mods when they are installed and quietly skips the prompt when they are not.**
-It has no masters, ships no patches and none of these mods' files, and needs no switch to detect
-them.
+It includes none of their files.
 
 | Prompt | Mod | Where |
 |---|---|---|
@@ -112,8 +111,7 @@ them.
 | Choose Action | BaboDialogue, by BakaFactory | LoversLab / SubscribeStar |
 | Wizard Warrior Mode, End Wizard Warrior | The Wizard Warrior - Spellsword Magic Combat Evolved | [Nexus](https://www.nexusmods.com/skyrimspecialedition/mods/14890) |
 
-Warm Hands finds fires with the list from the Survival Mode Creation Club file
-(`ccqdrsse001-survivalmode.esl`); without it that one prompt never shows.
+Warm Hands needs the Survival Mode Creation Club file.
 
 ### Settings CIGAR changes in other mods
 
@@ -122,14 +120,13 @@ So that one key does not do two things, CIGAR can take a mod's own hotkey over. 
 
 | Mod | While prompt only is on |
 |---|---|
-| Grapple | its hotkey moves to F13, a key keyboards never send |
-| Acheron | the surrender key moves to F14 (through Acheron's own settings, saved with your game) |
+| Grapple | its hotkey moves to F13 |
+| Acheron | the surrender key moves to F14 |
 | Valhalla Combat | the execution key moves to F15 |
 | Fill Her Up Baka Edition | the deflate hotkey is cleared |
 | Private Needs - Orgasm | its six hotkeys are cleared, including its menu and status keys |
 
-One change does not depend on the switch: with True Directional Movement installed, Grapple's target
-lock key is set to TDM's lock key, which Grapple presses to release the lock during a grapple.
+With True Directional Movement installed, Grapple's target lock key is set to TDM's lock key.
 
 If you change one of these keys in the other mod's menu, press **Check mod keys again** on the Keys
 page once.
@@ -157,14 +154,10 @@ Your choices are saved to `SKSE/Plugins/CIGAR.json`.
 - **Chair drinking** knows the 29 drinks of the base game and its DLCs, plus any drink another mod
   tags as alcohol (Gourmet, Object Categorization Framework, SunHelm).
 - **The helmet** comes off at once, without an animation.
-- **Prompt position:** to place prompts ahead of your character, CIGAR keeps one invisible, disabled
-  marker in each save and moves it every frame. If CIGAR is removed, the marker stays in the save and
-  does nothing. If another mod stops that per-frame update from reaching CIGAR, prompts go back to
-  your character and a notification says so.
-- **Mannequins:** the swap was tested with the Unofficial Skyrim Special Edition Patch's mannequin
-  script and with Another Mannequin Script Fix. The unpatched base-game script is supported but was
-  not tested. When a mannequin cannot take an outfit (too few free slots, or a second copy of the same
-  armor), nothing moves and a notification says why.
+- **Prompt position:** CIGAR keeps one invisible marker in each save to place prompts. It is
+  harmless if CIGAR is removed.
+- **Mannequins:** tested with the Unofficial Patch and Another Mannequin Script Fix. If a mannequin
+  cannot take an outfit, nothing moves and a notification says why.
 - **Scenes:** while a SexLab or OStim scene plays the player, combat, gear and needs prompts stay
   away (detected at runtime; neither framework is needed).
 - Page names in the settings panel switch language at the next launch; everything else switches at
@@ -172,11 +165,8 @@ Your choices are saved to `SKSE/Plugins/CIGAR.json`.
 
 ## Known issues
 
-- **Jujutsu does nothing until someone has died since the game was loaded.** Once anyone (any enemy)
-  dies in the session, it works normally. Until then the prompt shows but the move does not play. The
-  cause appears to be a kill-move state inside the game engine. Changing that value directly might fix
-  it, but there is no way to check what else such a change would affect, so it is **deliberately left
-  alone**. Refusals in that window raise no warning; the log gives the reason.
+- **Jujutsu does nothing until someone has died since the game was loaded.** After the first death it
+  works normally.
 - **Execute can miss the first press.** Press again.
 - **A weapon enchantment stays after End Wizard Warrior** until it runs out. That is The Wizard
   Warrior's own design, and CIGAR leaves it alone.
