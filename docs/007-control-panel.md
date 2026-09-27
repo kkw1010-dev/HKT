@@ -214,3 +214,28 @@ Every panel string has Korean and English (`src/Text.*`); page 1 has the languag
 is registered at kDataLoaded so the page titles follow the resolved language. The 2.0.1 Nexus edition hid
 the prompt-only section and the other-mod options; since 2.1.0 there is one release build, which shows
 them. See `docs/035-nexus-edition.md`.
+
+## Prompt placement (research, 2026-09-27; nothing changed)
+
+The user asked for three things:
+- in third person, prompts a little farther from the face
+- in first person, prompts right under the crosshair
+- a smooth move between the two when the camera switches
+
+What decides the position today:
+
+- **SkyPrompt places every prompt.** CIGAR only chooses the `refid` it sends (`Prompt.cpp`
+  sends the player, 0x14). SkyPrompt API 2.0 (`include/SkyPrompt/API.hpp`, identical to
+  `QTR-Modding/SkyPromptAPI` main on 2026-09-27) has no position or offset field.
+- **Attached prompts** (SkyPrompt 2.4.0 `src/Renderer.cpp` `GetAttachedObjectPos`). For an actor,
+  the anchor is the head node, moved 15 units × scale sideways from the camera. On screen it is then
+  moved right by the prompt size + 10 px, and the theme's `marginX`/`marginY` are subtracted.
+  SkyPrompt recomputes this itself every frame.
+- **Unattached prompts** (`refid` 0) sit at the theme's fixed point: `xPercent × width − marginX`,
+  `yPercent × height − marginY`. This modlist has 0.78 / 0.775 / 0 / 0, in `TAKEALOOK - MCM and
+  INI/SKSE/Plugins/SkyPrompt/settings.json`.
+- **All of these are theme values.** They belong to the player's SkyPrompt theme and apply to every
+  SkyPrompt client (Grapple's QTE, Camping++, Read It Now), not to CIGAR alone.
+- **A queued prompt keeps its `refid`.** Changing the anchor means withdrawing the prompt and
+  offering it again, and SkyPrompt then jumps. CIGAR cannot feed a per-frame screen position.
+- **First person** can be detected with `RE::PlayerCamera::IsInFirstPerson()` (CommonLib).
