@@ -16,7 +16,7 @@ history of each module are in `docs/`, one file per module, and each file starts
   session.
 
 **Git.**
-- `v3` at **`65d1a02`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
+- `v3` at **`489e863`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
 - Branches:
   - `master` / `v2`: 2.x, on GitHub; 2.1.2 is live on Nexus 193080
   - `v3`: 3.0.0 work, local
@@ -26,6 +26,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 **Deploy.**
 - `mods\CIGAR` holds the **65d1a02 build**, deployed 2026-09-27 by the session "Cigar" after the
   orchestrator released the `mods\` lock; `verify_deploy.py` passed every check.
+- **489e863 is built but not deployed** (the right-offset setting). Deploy it when the orchestrator
+  next releases `mods\`.
 - The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
   release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
   `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
@@ -35,11 +37,11 @@ history of each module are in `docs/`, one file per module, and each file starts
 - N1-N5 passed in the 17:41 run: the relief prompt hidden during a bath, 주시하기 after a bath or
   when idle, the mannequin regression on Another Mannequin Script Fix, 마검사 모드 on and off.
 - N6 passed: the prompt marker.
-- **N7 is next, after the deploy.**
-  1. The user picks the right offset (0 / 10 / 15 default / 20 / 30) on the author panel's
-     "프롬프트 오른쪽 오프셋 (N7, 3인칭)".
-  2. Make it the constant `PromptAnchor::kRightDefault`, recorded as the user's choice.
-  3. Delete `kRightCandidates` and the panel item, rebuild, and deploy when allowed.
+- N7 passed: all five steps; the prompts follow after fast travel, a door and riding. **PromptAnchor
+  is finished.** The user kept the offset as the player's choice instead of fixing one value, so the
+  N7 item became the player setting `3. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭)
+  (`CIGAR.json` `prompt.rightOffset`, 0 / 10 / 15 / 20 / 30, default 15; `docs/007` "Finished after
+  N7").
 - Test logs are archived under `C:\TAKEALOOK\_test-runs\<date time>\SKSE\`.
 
 **Added in 3.0.0 so far (all on `v3`):**
@@ -49,7 +51,7 @@ history of each module are in `docs/`, one file per module, and each file starts
 | MannequinSwap | The slot-60 fix: the HDT SMP carrier no longer blocks | `docs/030` |
 | Needs | No prompt while Bathing in Skyrim washes (`Bathe::Washing()`) | `docs/013` |
 | WizardWarrior | 마검사 모드 on weapon draw (ID 41) and 마검사 해제 when sheathing out of combat (ID 42), both through `QK_MainQuestScript.ToggleAbility()`. The Wizard Warrior 5.0.1 is installed (IaM case 037, plugin index 0x89) | `docs/037` |
-| PromptAnchor | In third person, prompts attach to one disabled XMarker (co-save `ANCH`) that a `PlayerCharacter::Update` hook (0xAD, chained) moves every frame to head + facing × 40 + camera-right × offset. First person uses the player. With recovery, a hook-liveness check and fallbacks | `docs/007` "Prompt placement" |
+| PromptAnchor | In third person, prompts attach to one disabled XMarker (co-save `ANCH`) that a `PlayerCharacter::Update` hook (0xAD, chained) moves every frame to head + facing × 40 + camera-right × offset (player setting, default 15). First person uses the player. With recovery, a hook-liveness check and fallbacks. Passed N6 and N7 | `docs/007` "Prompt placement" |
 
 **The user's decisions this session.** Do not re-propose these.
 - Brace (버티기) abandoned.
@@ -58,13 +60,14 @@ history of each module are in `docs/`, one file per module, and each file starts
 - The enchantment WW leaves after 마검사 해제 is WW's own behaviour.
 - In first person, prompts stay on the player.
 - Forward distance is 40.
+- The right offset stays the player's choice: 0 / 10 / 15 / 20 / 30, default 15.
 - A pinned Nexus FAQ post is up (comment 176294172).
 - Nexus replies are posted by the user, never by Claude.
 
 **Open items and backlog.**
-1. N7, then fix the offset (above).
+1. Deploy `489e863` when `mods\` is free.
 2. 3.0.0 packaging and Nexus release, with the user. `README` and the Nexus description need:
-   - MannequinSwap, 마검사 모드 / 해제 and the prompt placement
+   - MannequinSwap, 마검사 모드 / 해제 and the prompt placement, with its right-offset option
    - a line that one disabled marker reference is kept per save
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
