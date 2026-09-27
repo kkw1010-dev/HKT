@@ -24,11 +24,10 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **489e863 build** (the right-offset setting), deployed 2026-09-27 by the
-  session "Cigar" after the orchestrator released the `mods\` lock; `verify_deploy.py` passed every
-  check. The setting itself has not been seen in game yet.
-- **474538c is built but not deployed**: the module pages split into 1. 전투 / 2. 비전투 /
-  3. 모드 연동 (`docs/007` "Module pages"). Deploy it at the next lock release.
+- `mods\CIGAR` holds the **474538c build**, deployed 2026-09-27 by the session "Cigar" after the
+  orchestrator released the `mods\` lock; `verify_deploy.py` passed every check. It carries the
+  right-offset setting (489e863) and the module pages split into 1. 전투 / 2. 비전투 / 3. 모드 연동
+  (`docs/007` "Module pages"). Neither has been seen in game yet.
 - The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
   release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
   `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
@@ -67,7 +66,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 
 **Open items and backlog.**
 1. The next launch: the panel's 프롬프트 위치 slider shows and saves (`CIGAR.log`: `settings: prompt
-   right offset N`, `[PromptAnchor] right offset set to N`).
+   right offset N`, `[PromptAnchor] right offset set to N`), and the five pages show the modules as
+   in `docs/007` "Module pages" (`control panel: combat page …` line, no WARN).
 2. 3.0.0 packaging and Nexus release, with the user. `README` and the Nexus description need:
    - MannequinSwap, 마검사 모드 / 해제 and the prompt placement, with its right-offset option
    - a line that one disabled marker reference is kept per save
