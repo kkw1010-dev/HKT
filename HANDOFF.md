@@ -68,9 +68,14 @@ history of each module are in `docs/`, one file per module, and each file starts
 1. The next launch: the panel's 프롬프트 위치 slider shows and saves (`CIGAR.log`: `settings: prompt
    right offset N`, `[PromptAnchor] right offset set to N`), and the five pages show the modules as
    in `docs/007` "Module pages" (`control panel: combat page …` line, no WARN).
-2. 3.0.0 packaging and Nexus release, with the user. `README` and the Nexus description need:
-   - MannequinSwap, 마검사 모드 / 해제 and the prompt placement, with its right-offset option
-   - a line that one disabled marker reference is kept per save
+2. **3.0.0 is packaged; the Nexus upload is not done.** `Downloads\CIGAR 3.0.0.7z` (922,079 bytes,
+   DLL sha256 `afef2eb1...`); `CHANGELOG.md`, both readmes and `description-live.bbcode` are
+   updated (`52df45f`). On 2026-09-27 the upload stopped before the Nexus edit page opened: Claude
+   Code's permission check refused it as "Create Public Surface". Everything to paste is in
+   `dist/nexus-page/upload-3.0.0.md`. After it ships: merge `v3` into `master` and tag `v3.0.0`
+   (locally; GitHub only when the user asks).
+   - Not seen in game before packaging: the release build itself, the right-offset slider and the
+     five panel pages (the author build with them is deployed).
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
 5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).

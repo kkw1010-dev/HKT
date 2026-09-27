@@ -1,0 +1,41 @@
+# Nexus upload: CIGAR 3.0.0 (prepared 2026-09-27, not uploaded)
+
+The upload was stopped before the Nexus edit page opened: Claude Code's permission check refused
+the navigation as "Create Public Surface". Everything below is ready to paste.
+
+## The file
+
+- Archive: `%USERPROFILE%\Downloads\CIGAR 3.0.0.7z`, 922,079 bytes
+  - `SKSE\Plugins\CIGAR.dll`: 4,641,280 bytes, sha256 `afef2eb1d5efbfe7a65b6cf9a688e3392d50f54f751e881f9e204a8810588440`
+  - `SKSE\Plugins\CIGAR.json`, `README.md`, `README-ko.md`, `LICENSE.txt`, `THIRD-PARTY-NOTICES.txt`
+  - `make_release.py` checked: only these six files, `SKSE` at the archive root, no user-profile
+    path in any file
+- Nexus 193080, Files → add as an **Update** of the 2.1.2 main file (moves 2.1.2 to old versions)
+- Name: `CIGAR`; version: `3.0.0`; category: Main Files
+- Mod version (page header): `3.0.0`
+
+File description:
+
+```
+3.0.0: mannequin outfit swap, Wizard Warrior Mode, prompts ahead of the character in third person (adjustable), settings pages split into Combat / Non-combat / Mod integrations. No new game needed. See the Logs tab for the full changelog.
+```
+
+## Changelog entry (Logs tab, version 3.0.0), one line per change
+
+```
+New: Mannequin outfit swap. Looking at a mannequin, one hold prompt swaps what you wear with what it wears; enchanted and tempered pieces move as they are, and its helmet comes to you stowed.
+New: Wizard Warrior Mode (with The Wizard Warrior). Drawing a weapon offers to turn it on; sheathing out of combat offers to turn it off.
+New: In third person, prompts sit just ahead of your character's head, a little to the right; the distance to the right is a setting (default 15). First person is unchanged.
+Changed: The settings panel's module switches are split into Combat, Non-combat and Mod integrations; Keys is page 4 and Options page 5, with status and language at the top of Options.
+Fixed: Relief prompts no longer show while Bathing in Skyrim is washing you.
+Note: CIGAR now keeps one invisible, disabled marker in each save for prompt placement; it does nothing if CIGAR is removed.
+Known issue: A weapon enchantment stays after End Wizard Warrior until it runs out; that is The Wizard Warrior's own design.
+Tested with the Unofficial Patch's mannequin script and Another Mannequin Script Fix; the unpatched base-game script is supported but untested.
+```
+
+## Description and requirements
+
+- Description: paste `description-live.bbcode` (updated for 3.0.0).
+- Requirements (legacy method, like the others): add The Wizard Warrior - Spellsword Magic Combat
+  Evolved (Nexus 14890), note "Not necessary, but recommended" (Wizard Warrior Mode prompts).
+- Summary: unchanged (`summary-live.txt`).
