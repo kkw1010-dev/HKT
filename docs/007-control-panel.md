@@ -140,7 +140,7 @@ mod folder only when none is there. That keeps the panel's saves in
     `TAKEALOOK - Font Edit`; the framework's own ini has
     `EnableKorean = false`.
 - `CIGAR.log` records one of these:
-  - `control panel: registered CIGAR/{1. 모듈, 2. 단축키, 3. 세부 설정} …`
+  - `control panel: registered CIGAR/{1. 전투, 2. 비전투, 3. 모드 연동, 4. 단축키, 5. 세부 설정} …`
   - `… SKSE Menu Framework is not loaded; no panel`
   - `… lacks AddSectionItem/igCheckbox`
 
@@ -347,7 +347,7 @@ interior/exterior door and riding a horse. PromptAnchor is a finished feature.
 - **The right offset stays the player's choice.** The user saw no need to pick one value ("이거
   굳이 뭘 골라야 할 필요가 있나? 그냥 선택하게 두는 게 더 좋은 것 같다"). The candidates 0 / 10 / 15 /
   20 / 30 and the default 15 are the user's decision.
-  - Panel: `3. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭), in every build.
+  - Panel: `5. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭), in every build.
   - Stored in `CIGAR.json` as `prompt.rightOffset`, snapped to the nearest step on load
     (`Settings::kPromptRightSteps`, `Settings::PromptRight`).
   - `Settings` passes it to `PromptAnchor::SetRight` at load and on every change; the log line is
