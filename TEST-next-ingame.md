@@ -184,3 +184,27 @@ N6 합격 후 본 구현입니다. 전방 거리는 40으로 고정했습니다(
   - `prompts attach to the marker ... (third person)` / `the player (first person)`: 부착 전환
   - `right offset set to N`: 후보 변경
   - `WARN`이나 `marker is gone`이 없어야 합니다(있으면 복구 줄이 이어짐)
+
+## P1-P5. NPC 밀기 탐침 (docs/038, 2026-09-28, 작성자 빌드 `f9fd8e0`)
+
+로그만 남기는 탐침입니다. 프롬프트는 뜨지 않습니다. 판정은 `CIGAR.log`의 `[PushProbe] RESULT` 줄로 합니다.
+끝나면 게임을 끄고 다시 켜지 마세요(로그가 새로 만들어집니다).
+
+- **P1. 준비:** 여관으로 가서 3인칭으로 바꿉니다. F1 → CIGAR → 5. 세부 설정 맨 아래에 "탐침: NPC 밀기 (docs/038)"가
+  보이면 됩니다.
+  ```
+  coc WhiterunBanneredMare
+  ```
+- **P2. 걸어서 부딪히기:** 같은 칸의 "자연 부딪힘 관찰"을 켜고 메뉴를 닫습니다. 서 있는 NPC에게 걸어서 2~3초 밀고
+  들어갑니다. 3초 기다렸다가 다른 NPC에게 한 번 더 합니다.
+- **P3. 달려서 부딪히기:** 관찰을 켠 채로, 서 있는 NPC에게 달려서(질주) 부딪힙니다. 3초 기다렸다가 한 번 더 합니다.
+- **P4. 행동 ActionBumpedInto:** NPC를 조준한 채 F1 → "행동 ActionBumpedInto" → 메뉴를 닫고 3초 기다립니다.
+  NPC 정면에서 한 번, 옆에서 한 번 합니다.
+- **P5. 방향 이벤트:** NPC를 조준하고 "앞", "왼쪽", "오른쪽", "뒤"를 한 번씩 누릅니다(누를 때마다 메뉴를 닫고 3초 대기).
+
+로그에서 보는 것(판정은 Claude가 합니다):
+- `natural small|big bump` 줄: 걷기와 질주에서 바닐라가 어떤 부딪힘 상태를 쓰는지
+- `RESULT ... DISPLACED / NOT DISPLACED`와 최대 이동 거리: 실제로 비켜났는지
+- `anim event` 줄: NPC가 어떤 반응 애니메이션을 탔는지
+- `dialogue` 줄: 부딪힌 NPC가 대사를 했는지
+- `PROBLEM: HOSTILE / COMBAT / CRIME`: 적대, 전투, 현상금이 생겼는지(없어야 함)
