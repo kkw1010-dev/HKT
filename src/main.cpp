@@ -24,6 +24,7 @@
 #include "Potion.h"
 #include "Prompt.h"
 #include "PromptAnchor.h"
+#include "PushProbe.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
@@ -235,6 +236,9 @@ namespace
 			}
 		}
 		PromptAnchor::Tick();
+#ifndef CIGAR_RELEASE
+		PushProbe::Tick();  // docs/038, author build only
+#endif
 	}
 
 	// Paces the ticks from its own thread and posts one task per 100 ms, running Tick() on every
@@ -302,6 +306,9 @@ namespace
 			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
 			PromptAnchor::Install();
+#ifndef CIGAR_RELEASE
+			PushProbe::RegisterEvents();
+#endif
 			StartTicker();
 			break;
 		case SKSE::MessagingInterface::kSaveGame:

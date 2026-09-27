@@ -13,6 +13,7 @@
 #include "Potion.h"
 #include "Prompt.h"
 #include "PromptAnchor.h"
+#include "PushProbe.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
@@ -565,6 +566,33 @@ namespace CIGAR::Panel
 				if constexpr (!kRelease) {
 					ImGui::TextColored(kDim, "%s", PromptAnchor::Status().c_str());
 				}
+			}
+
+			if constexpr (!kRelease) {
+				// docs/038: the log-only NPC push-through probe. It fires when the menu closes.
+				ImGui::SeparatorText("탐침: NPC 밀기 (docs/038)");
+				Help("NPC를 조준한 채 메뉴를 열고 버튼을 누른 뒤 메뉴를 닫으면 그 NPC에게 발동. 결과는 CIGAR.log의 [PushProbe] RESULT 줄");
+				if (ImGui::Button("행동 ActionBumpedInto##pp-action")) {
+					PushProbe::Arm(PushProbe::Kind::kAction);
+				}
+				const std::array<std::pair<const char*, PushProbe::Kind>, 4> sides{ {
+					{ "앞##pp-front", PushProbe::Kind::kFront },
+					{ "뒤##pp-back", PushProbe::Kind::kBack },
+					{ "왼쪽##pp-left", PushProbe::Kind::kLeft },
+					{ "오른쪽##pp-right", PushProbe::Kind::kRight },
+				} };
+				ImGui::TextColored(kDim, "%s", "반응 이벤트 직접:");
+				for (const auto& [label, kind] : sides) {
+					ImGui::SameLine();
+					if (ImGui::Button(label)) {
+						PushProbe::Arm(kind);
+					}
+				}
+				bool watch = PushProbe::Watching();
+				if (ImGui::Checkbox("자연 부딪힘 관찰 (걷기·달리기로 부딪힐 때)##pp-watch", &watch)) {
+					PushProbe::SetWatch(watch);
+				}
+				ImGui::TextColored(kDim, "%s", PushProbe::Status().c_str());
 			}
 
 			ImGui::SeparatorText(L("먹기", "Eating"));
