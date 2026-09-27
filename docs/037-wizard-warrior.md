@@ -93,6 +93,11 @@ parsed for record IDs and property values.
       hidden then.
     - CIGAR therefore uses `ToggleAbility()` both ways and does not change WW's enchantment
       behaviour.
+  - **Decided (the user, 2026-09-27):** the enchantment that lingers after 마검사 해제 is WW's
+    intended behaviour, and CIGAR leaves it alone. No `Enchantment_On(False)` call is added.
+    Nexus FAQ candidate: "Why does my weapon enchantment stay after turning Wizard Warrior off?
+    That is The Wizard Warrior's own design; it runs out on its own."
+
 - **Keys and MCM are the player's.** CIGAR does not move, unbind or report WW's keys, and does not
   touch MCM Memory for it. No prompt-only mode. The user rejected the earlier options A, B and C
   for the 1-4 clash: "나는 모더지 출장 수리기사가 아니다" (I am a modder, not a house-call
