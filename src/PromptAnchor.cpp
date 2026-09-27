@@ -1,6 +1,7 @@
 #include "PromptAnchor.h"
 
 #include "Prompt.h"
+#include "Settings.h"
 #include "Util.h"
 
 namespace CIGAR::PromptAnchor
@@ -28,7 +29,7 @@ namespace CIGAR::PromptAnchor
 		std::atomic_bool markerLost{ false };       // the hook saw the handle fail; Tick places a new marker
 		std::atomic_bool hookDead{ false };         // the hook stopped being called; prompts stay on the player
 		std::atomic<std::uint64_t> frames{ 0 };     // counted by the hook
-		std::atomic<float> right{ kRightDefault };
+		std::atomic<float> right{ Settings::kPromptRightDefault };  // Settings passes the player's choice
 
 		// Main thread only.
 		RE::ObjectRefHandle marker;
@@ -274,16 +275,13 @@ namespace CIGAR::PromptAnchor
 		return attachID.load();
 	}
 
-	float Right()
-	{
-		return right.load();
-	}
-
 	void SetRight(float a_units)
 	{
 		right = a_units;
 		Log("right offset set to {:.0f}", a_units);
-		SetStatus(std::format("marker {:08X}, right {:.0f}", markerID.load(), a_units));
+		if (const auto id = markerID.load()) {
+			SetStatus(std::format("marker {:08X}, right {:.0f}", id, a_units));
+		}
 	}
 
 	std::string Status()

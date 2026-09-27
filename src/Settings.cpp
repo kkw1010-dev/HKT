@@ -6,6 +6,7 @@
 #include "Jujutsu.h"
 #include "Potion.h"
 #include "Prompt.h"
+#include "PromptAnchor.h"
 #include "WeaponSwap.h"
 
 #include <nlohmann/json.hpp>
@@ -32,18 +33,22 @@ namespace CIGAR::Settings
 		JujutsuTuning jujutsuTuning;
 		PotionTuning potionTuning;
 		float restGameSpeed = kRestGameSpeedDefault;
+		float promptRight = kPromptRightDefault;
 		std::string language = "auto";
 
-		float SnappedGameSpeed(float a_speed)
+		float Snapped(std::span<const float> a_steps, float a_value)
 		{
-			float best = kRestGameSpeedSteps.front();
-			for (const float step : kRestGameSpeedSteps) {
-				if (std::abs(step - a_speed) < std::abs(best - a_speed)) {
+			float best = a_steps.front();
+			for (const float step : a_steps) {
+				if (std::abs(step - a_value) < std::abs(best - a_value)) {
 					best = step;
 				}
 			}
 			return best;
 		}
+
+		float SnappedGameSpeed(float a_speed) { return Snapped(kRestGameSpeedSteps, a_speed); }
+		float SnappedPromptRight(float a_units) { return Snapped(kPromptRightSteps, a_units); }
 
 		JujutsuTuning Clamped(JujutsuTuning a_t)
 		{
@@ -90,6 +95,7 @@ namespace CIGAR::Settings
 			}
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
+			j["prompt"]["rightOffset"] = promptRight;
 			j["eat"]["minStage"] = eatMinStage;
 			j["needs"]["minPercent"] = needsMinPercent;
 			j["language"] = language;
@@ -132,6 +138,11 @@ namespace CIGAR::Settings
 	void Load()
 	{
 		std::scoped_lock guard(lock);
+		// On every way out below, the defaults included, PromptAnchor gets the offset.
+		const struct PassRight
+		{
+			~PassRight() { PromptAnchor::SetRight(promptRight); }
+		} passRight;
 		enabled.clear();
 		for (const auto* module : Modules()) {
 			enabled.emplace(module->Name(), true);
@@ -147,6 +158,7 @@ namespace CIGAR::Settings
 		jujutsuTuning = {};
 		potionTuning = {};
 		restGameSpeed = kRestGameSpeedDefault;
+		promptRight = kPromptRightDefault;
 
 		std::ifstream in(kPath, std::ios::binary);
 		if (!in) {
@@ -178,6 +190,7 @@ namespace CIGAR::Settings
 						}
 					}
 				}
+				promptRight = SnappedPromptRight(it->value("rightOffset", kPromptRightDefault));
 			}
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
@@ -236,6 +249,7 @@ namespace CIGAR::Settings
 		}
 		logs::info("settings: dress place range {:.0f}", placeRange);
 		logs::info("settings: prompt keys {} {} {} {}", promptKeys[0], promptKeys[1], promptKeys[2], promptKeys[3]);
+		logs::info("settings: prompt right offset {:.0f} (third person)", promptRight);
 		logs::info("settings: language {}", language);
 		for (const auto& [target, state] : promptOnly) {
 			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
@@ -339,6 +353,22 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		restGameSpeed = SnappedGameSpeed(a_speed);
+	}
+
+	float PromptRight()
+	{
+		std::scoped_lock guard(lock);
+		return promptRight;
+	}
+
+	void SetPromptRight(float a_units)
+	{
+		float units;
+		{
+			std::scoped_lock guard(lock);
+			units = promptRight = SnappedPromptRight(a_units);
+		}
+		PromptAnchor::SetRight(units);
 	}
 
 	int NeedsMinPercent()
@@ -467,7 +497,7 @@ namespace CIGAR::Settings
 	{
 		std::scoped_lock guard(lock);
 		SaveLocked();
-		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, needs from {}%, weapon swap range {:.0f}, jujutsu reach {:.0f}", placeRange, eatMinStage, needsMinPercent, swapRange, jujutsuReach);
+		logs::info("control panel: dress place range {:.0f}, eat from hunger stage {}, needs from {}%, weapon swap range {:.0f}, jujutsu reach {:.0f}, prompt right offset {:.0f}", placeRange, eatMinStage, needsMinPercent, swapRange, jujutsuReach, promptRight);
 	}
 
 	std::string SourceDescription()

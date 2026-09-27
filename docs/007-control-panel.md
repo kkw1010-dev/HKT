@@ -36,7 +36,7 @@ items by name, so the numbers fix their order:
 | `1. 모듈` | 모듈 (switches, gate, last line) and 상태 |
 | `2. 단축키` | 프롬프트 키 and 모드 단축키 |
 | `2. 단축키` note | prompt-only switches now also cover Valhalla's execution key (F15) |
-| `3. 세부 설정` | 먹기 (start stage), 무기 전환 (switch distance, default 800) and 탈의·착용 (reach) |
+| `3. 세부 설정` | 프롬프트 위치 (third-person right offset, default 15), 먹기 (start stage), 무기 전환 (switch distance, default 800) and 탈의·착용 (reach) |
 
 Each page logs `control panel: page … drawn for the first time` once.
 
@@ -55,6 +55,9 @@ Each page logs `control panel: page … drawn for the first time` once.
 - **모드 단축키**: prompt-only switches for Grapple and Acheron's surrender
   (default on), the current keys, and a 모드 키 다시 확인 button that re-reads
   both mods' keys. See "Prompt-only mode" in `docs/005-lockon.md`.
+- **프롬프트 위치**: 오른쪽 간격 (3인칭), a slider over 0 / 10 / 15 / 20 / 30, default 15.
+  Saved as `prompt.rightOffset` when the slider is released; it moves the prompts from the next
+  frame. See "Prompt placement" below.
 - **탈의·착용**: the bed/wardrobe reach (100–600, default 250) that used to be
   `kPlaceRange` in `Dress.cpp`. It is saved when the slider is released.
 - **상태**: whether SkyPrompt is connected, and where the settings came from.
@@ -215,7 +218,7 @@ is registered at kDataLoaded so the page titles follow the resolved language. Th
 the prompt-only section and the other-mod options; since 2.1.0 there is one release build, which shows
 them. See `docs/035-nexus-edition.md`.
 
-## Prompt placement (research, 2026-09-27; nothing changed)
+## Prompt placement (2026-09-27; done, N6 and N7 passed in game)
 
 The user asked for three things:
 - in third person, prompts a little farther from the face
@@ -314,10 +317,9 @@ N6 passed: the marker ahead of the head worked, and the user wants the prompt a 
 right. Applied (built; deployment waits while the MO2 session holds `mods\`):
 
 - **Forward.** Fixed at 40 units (`PromptAnchor::kForward`), the user's choice from N6.
-- **Right offset.** Along the camera's right, the side SkyPrompt itself uses for actors. It is
-  still being chosen: the author panel's "프롬프트 오른쪽 오프셋 (N7, 3인칭)" offers 0 / 10 / 15 /
-  20 / 30. The default is 15, the orchestrator's starting value. After N7 the pick becomes a
-  constant and the panel item goes.
+- **Right offset.** Along the camera's right, the side SkyPrompt itself uses for actors. At this
+  point it was an author-panel probe offering 0 / 10 / 15 / 20 / 30; N7 settled it as a player
+  setting (next section).
 - **The hardening plan above, as written.**
   - Validation of the co-saved marker (base XMarker, not deleted).
   - Per-frame handle check, with an immediate fallback to the player.
@@ -333,3 +335,21 @@ N7 draft (in `TEST-next-ingame.md`):
 - Pick one; it becomes the fixed value.
 - Also exercise fast travel, an interior/exterior door and riding a horse. `[PromptAnchor]` must
   show no `marker is gone` or `WARN` line; recovery lines would appear there.
+
+### Finished after N7 (2026-09-27)
+
+N7 passed in game: all five steps, with the prompts following the character after fast travel, an
+interior/exterior door and riding a horse. PromptAnchor is a finished feature.
+
+- **The right offset stays the player's choice.** The user saw no need to pick one value ("이거
+  굳이 뭘 골라야 할 필요가 있나? 그냥 선택하게 두는 게 더 좋은 것 같다"). The candidates 0 / 10 / 15 /
+  20 / 30 and the default 15 are the user's decision.
+  - Panel: `3. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭), in every build.
+  - Stored in `CIGAR.json` as `prompt.rightOffset`, snapped to the nearest step on load
+    (`Settings::kPromptRightSteps`, `Settings::PromptRight`).
+  - `Settings` passes it to `PromptAnchor::SetRight` at load and on every change; the log line is
+    `[PromptAnchor] right offset set to N`. The author build also shows the marker status under the
+    slider.
+- **Forward** stays the constant 40 (`PromptAnchor::kForward`), the user's choice from N6.
+- **For the release:** the README and the Nexus description must say that one disabled marker
+  reference is kept per save, and name the new option.

@@ -7,7 +7,7 @@
 // box. So in third person CIGAR attaches its prompts to one invisible marker (a disabled XMarker
 // placed once per save and kept in the co-save) and moves it every frame to a point ahead of the
 // head and a little to the right. In first person, or whenever the marker cannot be used, prompts
-// attach to the player as before. N6 passed on 2026-09-27; the right offset is still being chosen (N7).
+// attach to the player as before. N6 and N7 passed on 2026-09-27.
 namespace CIGAR::PromptAnchor
 {
 	// kDataLoaded: hooks PlayerCharacter::Update for the per-frame move.
@@ -27,10 +27,8 @@ namespace CIGAR::PromptAnchor
 
 	// Units ahead of the head, along the direction the character faces: the user's choice after N6.
 	inline constexpr float kForward = 40.0f;
-	// Units to the camera's right. Chosen in N7 from these candidates (author panel); 15 until then.
-	inline constexpr std::array kRightCandidates{ 0.0f, 10.0f, 15.0f, 20.0f, 30.0f };
-	inline constexpr float kRightDefault = 15.0f;
-	float Right();
+	// Units to the camera's right: the player's choice, kept by Settings (Settings::PromptRight), which
+	// passes it here at load and on every change.
 	void SetRight(float a_units);
 	std::string Status();
 }

@@ -481,6 +481,33 @@ namespace CIGAR::Panel
 		void __stdcall RenderOptions()
 		{
 			LogFirstDraw("options");
+			ImGui::SeparatorText(L("프롬프트 위치", "Prompt position"));
+			{
+				// The player picks from the N7 candidates (the user, 2026-09-27); forward stays 40.
+				const auto& steps = Settings::kPromptRightSteps;
+				const float current = Settings::PromptRight();
+				int step = 0;
+				for (int i = 0; i < static_cast<int>(steps.size()); ++i) {
+					if (std::abs(steps[i] - current) < 0.01f) {
+						step = i;
+					}
+				}
+				// No %d in the format: ImGui shows the text as the value.
+				const std::string shown = std::format("{:.0f}", steps[step]);
+				if (ImGui::SliderInt(L("오른쪽 간격 (3인칭)##prompt-right", "Right offset (third person)##prompt-right"), &step, 0,
+						static_cast<int>(steps.size()) - 1, shown.c_str())) {
+					Settings::SetPromptRight(steps[step]);
+				}
+				if (ImGui::IsItemDeactivatedAfterEdit()) {
+					Settings::Save();
+				}
+				Help(L("기본 15. 3인칭에서 프롬프트는 머리 바로 앞에 뜨며, 이 값만큼 오른쪽으로 비켜납니다. 1인칭에서는 캐릭터 기준",
+					"Default 15. In third person the prompts sit just ahead of the head, moved this far to the right. In first person they stay on the character"));
+				if constexpr (!kRelease) {
+					ImGui::TextColored(kDim, "%s", PromptAnchor::Status().c_str());
+				}
+			}
+
 			ImGui::SeparatorText(L("먹기", "Eating"));
 			int stage = Settings::EatMinStage();
 			if (ImGui::SliderInt(L("표시 시작 허기 단계##eat-stage", "Hunger stage to start##eat-stage"), &stage, Eat::kMinStageLow, Eat::kMinStageHigh)) {
@@ -559,22 +586,6 @@ namespace CIGAR::Panel
 			}
 			Help(L("기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트",
 				"Default 800. Beyond it, or with the enemy fleeing, the ranged weapon prompt shows; inside it, the melee one"));
-
-			if constexpr (!kRelease) {
-				// N7 (the user, 2026-09-27): the right offset is chosen in game; forward is fixed at 40.
-				ImGui::SeparatorText("프롬프트 오른쪽 오프셋 (N7, 3인칭)");
-				const float current = PromptAnchor::Right();
-				for (const float candidate : PromptAnchor::kRightCandidates) {
-					const auto label = candidate == PromptAnchor::kRightDefault ? std::format("{:.0f} (기본)##anchor-r{:.0f}", candidate, candidate) :
-					                                                              std::format("{:.0f}##anchor-r{:.0f}", candidate, candidate);
-					if (ImGui::RadioButton(label.c_str(), current == candidate)) {
-						SKSE::GetTaskInterface()->AddTask([candidate] { PromptAnchor::SetRight(candidate); });
-					}
-					ImGui::SameLine();
-				}
-				ImGui::NewLine();
-				ImGui::TextColored(kDim, "%s", PromptAnchor::Status().c_str());
-			}
 
 			ImGui::SeparatorText(L("유술", "Jujutsu"));
 			float reach = Settings::JujutsuReach();

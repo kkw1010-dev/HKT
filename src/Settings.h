@@ -100,6 +100,15 @@ namespace CIGAR::Settings
 	// Snaps to the nearest step.
 	void SetRestGameSpeed(float a_speed);
 
+	// Third person: how far to the camera's right of the point ahead of the head the prompts sit
+	// (PromptAnchor). The user kept the N7 candidates 0 / 10 / 15 / 20 / 30 as the player's choice,
+	// default 15 (2026-09-27).
+	inline constexpr std::array kPromptRightSteps{ 0.0f, 10.0f, 15.0f, 20.0f, 30.0f };
+	inline constexpr float kPromptRightDefault = 15.0f;
+	float PromptRight();
+	// Snaps to the nearest step and moves the marker from the next frame.
+	void SetPromptRight(float a_units);
+
 	// Writes the file; the panel calls this once a slider is released rather than on every drag step.
 	void Save();
 
