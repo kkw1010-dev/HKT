@@ -16,7 +16,7 @@ history of each module are in `docs/`, one file per module, and each file starts
   session.
 
 **Git.**
-- `v3` at **`65d1a02`**, local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
+- `v3` at **`65d1a02`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
 - Branches:
   - `master` / `v2`: 2.x, on GitHub; 2.1.2 is live on Nexus 193080
   - `v3`: 3.0.0 work, local
@@ -24,13 +24,12 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **68bd12a probe build** (forward-distance candidates).
-- **65d1a02 is built but not deployed.** The MO2 optimization session holds the MO2 profile and
-  `mods\`. When the orchestrator says the lock is released:
-  1. Check that Skyrim is closed.
-  2. Run `tools\Build.ps1 -Deploy`. It builds, copies only into `mods\CIGAR`, runs `verify_deploy.py`
-     and stops only the processes it started.
-  3. Report the result to "오케스트레이터".
+- `mods\CIGAR` holds the **65d1a02 build**, deployed 2026-09-27 by the session "Cigar" after the
+  orchestrator released the `mods\` lock; `verify_deploy.py` passed every check.
+- The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
+  release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
+  `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
+  result and hand the lock back.
 
 **Tests (`TEST-next-ingame.md`).**
 - N1-N5 passed in the 17:41 run: the relief prompt hidden during a bath, 주시하기 after a bath or
