@@ -732,3 +732,48 @@ Checks for the user's game (bare hands, weapon sheathed, third person):
   should play every time (IAMTOKKO's pattern).
 - Settling 2 needs a test profile without Acheron (an MO2 profile change, the user's call), or
   IAMTOKKO's `CIGAR.log` and mod list (whether to ask is the user's call).
+
+### The kill-move path first (the user's context, 2026-09-28)
+
+The last wall in developing 유술 was the engine's kill-move function; it was left alone because
+touching it is untested CommonLibSSE-NG territory and would need many runs
+(`disclose-known-issue-over-risky-engine-fix`). How that path could make "refused until the first
+death", and how to look at it **without calling or changing any kill-move function**:
+
+- **The mechanism that fits every record.** A paired kill move is gated by engine state on the actors
+  (`MiddleHighProcessData::killMoveTimer`, `deferredKillTimer`, `inDeferredKill`, the actor flag
+  `kIsInKillMove`) and possibly a global kill-move slot. If one of these is set when a session starts
+  and only the engine's death processing clears it, every paired request is refused until something
+  dies. It fits: any death cleared it, even a console `kill` of a non-victim (tests 28, 29); the
+  player's `boolBits` did not change (test 29), which points at process data rather than actor flags;
+  it is **not every session** (tests 5-8 and 12 played their first presses); and Execute, which also
+  starts paired kill moves, "sometimes misses its first press".
+- **Where the state could come from.** CIGAR swallows `KillActor` and `KillMoveEnd` for the four
+  non-lethal throws, which are the events that normally close a kill move. Inside a session the next
+  presses still play, so the swallow does not close the gate by itself. But a save made after a
+  throw may carry state the engine never cleaned up, and a load would restore it; sessions loaded from
+  such saves would start closed, fresh ones open. This would also explain a player who sees 100%.
+- **SE against AE.** CIGAR neither calls nor hooks the gate function itself (it calls
+  `SetupSpecialIdle` through CommonLib and hooks the animation-event handlers). A wrong address in
+  CIGAR would fail every time or crash, not until a death. A change in Bethesda's own function between
+  1.5.97 and 1.6 is possible in principle; there is no evidence, and it cannot be tested here.
+
+Observation-only checks (nothing below writes an engine value or calls a kill-move function):
+
+- **K1, save against fresh start.** From the main menu, `coc WhiterunBanneredMare`-style start without
+  loading a save (or a new game), step outside, then J1. Window present: session start sets it. Window
+  absent, while J1 after loading an older save shows it: the state comes from the save.
+- **K2, read-only log.** A small author build that only reads and logs, at each 유술 press, each
+  refusal and the first death: both actors' `killMoveTimer`, `deferredKillTimer`, `inDeferredKill`,
+  `IsInKillMove()`. The field that changes at the first death is the gate. (A similar build was made
+  after test 29 and rolled back untested.)
+- **J2** (any death) as above.
+- The runtime question needs IAMTOKKO's `CIGAR.log` (refusals before a death or none); asking is the
+  user's call.
+
+**A fix would be a risky engine change** and is not proposed now: clearing the field K2 finds before
+each request (writing process data), or calling the engine's own kill-move cleanup. Test cost: at
+least four to six sessions of about 30 minutes, covering the window on AE; vanilla kill moves, Valhalla
+executions, Acheron defeats, NPC-on-NPC kill moves and the kill camera for side effects; and a save and
+load after each. The SE path could not be tested here at all. By the user's standing choice this stays
+a disclosed known issue unless K1/K2 show a single, clearly benign cause.
