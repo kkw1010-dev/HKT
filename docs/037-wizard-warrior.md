@@ -1,9 +1,10 @@
 # 037 · The Wizard Warrior: 마검사 모드
 
-Status (2026-09-27): **designed by the user; code written (`src/WizardWarrior.*`), not built yet.**
-The C++ build waits for the shared build slot. Installing WW into the modlist waits for the
-user's approval: the permission check stopped a request relayed from another session. The
-in-game test is `TEST-next-ingame.md` N4.
+Status (2026-09-27): **built, deployed and installed; in-game NOT VERIFIED.**
+- The module (`src/WizardWarrior.*`) is in the deployed author build.
+- The user approved the WW install in the CIGAR session. It is Installation and Modification case
+  037: `##Magic`, plugin index 0x89, and verify_deploy passes WW's script-name check.
+- The in-game test is `TEST-next-ingame.md` N4.
 
 A Nexus user (xLenax) asked for a combat prompt that activates The Wizard Warrior. The user took
 it on for these reasons:
@@ -98,9 +99,9 @@ parsed for record IDs and property values.
   `QK_MainQuestScript.pex` still has `ToggleAbility`, `Allow_Switch`, `PowerToggle` and
   `KeyPowerUP`. Otherwise it only notes that the module idles.
 
-## The install (waiting for the user)
+## The install (done 2026-09-27, IaM case 037)
 
-The planned placement follows the Installation and Modification rules:
+The placement follows the Installation and Modification rules:
 - mod folder `The Wizard Warrior` inside the `##Magic` separator, next to Magic Sneak Attacks and
   Enhanced Reanimation (magic mechanics, no shared files)
 - plugin `The Wizard Warrior.esp` (a full ESP, master Skyrim.esm) in the `Overhaul - Magic` group,

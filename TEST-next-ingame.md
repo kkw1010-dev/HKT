@@ -89,10 +89,9 @@ USSEP 시험이 끝나 수정판 스크립트(슬롯 20칸, 속성 방식)가 �
 
 ## N4. 마검사 모드 (The Wizard Warrior 연동, 2026-09-27)
 
-전제: The Wizard Warrior가 모드리스트에 설치돼 있어야 합니다(사용자 승인 대기). CIGAR는 이 모듈이 들어간 빌드로
-2026-09-27에 배포했습니다. WW가 아직 없는 상태로 게임을 켜면 로그에
-`[WizardWarrior] The Wizard Warrior not found: 마검사 모드 is off` 한 줄만 나와야 합니다(조용히 건너뜀 확인). 플러그인이 추가되므로 새 게임에서 합니다. 시작 직후 "The Wizard Warrior
-Initialized" 알림이 뜨면 WW가 준비된 것입니다.
+전제: The Wizard Warrior 5.0.1을 2026-09-27에 설치했습니다(`##Magic`, 플러그인 인덱스 0x89, IaM 케이스 037).
+CIGAR는 이 모듈이 들어간 빌드로 배포돼 있고 verify_deploy가 WW 스크립트 이름까지 확인했습니다. 플러그인이
+추가됐으므로 **새 게임**에서 합니다. 시작 직후 "The Wizard Warrior Initialized" 알림이 뜨면 WW가 준비된 것입니다.
 
 - **준비:** 철 검(현재 로드 오더에서 확인).
   ```

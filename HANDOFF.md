@@ -166,8 +166,8 @@ In order. Every item is committed; the versions are also in `CMakeLists.txt` his
      - N2: 주시하기 after a bath or when idle
      - N3: mannequin regression on Another Mannequin Script Fix
      - N4: 마검사 모드
-   - The Wizard Warrior: the module is built and deployed (`docs/037-wizard-warrior.md`).
-     Installing WW into the modlist waits for the user's own approval in the CIGAR session.
+   - The Wizard Warrior: the module is built and deployed, and WW 5.0.1 is installed (IaM case 037,
+     plugin index 0x89; `docs/037-wizard-warrior.md`). In-game test N4; new game required.
 
 ### Two builds, one source (since 2.1.0)
 
