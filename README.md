@@ -57,8 +57,9 @@ All 24 modules passed the CIGAR 2.0 final in-game test on 2026-09-25 (44 of 44 c
 | `Surrender` | 항복 | Acheron (+ Yamete Kudasai) |
 
 A prompt dismissed with SkyPrompt's double tap stays hidden until the situation changes (pass time,
-helmet, chair drink, observe). Prompts hide while a menu is open. Keyboard and mouse are the target;
-gamepads are not supported.
+helmet, chair drink, observe, Wizard Warrior). Prompts hide while a menu is open. Keyboard and mouse,
+or a gamepad through SkyPrompt's own gamepad buttons; CIGAR's key settings change the keyboard keys
+only.
 
 ## Known issues
 
