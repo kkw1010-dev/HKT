@@ -23,6 +23,7 @@
 #include "Panel.h"
 #include "Potion.h"
 #include "Prompt.h"
+#include "PromptAnchor.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
@@ -264,6 +265,7 @@ namespace
 				Util::Notify(Text::L("CIGAR: 프롬프트 ID 중복. 한 키에 두 동작이 실행됨. 로그 확인", "CIGAR: Duplicate prompt IDs. One key runs two actions. See the log"));
 			}
 			Util::ResolveScenes();
+			PromptAnchor::OnGameLoaded();
 			for (auto* module : Modules()) {
 				module->OnGameLoaded();
 			}
@@ -298,6 +300,7 @@ namespace
 			BookRead::GetSingleton()->RegisterEvents();
 			Grapple::GetSingleton()->ReadIni();
 			Jujutsu::InstallHook();
+			PromptAnchor::Install();
 			StartTicker();
 			break;
 		case SKSE::MessagingInterface::kSaveGame:
@@ -325,6 +328,7 @@ namespace
 		Dress::GetSingleton()->Save(a_intfc);
 		Helmet::GetSingleton()->Save(a_intfc);
 		PartyOutfit::GetSingleton()->Save(a_intfc);
+		PromptAnchor::Save(a_intfc);
 	}
 
 	void OnLoad(SKSE::SerializationInterface* a_intfc)
@@ -339,6 +343,8 @@ namespace
 				Helmet::GetSingleton()->Load(a_intfc, version);
 			} else if (type == 'QOUT' && version == 1) {
 				PartyOutfit::GetSingleton()->Load(a_intfc, version);
+			} else if (type == 'ANCH' && version == 1) {
+				PromptAnchor::Load(a_intfc, version);
 			} else {
 				logs::warn("skipping unknown co-save record {:08X} v{}", type, version);
 			}
@@ -351,6 +357,7 @@ namespace
 		Dress::GetSingleton()->Revert();
 		Helmet::GetSingleton()->Revert();
 		PartyOutfit::GetSingleton()->Revert();
+		PromptAnchor::Revert();
 	}
 }
 

@@ -239,3 +239,25 @@ What decides the position today:
 - **A queued prompt keeps its `refid`.** Changing the anchor means withdrawing the prompt and
   offering it again, and SkyPrompt then jumps. CIGAR cannot feed a per-frame screen position.
 - **First person** can be detected with `RE::PlayerCamera::IsInFirstPerson()` (CommonLib).
+
+### Probe: a marker ahead of the head (2026-09-27, `src/PromptAnchor.*`)
+
+The user chose a third-person-only test. First person keeps attaching to the player.
+
+- **The marker.** One disabled `XMarker` (Skyrim.esm 0x3B), placed once per save with
+  `PlaceObjectAtMe(base, forcePersist=true)` and kept through the co-save record `ANCH` v1.
+  - At load CIGAR reads the marker's `GetBoundMin/Max`, the values SkyPrompt's `GetOBB` uses. If
+    they are zero, it enables the marker and moves it with `SetPosition`. If those are zero too,
+    prompts stay on the player. Every step is logged.
+- **Every frame.** A `PlayerCharacter::Update` vtable hook (slot 0xAD, chained as Acheron and
+  Grapple do) moves the marker to head + facing direction × d. It subtracts SkyPrompt's lift
+  (bounds top + 10 = 26 units), so the prompt is drawn at head height. The disabled marker's
+  `data.location` is written directly; no engine call.
+- **Attachment.** `PromptSlot::Offer` takes the `refid` from `PromptAnchor::RefID()`: the marker
+  in third person, the player in first person or without a marker. On a switch, every CIGAR prompt
+  is withdrawn and offered again, because SkyPrompt keeps a queued prompt's reference.
+- **Probe controls.** The author panel's "프롬프트 위치 탐색 (3인칭)" chooses d = 0 (the player,
+  as before), 25, 40 or 60; the default is 40. The final build fixes one value and drops the
+  panel item.
+- **Open:** whether the forward offset covers the face when the camera looks at the character from
+  the front. In-game test: `TEST-next-ingame.md` N6.

@@ -12,6 +12,7 @@
 #include "Module.h"
 #include "Potion.h"
 #include "Prompt.h"
+#include "PromptAnchor.h"
 #include "QuestTrack.h"
 #include "Rest.h"
 #include "Settings.h"
@@ -558,6 +559,21 @@ namespace CIGAR::Panel
 			}
 			Help(L("기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트",
 				"Default 800. Beyond it, or with the enemy fleeing, the ranged weapon prompt shows; inside it, the melee one"));
+
+			if constexpr (!kRelease) {
+				// Probe for the prompt position (the user, 2026-09-27); the final build fixes one distance.
+				ImGui::SeparatorText("프롬프트 위치 탐색 (3인칭)");
+				const float current = PromptAnchor::Distance();
+				for (const float candidate : PromptAnchor::kCandidates) {
+					const auto label = candidate <= 0.0f ? std::string("플레이어(기존)##anchor-0") : std::format("전방 {:.0f}##anchor-{:.0f}", candidate, candidate);
+					if (ImGui::RadioButton(label.c_str(), current == candidate)) {
+						SKSE::GetTaskInterface()->AddTask([candidate] { PromptAnchor::SetDistance(candidate); });
+					}
+					ImGui::SameLine();
+				}
+				ImGui::NewLine();
+				ImGui::TextColored(kDim, "%s", PromptAnchor::Status().c_str());
+			}
 
 			ImGui::SeparatorText(L("유술", "Jujutsu"));
 			float reach = Settings::JujutsuReach();

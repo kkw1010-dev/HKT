@@ -3,6 +3,7 @@
 #include <map>
 
 #include "Module.h"
+#include "PromptAnchor.h"
 #include "Settings.h"
 
 namespace CIGAR
@@ -11,7 +12,6 @@ namespace CIGAR
 	{
 		SkyPromptAPI::ClientID clientID = 0;
 
-		constexpr RE::FormID kPlayerRef = 0x14;
 		// SkyPrompt fades a prompt out after its lifetime setting; re-sending well within it keeps
 		// the prompt up.
 		constexpr auto kKeepAliveInterval = 2s;
@@ -164,7 +164,8 @@ namespace CIGAR
 			buttons[0] = { RE::INPUT_DEVICE::kKeyboard, key };
 			keys = buttons;
 		}
-		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, kPlayerRef, keys, color);
+		// The player, or the marker PromptAnchor moves ahead of the head in third person.
+		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, PromptAnchor::RefID(), keys, color);
 		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
 		lastSent = std::chrono::steady_clock::now();
 		owner->Log("offer event={} '{}' slot={} key={} sent={}", id, text, slot + 1, key, sent);
