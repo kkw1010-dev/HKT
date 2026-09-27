@@ -1,7 +1,14 @@
-# Nexus upload: CIGAR 3.0.0 (prepared 2026-09-27, not uploaded)
+# Nexus upload: CIGAR 3.0.0 (uploaded 2026-09-27)
 
-The upload was stopped before the Nexus edit page opened: Claude Code's permission check refused
-the navigation as "Create Public Surface". Everything below is ready to paste.
+Uploaded on 2026-09-27 as Nexus file 811289 (`CIGAR`, 3.0.0, Main, primary, 922,079 bytes), an
+Update of 2.1.2 (now Old versions). Mod version is 3.0.0, the file changelog carries the eight
+lines below, the description is `description-live.bbcode` (identical once Nexus's `<br />` are
+stripped) and The Wizard Warrior (14890) is a legacy requirement. All checked through the public v2
+GraphQL after saving. File page:
+https://www.nexusmods.com/skyrimspecialedition/mods/193080?tab=files&file_id=811289
+
+An earlier attempt was stopped before the edit page opened (permission check: "Create Public
+Surface"); the texts below are what was entered.
 
 ## The file
 
