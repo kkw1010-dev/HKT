@@ -154,9 +154,20 @@ In order. Every item is committed; the versions are also in `CMakeLists.txt` his
    reason is in `docs/007-control-panel.md`, and the correcting Nexus reply is drafted.
 5. **Nexus feedback of 2026-09-27** (`dist/nexus-page/feedback-2026-09-27.md`; decisions and replies
    in `dist/nexus-page/replies-2026-09-27.md`). The user posts the replies, never Claude.
-   - In-game repro pending: `TEST-next-ingame.md` (N1 relief prompt during a bath, N2 주시하기
-     after a bath or when idle). The N1 fix is proposed there and waits for the user.
-   - The Wizard Warrior: research in `docs/037-wizard-warrior.md`; the user decides.
+   - **Posted on Nexus (2026-09-27, by the orchestrator session after the user approved):**
+     - `sticky-faq.txt` went up as a Posts comment and is pinned (comment id 176294172, sticky
+       confirmed on the page).
+     - The two FAQ lines of `description-live.bbcode` (Language) are saved on the live
+       description.
+     - The reply drafts in `replies-2026-09-27.md` are for the user to post; whether they are up is
+       not recorded here.
+   - In-game tests pending in `TEST-next-ingame.md`:
+     - N1: the relief-prompt-during-a-bath fix (deployed)
+     - N2: 주시하기 after a bath or when idle
+     - N3: mannequin regression on Another Mannequin Script Fix
+     - N4: 마검사 모드
+   - The Wizard Warrior: the module is built and deployed (`docs/037-wizard-warrior.md`).
+     Installing WW into the modlist waits for the user's own approval in the CIGAR session.
 
 ### Two builds, one source (since 2.1.0)
 
