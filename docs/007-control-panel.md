@@ -96,6 +96,15 @@ CIGAR therefore lists a keyboard key for every prompt it sends
 - **Log.** Every `offer` line in `CIGAR.log` shows `slot=` and `key=` (the
   scan code).
 
+### Rejected: modifier keys and arrow keys (the user, 2026-09-27)
+
+A Nexus user (IAMTOKKO, 2026-09-26) asked for modifier-key combinations and arrow keys as
+prompt keys. The author first answered that they were "on my list". The user then **rejected
+both.** Their reason: other mods that show SkyPrompt prompts must be able to take the arrow keys,
+Grapple's QTE for one, so CIGAR must not claim them. SkyPrompt's own `settings.json` also uses
+Left and Right (`cycle_L` 203, `cycle_R` 205) to cycle between prompts. Do not add either. The
+correcting reply is drafted in `dist/nexus-page/replies-2026-09-27.md`.
+
 ## Settings file
 
 `Data/SKSE/Plugins/CIGAR.json`, read through MO2's VFS:

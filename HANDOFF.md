@@ -150,8 +150,13 @@ In order. Every item is committed; the versions are also in `CMakeLists.txt` his
    - The Nexus description will need a "Mannequin Outfit Swap" line.
    - `v3` merges into `master` when 3.0.0 ships.
 4. Minor, open: a GitHub release for 2.1.x (ask first); the `v2.0.1-nexus` release notes still say
-   SkyPrompt 2.3.15; the Nexus comment asking for modifier keys and arrow keys (the user answered
-   "on my list").
+   SkyPrompt 2.3.15. Modifier and arrow keys were **rejected** by the user on 2026-09-27; the
+   reason is in `docs/007-control-panel.md`, and the correcting Nexus reply is drafted.
+5. **Nexus feedback of 2026-09-27** (`dist/nexus-page/feedback-2026-09-27.md`; decisions and replies
+   in `dist/nexus-page/replies-2026-09-27.md`). The user posts the replies, never Claude.
+   - In-game repro pending: `TEST-next-ingame.md` (N1 relief prompt during a bath, N2 주시하기
+     after a bath or when idle). The N1 fix is proposed there and waits for the user.
+   - The Wizard Warrior: research in `docs/037-wizard-warrior.md`; the user decides.
 
 ### Two builds, one source (since 2.1.0)
 
