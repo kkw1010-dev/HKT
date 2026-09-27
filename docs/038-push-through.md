@@ -1,6 +1,6 @@
 # 038 · NPC push-through (review of an outside plan, 2026-09-28)
 
-**Status: reviewed, not started.** A GPT-written brief ("CIGAR NPC Push-Through Interaction v0.1",
+**Status: stage 0 (probe build and clip candidates) done 2026-09-28; waiting for the in-game probe (P1-P5).** A GPT-written brief ("CIGAR NPC Push-Through Interaction v0.1",
 `Downloads\# CIGAR NPC Push-Through Interactio.txt`) proposes a hold prompt that lets the player
 push past a non-hostile NPC with an arm or shoulder, the NPC reacting with the vanilla bump. This
 file records the review and its evidence so the next session does not re-derive it.
@@ -94,3 +94,54 @@ One log-only probe build: an author-panel button that performs `ActionBumpedInto
 the crosshair and logs `Process()`, `bumpedState`, the NPC's position before and after, hostility and
 crime. In parallel, a list of vanilla one-arm clip candidates from `hkx_preview.py`. Both decide GO
 or HOLD before any module code.
+
+## Stage 0 (2026-09-28): probe build and clip candidates
+
+The user said go (through the orchestrator). Nothing below offers a prompt.
+
+### The probe (`src/PushProbe.*`, author build `f9fd8e0`, deployed)
+
+- Author panel, `5. 세부 설정` → "탐침: NPC 밀기 (docs/038)". A button arms the probe; it fires on the
+  NPC under the crosshair when the menu closes, so the measurement is not paused with the menu.
+  - **행동 ActionBumpedInto:** `TESActionData::Create()`, source = the NPC, target = the player,
+    action = default object 90, `Process()`.
+  - **앞 / 뒤 / 왼쪽 / 오른쪽:** the graph events of the IDLE children of `BumpedIntoRoot`
+    (Skyrim.esm 03DE4E), sent with `NotifyAnimationGraph`: `NPC_BumpFromFront`,
+    `NPC_BumpedFromBack`, `NPC_BumpedFromLeft`, `NPC_BumpedFromRight`.
+  - **자연 부딪힘 관찰:** every 100 ms, the high-process actors within 400 units; a change of
+    `bumpedState` opens the same measurement, so walking and sprinting bumps are logged as the game
+    makes them.
+- Each bump is followed for 3 s: samples at 0.25 / 0.5 / 1 / 2 s, the NPC's animation graph events
+  (up to 40), dialogue lines within 1,500 units (`TESTopicInfoEvent`, with the topic and its
+  subtype), hostility, combat and the player's crime gold in the NPC's crime faction. It ends with
+  `RESULT ... DISPLACED | NOT DISPLACED` (20 units or more at any sample) and `PROBLEM:` when
+  hostility, combat or crime appeared.
+- Read only: `HighProcessData::bumpedState`, `lastBumpDirection`, `bumpTimer`. No engine value is
+  written.
+- **Small versus big.** The IDLE tree has no small/big split: `ActionBumpedInto` (03DE4D) →
+  `BumpedIntoRoot` → four direction idles chosen by `GetLastBumpDirection` on the NPC. The engine
+  keeps the strength in `bumpedState`; the watch mode shows what walking and sprinting set, and the
+  results show what each one does to the NPC.
+- In-game items: `TEST-next-ingame.md` P1-P5.
+
+### One-arm clip candidates (vanilla, no edit)
+
+Preview page: `C:\TAKEALOOK\_staging\push-clip-candidates\index.html` (hkx_preview, GT Softbody's
+female skeleton). Numbers from `arm-metrics.json`: how far each hand moves and reaches forward
+(+y), in units, root motion removed. GPMA plays one arm with `iGPMAOffsetType` 1 (right) or 2 (left),
+so the side of the clip must match.
+
+| Clip | Length | Arm | Reach forward | Fit |
+|---|---|---|---|---|
+| `mt_activatedoor` (same numbers as `mt_activatepickup`) | 2.7 s | left | 35 | best left push: an open hand pushed forward |
+| `shd_blockbash` | 0.37 s | left | 62 | a fast shove; strong, may read as aggressive |
+| `idletake` | 2.4 s | right | 44 | right reach; calm |
+| `idlegive` | 2.4 s | right | 38 | right reach; calm, hand turned up |
+| `mt_pointclose` | 2.2 s | left | 27 | a point, not a push |
+| `idlewave` | 2.1 s | right | 30 | a wave; "excuse me" at most |
+| `dialogueneutralsubtled` | 5.0 s | right | 15 | small talk gesture, too weak |
+| `h2h_attackpowerforwardlefthand` | 1.7 s | both | 46 | a punch; rejected |
+
+No single vanilla clip mirrors: a right push and a left push come from different clips
+(`idletake` right, `mt_activatedoor` left). The clips are Bethesda's; shipping a copy in an OAR
+folder would add files to the package allowlist (the user's call, open decision B/A above).
