@@ -130,10 +130,12 @@ history of each module are in `docs/`, one file per module, and each file starts
    compiled into the author build only (`src/Personal.h`); CIGAR's public files never name them.
 5. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
-6. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
-7. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
+6. **주시하기 during a bath, third person (open, no action).** The user will check it in game
+   (Nexus IAMTOKKO; `dist/nexus-page/feedback-2026-09-28.md` §3). Wait for the result.
+7. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
+8. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
    also an FAQ candidate about WW's lingering enchantment in `docs/037`.
-8. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
+9. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
    is tracked in `../Crash Triage`.
 
 **Where things are.**
