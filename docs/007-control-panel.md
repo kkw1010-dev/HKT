@@ -261,3 +261,49 @@ The user chose a third-person-only test. First person keeps attaching to the pla
   panel item.
 - **Open:** whether the forward offset covers the face when the camera looks at the character from
   the front. In-game test: `TEST-next-ingame.md` N6.
+
+### Hardening plan, applied only if N6 passes (designed 2026-09-27, not implemented)
+
+The user decided to keep the marker approach if N6 shows it reads naturally. The probe then
+becomes the real implementation, with these changes. Items marked *[verify]* rest on an inference
+that the probe's own logs can confirm.
+
+- **Marker life.**
+  - One marker per save, reused through `ANCH`.
+  - At load, the co-saved FormID is accepted only if it resolves to a reference whose base is
+    `XMarker` 0x3B and which is not deleted; otherwise a new one is placed and the old ID logged.
+  - Footprint: one disabled reference with no 3D and no script. If CIGAR is removed it stays as an
+    inert disabled marker; this is to be stated in the README.
+  - Deleting it at every save and placing it again was considered and rejected: `kSaveGame`
+    arrives on the saving thread, before the write, where changing world objects is unsafe.
+- **Cells, loading screens, fast travel.**
+  - SkyPrompt reads a disabled reference's position from `GetPosition()`, because
+    `GetCurrent3D()` is null. The marker's cell therefore does not matter.
+  - The marker is persistent, so it stays in memory across cell changes *[verify: after
+    interior/exterior changes and fast travel, `marker.get()` still resolves; the sample line
+    shows it]*.
+  - The update hook does not run during loading screens, and CIGAR's prompts are off in blocking
+    menus, so nothing is drawn stale.
+- **Riding, sitting, transformation, bleedout, scenes.**
+  - The facing comes from the player's own `GetAngleZ()` (the horse's heading when mounted) and
+    the head node from its middle-high process. When the node is missing (a transformation in
+    progress), that frame is skipped.
+  - In scenes and killmoves CIGAR's prompts are hidden anyway; the marker keeps following
+    harmlessly.
+- **Recovery and fallback.**
+  - Every frame the handle is resolved. If it fails, prompts switch to the player at once (one WARN
+    in the log), and a new marker is placed on the game thread, at most once every 10 s.
+  - If placement fails three times in a session, the player attachment stays until the next load,
+    with one notification.
+- **Hook order.**
+  - `write_vfunc` returns the previous function and CIGAR always calls it first. That makes the
+    order with Acheron and Grapple (both hook slot 0xAD and chain) irrelevant.
+  - The risk is a later mod that replaces the slot without chaining; the marker would then stop
+    moving silently. Self-check: the hook counts frames. If none arrive for 5 s while the game runs
+    unpaused, CIGAR logs a WARN, notifies once, and attaches prompts to the player.
+- **Probe removal.**
+  - Remove the panel item "프롬프트 위치 탐색 (3인칭)" and `kCandidates`.
+  - `d` becomes a constant with the N6 winner, recorded as the user's choice.
+  - The 5-second `sample:` line is dropped. The attach switches, marker placement and warnings
+    stay in the log.
+- **Unchanged:** first person attaches to the player (the user's choice).
