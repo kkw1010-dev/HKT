@@ -64,8 +64,9 @@ namespace CIGAR
 		inline constexpr std::uint16_t kReadBook = 39;
 		inline constexpr std::uint16_t kMannequinSwap = 40;
 		inline constexpr std::uint16_t kWizardWarrior = 41;
+		inline constexpr std::uint16_t kWizardWarriorOff = 42;
 
-		inline constexpr std::array kAll{ kBathe, kShower, kUndress, kDress, kBaboAct, kLock, kGrapple, kDeflate, kSurrender, kEat, kRanged, kMelee, kExecute, kJujutsu, kUrinate, kDefecate, kDrink, kTrackQuest, kEquipItem, kSit, kLieDown, kLean, kPassTime, kWarmHands, kRecharge, kEquipShout, kChairDrink, kHelmetOff, kHelmetOn, kPoison, kObserve, kPartyOutfit, kPartyRevert, kReadBook, kMannequinSwap, kWizardWarrior };
+		inline constexpr std::array kAll{ kBathe, kShower, kUndress, kDress, kBaboAct, kLock, kGrapple, kDeflate, kSurrender, kEat, kRanged, kMelee, kExecute, kJujutsu, kUrinate, kDefecate, kDrink, kTrackQuest, kEquipItem, kSit, kLieDown, kLean, kPassTime, kWarmHands, kRecharge, kEquipShout, kChairDrink, kHelmetOff, kHelmetOn, kPoison, kObserve, kPartyOutfit, kPartyRevert, kReadBook, kMannequinSwap, kWizardWarrior, kWizardWarriorOff };
 		constexpr bool Unique()
 		{
 			for (std::size_t i = 0; i < kAll.size(); ++i) {

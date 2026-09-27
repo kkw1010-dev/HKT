@@ -41,8 +41,10 @@ namespace CIGAR
 	void WizardWarrior::OnGameLoaded()
 	{
 		activate.Reset();
+		deactivate.Reset();
 		lastGate.clear();
-		dismissed = false;
+		dismissedOn = false;
+		dismissedOff = false;
 		checking = false;
 		auto* handler = RE::TESDataHandler::GetSingleton();
 		quest = handler && handler->LookupModByName(kPlugin) ? handler->LookupForm<RE::TESQuest>(kQuestID, kPlugin) : nullptr;
@@ -78,60 +80,80 @@ namespace CIGAR
 		const auto now = Clock::now();
 		if (checking && now >= checkAt) {
 			checking = false;
-			if (IsOn()) {
-				Log("on: QK_SpellToggle = 1");
-			} else {
+			if (IsOn() == expectOn) {
+				Log("{}: QK_SpellToggle = {}", expectOn ? "on" : "off", expectOn ? 1 : 0);
+			} else if (expectOn) {
 				Log("WARN ToggleAbility ran but QK_SpellToggle is still 0");
 				Util::Notify(Text::L("CIGAR: 마검사 모드가 켜지지 않음. 로그 확인", "CIGAR: Wizard Warrior did not turn on. See the log"));
+			} else {
+				Log("WARN ToggleAbility ran but QK_SpellToggle is still 1");
+				Util::Notify(Text::L("CIGAR: 마검사 모드가 꺼지지 않음. 로그 확인", "CIGAR: Wizard Warrior did not turn off. See the log"));
 			}
 		}
 
 		const auto* state = player->AsActorState();
 		const bool drawn = state && state->IsWeaponDrawn();
-		if (!drawn) {
-			dismissed = false;  // a decline lasts until the weapon is sheathed
+		if (drawn) {
+			dismissedOff = false;  // 마검사 해제: hidden until the next draw and sheathe
+		} else {
+			dismissedOn = false;  // 마검사 모드: hidden until the weapon is sheathed
 		}
 
 		const auto* allowVar = script ? script->GetVariable(kAllowSwitch) : nullptr;
 		const bool allowSwitch = !allowVar || !allowVar->IsBool() || allowVar->GetBool();
 		const bool on = IsOn();
+		const bool combat = player->IsInCombat();
 		const bool scene = Util::InScene(player);
 		const bool quiet = now < quietUntil;
-		LogGate(std::format("drawn={} on={} allowSwitch={} scene={} dismissed={} quiet={}", drawn, on, allowSwitch, scene, dismissed, quiet));
-		activate.Update(drawn && !on && allowSwitch && !scene && !dismissed && !quiet,
-			[] { return Text::L("마검사 모드", "Wizard Warrior Mode"); });
+		LogGate(std::format("drawn={} on={} allowSwitch={} combat={} scene={} dismissedOn={} dismissedOff={} quiet={}", drawn, on, allowSwitch,
+			combat, scene, dismissedOn, dismissedOff, quiet));
+		const bool free = allowSwitch && !scene && !quiet;
+		activate.Update(free && drawn && !on && !dismissedOn, [] { return Text::L("마검사 모드", "Wizard Warrior Mode"); });
+		// Off only out of combat: sheathing mid-fight can be a stance change (the user, 2026-09-27).
+		deactivate.Update(free && !drawn && on && !combat && !dismissedOff, [] { return Text::L("마검사 해제", "End Wizard Warrior"); });
 	}
 
-	void WizardWarrior::OnAccepted(std::uint16_t a_eventID)
+	void WizardWarrior::Toggle(bool a_turnOn)
 	{
-		if (a_eventID != kActivate || !quest) {
-			return;
-		}
-		if (IsOn()) {
-			Log("accept ignored: already on");
-			return;
-		}
-		activate.Withdraw();
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		auto* args = RE::MakeFunctionArguments();
 		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback{ new NoResult() };
 		const bool queued = vm && vm->DispatchMethodCall2(Util::Handle(quest), kScript, kToggleFunction, args, callback);
 		quietUntil = Clock::now() + kQuietAfterAccept;
 		checking = queued;
+		expectOn = a_turnOn;
 		checkAt = Clock::now() + kCheckAfterAccept;
-		Log("{}ToggleAbility queued={}", queued ? "" : "WARN ", queued);
+		Log("{}ToggleAbility ({}) queued={}", queued ? "" : "WARN ", a_turnOn ? "turn on" : "turn off", queued);
 		if (!queued) {
 			Util::Notify(Text::L("CIGAR: 마검사 모드 호출 실패. 로그 확인", "CIGAR: Could not call Wizard Warrior. See the log"));
 		}
 	}
 
-	void WizardWarrior::OnDeclined(std::uint16_t a_eventID)
+	void WizardWarrior::OnAccepted(std::uint16_t a_eventID)
 	{
-		if (a_eventID != kActivate) {
+		if (!quest || (a_eventID != kActivate && a_eventID != kDeactivate)) {
 			return;
 		}
-		dismissed = true;
-		activate.Withdraw();
-		Log("마검사 모드 dismissed: hidden until the weapon is sheathed");
+		const bool turnOn = a_eventID == kActivate;
+		// ToggleAbility flips whatever state WW is in, so it runs only when that state still matches.
+		if (IsOn() == turnOn) {
+			Log("accept ignored: already {}", turnOn ? "on" : "off");
+			return;
+		}
+		(turnOn ? activate : deactivate).Withdraw();
+		Toggle(turnOn);
+	}
+
+	void WizardWarrior::OnDeclined(std::uint16_t a_eventID)
+	{
+		if (a_eventID == kActivate) {
+			dismissedOn = true;
+			activate.Withdraw();
+			Log("마검사 모드 dismissed: hidden until the weapon is sheathed");
+		} else if (a_eventID == kDeactivate) {
+			dismissedOff = true;
+			deactivate.Withdraw();
+			Log("마검사 해제 dismissed: hidden until the weapon is drawn and sheathed again");
+		}
 	}
 }

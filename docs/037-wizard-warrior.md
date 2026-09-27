@@ -77,7 +77,22 @@ parsed for record IDs and property values.
   - in a SexLab or OStim scene
   - after a decline (double tap), until the weapon is sheathed: the same logic as the other
     declines
-- **No off prompt.** X belongs to the player.
+- **마검사 해제 (changed by the user, 2026-09-27, after N4 passed).** Sheathing out of combat
+  while WW is on offers to turn it off. It is shown while that holds (with `Allow_Switch` true and
+  no scene), and a decline hides it until the next draw and sheathe. The user's reason: in play,
+  WW could not be turned off by hand and stayed on, or only wore off with time, which was very
+  distracting. So an off prompt does not break the principle.
+  - What the logs and the source show about "cannot turn it off":
+    - X does run the off path. In the N4 run, `QK_SpellToggle` went 1 -> 0 at 15:26:53 and
+      15:27:58 with the weapon sheathed, where CIGAR only turns WW on.
+    - `ToggleAbility()`'s off path stops the current group's glow, dispels `TWW_Power` and sets
+      the global to 0.
+    - It does **not** call `Enchantment_On(False)`, so a weapon enchantment spell (when enabled in
+      WW's MCM) stays until its own duration ends. WW's 4.2.6 changelog says this is deliberate.
+    - The only refusal is `Allow_Switch` false, during a concentration spell; the prompt is
+      hidden then.
+    - CIGAR therefore uses `ToggleAbility()` both ways and does not change WW's enchantment
+      behaviour.
 - **Keys and MCM are the player's.** CIGAR does not move, unbind or report WW's keys, and does not
   touch MCM Memory for it. No prompt-only mode. The user rejected the earlier options A, B and C
   for the 1-4 clash: "나는 모더지 출장 수리기사가 아니다" (I am a modder, not a house-call
@@ -94,7 +109,10 @@ parsed for record IDs and property values.
 - **Accept.** `DispatchMethodCall2(QK_QuestMain, "QK_MainQuestScript", "ToggleAbility")`. Two
   seconds later it checks `QK_SpellToggle`: it logs `on: QK_SpellToggle = 1`, or a WARN plus one
   notification when WW did not turn on (self-reporting).
-- **Prompt.** ID 41, single press (combat context); panel label 마검사 모드 / Wizard Warrior Mode.
+- **Prompts.** 마검사 모드 is ID 41 and 마검사 해제 is ID 42, both single press. The panel label is
+  마검사 모드 / Wizard Warrior Mode.
+- **Off check.** Two seconds after 마검사 해제 it checks that `QK_SpellToggle` is 0: `off: ...`,
+  or a WARN plus one notification.
 - **verify_deploy.** When the `The Wizard Warrior` mod is enabled, it checks that
   `QK_MainQuestScript.pex` still has `ToggleAbility`, `Allow_Switch`, `PowerToggle` and
   `KeyPowerUP`. Otherwise it only notes that the module idles.
