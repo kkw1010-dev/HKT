@@ -21,6 +21,19 @@ find_package(nlohmann_json CONFIG REQUIRED)
 
 file(GLOB_RECURSE CIGAR_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
+# Personal modules (src/Personal.h): the sibling folder ../CIGAR-Personal is local only and never
+# published. The author build compiles its sources when it has any; a release build never does.
+set(CIGAR_PERSONAL OFF)
+set(CIGAR_PERSONAL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/../CIGAR-Personal/src")
+if(NOT CIGAR_RELEASE AND IS_DIRECTORY "${CIGAR_PERSONAL_SRC}")
+	file(GLOB_RECURSE CIGAR_PERSONAL_SOURCES CONFIGURE_DEPENDS "${CIGAR_PERSONAL_SRC}/*.cpp")
+	if(CIGAR_PERSONAL_SOURCES)
+		list(APPEND CIGAR_SOURCES ${CIGAR_PERSONAL_SOURCES})
+		set(CIGAR_PERSONAL ON)
+	endif()
+endif()
+message(STATUS "CIGAR personal modules: ${CIGAR_PERSONAL}")
+
 add_commonlibsse_plugin(${PROJECT_NAME}
 	AUTHOR "TAKEALOOK"
 	SOURCES ${CIGAR_SOURCES}
@@ -29,7 +42,7 @@ add_commonlibsse_plugin(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 target_compile_options(${PROJECT_NAME} PRIVATE /Zc:preprocessor /utf-8 /permissive- /EHsc /W4)
 target_compile_definitions(${PROJECT_NAME} PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE
-	$<$<BOOL:${CIGAR_RELEASE}>:CIGAR_RELEASE>)
+	$<$<BOOL:${CIGAR_RELEASE}>:CIGAR_RELEASE> $<$<BOOL:${CIGAR_PERSONAL}>:CIGAR_PERSONAL>)
 target_include_directories(${PROJECT_NAME} PRIVATE src include)
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h)
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)

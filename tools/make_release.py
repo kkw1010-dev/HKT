@@ -26,6 +26,10 @@ REPO = os.path.dirname(HERE)
 OUT_ROOT = os.path.join(os.path.expanduser("~"), "Downloads")
 DEFAULTS = os.path.join(REPO, "dist", "CIGAR.json")
 SEVEN_ZIP = r"C:\Program Files\7-Zip\7z.exe"
+# Personal modules (src/Personal.h) never ship: every personal build carries this string, and the local
+# personal repo may hold a list of words that must not appear in anything public.
+PERSONAL = os.path.join(os.path.dirname(REPO), "CIGAR-Personal")
+PERSONAL_MARKER = b"CIGAR-PERSONAL-BUILD"
 
 # Everything the package may hold. Anything else (a mesh, a script, another mod's file) fails the
 # build: CIGAR integrates other mods at runtime and ships none of their files (docs/035).
@@ -91,6 +95,10 @@ def main():
             "CIGAR_RELEASE. Build with: tools\\Build.ps1 -Package"
         )
 
+    if PERSONAL_MARKER in blob:
+        raise SystemExit("this DLL carries personal modules (src/Personal.h). Build with: tools\\Build.ps1 -Package")
+    print("PASS no personal modules in the DLL")
+
     name = "CIGAR %s" % version()
     out = os.path.join(OUT_ROOT, name)
     if os.path.isdir(out):
@@ -138,6 +146,20 @@ def main():
                 if encoded.lower() in data:
                     raise SystemExit("%s holds this machine's user-profile path" % rel)
     print("PASS no user-profile path in the package")
+
+    # The personal repo's word list, when this machine has it (the list itself is never public).
+    checker = os.path.join(PERSONAL, "tools", "check_public.py")
+    if os.path.isfile(checker):
+        sys.path.insert(0, os.path.dirname(checker))
+        import check_public
+        table = check_public.words()
+        bad = check_public.check_files([os.path.join(out, rel) for rel in sorted(found)], table,
+                                       lambda p: os.path.relpath(p, out))
+        if bad:
+            raise SystemExit("the package holds %d private word(s); see the FAIL lines above" % bad)
+        print("PASS none of the %d private words in the package" % len(table))
+    else:
+        print("INFO no personal word list on this machine; that check is skipped")
 
     print("release folder:", out)
     total = 0

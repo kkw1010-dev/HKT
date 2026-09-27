@@ -10,9 +10,13 @@
 #include "ItemEquip.h"
 #include "Jujutsu.h"
 #include "Module.h"
+#include "ModuleLabel.h"
 #include "Potion.h"
 #include "Prompt.h"
 #include "PromptAnchor.h"
+#ifdef CIGAR_PERSONAL
+#include "Personal.h"
+#endif
 #include "PushProbe.h"
 #include "QuestTrack.h"
 #include "Rest.h"
@@ -43,17 +47,7 @@ namespace CIGAR::Panel
 		constexpr bool kRelease = false;
 #endif
 
-		struct Label
-		{
-			std::string_view module;
-			const char* titleKo;
-			const char* titleEn;
-			// The mod it waits for (a name, the same in both languages); empty for none.
-			const char* needs;
-			// What the player gets from it, in one or two sentences.
-			const char* whatKo;
-			const char* whatEn;
-		};
+		using Label = ModuleLabel;
 
 		// Modules missing here still get a switch, titled with their own name.
 		constexpr Label kLabels[]{
@@ -144,7 +138,11 @@ namespace CIGAR::Panel
 					return &label;
 				}
 			}
+#ifdef CIGAR_PERSONAL
+			return Personal::FindLabel(a_module);
+#else
 			return nullptr;
+#endif
 		}
 
 		// The module pages (the user, 2026-09-27: CIGAR's own modules split into combat and

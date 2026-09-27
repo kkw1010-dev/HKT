@@ -79,6 +79,8 @@ DLL on 2026-09-17, and reached CIGAR 2.0 on 2026-09-25. Each module's design and
 ```text
 src/main.cpp        SKSE entry, lifecycle messages, co-save, ticker (one game-thread task per 100 ms: FastTick every time, Tick once a second)
 src/Module.h        module interface (OnGameLoaded / Tick / OnAccepted) and gated logging
+src/Personal.h      hook for local-only modules kept outside this repo (author build only; release builds never include them)
+src/PushProbe.*     author-build probe for docs/038 (NPC push-through); log only
 src/Prompt.*        SkyPrompt client and one sink per prompt (SkyPrompt 2.3.15 removes by sink)
 src/Util.*          strip rules, worn description, Papyrus script-property reader, synthetic key presses
 src/Bathe.*         Bathing in Skyrim integration (properties read from its quest script at load)

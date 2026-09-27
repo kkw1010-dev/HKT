@@ -21,6 +21,9 @@ MOD_NAME = "CIGAR"
 MOD = os.path.join(MODS, MOD_NAME)
 DLL = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.dll")
 BUILT_DLL = os.path.join(REPO, "build", "release", "CIGAR.dll")
+# Personal modules (src/Personal.h): the author build must carry them whenever the local folder has sources.
+PERSONAL_SRC = os.path.join(os.path.dirname(REPO), "CIGAR-Personal", "src")
+PERSONAL_MARKER = b"CIGAR-PERSONAL-BUILD"
 # Names src/BaboKey.cpp reads from BaboDialogue.
 BABO_SCRIPTS = {
     "BaboDiaMonitorScript": ["OnKeyDown", "BDConfig", "BaboKidnapEvent", "BaboNPCAnimating"],
@@ -772,6 +775,12 @@ def main():
             check(a.read() == b.read(), "deployed DLL matches the build")
         exports = dll_exports(DLL)
         check(REQUIRED_EXPORTS <= exports, "DLL exports %s" % ", ".join(sorted(e.decode() for e in REQUIRED_EXPORTS)))
+        personal = os.path.isdir(PERSONAL_SRC) and any(f.lower().endswith(".cpp") for f in os.listdir(PERSONAL_SRC))
+        if personal:
+            with open(DLL, "rb") as f:
+                check(PERSONAL_MARKER in f.read(), "author build carries the personal modules")
+        else:
+            note("no personal modules on this machine")
 
     # CIGAR is ESP-less: no plugin and no Papyrus script belongs in its mod folder.
     leftovers = []

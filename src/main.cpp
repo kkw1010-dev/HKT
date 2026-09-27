@@ -20,6 +20,9 @@
 #include "PartyOutfit.h"
 #include "MannequinSwap.h"
 #include "Module.h"
+#ifdef CIGAR_PERSONAL
+#include "Personal.h"
+#endif
 #include "Panel.h"
 #include "Potion.h"
 #include "Prompt.h"
@@ -38,16 +41,23 @@ namespace CIGAR
 {
 	std::span<Module* const> Modules()
 	{
-		static const std::array<Module*, 26> modules{
-			Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
-			LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
-			Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
-			Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
-			BookRead::GetSingleton(),
-			Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
-			QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
-			PartyOutfit::GetSingleton(), MannequinSwap::GetSingleton(), WizardWarrior::GetSingleton()
-		};
+		static const std::vector<Module*> modules = [] {
+			std::vector<Module*> all{
+				Bathe::GetSingleton(), Dress::GetSingleton(), BaboKey::GetSingleton(),
+				LockOn::GetSingleton(), Grapple::GetSingleton(), Deflate::GetSingleton(), Surrender::GetSingleton(),
+				Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
+				Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
+				BookRead::GetSingleton(),
+				Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
+				QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
+				PartyOutfit::GetSingleton(), MannequinSwap::GetSingleton(), WizardWarrior::GetSingleton()
+			};
+#ifdef CIGAR_PERSONAL
+			const auto personal = Personal::Modules();
+			all.insert(all.end(), personal.begin(), personal.end());
+#endif
+			return all;
+		}();
 		return modules;
 	}
 }
@@ -381,6 +391,9 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	constexpr auto kEdition = "author";
 #endif
 	logs::info("{} {} loaded ({}; runtime {})", plugin->GetName(), plugin->GetVersion().string(), kEdition, a_skse->RuntimeVersion().string());
+#ifdef CIGAR_PERSONAL
+	logs::info("personal modules: {} ({})", Personal::Modules().size(), Personal::BuildMarker());
+#endif
 
 	if (!SKSE::GetMessagingInterface()->RegisterListener(OnMessage)) {
 		logs::critical("could not register the SKSE message listener");
