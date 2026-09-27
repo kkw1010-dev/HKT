@@ -16,7 +16,7 @@ history of each module are in `docs/`, one file per module, and each file starts
      user's choice.
   3. After the pick, take the test clips out: `python tools/push_test_assets.py --remove` (Skyrim and
      MO2 closed; only `mods\CIGAR` changes).
-- Nothing is uncommitted. `v3` = `master` = `eecfe87`, 4 local commits ahead of GitHub (pushed only
+- Nothing is uncommitted. `v3` = `master`, a few local commits ahead of GitHub (`8254180`; pushed only
   when the user asks). `../CIGAR-Personal` is committed too (no remote).
 - Build lock and `mods\` lock: ask the orchestrator each time; deploy only with Skyrim and MO2 closed.
 
