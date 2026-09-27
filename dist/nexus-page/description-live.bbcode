@@ -104,7 +104,7 @@ Most prompts work with Skyrim alone. Others appear only when the mod they drive 
 - Observe a person or a distant view (hold to zoom)
 - Bathe / Shower [i](Bathing in Skyrim - Renewed)[/i]
 - Eat the cheapest suitable food when hungry [i](Survival Mode + Survival Mode Improved)[/i]
-- Urinate / Defecate [i](Private Needs - Orgasm)[/i]
+- Urinate / Defecate, never while bathing [i](Private Needs - Orgasm)[/i]
 - Deflate [i](Fill Her Up Baka Edition)[/i]
 
 [b]Gear and items[/b]
@@ -114,6 +114,7 @@ Most prompts work with Skyrim alone. Others appear only when the mod they drive 
 - Recharge an enchanted weapon with the best-fitting soul gem
 - Apply the most valuable poison to a drawn weapon
 - Drink the right potion for low health, stamina or magicka, poison, disease or water breathing
+- Swap outfits with a mannequin in one hold; enchanted and tempered pieces move as they are
 
 [b]Quests[/b]
 - Track a quest when it gets a new objective
@@ -127,6 +128,11 @@ Most prompts work with Skyrim alone. Others appear only when the mod they drive 
 - Lock On [i](True Directional Movement)[/i]
 - Execute a stunned enemy [i](Valhalla Combat)[/i]
 - Surrender at low health [i](Acheron; respects Yamete Kudasai's 3-minute rule)[/i]
+- Wizard Warrior Mode on when you draw, off when you sheathe out of combat [i](The Wizard Warrior)[/i]
+
+[b]Where prompts appear[/b]
+
+In third person, prompts sit just ahead of your character's head, a little to the right; how far to the right is a setting. In first person they stay on your character. For this, CIGAR keeps one invisible, disabled marker in each save; it does nothing if CIGAR is removed.
 
 [b]Hotkeys CIGAR takes over[/b]
 
@@ -175,7 +181,7 @@ The player plays the game.[/color][/b]
 4. Install CIGAR normally through your preferred mod manager.
 5. Launch Skyrim through SKSE.
 
-CIGAR is [b]ESP-less[/b] and does not require a new game. Updating from 2.0.1 needs nothing special.
+CIGAR is [b]ESP-less[/b] and does not require a new game. Updating from 2.x needs nothing special.
 [/color]
 
 [size=4][b][color=#D6A24A]Requirements[/color][/b][/size]
@@ -200,6 +206,7 @@ CIGAR is [b]ESP-less[/b] and does not require a new game. Updating from 2.0.1 ne
 - [url=https://subscribestar.adult/posts/118628]Fill Her Up Baka Edition[/url] (BakaFactory)
 - [url=https://www.loverslab.com/files/file/39023-private-needs-orgasm/]Private Needs - Orgasm[/url] (LoversLab)
 - [url=https://www.loverslab.com/files/file/17496-babodialogue/]BaboDialogue[/url] (BakaFactory, LoversLab)
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/14890]The Wizard Warrior - Spellsword Magic Combat Evolved[/url]
 
 [b]Input[/b]
 
@@ -225,6 +232,8 @@ Prompts, notifications and the settings panel are in [b]English or Korean[/b]. C
 - [b]Jujutsu does nothing until someone has died since the game was loaded.[/b] Once anyone dies in the session it works normally. The cause appears to be a kill-move state inside the game engine; changing it directly might fix it, but its side effects cannot be checked, so it is deliberately left alone. The log records each refusal.
 - [b]Execute can miss the first press.[/b] Press again.
 - [b]The helmet comes off at once, without an animation.[/b]
+- [b]A weapon enchantment stays after End Wizard Warrior[/b] until it runs out. That is The Wizard Warrior's own design.
+- [b]Mannequins:[/b] tested with the Unofficial Patch's mannequin script and with Another Mannequin Script Fix. The unpatched base-game script is supported but was not tested.
 [/color]
 
 [size=4][b][color=#D6A24A]Design Inspiration & Shout Outs[/color][/b][/size]

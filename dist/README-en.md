@@ -32,8 +32,10 @@ Install the archive with Mod Organizer 2 or Vortex. No new game is needed.
 - A prompt stays up while its situation lasts and goes away on its own when it ends.
 - Up to four prompts show at once, each on its own key. The default keys are 1, 2, 3 and 4.
 - Most actions outside combat are **hold** prompts, so a stray tap changes nothing.
-- **Double-tap** a prompt to dismiss it: pass time, helmet, chair drinking and observe then stay away
-  until the situation changes.
+- **Double-tap** a prompt to dismiss it: pass time, helmet, chair drinking, observe and Wizard Warrior
+  then stay away until the situation changes.
+- In third person, prompts sit just ahead of your character's head, a little to the right (the
+  distance to the right is a setting). In first person they stay on your character.
 - Prompts hide while a menu is open (inventory, map, dialogue and so on).
 
 ## Prompts
@@ -47,7 +49,7 @@ Prompts marked with a mod name need that mod; the rest work with Skyrim alone.
 | Bathe / Shower | Naked in water, or under a waterfall. *Bathing in Skyrim - Renewed* |
 | Undress / Get Dressed | At a bed or wardrobe, and in water. What you take off is remembered and put back on |
 | Eat: <food> | When you are hungry. Cheapest food first; raw meat, drinks and spoiled food are skipped. *Survival Mode* |
-| Urinate / Defecate | When bladder or bowels are full. *Private Needs - Orgasm* |
+| Urinate / Defecate | When bladder or bowels are full; not while you are bathing. *Private Needs - Orgasm* |
 | Deflate (hold) | While inflated. *Fill Her Up Baka Edition* |
 | Sit / Lie Down | Standing still with the weapon sheathed, looking down at the floor. Moving gets you up slowly |
 | Lean on Wall / Table / Railing | Facing a wall, a table or a railing |
@@ -66,6 +68,7 @@ Prompts marked with a mod name need that mod; the rest work with Skyrim alone.
 | Recharge (hold): <weapon> | Out of combat, when the enchanted weapon in your hand is at 25% charge or less. The best-fitting soul gem is used |
 | Apply Poison (hold): <poison> | Weapon drawn, no poison on it, and a poison in your pack |
 | Drink: <potion> | Low health, stamina or magicka, poisoned, diseased, or under water |
+| Swap Outfits (hold) | Looking at a mannequin: what you wear and what it wears change places. Enchanted and tempered pieces move as they are, and the mannequin's helmet comes to you stowed. With one side empty the prompt is Store Outfit or Wear Mannequin's Outfit |
 
 ### Quests
 
@@ -86,6 +89,7 @@ Prompts marked with a mod name need that mod; the rest work with Skyrim alone.
 | Execute | An enemy's stun is broken. *Valhalla Combat* |
 | Jujutsu | A blocking humanoid enemy is close. Four throws that knock it down and break its guard, and a neck break that kills |
 | Surrender (hold) | In combat below 40% health. *Acheron* |
+| Wizard Warrior Mode / End Wizard Warrior | Drawing a weapon while it is off; sheathing out of combat while it is on. *The Wizard Warrior* |
 
 ## Other mods
 
@@ -106,6 +110,7 @@ them.
 | Deflate | Fill Her Up Baka Edition, by BakaFactory | LoversLab / SubscribeStar |
 | Urinate, Defecate | Private Needs - Orgasm | [LoversLab](https://www.loverslab.com/files/file/39023-private-needs-orgasm/) |
 | Choose Action | BaboDialogue, by BakaFactory | LoversLab / SubscribeStar |
+| Wizard Warrior Mode, End Wizard Warrior | The Wizard Warrior - Spellsword Magic Combat Evolved | [Nexus](https://www.nexusmods.com/skyrimspecialedition/mods/14890) |
 
 Warm Hands finds fires with the list from the Survival Mode Creation Club file
 (`ccqdrsse001-survivalmode.esl`); without it that one prompt never shows.
@@ -131,13 +136,16 @@ page once.
 
 ## Settings (SKSE Menu Framework)
 
-The in-game menu has a **CIGAR** section with three pages.
+The in-game menu has a **CIGAR** section with five pages.
 
-1. **Modules**: switch each feature on or off; a feature switched off takes its prompts away at once.
-   The **language** is chosen here too: Auto (your game's language), 한국어 or English.
-2. **Keys**: the four prompt keys, and the prompt only switches above. A clash with another mod's key
+1. **Combat**, 2. **Non-combat** and 3. **Mod integrations**: switch each feature on or off; a feature
+   switched off takes its prompts away at once. Mod integrations work only with their mod installed
+   and wait quietly without it.
+4. **Keys**: the four prompt keys, and the prompt only switches above. A clash with another mod's key
    is shown.
-3. **Options**: when prompts start (potion thresholds, hunger stage, needs level, weapon swap
+5. **Options**: whether SkyPrompt is connected, the **language** (Auto, your game's language, 한국어
+   or English), the **prompt position** (how far to the right prompts sit in third person: 0, 10, 15,
+   20 or 30, default 15), when prompts start (potion thresholds, hunger stage, needs level, weapon swap
    distance, jujutsu reach, bed and wardrobe reach, pass time speed) and **jujutsu damage**: the share
    of the enemy's maximum stamina (default 100%) and maximum health (default 5%) a throw takes. A throw
    always leaves at least 1 health; only the neck break kills.
@@ -149,6 +157,14 @@ Your choices are saved to `SKSE/Plugins/CIGAR.json`.
 - **Chair drinking** knows the 29 drinks of the base game and its DLCs, plus any drink another mod
   tags as alcohol (Gourmet, Object Categorization Framework, SunHelm).
 - **The helmet** comes off at once, without an animation.
+- **Prompt position:** to place prompts ahead of your character, CIGAR keeps one invisible, disabled
+  marker in each save and moves it every frame. If CIGAR is removed, the marker stays in the save and
+  does nothing. If another mod stops that per-frame update from reaching CIGAR, prompts go back to
+  your character and a notification says so.
+- **Mannequins:** the swap was tested with the Unofficial Skyrim Special Edition Patch's mannequin
+  script and with Another Mannequin Script Fix. The unpatched base-game script is supported but was
+  not tested. When a mannequin cannot take an outfit (too few free slots, or a second copy of the same
+  armor), nothing moves and a notification says why.
 - **Scenes:** while a SexLab or OStim scene plays the player, combat, gear and needs prompts stay
   away (detected at runtime; neither framework is needed).
 - Page names in the settings panel switch language at the next launch; everything else switches at
@@ -162,6 +178,8 @@ Your choices are saved to `SKSE/Plugins/CIGAR.json`.
   it, but there is no way to check what else such a change would affect, so it is **deliberately left
   alone**. Refusals in that window raise no warning; the log gives the reason.
 - **Execute can miss the first press.** Press again.
+- **A weapon enchantment stays after End Wizard Warrior** until it runs out. That is The Wizard
+  Warrior's own design, and CIGAR leaves it alone.
 
 ## If something goes wrong
 

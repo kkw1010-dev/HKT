@@ -125,6 +125,20 @@ def main():
                          % (sorted(found - PACKAGE_FILES), sorted(PACKAGE_FILES - found)))
     print("PASS the package holds only CIGAR's own %d files" % len(PACKAGE_FILES))
 
+    # Nothing under this machine's user profile may ship: no profile path in any file (the DLL
+    # included; it carries source paths from the build folder, which is outside the profile). The
+    # bare user name is not checked: it is a prefix of the public GitHub account in the readmes.
+    profile = os.path.expanduser("~")
+    personal = {profile, profile.replace("\\", "/"), profile.replace("\\", "\\\\")}
+    for rel in sorted(found):
+        with open(os.path.join(out, rel), "rb") as f:
+            data = f.read().lower()
+        for text in personal:
+            for encoded in (text.encode("utf-8"), text.encode("utf-16-le")):
+                if encoded.lower() in data:
+                    raise SystemExit("%s holds this machine's user-profile path" % rel)
+    print("PASS no user-profile path in the package")
+
     print("release folder:", out)
     total = 0
     for root, _, files in os.walk(out):
