@@ -16,7 +16,7 @@ history of each module are in `docs/`, one file per module, and each file starts
   session.
 
 **Git.**
-- `v3` at **`489e863`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
+- `v3` at **`474538c`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
 - Branches:
   - `master` / `v2`: 2.x, on GitHub; 2.1.2 is live on Nexus 193080
   - `v3`: 3.0.0 work, local
@@ -27,6 +27,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `mods\CIGAR` holds the **489e863 build** (the right-offset setting), deployed 2026-09-27 by the
   session "Cigar" after the orchestrator released the `mods\` lock; `verify_deploy.py` passed every
   check. The setting itself has not been seen in game yet.
+- **474538c is built but not deployed**: the module pages split into 1. 전투 / 2. 비전투 /
+  3. 모드 연동 (`docs/007` "Module pages"). Deploy it at the next lock release.
 - The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
   release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
   `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
