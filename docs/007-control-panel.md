@@ -262,7 +262,7 @@ The user chose a third-person-only test. First person keeps attaching to the pla
 - **Open:** whether the forward offset covers the face when the camera looks at the character from
   the front. In-game test: `TEST-next-ingame.md` N6.
 
-### Hardening plan, applied only if N6 passes (designed 2026-09-27, not implemented)
+### Hardening plan (designed 2026-09-27; applied after N6 passed, see below)
 
 The user decided to keep the marker approach if N6 shows it reads naturally. The probe then
 becomes the real implementation, with these changes. Items marked *[verify]* rest on an inference
@@ -307,3 +307,29 @@ that the probe's own logs can confirm.
   - The 5-second `sample:` line is dropped. The attach switches, marker placement and warnings
     stay in the log.
 - **Unchanged:** first person attaches to the player (the user's choice).
+
+### Adopted after N6 (2026-09-27)
+
+N6 passed: the marker ahead of the head worked, and the user wants the prompt a little further
+right. Applied (built; deployment waits while the MO2 session holds `mods\`):
+
+- **Forward.** Fixed at 40 units (`PromptAnchor::kForward`), the user's choice from N6.
+- **Right offset.** Along the camera's right, the side SkyPrompt itself uses for actors. It is
+  still being chosen: the author panel's "프롬프트 오른쪽 오프셋 (N7, 3인칭)" offers 0 / 10 / 15 /
+  20 / 30. The default is 15, the orchestrator's starting value. After N7 the pick becomes a
+  constant and the panel item goes.
+- **The hardening plan above, as written.**
+  - Validation of the co-saved marker (base XMarker, not deleted).
+  - Per-frame handle check, with an immediate fallback to the player.
+  - Recovery placing at most once every 10 s, giving up after 3 failures with one notification.
+  - The frame counter: 5 s without the update hook while playing gives a WARN and a notification,
+    and prompts go to the player.
+  - Head-node gaps skip the frame.
+  - The forward candidates and the 5-second `sample:` log are gone.
+
+N7 draft (in `TEST-next-ingame.md`):
+- In third person, compare the right offsets 0 / 10 / 15 / 20 / 30 from the panel.
+- Check the view from behind, from the side and from the front.
+- Pick one; it becomes the fixed value.
+- Also exercise fast travel, an interior/exterior door and riding a horse. `[PromptAnchor]` must
+  show no `marker is gone` or `WARN` line; recovery lines would appear there.

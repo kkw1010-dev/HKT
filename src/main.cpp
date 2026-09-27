@@ -234,6 +234,7 @@ namespace
 				module->Tick();
 			}
 		}
+		PromptAnchor::Tick();
 	}
 
 	// Paces the ticks from its own thread and posts one task per 100 ms, running Tick() on every

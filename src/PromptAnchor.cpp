@@ -17,23 +17,30 @@ namespace CIGAR::PromptAnchor
 
 		constexpr RE::FormID kXMarker = 0x3B;  // Skyrim.esm XMarker: IsMarker (never drawn), bounds -18,-20,0..18,18,16
 		constexpr RE::FormID kPlayer = 0x14;
-		constexpr std::uint32_t kRecord = 'ANCH';
-		constexpr std::uint32_t kVersion = 1;
-		constexpr auto kSampleEvery = 5s;
+		constexpr auto kRetryEvery = 10s;       // a lost marker is placed again at most this often
+		constexpr int kMaxPlaceFailures = 3;    // then the player keeps the prompts until the next load
+		constexpr auto kHookSilence = 5s;       // no frame from the update hook this long while playing: another mod replaced it
 
-		// The probe starts on the middle candidate (the user's examples: 25/40/60).
-		std::atomic<float> distance{ 40.0f };
-		// Read by PromptSlot::Offer (game thread), written by the update hook (main thread).
+		// Read by PromptSlot::Offer and Tick (game thread), written by the update hook (main thread).
 		std::atomic<RE::FormID> attachID{ kPlayer };
-		std::atomic<RE::FormID> markerID{ 0 };  // 0: no usable marker
-		std::atomic_bool setPosition{ false };  // enabled-marker fallback when a disabled one has no bounds
+		std::atomic<RE::FormID> markerID{ 0 };      // 0: no usable marker
+		std::atomic_bool setPosition{ false };      // enabled-marker fallback when a disabled one has no bounds
+		std::atomic_bool markerLost{ false };       // the hook saw the handle fail; Tick places a new marker
+		std::atomic_bool hookDead{ false };         // the hook stopped being called; prompts stay on the player
+		std::atomic<std::uint64_t> frames{ 0 };     // counted by the hook
+		std::atomic<float> right{ kRightDefault };
 
 		// Main thread only.
 		RE::ObjectRefHandle marker;
 		RE::FormID savedID = 0;  // from the co-save
 		float lift = 26.0f;      // SkyPrompt draws 10 units above the box top; XMarker's top is 16 up
 		bool attachedToMarker = false;
-		Clock::time_point nextSample{};
+		// Tick bookkeeping (game thread).
+		Clock::time_point nextRetry{};
+		int placeFailures = 0;
+		bool gaveUpNotified = false;
+		std::uint64_t lastFrames = 0;
+		Clock::time_point lastFrameSeen{};
 
 		std::mutex statusLock;
 		std::string status = "not installed";
@@ -52,56 +59,63 @@ namespace CIGAR::PromptAnchor
 			return std::format("({:.0f}, {:.0f}, {:.0f})", a_p.x, a_p.y, a_p.z);
 		}
 
+		void Attach(bool a_marker, std::string_view a_why)
+		{
+			if (a_marker == attachedToMarker) {
+				return;
+			}
+			attachedToMarker = a_marker;
+			attachID = a_marker ? markerID.load() : kPlayer;
+			Log("prompts attach to {} ({})", a_marker ? std::format("the marker {:08X}", markerID.load()) : "the player"s, a_why);
+			// SkyPrompt keeps a queued prompt's reference; every prompt is offered again on its next tick.
+			Prompts::WithdrawEverything();
+		}
+
 		void Move(RE::PlayerCharacter* a_player)
 		{
 			auto* camera = RE::PlayerCamera::GetSingleton();
 			const bool firstPerson = camera && camera->IsInFirstPerson();
-			const float d = distance.load();
-			const bool want = !firstPerson && d > 0.0f && markerID.load() != 0;
-			if (want != attachedToMarker) {
-				attachedToMarker = want;
-				attachID = want ? markerID.load() : kPlayer;
-				Log("prompts attach to {} ({})", want ? std::format("the marker {:08X}", markerID.load()) : "the player"s,
-					firstPerson ? "first person" : d <= 0.0f ? "distance 0: the player as before" : want ? "third person" : "no marker");
-				// SkyPrompt keeps a queued prompt's reference; every prompt is offered again next tick.
-				Prompts::WithdrawEverything();
-			}
-			if (!want) {
+			if (firstPerson || hookDead || markerID.load() == 0) {
+				Attach(false, firstPerson ? "first person" : hookDead ? "update hook not called" : "no marker");
 				return;
 			}
 			const auto ref = marker.get();
-			if (!ref) {
+			if (!ref || ref->IsDeleted()) {
 				markerID = 0;
-				Log("WARN the marker is gone: prompts fall back to the player");
-				SetStatus("marker gone: prompts on the player");
+				markerLost = true;
+				Log("WARN the marker is gone: prompts go to the player, and a new marker is placed");
+				Attach(false, "marker lost");
 				return;
 			}
 			const auto* middle = a_player->GetMiddleHighProcess();
 			const auto* head = middle ? middle->headNode : nullptr;
 			if (!head) {
-				return;
+				return;  // a transformation or a missing process; the next frame tries again
 			}
-			// Ahead of the head, in the direction the character faces; no sideways part (the user).
+			Attach(true, "third person");
+			const auto& headPos = head->world.translate;
+			// Ahead of the head along the direction the character faces (the user, N6), then to the
+			// camera's right, the side SkyPrompt itself uses for actors.
 			const float heading = a_player->GetAngleZ();
 			const RE::NiPoint3 forward{ std::sin(heading), std::cos(heading), 0.0f };
-			RE::NiPoint3 target = head->world.translate + forward * d;
+			RE::NiPoint3 target = headPos + forward * kForward;
+			if (const float r = right.load(); r != 0.0f && camera) {
+				const auto toHead = headPos - camera->GetRuntimeData2().pos;
+				target += toHead.UnitCross(RE::NiPoint3{ 0.0f, 0.0f, 1.0f }) * r;
+			}
 			target.z -= lift;
 			if (setPosition) {
 				ref->SetPosition(target);
 			} else {
 				ref->data.location = target;
 			}
-			if (const auto now = Clock::now(); now >= nextSample) {
-				nextSample = now + kSampleEvery;
-				const auto cameraPos = camera ? camera->GetRuntimeData2().pos : RE::NiPoint3{};
-				Log("sample: d={:.0f} head {} marker {} (drawn at z+{:.0f}), camera {} at {:.0f} units", d, Point(head->world.translate), Point(target),
-					lift, Point(cameraPos), cameraPos.GetDistance(head->world.translate));
-			}
 		}
 
 		void UpdateHook(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			// The previous function first, whoever it belongs to (Acheron and Grapple hook this slot too).
 			originalUpdate(a_player, a_delta);
+			++frames;
 			if (a_player) {
 				Move(a_player);
 			}
@@ -116,6 +130,61 @@ namespace CIGAR::PromptAnchor
 			const auto size = a_max - a_min;
 			return std::abs(size.x) > 1e-3f || std::abs(size.y) > 1e-3f || std::abs(size.z) > 1e-3f;
 		}
+
+		bool IsOurMarker(RE::TESObjectREFR* a_ref)
+		{
+			const auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
+			return base && base->GetFormID() == kXMarker && !a_ref->IsDeleted();
+		}
+
+		// Uses the co-saved marker when it is still ours, else places a new one; game thread.
+		bool Prepare(std::string_view a_why)
+		{
+			auto* player = Util::Player();
+			RE::TESObjectREFR* ref = savedID ? RE::TESForm::LookupByID<RE::TESObjectREFR>(savedID) : nullptr;
+			if (ref && !IsOurMarker(ref)) {
+				Log("WARN co-saved marker {:08X} is no longer an XMarker reference; placing a new one", savedID);
+				ref = nullptr;
+			}
+			const bool reused = ref != nullptr;
+			RE::NiPointer<RE::TESObjectREFR> placed;
+			if (!ref) {
+				auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(kXMarker);
+				placed = base && player ? player->PlaceObjectAtMe(base, true) : nullptr;
+				ref = placed.get();
+			}
+			if (!ref) {
+				Log("WARN could not place the marker ({}): prompts stay on the player", a_why);
+				return false;
+			}
+			if (!ref->IsDisabled()) {
+				ref->Disable();
+			}
+			RE::NiPoint3 min, max;
+			bool bounds = HasBounds(ref, min, max);
+			bool enabled = false;
+			if (!bounds) {
+				// A disabled marker without 3D may report no bounds; an enabled one has its 3D.
+				Log("WARN the disabled marker reports no bounds; enabling it and moving it with SetPosition");
+				ref->Enable(false);
+				bounds = HasBounds(ref, min, max);
+				enabled = true;
+			}
+			if (!bounds) {
+				Log("WARN the marker has no bounds even when enabled: prompts stay on the player");
+				return false;
+			}
+			setPosition = enabled;
+			lift = max.z * ref->GetScale() + 10.0f;
+			marker = ref->GetHandle();
+			savedID = ref->GetFormID();
+			markerID = savedID;
+			Log("marker {:08X} {} ({}; {}): bounds {} .. {}, drawn {:.0f} units above it; forward {:.0f}, right {:.0f}", savedID,
+				reused ? "reused" : "placed", a_why, enabled ? "enabled, SetPosition" : "disabled, position written directly", Point(min),
+				Point(max), lift, kForward, right.load());
+			SetStatus(std::format("marker {:08X} ({}), right {:.0f}", savedID, enabled ? "enabled" : "disabled", right.load()));
+			return true;
+		}
 	}
 
 	void Install()
@@ -128,53 +197,58 @@ namespace CIGAR::PromptAnchor
 	void OnGameLoaded()
 	{
 		markerID = 0;
+		markerLost = false;
 		attachID = kPlayer;
 		attachedToMarker = false;
 		marker = {};
-		auto* player = Util::Player();
-		RE::TESObjectREFR* ref = savedID ? RE::TESForm::LookupByID<RE::TESObjectREFR>(savedID) : nullptr;
-		const bool reused = ref != nullptr;
-		RE::NiPointer<RE::TESObjectREFR> placed;
-		if (!ref) {
-			auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(kXMarker);
-			placed = base && player ? player->PlaceObjectAtMe(base, true) : nullptr;
-			ref = placed.get();
+		placeFailures = 0;
+		gaveUpNotified = false;
+		lastFrames = frames.load();
+		lastFrameSeen = Clock::now();
+		if (hookDead.exchange(false)) {
+			Log("update hook check reset for this load");
 		}
-		if (!ref) {
-			Log("WARN could not place the marker: prompts stay on the player");
+		if (!Prepare("load")) {
+			++placeFailures;
+			nextRetry = Clock::now() + kRetryEvery;
 			SetStatus("no marker: prompts on the player");
-			return;
 		}
-		if (!ref->IsDisabled()) {
-			ref->Disable();
+	}
+
+	void Tick()
+	{
+		const auto now = Clock::now();
+		// The update hook must keep being called while the game runs; Tick only runs then.
+		if (const auto f = frames.load(); f != lastFrames) {
+			lastFrames = f;
+			lastFrameSeen = now;
+		} else if (!hookDead && now - lastFrameSeen >= kHookSilence) {
+			hookDead = true;
+			Log("WARN PlayerCharacter::Update has not reached CIGAR for {} s (another mod replaced it?): prompts stay on the player",
+				std::chrono::duration_cast<std::chrono::seconds>(kHookSilence).count());
+			Util::Notify(Text::L("CIGAR: 프롬프트 위치 갱신 중단. 플레이어 기준으로 표시. 로그 확인",
+				"CIGAR: Prompt placement stopped updating; prompts stay on the player. See the log"));
+			SetStatus("update hook not called: prompts on the player");
 		}
-		RE::NiPoint3 min, max;
-		bool bounds = HasBounds(ref, min, max);
-		setPosition = false;
-		if (!bounds) {
-			// A disabled marker without 3D may report no bounds; an enabled one has its 3D.
-			Log("WARN the disabled marker reports no bounds; enabling it and moving it with SetPosition");
-			ref->Enable(false);
-			bounds = HasBounds(ref, min, max);
-			setPosition = true;
+
+		// Recovery: a lost marker, or one that could not be placed at load.
+		if ((markerLost || markerID.load() == 0) && !hookDead && placeFailures < kMaxPlaceFailures && now >= nextRetry) {
+			nextRetry = now + kRetryEvery;
+			if (Prepare("recovery")) {
+				markerLost = false;
+			} else if (++placeFailures >= kMaxPlaceFailures && !gaveUpNotified) {
+				gaveUpNotified = true;
+				Log("WARN the marker could not be placed {} times: prompts stay on the player until the next load", kMaxPlaceFailures);
+				Util::Notify(Text::L("CIGAR: 프롬프트 마커를 만들 수 없음. 플레이어 기준으로 표시",
+					"CIGAR: Could not place the prompt marker; prompts stay on the player"));
+				SetStatus("marker failed: prompts on the player");
+			}
 		}
-		if (!bounds) {
-			Log("WARN the marker has no bounds even when enabled: prompts stay on the player");
-			SetStatus("marker without bounds: prompts on the player");
-			return;
-		}
-		lift = max.z * ref->GetScale() + 10.0f;
-		marker = ref->GetHandle();
-		savedID = ref->GetFormID();
-		markerID = savedID;
-		Log("marker {:08X} {} ({}): bounds {} .. {}, drawn {:.0f} units above it; distance {:.0f}", savedID, reused ? "reused" : "placed",
-			setPosition ? "enabled, SetPosition" : "disabled, position written directly", Point(min), Point(max), lift, distance.load());
-		SetStatus(std::format("marker {:08X} ({}), distance {:.0f}", savedID, setPosition ? "enabled" : "disabled", distance.load()));
 	}
 
 	void Save(SKSE::SerializationInterface* a_intfc)
 	{
-		if (savedID == 0 || !a_intfc->OpenRecord(kRecord, kVersion)) {
+		if (savedID == 0 || !a_intfc->OpenRecord('ANCH', 1)) {
 			return;
 		}
 		a_intfc->WriteRecordData(savedID);
@@ -200,16 +274,16 @@ namespace CIGAR::PromptAnchor
 		return attachID.load();
 	}
 
-	float Distance()
+	float Right()
 	{
-		return distance.load();
+		return right.load();
 	}
 
-	void SetDistance(float a_units)
+	void SetRight(float a_units)
 	{
-		distance = a_units;
-		Log("distance set to {:.0f} ({})", a_units, a_units > 0.0f ? "ahead of the head" : "the player, as before");
-		SetStatus(std::format("marker {:08X}, distance {:.0f}", markerID.load(), a_units));
+		right = a_units;
+		Log("right offset set to {:.0f}", a_units);
+		SetStatus(std::format("marker {:08X}, right {:.0f}", markerID.load(), a_units));
 	}
 
 	std::string Status()

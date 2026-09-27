@@ -561,13 +561,14 @@ namespace CIGAR::Panel
 				"Default 800. Beyond it, or with the enemy fleeing, the ranged weapon prompt shows; inside it, the melee one"));
 
 			if constexpr (!kRelease) {
-				// Probe for the prompt position (the user, 2026-09-27); the final build fixes one distance.
-				ImGui::SeparatorText("프롬프트 위치 탐색 (3인칭)");
-				const float current = PromptAnchor::Distance();
-				for (const float candidate : PromptAnchor::kCandidates) {
-					const auto label = candidate <= 0.0f ? std::string("플레이어(기존)##anchor-0") : std::format("전방 {:.0f}##anchor-{:.0f}", candidate, candidate);
+				// N7 (the user, 2026-09-27): the right offset is chosen in game; forward is fixed at 40.
+				ImGui::SeparatorText("프롬프트 오른쪽 오프셋 (N7, 3인칭)");
+				const float current = PromptAnchor::Right();
+				for (const float candidate : PromptAnchor::kRightCandidates) {
+					const auto label = candidate == PromptAnchor::kRightDefault ? std::format("{:.0f} (기본)##anchor-r{:.0f}", candidate, candidate) :
+					                                                              std::format("{:.0f}##anchor-r{:.0f}", candidate, candidate);
 					if (ImGui::RadioButton(label.c_str(), current == candidate)) {
-						SKSE::GetTaskInterface()->AddTask([candidate] { PromptAnchor::SetDistance(candidate); });
+						SKSE::GetTaskInterface()->AddTask([candidate] { PromptAnchor::SetRight(candidate); });
 					}
 					ImGui::SameLine();
 				}

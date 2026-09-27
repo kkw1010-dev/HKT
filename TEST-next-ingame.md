@@ -157,3 +157,26 @@ N4와 같은 게임에서 이어서 해도 됩니다. CIGAR는 이 기능이 들
   - `prompts attach to the marker ... (third person)` / `... to the player (first person)`: 부착 전환
   - `distance set to N`: 후보 변경
   - 5초마다 `sample: d=... head (...) marker (...) ... camera ... at N units`: 실제 좌표
+
+## N7. 프롬프트 오른쪽 오프셋 고르기 (3인칭, 2026-09-27, **배포 대기**)
+
+N6 합격 후 본 구현입니다. 전방 거리는 40으로 고정했습니다(사용자 선택). 빌드는 됐고, MO2 작업이 `mods\`를 쥐고
+있어 배포는 오케스트레이터 신호를 기다립니다. 배포되면 이 줄을 지웁니다.
+
+- **동작:**
+  1. 3인칭에서 프롬프트가 뜨게 합니다(무기를 넣고 바닥을 보면 앉기·눕기, 무기를 꺼내면 독 바르기나 마검사 모드).
+  2. CIGAR 제어판 **"프롬프트 오른쪽 오프셋 (N7, 3인칭)"**에서 **0 / 10 / 15(기본) / 20 / 30**을 바꿔 가며 봅니다.
+     바꾸면 떠 있던 프롬프트는 다음 순간 새 자리에서 보입니다.
+  3. 카메라를 뒤, 옆, 앞으로 돌려 봅니다.
+  4. 안정성: 빠른 이동 한 번, 실내↔실외 문 한 번, 말 타기(안장 얹은 말 `EncHorseSaddledBrown`을 불러 탐, FormID 확인 완료). 이동한 뒤에도 프롬프트가 캐릭터 앞에
+     따라오는지 봅니다.
+     ```
+     player.placeatme 00023AB2
+     ```
+- **기대 결과:** 프롬프트가 얼굴을 가리지 않고 앞쪽 약간 오른쪽에 보입니다. **가장 좋은 값 하나를 골라 알려
+  주세요.** 그 값으로 고정하고 제어판 항목은 없앱니다.
+- **로그 (`[PromptAnchor]`):**
+  - `marker XXXXXXXX reused|placed (load; disabled, ...)`: 준비
+  - `prompts attach to the marker ... (third person)` / `the player (first person)`: 부착 전환
+  - `right offset set to N`: 후보 변경
+  - `WARN`이나 `marker is gone`이 없어야 합니다(있으면 복구 줄이 이어짐)
