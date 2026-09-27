@@ -61,7 +61,7 @@ USSEP 시험이 끝나 수정판 스크립트(슬롯 20칸, 속성 방식)가 �
 그리고 어제 고친 60번 슬롯 교환이 이 경로에서도 되는지 봅니다. 새 게임에서 합니다(USSEP 시험 때 세이브는 마네킹
 데이터 형식이 다릅니다).
 
-- **준비:** FormID는 2026-09-27 현재 로드 오더에서 확인했습니다.
+- **준비:** FormID는 2026-09-27 현재 로드 오더에서 확인했습니다(TravelerSetEldenRing.esp 설치로 NirnsChosen 방어구가 FEB41 → FEB42로 밀린 뒤 다시 확인).
   ```
   coc XJKRiverFallCottage
   player.additem 00013952 1
@@ -72,11 +72,11 @@ USSEP 시험이 끝나 수정판 스크립트(슬롯 20칸, 속성 방식)가 �
   player.additem 44024D6A 1
   player.additem 44024D6B 1
   player.additem 44024D6C 1
-  player.additem FEB41810 1
-  player.additem FEB41811 1
-  player.additem FEB41812 1
+  player.additem FEB42810 1
+  player.additem FEB42811 1
+  player.additem FEB42812 1
   ```
-  일식 마법사 세트: 로브, 장화, 장갑, 두건, 어깨·다리·팔 보호대(다리 보호대 `FEB41811`이 60번 슬롯).
+  일식 마법사 세트: 로브, 장화, 장갑, 두건, 어깨·다리·팔 보호대(다리 보호대 `FEB42811`이 60번 슬롯).
 - **동작:**
   1. 강철 미늘 세트(투구 포함)를 입고 마네킹에 **의상 보관 (길게)**.
   2. 일식 마법사 세트 7부위를 입고 같은 마네킹에 **의상 교환 (길게)**.
