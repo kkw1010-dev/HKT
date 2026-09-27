@@ -27,10 +27,9 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **474538c build**, deployed 2026-09-27 by the session "Cigar" after the
-  orchestrator released the `mods\` lock; `verify_deploy.py` passed every check. It carries the
-  right-offset setting (489e863) and the module pages split into 1. 전투 / 2. 비전투 / 3. 모드 연동
-  (`docs/007` "Module pages"). Neither has been seen in game yet.
+- `mods\CIGAR` holds the **f9fd8e0 author build** (2026-09-28): 3.0.0 plus the log-only NPC push
+  probe (`src/PushProbe.*`, author build only, `docs/038`). `verify_deploy.py` passed every check.
+  The right-offset setting and the five pages passed retest 3.
 - The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
   release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
   `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
@@ -99,12 +98,20 @@ history of each module are in `docs/`, one file per module, and each file starts
      - description = `description-live.bbcode` = `description-3.0.0-trimmed.bbcode`; the text
        before the trim is `description-3.0.0-untrimmed.bbcode`
      - Logs 3.0.0 = the seven lines of `changelog-3.0.0-trimmed.txt`
-4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
+3. **NPC push-through (`docs/038`), stage 0.** The probe build is deployed; the user runs
+   `TEST-next-ingame.md` P1-P5, then read the `[PushProbe]` lines: `RESULT ... DISPLACED`, `natural
+   small|big bump`, anim events, dialogue lines, `PROBLEM:`. Clip candidates:
+   `C:\TAKEALOOK\_staging\push-clip-candidates\index.html`. GO or HOLD after both; the open
+   decisions are listed in `docs/038`.
+4. **Personal modules** (the user, 2026-09-28). Modules for the user's own game only live in the
+   sibling repo `../CIGAR-Personal` (local, no remote) and are tracked in its own `HANDOFF.md`. They are
+   compiled into the author build only (`src/Personal.h`); CIGAR's public files never name them.
+5. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
-5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
-6. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
+6. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
+7. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
    also an FAQ candidate about WW's lingering enchantment in `docs/037`.
-7. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
+8. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
    is tracked in `../Crash Triage`.
 
 **Where things are.**
