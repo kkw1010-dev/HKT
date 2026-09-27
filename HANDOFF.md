@@ -1,9 +1,24 @@
-# CIGAR — session handoff (updated 2026-09-27, handover to the session "Cigar")
+# CIGAR — session handoff (updated 2026-09-28, end of day, session "Cigar")
 
 ## Start here
 
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
+
+### Next session starts here (2026-09-28, end of day)
+
+- **Waiting for the user's in-game run** of `TEST-next-ingame.md` **P1-P5** (NPC bump probe) and
+  **G1-G7** (push clip comparison, pick one). Both are in the deployed author build `e860764`; the
+  orchestrator posts the checklist page. Then:
+  1. Read `SKSE\CIGAR.log` (`[PushProbe]` lines): `RESULT ... DISPLACED`, `natural small|big bump`,
+     `PROBLEM:`, and for each gesture `start` / `RESULT gesture ... KEPT MOVING` / `stop`.
+  2. Decide GO or HOLD for push-through with the user (`docs/038`); record the picked clip as the
+     user's choice.
+  3. After the pick, take the test clips out: `python tools/push_test_assets.py --remove` (Skyrim and
+     MO2 closed; only `mods\CIGAR` changes).
+- Nothing is uncommitted. `v3` = `master` = `eecfe87`, 4 local commits ahead of GitHub (pushed only
+  when the user asks). `../CIGAR-Personal` is committed too (no remote).
+- Build lock and `mods\` lock: ask the orchestrator each time; deploy only with Skyrim and MO2 closed.
 
 ### Current state (2026-09-27 handover, read this first)
 
@@ -104,11 +119,12 @@ history of each module are in `docs/`, one file per module, and each file starts
      - description = `description-live.bbcode` = `description-3.0.0-trimmed.bbcode`; the text
        before the trim is `description-3.0.0-untrimmed.bbcode`
      - Logs 3.0.0 = the seven lines of `changelog-3.0.0-trimmed.txt`
-3. **NPC push-through (`docs/038`), stage 0.** The probe build is deployed; the user runs
-   `TEST-next-ingame.md` P1-P5, then read the `[PushProbe]` lines: `RESULT ... DISPLACED`, `natural
-   small|big bump`, anim events, dialogue lines, `PROBLEM:`. Clip candidates:
-   `C:\TAKEALOOK\_staging\push-clip-candidates\index.html`. GO or HOLD after both; the open
-   decisions are listed in `docs/038`.
+3. **NPC push-through (`docs/038`), stage 0 and 0b.** The user's decisions so far are recorded there
+   (small bump, no NPC line, 70 / 0.3 s / 1.5 s, "비켜 지나가기 (누르고 있기)"). Deployed: the bump probe
+   (P1-P5) and six clip candidates (G1-G7, `CIGAR Push Test`, vanilla A and EVG C with its annotations
+   stripped). Waiting for the in-game run; see "Next session starts here". Clip previews:
+   `C:\TAKEALOOK\_staging\push-clip-candidates\index.html`. Whether a vanilla clip may ship in
+   the package is the user's call (`docs/038`, "Must a vanilla clip ship").
 4. **Personal modules** (the user, 2026-09-28). Modules for the user's own game only live in the
    sibling repo `../CIGAR-Personal` (local, no remote) and are tracked in its own `HANDOFF.md`. They are
    compiled into the author build only (`src/Personal.h`); CIGAR's public files never name them.
