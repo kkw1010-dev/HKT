@@ -16,10 +16,13 @@ history of each module are in `docs/`, one file per module, and each file starts
   session.
 
 **Git.**
-- `v3` at **`474538c`** (code), local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
+- **3.0.0 shipped** (Nexus, 2026-09-27). `master` = `v3`, fast-forwarded, tag `v3.0.0`, all local:
+  `master` is 47 commits ahead of `origin/master`. GitHub (`kkw1010-dev/HKT`) is pushed only when the
+  user asks.
 - Branches:
-  - `master` / `v2`: 2.x, on GitHub; 2.1.2 is live on Nexus 193080
-  - `v3`: 3.0.0 work, local
+  - `master`: 3.0.0, local ahead of GitHub
+  - `v2`: 2.x, on GitHub (2.1.2)
+  - `v3`: same commit as `master`; keep working here or on `master`
   - `brace`: abandoned, kept, never merged
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
@@ -68,14 +71,15 @@ history of each module are in `docs/`, one file per module, and each file starts
 1. The next launch: the panel's 프롬프트 위치 slider shows and saves (`CIGAR.log`: `settings: prompt
    right offset N`, `[PromptAnchor] right offset set to N`), and the five pages show the modules as
    in `docs/007` "Module pages" (`control panel: combat page …` line, no WARN).
-2. **3.0.0 is packaged; the Nexus upload is not done.** `Downloads\CIGAR 3.0.0.7z` (922,079 bytes,
-   DLL sha256 `afef2eb1...`); `CHANGELOG.md`, both readmes and `description-live.bbcode` are
-   updated (`52df45f`). On 2026-09-27 the upload stopped before the Nexus edit page opened: Claude
-   Code's permission check refused it as "Create Public Surface". Everything to paste is in
-   `dist/nexus-page/upload-3.0.0.md`. After it ships: merge `v3` into `master` and tag `v3.0.0`
-   (locally; GitHub only when the user asks).
-   - Not seen in game before packaging: the release build itself, the right-offset slider and the
-     five panel pages (the author build with them is deployed).
+2. **3.0.0 is live on Nexus 193080** as file 811289 (`CIGAR`, 3.0.0, Main, 922,079 bytes), an
+   Update of 2.1.2; mod version 3.0.0, changelog, description and The Wizard Warrior requirement
+   done. The session "CIGAR 3.0.0 Nexus 업로드" did the upload at the user's direct instruction,
+   because this session's permission check kept refusing the Nexus edit page. Record:
+   `dist/nexus-page/upload-3.0.0.md`. Local copy of the package: `Downloads\CIGAR 3.0.0.7z`
+   (DLL sha256 `afef2eb1...`).
+   - Not seen in game before release: the release build itself, the right-offset slider and the
+     five panel pages (the author build with them is deployed; the user's retest 3 has R3-C1..C8).
+   - Open: a GitHub release for 3.0.0 and the push, only when the user asks.
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
 5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
