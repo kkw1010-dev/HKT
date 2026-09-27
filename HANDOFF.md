@@ -27,9 +27,13 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **f9fd8e0 author build** (2026-09-28): 3.0.0 plus the log-only NPC push
-  probe (`src/PushProbe.*`, author build only, `docs/038`). `verify_deploy.py` passed every check.
-  The right-offset setting and the five pages passed retest 3.
+- `mods\CIGAR` holds the **b20d119 author build** (2026-09-28): 3.0.0, the log-only NPC push probe
+  with the stage-0b gesture buttons (`src/PushProbe.*`, `docs/038`), and the personal-module hook
+  (empty registry). `verify_deploy.py` passed every check. The right-offset setting and the five
+  pages passed retest 3.
+- **Test assets in `mods\CIGAR`:** `meshes\OpenAnimationReplacer\CIGAR Push Test` (six OAR submods,
+  `tools/push_test_assets.py --deploy`). Author test only; take them out with `--remove` when the
+  comparison is over. They never enter a package (`make_release.py` builds from its own allowlist).
 - The deploy procedure, whenever `mods\` is held by another session: wait for the orchestrator's
   release, check that Skyrim is closed, run `tools\Build.ps1 -Deploy` (it builds, copies only into
   `mods\CIGAR`, runs `verify_deploy.py` and stops only the processes it started), then report the
