@@ -45,6 +45,9 @@ Type 3 urinates as well when the bladder level is above 0. Sitting on furniture 
 - **Hidden** while PNO's main quest is stopped (notified once per session), while excreting, in
   combat, swimming, seated or on furniture, mounted, without movement controls, in a sex scene
   (PNO's `IsInSexScene` or SexLab's animating faction) and for 3 s after an accept.
+  Since 2026-09-27 also **while Bathing in Skyrim washes the player** (`Bathe::Washing()`, BiS's
+  AnimationKeyword effect; the gate line shows `washing=`). A Nexus user saw the relief prompt keep
+  popping up during a bath. In-game check: `TEST-next-ingame.md` N1.
 - **Accept** calls `UrinateAndDefecate(1 | 3, None, None)`, the same call as PNO's keys and menu.
   CIGAR then watches for PNO's excrete effect: none within 3 s is logged as a WARN and notified
   (PNO refused; its own notification says why); when the effect ends, the log shows the fill

@@ -1,5 +1,7 @@
 #include "Needs.h"
 
+#include "Bathe.h"
+
 #include "Settings.h"
 #include "Util.h"
 
@@ -237,16 +239,18 @@ namespace CIGAR
 		const bool scene = Util::ScriptBool(utility, "IsInSexScene") || Util::InScene(a_player);
 		const bool quiet = Clock::now() < quietUntil;
 		const int minPercent = Settings::NeedsMinPercent();
+		// A Nexus user saw the relief prompt pop up during a bath (2026-09-27); none while BiS washes.
+		const bool washing = Bathe::GetSingleton()->Washing(a_player);
 
 		// PNO's own refusals (combat, swimming) plus what would break its animation.
-		const bool free = s.running && !s.excreting && !combat && !swimming && !seated && !mounted && movable && !scene && !quiet;
+		const bool free = s.running && !s.excreting && !combat && !swimming && !seated && !mounted && movable && !scene && !quiet && !washing;
 		s.canUrinate = free && s.bladderOn && s.bladderLevel >= 1 && s.bladderPercent >= static_cast<float>(minPercent);
 		s.canDefecate = free && s.bowelOn && s.bowelLevel >= 1 && s.bowelPercent >= static_cast<float>(minPercent);
 
 		// The fill changes every PNO update; the gate logs levels only.
-		a_gate = std::format("running={} bladder={}:{} bowel={}:{} min={}% excreting={} combat={} swim={} seated={} mounted={} movable={} scene={} quiet={}",
+		a_gate = std::format("running={} bladder={}:{} bowel={}:{} min={}% excreting={} combat={} swim={} seated={} mounted={} movable={} scene={} washing={} quiet={}",
 			s.running, s.bladderOn ? "on" : "off", s.bladderLevel, s.bowelOn ? "on" : "off", s.bowelLevel, minPercent, s.excreting, combat,
-			swimming, seated, mounted, movable, scene, quiet);
+			swimming, seated, mounted, movable, scene, washing, quiet);
 		return s;
 	}
 

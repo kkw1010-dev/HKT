@@ -17,6 +17,10 @@ namespace CIGAR
 		void Tick() override;
 		void OnAccepted(std::uint16_t a_eventID) override;
 
+		// Bathing in Skyrim is running its wash animation on the actor (its AnimationKeyword effect).
+		// Other modules keep their prompts out of a bath (Needs, since 2026-09-27).
+		bool Washing(RE::Actor* a_actor) const;
+
 	private:
 		enum : std::uint16_t
 		{

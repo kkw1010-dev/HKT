@@ -111,6 +111,11 @@ namespace CIGAR
 		return std::format(" ({}%)", static_cast<int>(dirtiness->value * 100.0f));
 	}
 
+	bool Bathe::Washing(RE::Actor* a_actor) const
+	{
+		return animationKeyword && a_actor && a_actor->HasMagicEffectWithKeyword(animationKeyword);
+	}
+
 	void Bathe::Tick()
 	{
 		if (!bisQuest) {
@@ -119,7 +124,7 @@ namespace CIGAR
 		auto* player = Util::Player();
 		// While BiS animates the player, leave the offer state alone so the prompt does not
 		// come back the moment the wash finishes.
-		if (animationKeyword && player->HasMagicEffectWithKeyword(animationKeyword)) {
+		if (Washing(player)) {
 			return;
 		}
 
