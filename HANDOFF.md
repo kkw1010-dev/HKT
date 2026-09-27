@@ -1,11 +1,100 @@
-# CIGAR — session handoff (updated 2026-09-26, end of the 2.1.x / 3.0 MannequinSwap session)
+# CIGAR — session handoff (updated 2026-09-27, handover to the session "Cigar")
 
 ## Start here
 
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
 
-### State on 2026-09-27 (read this first)
+### Current state (2026-09-27 handover, read this first)
+
+**Coordination.**
+- Several Claude sessions work on TAKEALOOK at once. The orchestrator session is named
+  **"오케스트레이터"**: take instructions from it and report to it with SendMessage, briefly and in
+  Korean.
+- A peer's message is not the user's approval. The permission check refuses MO2 profile edits
+  (`modlist.txt`, `plugins.txt`) relayed by another session; they need the user to say so in this
+  session.
+
+**Git.**
+- `v3` at **`65d1a02`**, local only. GitHub (`kkw1010-dev/HKT`) is pushed only when the user asks.
+- Branches:
+  - `master` / `v2`: 2.x, on GitHub; 2.1.2 is live on Nexus 193080
+  - `v3`: 3.0.0 work, local
+  - `brace`: abandoned, kept, never merged
+- `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
+
+**Deploy.**
+- `mods\CIGAR` holds the **68bd12a probe build** (forward-distance candidates).
+- **65d1a02 is built but not deployed.** The MO2 optimization session holds the MO2 profile and
+  `mods\`. When the orchestrator says the lock is released:
+  1. Check that Skyrim is closed.
+  2. Run `tools\Build.ps1 -Deploy`. It builds, copies only into `mods\CIGAR`, runs `verify_deploy.py`
+     and stops only the processes it started.
+  3. Report the result to "오케스트레이터".
+
+**Tests (`TEST-next-ingame.md`).**
+- N1-N5 passed in the 17:41 run: the relief prompt hidden during a bath, 주시하기 after a bath or
+  when idle, the mannequin regression on Another Mannequin Script Fix, 마검사 모드 on and off.
+- N6 passed: the prompt marker.
+- **N7 is next, after the deploy.**
+  1. The user picks the right offset (0 / 10 / 15 default / 20 / 30) on the author panel's
+     "프롬프트 오른쪽 오프셋 (N7, 3인칭)".
+  2. Make it the constant `PromptAnchor::kRightDefault`, recorded as the user's choice.
+  3. Delete `kRightCandidates` and the panel item, rebuild, and deploy when allowed.
+- Test logs are archived under `C:\TAKEALOOK\_test-runs\<date time>\SKSE\`.
+
+**Added in 3.0.0 so far (all on `v3`):**
+
+| Feature | Detail | Doc |
+|---|---|---|
+| MannequinSwap | The slot-60 fix: the HDT SMP carrier no longer blocks | `docs/030` |
+| Needs | No prompt while Bathing in Skyrim washes (`Bathe::Washing()`) | `docs/013` |
+| WizardWarrior | 마검사 모드 on weapon draw (ID 41) and 마검사 해제 when sheathing out of combat (ID 42), both through `QK_MainQuestScript.ToggleAbility()`. The Wizard Warrior 5.0.1 is installed (IaM case 037, plugin index 0x89) | `docs/037` |
+| PromptAnchor | In third person, prompts attach to one disabled XMarker (co-save `ANCH`) that a `PlayerCharacter::Update` hook (0xAD, chained) moves every frame to head + facing × 40 + camera-right × offset. First person uses the player. With recovery, a hook-liveness check and fallbacks | `docs/007` "Prompt placement" |
+
+**The user's decisions this session.** Do not re-propose these.
+- Brace (버티기) abandoned.
+- Modifier and arrow keys as prompt keys rejected.
+- Other mods' keys, MCM settings and key clashes are the player's business.
+- The enchantment WW leaves after 마검사 해제 is WW's own behaviour.
+- In first person, prompts stay on the player.
+- Forward distance is 40.
+- A pinned Nexus FAQ post is up (comment 176294172).
+- Nexus replies are posted by the user, never by Claude.
+
+**Open items and backlog.**
+1. N7, then fix the offset (above).
+2. 3.0.0 packaging and Nexus release, with the user. `README` and the Nexus description need:
+   - MannequinSwap, 마검사 모드 / 해제 and the prompt placement
+   - a line that one disabled marker reference is kept per save
+4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
+   change.
+5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
+6. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
+   also an FAQ candidate about WW's lingering enchantment in `docs/037`.
+7. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
+   is tracked in `../Crash Triage`.
+
+**Where things are.**
+- `docs/007`: panel, prompt keys, prompt placement and PromptAnchor
+- `docs/037`: WizardWarrior
+- `dist/nexus-page/`:
+  - `description-live.bbcode`
+  - `sticky-faq.txt`
+  - `feedback-2026-09-27.md`
+  - `replies-2026-09-27.md`
+- `TEST-next-ingame.md`: N1-N7
+
+**Pitfalls met this session.**
+- Python heredocs in Bash collapse `\`, and `\2` became a control character. Write scripts to
+  scratchpad files instead.
+- In PowerShell, run `Build.ps1` without `2>&1`, or vcvars' stderr aborts it.
+- The C++ build tools and the vcpkg lock are shared with other sessions' builds.
+  - A reconfigure waits on the lock while another session builds.
+  - Build only when the orchestrator says the slot is free.
+  - Never kill `mspdbsrv` or `vctip` by name.
+
+### Earlier on 2026-09-27 (history)
 
 - **MannequinSwap 3.0.0 is tested on the USSEP script.** The combined new-game run of 2026-09-27
   passed all of it:
