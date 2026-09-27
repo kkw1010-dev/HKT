@@ -86,3 +86,27 @@ USSEP 시험이 끝나 수정판 스크립트(슬롯 20칸, 속성 방식)가 �
   - 판정 줄에 `slots=properties N/20`: 수정판 스크립트 경로라는 뜻
   - 각 교환마다 `swap done: ... slots properties N/20, 0 problems`
   - `kept item`이나 `WARN` 줄이 없어야 합니다
+
+## N4. 마검사 모드 (The Wizard Warrior 연동, 2026-09-27)
+
+전제: The Wizard Warrior가 모드리스트에 설치돼 있고 CIGAR가 새로 빌드돼 있어야 합니다(둘 다 대기 중이며,
+준비되면 이 줄을 지웁니다). 플러그인이 추가되므로 새 게임에서 합니다. 시작 직후 "The Wizard Warrior
+Initialized" 알림이 뜨면 WW가 준비된 것입니다.
+
+- **준비:** 철 검(현재 로드 오더에서 확인).
+  ```
+  player.additem 00012EB7 1
+  ```
+- **동작과 기대 결과:**
+  1. 철 검을 장착하고 **무기를 꺼냅니다** → **마검사 모드** 프롬프트가 뜹니다(WW가 꺼져 있을 때).
+  2. 누릅니다 → WW가 켜집니다(켜짐 소리와 빛 효과). 휘두르면 기본 그룹 1의 화염구·얼음 가시가 나갑니다.
+     켜진 동안에는 무기를 넣었다 다시 꺼내도 프롬프트가 **뜨지 않습니다**.
+  3. X로 WW를 끄고 무기를 다시 꺼냅니다 → 프롬프트가 다시 뜹니다.
+  4. 프롬프트를 **두 번 눌러 거절**합니다 → 무기를 들고 있는 동안 다시 뜨지 않습니다. 무기를 넣었다 꺼내면
+     다시 뜹니다.
+- **로그 (`[WizardWarrior]`):**
+  - `ready: quest ...`: WW를 찾았다
+  - `gate drawn=true on=false allowSwitch=true ...` 다음 `offer event=41`: 프롬프트 표시
+  - 누른 뒤 `ToggleAbility queued=true`, 2초 안에 `on: QK_SpellToggle = 1`
+  - `WARN`이 있으면 켜기 실패입니다
+  - 거절하면 `마검사 모드 dismissed`, 켜진 동안은 판정 줄에 `on=true`

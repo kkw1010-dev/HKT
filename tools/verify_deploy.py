@@ -51,6 +51,10 @@ FHU_SCRIPTS = {
     "sr_inflateConfig": ["defKey"],
 }
 # Private Needs - Orgasm names read and called by src/Needs.cpp (Papyrus names are case-insensitive).
+WW_MOD = "The Wizard Warrior"
+# WizardWarrior calls ToggleAbility() on QK_MainQuestScript and reads Allow_Switch and the
+# PowerToggle global by name (docs/037); a renamed one leaves the prompt dead without an error.
+WW_NEEDLES = ["ToggleAbility", "Allow_Switch", "PowerToggle", "KeyPowerUP"]
 PNO_MOD = "[SL+] Private Needs - Orgasm KOR"
 PNO_SCRIPTS = {
     "pno_configscript": ["Universal_keyCode", "CheckNeeds_keyCode", "Urinate_KeyCode", "Excrete_KeyCode",
@@ -462,6 +466,21 @@ def check_pno(modlist):
         check(not missing, "%s.pex still has %s%s" % (name, ", ".join(needles), " - missing: " + ", ".join(missing) if missing else ""))
 
 
+def check_wizard_warrior(modlist):
+    """WizardWarrior (마검사 모드) is a soft integration: absent, it idles."""
+    if "+" + WW_MOD not in modlist:
+        note("The Wizard Warrior absent: WizardWarrior module idles")
+        return
+    path = os.path.join(MODS, WW_MOD, "Scripts", "QK_MainQuestScript.pex")
+    if not os.path.isfile(path):
+        check(False, "The Wizard Warrior script present: QK_MainQuestScript.pex")
+        return
+    with open(path, "rb") as f:
+        data = f.read().lower()
+    missing = [n for n in WW_NEEDLES if n.lower().encode() not in data]
+    check(not missing, "QK_MainQuestScript.pex still has %s%s" % (", ".join(WW_NEEDLES), " - missing: " + ", ".join(missing) if missing else ""))
+
+
 def yaml_scalar(path, key):
     with open(path, encoding="utf-8", errors="replace") as f:
         for line in f:
@@ -788,6 +807,7 @@ def main():
     check_eat(modlist)
     check_fhu(modlist)
     check_pno(modlist)
+    check_wizard_warrior(modlist)
     check_helmet(modlist)
     check_ied(modlist, profile)
     check_surrender(modlist)
