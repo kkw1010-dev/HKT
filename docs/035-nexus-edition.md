@@ -21,9 +21,10 @@ The user's decision: other-mod integrations go back into the Nexus upload, as re
 - `CIGAR_NEXUS` is gone. The `nexus` preset, `Build.ps1 -Nexus` and `make_release.py --nexus` with its
   other-mod string list are removed; with every integration compiled in, the two release DLLs would
   have been the same. `tools\Build.ps1 -Package` makes `Downloads\CIGAR <version>` with the English
-  `README.md` and the Korean `README-ko.md`.
+  `README.md` and the Korean `README-ko.md`. (Since 2026-09-28 the Korean readme is no longer packaged;
+  the user decided the release is English.)
 - The hard line is now **other mods' files**, not their names: `make_release.py` fails when the
-  package holds anything but `CIGAR.dll`, `CIGAR.json`, the two readmes, `LICENSE.txt` and
+  package holds anything but `CIGAR.dll`, `CIGAR.json`, the readme, `LICENSE.txt` and
   `THIRD-PARTY-NOTICES.txt`.
 - `ChairDrink` knows alcohol by both routes: the 29 base-game FormIDs from the Nexus edition and the
   other mods' keywords, so a game without Gourmet or OCF still gets the prompt.

@@ -11,8 +11,9 @@ prompts.
 CIGAR resolves repetitive interactions from gameplay context and exposes them as prompts. The system
 absorbs the interaction complexity so the player can simply play the game.
 
-The player-facing readmes are [`dist/README-en.md`](dist/README-en.md) and
-[`dist/README-ko.md`](dist/README-ko.md); they ship with the release as `README.md` and `README-ko.md`.
+The player-facing readme is [`dist/README-en.md`](dist/README-en.md), which ships with the release
+as `README.md`. The Korean readme was dropped on 2026-09-28 (the
+user's decision: the release is English).
 
 ## Principles
 
@@ -108,7 +109,7 @@ src/Text.*          Korean/English pairs for every player-facing string; the lan
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
 src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 전투, 2. 비전투, 3. 모드 연동, 4. 단축키, 5. 세부 설정); the release build shows feature descriptions only
 tools/make_release.py   assembles the installable folder and .7z under Downloads from the CIGAR_RELEASE build; fails if the folder holds any file but CIGAR's own six
-dist/README-en.md, dist/README-ko.md  the readmes that ship with the release (English as README.md, Korean as README-ko.md)
+dist/README-en.md   the readme that ships with the release, as README.md
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)
 include/ValhallaCombat/  Valhalla Combat API, V2 part (BSD-3, D7ry/valhallaCombat)
 include/SkyPrompt/  SkyPromptAPI header (MIT, QTR-Modding/SkyPromptAPI @ cb4e551)

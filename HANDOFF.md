@@ -89,6 +89,16 @@ history of each module are in `docs/`, one file per module, and each file starts
    - The slider and the five pages passed retest 3 in the author build; the release build itself
      has not been launched.
    - Open: a GitHub release for 3.0.0 and the push, only when the user asks.
+   - **Release texts trimmed (the user, 2026-09-28): English, feature descriptions only.** The
+     Korean readme no longer ships (`dist/README-ko.md` deleted, `make_release.py` allows five
+     files). README, CHANGELOG and the Nexus texts lost their system explanations; the user's own
+     page sections are cut to one or two paragraphs each. Ready to paste, not on Nexus yet (the
+     orchestrator does that with the user's approval):
+     - `dist/nexus-page/description-3.0.0-trimmed.bbcode` (the whole page);
+       `description-live.bbcode` stays the live text, for rollback
+     - `dist/nexus-page/changelog-3.0.0-trimmed.txt` (six lines)
+     - `Downloads\CIGAR 3.0.0 (docs trimmed).7z`, 917,088 bytes, the same DLL (sha256
+       `afef2eb1...`). Whether it replaces file 811289 is the user's call.
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
 5. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).

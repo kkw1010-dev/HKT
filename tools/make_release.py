@@ -5,7 +5,9 @@ control panel writes back to, the readmes and the license files. Everything an a
 source, docs/, HANDOFF.md, tools/, the CMake files, the .pdb, MO2's meta.ini -- stays out.
 
 One package serves Nexus and every other host: the CIGAR_RELEASE build (preset "dist"), "CIGAR
-<version>", an English README.md and a Korean README-ko.md. Other mods are integrated at runtime
+<version>" and an English README.md (the Korean readme stopped shipping on 2026-09-28, the user's
+decision: the release is English; the game text itself still follows the game's language). Other mods
+are integrated at runtime
 only, so the package must hold no file of theirs; the folder is checked against PACKAGE_FILES.
 
 Usage: python tools/make_release.py <path to CIGAR.dll>
@@ -28,8 +30,7 @@ SEVEN_ZIP = r"C:\Program Files\7-Zip\7z.exe"
 # Everything the package may hold. Anything else (a mesh, a script, another mod's file) fails the
 # build: CIGAR integrates other mods at runtime and ships none of their files (docs/035).
 PACKAGE_FILES = {
-    "SKSE/Plugins/CIGAR.dll", "SKSE/Plugins/CIGAR.json", "README.md", "README-ko.md", "LICENSE.txt",
-    "THIRD-PARTY-NOTICES.txt",
+    "SKSE/Plugins/CIGAR.dll", "SKSE/Plugins/CIGAR.json", "README.md", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt",
 }
 
 
@@ -109,7 +110,6 @@ def main():
         json.dump(settings, f, ensure_ascii=False, indent=2)
         f.write("\n")
     shutil.copyfile(os.path.join(REPO, "dist", "README-en.md"), os.path.join(out, "README.md"))
-    shutil.copyfile(os.path.join(REPO, "dist", "README-ko.md"), os.path.join(out, "README-ko.md"))
 
     # GPL-3.0 asks for the license text with every copy, and the permissive licenses for their notices.
     shutil.copyfile(os.path.join(REPO, "LICENSE"), os.path.join(out, "LICENSE.txt"))
@@ -163,7 +163,7 @@ def main():
         # -slt prints the archive's own path first; the entries follow the "----------" line.
         entries = listing.split("----------", 1)[1]
         roots = {line[7:].replace("/", "\\").split("\\")[0] for line in entries.splitlines() if line.startswith("Path = ")}
-        if roots != {"SKSE", "README.md", "README-ko.md", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt"}:
+        if roots != {"SKSE", "README.md", "LICENSE.txt", "THIRD-PARTY-NOTICES.txt"}:
             raise SystemExit("the archive root is %s; SKSE and the documents belong at its root" % sorted(roots))
         print("PASS the archive has SKSE at its root")
         print("archive:", archive, os.path.getsize(archive), "bytes")
