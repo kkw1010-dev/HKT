@@ -38,7 +38,7 @@ history of each module are in `docs/`, one file per module, and each file starts
 - N6 passed: the prompt marker.
 - N7 passed: all five steps; the prompts follow after fast travel, a door and riding. **PromptAnchor
   is finished.** The user kept the offset as the player's choice instead of fixing one value, so the
-  N7 item became the player setting `3. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭)
+  N7 item became the player setting `5. 세부 설정` → 프롬프트 위치 → 오른쪽 간격 (3인칭)
   (`CIGAR.json` `prompt.rightOffset`, 0 / 10 / 15 / 20 / 30, default 15; `docs/007` "Finished after
   N7").
 - Test logs are archived under `C:\TAKEALOOK\_test-runs\<date time>\SKSE\`.
@@ -517,8 +517,8 @@ All modules except `WeaponSwap` and `Execute` are confirmed in game (2026-09-17;
     whose keys are set in the control panel (default 1–4).
 - **Ticks** (`src/main.cpp`): `Tick()` runs every 1 s and `FastTick()` every
   100 ms. Both run only while unpaused, and only for modules switched on.
-- **Control panel.** Optional SKSE Menu Framework pages (CIGAR / 1. 모듈,
-  2. 단축키, 3. 세부 설정;
+- **Control panel.** Optional SKSE Menu Framework pages (CIGAR / 1. 전투, 2. 비전투,
+  3. 모드 연동, 4. 단축키, 5. 세부 설정;
   `src/Panel.*`, `src/Settings.*`, `docs/007-control-panel.md`):
   - per-module on/off switches;
   - each module's live gate and last log line;

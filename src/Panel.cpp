@@ -146,6 +146,30 @@ namespace CIGAR::Panel
 			return nullptr;
 		}
 
+		// The module pages (the user, 2026-09-27: CIGAR's own modules split into combat and
+		// non-combat, and the mod integrations on a page of their own).
+		// - Integration: the module idles without another mod, i.e. its label names one in `needs`.
+		// - Combat: its prompt shows in combat or with a weapon drawn. A module whose prompts show in
+		//   both goes by what it is for: Potion is here because health comes first; Helmet is not,
+		//   because it is there to show the face.
+		// - NonCombat: everything else, including modules without a label.
+		enum class ModulePage
+		{
+			Combat,
+			NonCombat,
+			Integration
+		};
+		constexpr std::array kCombatModules{ "WeaponSwap"sv, "Jujutsu"sv, "Potion"sv, "Poison"sv };
+
+		ModulePage PageOf(const Module* a_module)
+		{
+			const std::string_view name = a_module->Name();
+			if (const auto* label = Find(name); label && label->needs[0] != '\0') {
+				return ModulePage::Integration;
+			}
+			return std::ranges::find(kCombatModules, name) != kCombatModules.end() ? ModulePage::Combat : ModulePage::NonCombat;
+		}
+
 		const ImVec4 kDim{ 0.62f, 0.62f, 0.62f, 1.0f };
 		const ImVec4 kWarn{ 1.0f, 0.72f, 0.28f, 1.0f };
 
@@ -445,22 +469,51 @@ namespace CIGAR::Panel
 
 		// The framework lists a section's items by their names, so the numbers fix the order. The names
 		// are fixed at registration (kDataLoaded), in the language resolved then.
-		const char* PageModules() { return L("1. 모듈", "1. Modules"); }
-		const char* PageKeys() { return L("2. 단축키", "2. Keys"); }
-		const char* PageOptions() { return L("3. 세부 설정", "3. Options"); }
+		const char* PageCombat() { return L("1. 전투", "1. Combat"); }
+		const char* PageNonCombat() { return L("2. 비전투", "2. Non-combat"); }
+		const char* PageIntegrations() { return L("3. 모드 연동", "3. Mod integrations"); }
+		const char* PageKeys() { return L("4. 단축키", "4. Keys"); }
+		const char* PageOptions() { return L("5. 세부 설정", "5. Options"); }
 
-		void __stdcall RenderModules()
+		void RenderModulePage(ModulePage a_page)
 		{
-			LogFirstDraw("modules");
-			ImGui::SeparatorText(L("모듈", "Modules"));
 			for (const auto* module : Modules()) {
-				RenderModule(module);
+				if (PageOf(module) == a_page) {
+					RenderModule(module);
+				}
 			}
+		}
 
-			ImGui::SeparatorText(L("언어", "Language"));
-			RenderLanguage();
+		void __stdcall RenderCombat()
+		{
+			LogFirstDraw("combat");
+			ImGui::SeparatorText(L("전투", "Combat"));
+			Help(L("전투 중이거나 무기를 꺼냈을 때 뜨는 CIGAR 자체 기능", "CIGAR's own prompts for combat or a drawn weapon"));
+			ImGui::Spacing();
+			RenderModulePage(ModulePage::Combat);
+		}
 
-			ImGui::SeparatorText(L("상태", "Status"));
+		void __stdcall RenderNonCombat()
+		{
+			LogFirstDraw("non-combat");
+			ImGui::SeparatorText(L("비전투", "Non-combat"));
+			Help(L("전투 밖에서 뜨는 CIGAR 자체 기능", "CIGAR's own prompts outside combat"));
+			ImGui::Spacing();
+			RenderModulePage(ModulePage::NonCombat);
+		}
+
+		void __stdcall RenderIntegrations()
+		{
+			LogFirstDraw("integrations");
+			ImGui::SeparatorText(L("모드 연동", "Mod integrations"));
+			Help(L("다른 모드가 설치돼 있을 때만 동작합니다. 없으면 대기하며, 켜 두어도 문제없습니다",
+				"These work only with the other mod installed. Without it they idle; leaving them on is harmless"));
+			ImGui::Spacing();
+			RenderModulePage(ModulePage::Integration);
+		}
+
+		void RenderStatus()
+		{
 			ImGui::Text("SkyPrompt: %s", Prompts::Available() ? L("연결됨", "connected") : L("없음 (프롬프트 비활성)", "missing (no prompts)"));
 			if constexpr (!kRelease) {
 				const auto source = Settings::SourceDescription();
@@ -481,6 +534,12 @@ namespace CIGAR::Panel
 		void __stdcall RenderOptions()
 		{
 			LogFirstDraw("options");
+			ImGui::SeparatorText(L("상태", "Status"));
+			RenderStatus();
+
+			ImGui::SeparatorText(L("언어", "Language"));
+			RenderLanguage();
+
 			ImGui::SeparatorText(L("프롬프트 위치", "Prompt position"));
 			{
 				// The player picks from the N7 candidates (the user, 2026-09-27); forward stays 40.
@@ -671,9 +730,27 @@ namespace CIGAR::Panel
 			return;
 		}
 		SKSEMenuFramework::SetSection(kSection);
-		SKSEMenuFramework::AddSectionItem(PageModules(), RenderModules);
+		SKSEMenuFramework::AddSectionItem(PageCombat(), RenderCombat);
+		SKSEMenuFramework::AddSectionItem(PageNonCombat(), RenderNonCombat);
+		SKSEMenuFramework::AddSectionItem(PageIntegrations(), RenderIntegrations);
 		SKSEMenuFramework::AddSectionItem(PageKeys(), RenderKeyPage);
 		SKSEMenuFramework::AddSectionItem(PageOptions(), RenderOptions);
-		logs::info("control panel: registered {}/{{{}, {}, {}}} in SKSE Menu Framework", kSection, PageModules(), PageKeys(), PageOptions());
+		logs::info("control panel: registered {}/{{{}, {}, {}, {}, {}}} in SKSE Menu Framework", kSection, PageCombat(), PageNonCombat(),
+			PageIntegrations(), PageKeys(), PageOptions());
+		// Which page each module is on; an unlabeled module lands on the non-combat page under its own name.
+		std::array<std::string, 3> listed;
+		for (const auto* module : Modules()) {
+			auto& line = listed[static_cast<std::size_t>(PageOf(module))];
+			line += line.empty() ? module->Name() : std::format(", {}", module->Name());
+			if (!Find(module->Name())) {
+				logs::warn("control panel: module {} has no label; it is listed on the non-combat page under its own name", module->Name());
+			}
+		}
+		logs::info("control panel: combat page {}; non-combat page {}; integrations page {}", listed[0], listed[1], listed[2]);
+		for (const auto name : kCombatModules) {
+			if (std::ranges::none_of(Modules(), [name](const Module* a_module) { return name == a_module->Name(); })) {
+				logs::warn("control panel: the combat page names {}, which is not a module", name);
+			}
+		}
 	}
 }

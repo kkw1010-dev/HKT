@@ -21,7 +21,7 @@ Needs are checked in this order, and the first that holds wins:
 | 5 | 해독 | an active effect from a poison |
 | 6 | 질병 치료 | an active effect whose source spell is of type Disease |
 
-Each of the six has its own switch in the control panel (3. 세부 설정 → 물약).
+Each of the six has its own switch in the control panel (5. 세부 설정 → 물약).
 The defaults are the user's values: all six on, health 50%, urgent health 20%,
 stamina and magicka 50%.
 
@@ -179,7 +179,7 @@ Results the same day (log 09:56-10:24):
   and lasts 3 s. Whether a bite landed is unknown, because nothing logged it.
 - **Added for the retest:** every poison-like effect on the player (poison spell type, a poison
   `AlchemyItem`, or an effect resisted by PoisonResist) now logs once as `poison-like effect: ...
-  counted=<bool>`; and the author build's panel (3. 세부 설정 → 물약) has **시험: 독 10초 걸기**,
+  counted=<bool>`; and the author build's panel (5. 세부 설정 → 물약) has **시험: 독 10초 걸기**,
   which casts `DLC2crScribPoisonBite` (`04020E92`, 10 s) on the player with `CastSpellImmediate`.
 
 **해독 passed** (log 11:00-11:09): 시험: 독 10초 걸기 → `test poison: cast Scrib Poison (04020E92)` →

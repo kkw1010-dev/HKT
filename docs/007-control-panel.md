@@ -28,15 +28,18 @@ missing with no error. The vendored copy replaces the static with
 
 ## What the pages show
 
-Since 2026-09-18 the section `CIGAR` has three pages. The framework lists
-items by name, so the numbers fix their order:
+Since 2026-09-27 the section `CIGAR` has five pages (three until then, with every module on
+`1. 모듈`). The framework lists items by name, so the numbers fix their order:
 
 | Page | Contents |
 |---|---|
-| `1. 모듈` | 모듈 (switches, gate, last line) and 상태 |
-| `2. 단축키` | 프롬프트 키 and 모드 단축키 |
-| `2. 단축키` note | prompt-only switches now also cover Valhalla's execution key (F15) |
-| `3. 세부 설정` | 프롬프트 위치 (third-person right offset, default 15), 먹기 (start stage), 무기 전환 (switch distance, default 800) and 탈의·착용 (reach) |
+| `1. 전투` | CIGAR's own combat modules (switches, gate, last line) |
+| `2. 비전투` | CIGAR's own non-combat modules |
+| `3. 모드 연동` | modules that idle without another mod |
+| `4. 단축키` | 프롬프트 키 and 모드 단축키; the prompt-only switches also cover Valhalla's execution key (F15) |
+| `5. 세부 설정` | 상태, 언어, 프롬프트 위치 (third-person right offset, default 15), 먹기 (start stage), 무기 전환 (switch distance, default 800) and 탈의·착용 (reach) |
+
+Which module goes on which page is in "Module pages" below.
 
 Each page logs `control panel: page … drawn for the first time` once.
 
@@ -353,3 +356,35 @@ interior/exterior door and riding a horse. PromptAnchor is a finished feature.
 - **Forward** stays the constant 40 (`PromptAnchor::kForward`), the user's choice from N6.
 - **For the release:** the README and the Nexus description must say that one disabled marker
   reference is kept per save, and name the new option.
+
+## Module pages (2026-09-27)
+
+The user asked for the module list to be split: CIGAR's own modules into combat and non-combat, and
+the mod integrations on their own page. `Panel.cpp` decides the page of each module (`PageOf`):
+
+- **3. 모드 연동:** the module idles without another mod, which is exactly a label with a `needs`
+  entry. The page says they idle without the mod and can stay on.
+- **1. 전투:** the prompt shows in combat or with a weapon drawn (`kCombatModules`).
+- **2. 비전투:** everything else. A module without a label lands here under its own name, with a
+  WARN in the log.
+- A module whose prompts show in both goes by what it is for.
+
+| Page | Modules |
+|---|---|
+| 1. 전투 | 무기 전환, 유술, 물약, 독 바르기 |
+| 2. 비전투 | 탈의·착용, 퀘스트 추적, 획득 장비 착용, 책 읽기, 무기 충전, 의자에서 마시기, 투구 벗기·쓰기, 주시하기, 파티 의상, 마네킹 의상 교환, 퀘스트 행동, 앉기·눕기·기대기 |
+| 3. 모드 연동 | 목욕, 납치 행동 선택, 록온, 그래플, 배출, 항복, 먹기, 처형, 용변, 마검사 모드 |
+
+The borderline calls:
+- 물약 shows in and out of combat; it is combat because health comes first.
+- 투구 puts the helmet on in combat and takes it off otherwise; it is non-combat, because it exists
+  to show the face.
+- 무기 충전 shows only out of combat, so non-combat.
+- 유술 uses Valhalla Combat when present but works without it, so it is CIGAR's own.
+- 먹기 needs Survival Mode, official content but idle without it, so an integration.
+
+The log line at registration lists every page's modules
+(`control panel: combat page …; non-combat page …; integrations page …`). A name in
+`kCombatModules` that matches no module gives a WARN.
+
+상태 and 언어 moved from the old `1. 모듈` page to the top of `5. 세부 설정`.

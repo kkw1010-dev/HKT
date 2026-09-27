@@ -14,7 +14,7 @@ needed; TDM is used when present.
 
 - A prompt, not an automatic swap.
 - The switch distance defaults to **800** units and is adjustable in
-  CIGAR / 3. 세부 설정 / 무기 전환 (300–3000). 800 is the user's choice.
+  CIGAR / 5. 세부 설정 / 무기 전환 (300–3000). 800 is the user's choice.
 - Staves do not count as ranged weapons. Only bows and crossbows do.
 - The reverse case (enemy near, bow in hand → melee weapon) is required.
 - **Going back returns to the loadout held before** (the user's correction,

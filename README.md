@@ -106,7 +106,7 @@ src/QuestAction.*    equips the shout a quest asks for (the Greybeards)
 src/PartyOutfit.*    party clothes for Diplomatic Immunity, and back to the stored gear
 src/Text.*          Korean/English pairs for every player-facing string; the language comes from CIGAR.json or the game's own text
 src/Settings.*      per-module switches, prompt keys, prompt-only switches, eat stage, weapon swap distance and Dress reach, saved to Data/SKSE/Plugins/CIGAR.json
-src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 모듈, 2. 단축키, 3. 세부 설정); the release build shows feature descriptions only
+src/Panel.*         SKSE Menu Framework pages (CIGAR / 1. 전투, 2. 비전투, 3. 모드 연동, 4. 단축키, 5. 세부 설정); the release build shows feature descriptions only
 tools/make_release.py   assembles the installable folder and .7z under Downloads from the CIGAR_RELEASE build; fails if the folder holds any file but CIGAR's own six
 dist/README-en.md, dist/README-ko.md  the readmes that ship with the release (English as README.md, Korean as README-ko.md)
 include/TDM/        True Directional Movement API, V1 part (ersh1/TrueDirectionalMovement @ 57b913a)

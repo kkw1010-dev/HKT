@@ -73,7 +73,7 @@ Earlier status (2026-09-19): in progress. This is the first CIGAR module with a 
 
 ## Gate and play
 
-- **Target:** a hostile humanoid (body part data `0x1D`) within the panel's 유술 거리 (3. 세부 설정, 100–400, default 250 by the user's choice) that
+- **Target:** a hostile humanoid (body part data `0x1D`) within the panel's 유술 거리 (5. 세부 설정, 100–400, default 250 by the user's choice) that
   is blocking (`Actor::IsBlocking`). It must not be in a kill move, mounted or a
   teammate. It stays offered for 0.7 s after its guard drops.
 - **Player:** movement controls on, not in a SexLab scene, humanoid, not
@@ -302,7 +302,7 @@ refusals. NPC grapples were off only in this test, so their share is not separat
 
 The user's design:
 
-- **Stun shares are fixed values the player can change** in the panel (3. 세부 설정 → 유술):
+- **Stun shares are fixed values the player can change** in the panel (5. 세부 설정 → 유술):
   15% of Valhalla's max stun on a guarding target ("the ragdoll alone makes it a guard break"), 25%
   after a perfect parry. The user first considered topping Valhalla's own parry damage up to 50%, but
   Valhalla's timed-block stun is the player's weapon damage times difficulty times
