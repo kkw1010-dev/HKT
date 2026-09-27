@@ -701,3 +701,34 @@ notification, while a refusal after it still notifies "유술 모션 미발동" 
 
 The stamina and health the victim loses are panel settings now (defaults: all of its stamina, 5% of
 its maximum health, the old fixed values); see `docs/035-nexus-edition.md`, "유술 damage".
+
+## A Nexus report of "working 100%" (2026-09-28, analysis only)
+
+IAMTOKKO reported 유술 "working 100%" on SSE 1.5.97 (`dist/nexus-page/feedback-2026-09-28.md`), while
+the known issue says it is refused until the session's first death. Hypotheses, most likely first:
+
+1. **Play pattern.** The gate is "no actor but the player has died since the load" (the
+   `TESDeathEvent` note above). In ordinary play something dies early: the first enemy of a fight
+   killed with a weapon, a follower's or a guard's kill. The window was only exposed by tests 24-29,
+   which loaded a save and pressed at once on console-spawned orcs; test 26, with a death before the
+   first press, had one ordinary refusal. A refusal in the window raises no notification, so a player
+   who meets it may read it as bad timing.
+2. **Modlist.** The state cleared by the first death may belong to a mod here, not the engine:
+   Acheron (+ Yamete Kudasai) intercepts lethal hits and kill moves, Valhalla Combat plays its
+   executions through the same `SetupSpecialIdle`, and Cinematic Clash logged in the window. Test 29
+   ruled out the player's flags only; the process fields were logged in a build that was rolled back
+   untested, so the cause is still open.
+3. **Runtime (1.5.97 against 1.6.1170).** Unlikely: a wrong address or offset fails always or
+   crashes, it does not block until a death.
+
+Checks for the user's game (bare hands, weapon sheathed, third person):
+- **J1.** Right after loading a save, outdoors: `player.placeatme 0001BCD8` (EncBandit01Melee1HNordM,
+  Skyrim.esm). 유술 on the blocking bandit: expected refused, with the `known issue: no actor has died
+  since the load` line.
+- **J2.** `player.placeatme 000A91A0` (EncChicken, Skyrim.esm), click the chicken, `kill`, then 유술 on
+  the bandit again. Plays at once: any death clears the gate, which favours 1. Still refused: the gate
+  is tied to a hostile or combat death, which points at 2.
+- **J3.** Load again, fight normally, kill the first enemy with a weapon, then 유술 on the next: it
+  should play every time (IAMTOKKO's pattern).
+- Settling 2 needs a test profile without Acheron (an MO2 profile change, the user's call), or
+  IAMTOKKO's `CIGAR.log` and mod list (whether to ask is the user's call).
