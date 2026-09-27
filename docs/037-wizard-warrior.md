@@ -1,10 +1,15 @@
-# 037 · The Wizard Warrior: research only
+# 037 · The Wizard Warrior: 마검사 모드
 
-Status (2026-09-27): **research done, nothing built.** A Nexus user (xLenax) asked for a combat
-prompt that activates The Wizard Warrior. The user is weighing whether it is worth doing:
+Status (2026-09-27): **designed by the user; code written (`src/WizardWarrior.*`), not built yet.**
+The C++ build waits for the shared build slot. Installing WW into the modlist waits for the
+user's approval: the permission check stopped a request relayed from another session. The
+in-game test is `TEST-next-ingame.md` N4.
+
+A Nexus user (xLenax) asked for a combat prompt that activates The Wizard Warrior. The user took
+it on for these reasons:
 - 3,299 endorsements and 86,737 unique downloads
 - stable, since the mod has not changed since 2022
-- low complexity if CIGAR only takes over the key
+- CIGAR only needs to trigger its toggle
 - listed on that mod's page as a mod using it, CIGAR would pick up visitors
 
 ## The mod
@@ -60,73 +65,45 @@ parsed for record IDs and property values.
 - **`Allow_Switch`** is false while a concentration spell is being cast through block; X then
   re-casts it instead of toggling.
 
-## How CIGAR would drive it (confirmed entry points)
+## The design (the user, 2026-09-27)
 
-1. **Resolve at load.** `The Wizard Warrior.esp` present, quest 0x878 found, `QK_MainQuestScript`
-   bound. Absent means the module is silently off (`cigar-dll-soft-integrations`).
-2. **Read the state** from the global `QK_SpellToggle` (0x87E), which is 1 while on. Also read
-   the script variable `Allow_Switch`, and offer nothing while it is false.
-3. **Toggle** by calling `QK_MainQuestScript.ToggleAbility()` through the Papyrus VM, as CIGAR
-   calls PNO's `UrinateAndDefecate`. This is the same function X and the toggle power run.
-4. **Prompt-only mode:**
-   - Call `REG_KeyToggle(<hidden key>)`, which properly unregisters X; setting the property
-     alone does not. Remember X in `CIGAR.json` for switching back.
-   - Update the MCM Memory profile too (`hotkey-changes-also-update-mcm-memory`).
-   - Check the key again at load and from the panel's key check (`prefer-on-demand-checks-over-polling`).
+- **When.** Drawing a weapon while WW is off offers **마검사 모드**. Whether a fight is on does not
+  matter; the player can try it by swinging at the air. One press calls
+  `QK_MainQuestScript.ToggleAbility()`.
+- **Hidden:**
+  - while WW is on (`QK_SpellToggle` = 1)
+  - while `Allow_Switch` is false (a concentration spell through block)
+  - in a SexLab or OStim scene
+  - after a decline (double tap), until the weapon is sheathed: the same logic as the other
+    declines
+- **No off prompt.** X belongs to the player.
+- **Keys and MCM are the player's.** CIGAR does not move, unbind or report WW's keys, and does not
+  touch MCM Memory for it. No prompt-only mode. The user rejected the earlier options A, B and C
+  for the 1-4 clash: "나는 모더지 출장 수리기사가 아니다" (I am a modder, not a house-call
+  repairman). If WW's group keys 1-4 clash with the prompt keys while WW is on, the player
+  rebinds one side.
+- **Soft integration.** Without `The Wizard Warrior.esp`, the module logs once and idles.
 
-## The 1-4 key conflict
+## As written (`src/WizardWarrior.cpp`)
 
-WW's group keys are scan codes 2-5, keys 1-4. SkyPrompt's prompt keys are the same keys
-(`keys: [2,3,4,5]` in SkyPrompt's `settings.json`, CIGAR's defaults too). The conflict exists
-**only while WW is on**, which is when CIGAR's combat prompts (Jujutsu, Execute, Surrender, Weapon
-Swap, Lock On) come up. Pressing 1 then both answers the prompt and switches WW's group or casts
-its instant spell.
+- **At load** it looks up `QK_QuestMain` (0x878), the global `QK_SpellToggle` (0x87E) and the bound
+  `QK_MainQuestScript`. It logs `ready: ...`, or why the module is off.
+- **Gate (100 ms).** Weapon drawn, not on, `Allow_Switch`, no scene, not dismissed, and not within
+  2 s of an accept. The gate line logs each of these.
+- **Accept.** `DispatchMethodCall2(QK_QuestMain, "QK_MainQuestScript", "ToggleAbility")`. Two
+  seconds later it checks `QK_SpellToggle`: it logs `on: QK_SpellToggle = 1`, or a WARN plus one
+  notification when WW did not turn on (self-reporting).
+- **Prompt.** ID 41, single press (combat context); panel label 마검사 모드 / Wizard Warrior Mode.
+- **verify_deploy.** When the `The Wizard Warrior` mod is enabled, it checks that
+  `QK_MainQuestScript.pex` still has `ToggleAbility`, `Allow_Switch`, `PowerToggle` and
+  `KeyPowerUP`. Otherwise it only notes that the module idles.
 
-Options:
+## The install (waiting for the user)
 
-- **A. Detect and tell (recommended).**
-  - CIGAR takes over only X.
-  - At load and from the panel's key check, it compares WW's `GroupKey_0..3` with the prompt keys.
-  - On an overlap it notifies once and logs which keys clash; the player rebinds one side (WW's
-    MCM, or CIGAR's prompt keys in the panel).
-  - Least invasive: the group keys are not keys CIGAR replaces with a prompt, so moving them is
-    outside CIGAR's mandate. It is also self-reporting (`make-failures-self-reporting-not-user-retested`).
-- **B. Move WW's group keys** in prompt-only mode, for example to 5-8.
-  - Automatic, but CIGAR would choose combat keys for another mod.
-  - It would also have to update MCM Memory and handle WW's own key saving.
-- **C. Unbind WW's group keys** in prompt-only mode.
-  - Group switching stays available through WW's own powers (`QK_Group1Power`..`4`, on the
-    favorites or shout key).
-  - The "press the active group's key to cast Instant Spell 0" quick cast is lost.
-
-## When to offer it (design)
-
-- **Turning it on is the action, not a preparation.** It changes what every attack does for the
-  rest of the fight. The accepted precedent is 록온 (Lock On), a combat-mode prompt offered when a
-  fight starts. The rejected tool swap only put a pickaxe in hand; the player still had to act.
-- **Proposal:**
-  - Offer 마검사 모드 when a fight starts, with a weapon drawn, WW off and `Allow_Switch` true.
-    One press turns it on (single press, the combat input policy).
-  - Offer 마검사 해제 only after the fight ends, with WW on. In prompt-only mode X is gone, so
-    this is the way to turn it off, besides WW's own toggle power.
-  - A decline hides it until the next fight, or until the next time out of combat
-    (`cigar-declined-prompt-stays-hidden`).
-- **Not proposed:**
-  - Turning it on automatically (`cigar-takes-animations-not-auto-triggers`).
-  - Group switching as prompts; a group is the player's preference, not something the situation
-    decides.
-
-## Decisions needed before building
-
-1. The 1-4 conflict: A, B or C (A recommended).
-2. Whether 마검사 해제 is offered after a fight, as proposed, or WW simply stays on until the
-   player uses WW's toggle power.
-3. Prompt-only on by default, as for the other integrations.
-4. Installing WW into the modlist to build and test (MO2 closed; the archive is in Downloads).
-
-Estimated work once decided: about one session. It covers:
-- the module and the prompt-only key handling
-- the conflict check
-- verify_deploy checks for `QK_QuestMain`, `QK_MainQuestScript`, `ToggleAbility`,
-  `REG_KeyToggle`, `Allow_Switch` and `QK_SpellToggle`
-- docs and an in-game test
+The planned placement follows the Installation and Modification rules:
+- mod folder `The Wizard Warrior` inside the `##Magic` separator, next to Magic Sneak Attacks and
+  Enhanced Reanimation (magic mechanics, no shared files)
+- plugin `The Wizard Warrior.esp` (a full ESP, master Skyrim.esm) in the `Overhaul - Magic` group,
+  right after `aap-Clairvoyance Corpses.esp` in `plugins.txt` and `loadorder.txt`
+- no ESL compaction, so the local IDs (0x878, 0x87E) stay those every Nexus player has
+- its requirements (SKSE, SkyUI, powerofthree's Papyrus Extender, PapyrusUtil) are installed
