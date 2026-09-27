@@ -21,6 +21,21 @@ namespace CIGAR::PushProbe
 	// one), with the same before/after measurement.
 	void SetWatch(bool a_on);
 	bool Watching();
+	// Stage 0b (docs/038): the push clip candidates of tools/push_test_assets.py ("CIGAR Push Test"),
+	// played on the player through Offset Movement Animation. Each is keyed on its own
+	// iGPMAAnimationType; iGPMAOffsetType picks the arm (0 both arms and upper body, 1 right, 2 left).
+	struct Gesture
+	{
+		int value;
+		int offsetType;
+		float seconds;
+		const char* label;
+	};
+	std::span<const Gesture> Gestures();
+	// Any thread: arms one; it plays as soon as the player moves (within 20 s), and stops after its
+	// length, both graph variables back at 0.
+	void ArmGesture(std::size_t a_index);
+
 	// kDataLoaded: the dialogue event sink.
 	void RegisterEvents();
 	// Game thread, every 100 ms while the game runs.

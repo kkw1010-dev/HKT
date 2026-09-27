@@ -590,6 +590,17 @@ namespace CIGAR::Panel
 				if (ImGui::Checkbox("자연 부딪힘 관찰 (걷기·달리기로 부딪힐 때)##pp-watch", &watch)) {
 					PushProbe::SetWatch(watch);
 				}
+				ImGui::TextColored(kDim, "%s", "밀기 동작 후보 (누르고 메뉴를 닫은 뒤 걸으면 재생):");
+				const auto gestures = PushProbe::Gestures();
+				for (std::size_t i = 0; i < gestures.size(); ++i) {
+					if (i % 2 == 1) {
+						ImGui::SameLine();
+					}
+					const auto label = std::format("{}##pp-g{}", gestures[i].label, gestures[i].value);
+					if (ImGui::Button(label.c_str())) {
+						PushProbe::ArmGesture(i);
+					}
+				}
 				ImGui::TextColored(kDim, "%s", PushProbe::Status().c_str());
 			}
 

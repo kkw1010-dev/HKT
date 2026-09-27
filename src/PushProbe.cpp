@@ -32,6 +32,9 @@ namespace CIGAR::PushProbe
 
 		// Read by the event sinks (other threads); written on the game thread.
 		std::atomic<const RE::TESObjectREFR*> tracked{ nullptr };  // compared only, never dereferenced
+		std::atomic<const RE::TESObjectREFR*> gesturePlayer{ nullptr };  // the player while a gesture plays
+		std::atomic<Clock::rep> gestureStartTicks{ 0 };
+		std::atomic<int> gestureEvents{ 0 };
 		std::atomic<Clock::rep> windowStart{ 0 };
 		std::atomic<int> animEvents{ 0 };
 		std::atomic<int> topicLines{ 0 };
@@ -147,6 +150,13 @@ namespace CIGAR::PushProbe
 					if (const int n = ++animEvents; n <= kMaxAnimEvents) {
 						Log("  anim event +{:.2f}s: {}{}", Since(), a_event->tag.c_str(),
 							a_event->payload.empty() ? "" : std::format(" ({})", a_event->payload.c_str()));
+					}
+				}
+				if (a_event && a_event->holder && a_event->holder == gesturePlayer.load()) {
+					if (const int n = ++gestureEvents; n <= kMaxAnimEvents) {
+						const auto start = Clock::time_point(Clock::duration(gestureStartTicks.load()));
+						Log("  player anim event +{:.2f}s: {}{}", std::chrono::duration<float>(Clock::now() - start).count(),
+							a_event->tag.c_str(), a_event->payload.empty() ? "" : std::format(" ({})", a_event->payload.c_str()));
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
@@ -318,6 +328,130 @@ namespace CIGAR::PushProbe
 			}
 		}
 
+		// Stage 0b: the clips of tools/push_test_assets.py; values and lengths must match it.
+		constexpr std::array kGestures{
+			Gesture{ 3801, 2, 2.67f, "3801 문 열기 · 왼팔" },
+			Gesture{ 3802, 2, 0.33f, "3802 방패 밀치기 · 왼팔" },
+			Gesture{ 3803, 1, 2.33f, "3803 받기 · 오른팔" },
+			Gesture{ 3804, 1, 2.33f, "3804 건네기 · 오른팔" },
+			Gesture{ 3805, 0, 2.87f, "3805 EVG 비집기 · 상체" },
+			Gesture{ 3806, 2, 2.87f, "3806 EVG 비집기 · 왼팔" },
+		};
+		constexpr auto kClipVariable = "iGPMAAnimationType";
+		constexpr auto kArmVariable = "iGPMAOffsetType";
+		constexpr auto kArmWait = 20s;         // an armed gesture is dropped if the player does not move by then
+		constexpr auto kAfterStop = 500ms;     // speed is measured this long after the stop
+
+		std::atomic<int> gestureArmed{ -1 };  // an index into kGestures, or -1
+
+		struct GestureRun
+		{
+			int index = -1;
+			Clock::time_point armed;
+			Clock::time_point start;
+			Clock::time_point lastSample;
+			RE::NiPoint3 startPos;
+			RE::NiPoint3 lastPos;
+			float speedBefore = 0.0f;
+			float sumSpeed = 0.0f;
+			int samples = 0;
+			bool waiting = false;
+			bool playing = false;
+			bool stopped = false;
+			Clock::time_point stopAt;
+			RE::NiPoint3 stopPos;
+		};
+		GestureRun run;  // game thread
+		RE::NiPoint3 lastPlayerPos;
+		Clock::time_point lastPlayerTick;
+
+		bool Moving(RE::PlayerCharacter* a_player)
+		{
+			const auto* state = a_player->AsActorState();
+			return state->IsWalking() || state->IsRunning() || state->IsSprinting();
+		}
+
+		void GestureTick(RE::PlayerCharacter* a_player)
+		{
+			const auto now = Clock::now();
+			const auto pos = a_player->GetPosition();
+			// Speed from the last tick (units per second), whatever the state flags say.
+			const float dt = std::chrono::duration<float>(now - lastPlayerTick).count();
+			const float speed = dt > 0.0f && dt < 1.0f ? pos.GetDistance(lastPlayerPos) / dt : 0.0f;
+			lastPlayerPos = pos;
+			lastPlayerTick = now;
+
+			if (const int index = gestureArmed.exchange(-1); index >= 0) {
+				run = {};
+				run.index = index;
+				run.armed = now;
+				run.waiting = true;
+				Log("gesture {} armed: plays when the player moves", kGestures[index].label);
+			}
+			if (run.index < 0) {
+				return;
+			}
+			const auto& g = kGestures[run.index];
+			if (run.waiting) {
+				if (!Moving(a_player)) {
+					if (now - run.armed > kArmWait) {
+						Log("gesture {} dropped: the player did not move within {} s", g.label, kArmWait.count());
+						SetStatus(std::format("gesture {}: dropped (did not move)", g.label));
+						run = {};
+					}
+					return;
+				}
+				bool installed = false;
+				const bool read = a_player->GetGraphVariableBool("bGPMAInstalled", installed);
+				const bool arm = a_player->SetGraphVariableInt(kArmVariable, g.offsetType);
+				const bool clip = a_player->SetGraphVariableInt(kClipVariable, g.value);
+				gesturePlayer = a_player;
+				gestureStartTicks = now.time_since_epoch().count();
+				gestureEvents = 0;
+				const bool sink = a_player->AddAnimationGraphEventSink(AnimSink::Get());
+				const bool sent = a_player->NotifyAnimationGraph("OffsetGPMA");
+				run.waiting = false;
+				run.playing = true;
+				run.start = now;
+				run.lastSample = now;
+				run.startPos = pos;
+				run.speedBefore = speed;
+				Log("gesture {} start ({}): bGPMAInstalled {} (read {}), {}={} set {}, {}={} set {}, OffsetGPMA accepted {}, sink {}, "
+					"speed before {:.0f}", g.label, Movement(a_player), installed, read, kArmVariable, g.offsetType, arm, kClipVariable,
+					g.value, clip, sent, sink, speed);
+				return;
+			}
+			if (run.playing) {
+				run.sumSpeed += speed;
+				++run.samples;
+				if (now - run.start >= std::chrono::duration<float>(g.seconds)) {
+					const bool sent = a_player->NotifyAnimationGraph("OffsetGPMAStop");
+					const bool clip = a_player->SetGraphVariableInt(kClipVariable, 0);
+					const bool arm = a_player->SetGraphVariableInt(kArmVariable, 0);
+					run.playing = false;
+					run.stopped = true;
+					run.stopAt = now;
+					run.stopPos = pos;
+					Log("gesture {} stop after {:.2f} s: OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", g.label,
+						std::chrono::duration<float>(now - run.start).count(), sent, kClipVariable, clip, kArmVariable, arm);
+				}
+				return;
+			}
+			if (run.stopped && now - run.stopAt >= kAfterStop) {
+				a_player->RemoveAnimationGraphEventSink(AnimSink::Get());
+				gesturePlayer = nullptr;
+				const float during = run.samples ? run.sumSpeed / static_cast<float>(run.samples) : 0.0f;
+				const bool kept = run.speedBefore > 0.0f && during >= 0.5f * run.speedBefore;
+				Log("RESULT gesture {}: speed before {:.0f}, during {:.0f}, after {:.0f} ({}); moved {:.0f} units while playing; "
+					"player anim events {}; {}",
+					g.label, run.speedBefore, during, speed, Movement(a_player), run.stopPos.GetDistance(run.startPos), gestureEvents.load(),
+					kept ? "KEPT MOVING" : "MOVEMENT DROPPED (below half the speed before)");
+				SetStatus(std::format("gesture {}: {}, speed {:.0f} -> {:.0f}", g.label, kept ? "kept moving" : "movement dropped",
+					run.speedBefore, during));
+				run = {};
+			}
+		}
+
 		class TopicSink final : public RE::BSTEventSink<RE::TESTopicInfoEvent>
 		{
 		public:
@@ -367,6 +501,20 @@ namespace CIGAR::PushProbe
 		return watching.load();
 	}
 
+	std::span<const Gesture> Gestures()
+	{
+		return kGestures;
+	}
+
+	void ArmGesture(std::size_t a_index)
+	{
+		if (a_index >= kGestures.size()) {
+			return;
+		}
+		gestureArmed = static_cast<int>(a_index);
+		SetStatus(std::format("gesture {} armed: close the menu and walk", kGestures[a_index].label));
+	}
+
 	void RegisterEvents()
 	{
 		if (auto* holder = RE::ScriptEventSourceHolder::GetSingleton()) {
@@ -394,6 +542,7 @@ namespace CIGAR::PushProbe
 		} else if (!seen.empty()) {
 			seen.clear();
 		}
+		GestureTick(player);
 	}
 
 	std::string Status()
