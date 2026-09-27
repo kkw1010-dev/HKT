@@ -5,9 +5,27 @@
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
 
-### First thing next session: the USSEP mannequin test
+### State on 2026-09-27 (read this first)
 
-The user starts the next session from **whether the USSEP test is complete**. Ask for their result,
+- **MannequinSwap 3.0.0 is tested on the USSEP script.** The combined new-game run of 2026-09-27
+  passed all of it:
+  - A1: the slot-60 fix `7ccf6c0`; the HDT SMP carrier no longer blocks an outfit with a slot-60
+    piece
+  - A2: the same base item on both sides, with no bounce
+  - A3: re-entry
+
+  The test list is `TEST-run-2026-09-27.md` on the `brace` branch; its log is archived in
+  `C:\TAKEALOOK\_test-runs\2026-09-27 1207 run\`. The USSEP section below is kept as history.
+- **`+Another Mannequin Script Fix (AE.SE)`** is being turned back on by the MO2 session, as part
+  of its own work. The orchestrator moved that job there; do not do it from here.
+- **The brace feature (버티기) was abandoned by the user.** The branch `brace` is kept and never
+  merged; `docs/036-brace.md` there records why and the stage-0 evidence. The deployed DLL is
+  `v3` again (no probe), rebuilt and verified on 2026-09-27.
+- **Next:** 3.0.0 packaging and release with the user (see "Next, in order").
+
+### The USSEP mannequin test (2026-09-26, done)
+
+The user started the next session from **whether the USSEP test is complete**. Ask for their result,
 then read `SKSE\CIGAR.log` before anything else.
 
 - **What it tests:** `TEST-3.0.0-ussep.md`. It checks MannequinSwap on USSEP's
