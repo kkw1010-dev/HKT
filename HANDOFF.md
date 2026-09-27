@@ -68,17 +68,26 @@ history of each module are in `docs/`, one file per module, and each file starts
 - Nexus replies are posted by the user, never by Claude.
 
 **Open items and backlog.**
-1. The next launch: the panel's 프롬프트 위치 slider shows and saves (`CIGAR.log`: `settings: prompt
-   right offset N`, `[PromptAnchor] right offset set to N`), and the five pages show the modules as
-   in `docs/007` "Module pages" (`control panel: combat page …` line, no WARN).
+1. **Retest 3 (R3-C1..C8) passed** (the user's report through the orchestrator, 2026-09-28). The
+   author-build log of 2026-09-27 23:20-23:47 shows it:
+   - the five pages registered, with the modules on the pages of `docs/007` "Module pages", and
+     each page drawn; no WARN from the panel;
+   - the right offset moved through 0 / 10 / 15 / 20 / 30 and saved (`settings saved`, `prompt right
+     offset N`).
+   - Not in that log: a module switch toggled (R3-C5) and a reload after saving 30 (R3-C8). The
+     offset lives in `CIGAR.json`, not the save, so a reload cannot lose it.
+   - Seen in the same log, not an r3 item: on a **new game** the marker cannot be placed at load
+     (`WARN could not place the marker (load)`, the player is not in the world yet); recovery placed
+     it 25 s later and prompts attached to it. Harmless, but the WARN reads like a failure; a quiet
+     first retry for the new-game case is a candidate fix.
 2. **3.0.0 is live on Nexus 193080** as file 811289 (`CIGAR`, 3.0.0, Main, 922,079 bytes), an
    Update of 2.1.2; mod version 3.0.0, changelog, description and The Wizard Warrior requirement
    done. The session "CIGAR 3.0.0 Nexus 업로드" did the upload at the user's direct instruction,
    because this session's permission check kept refusing the Nexus edit page. Record:
-   `dist/nexus-page/upload-3.0.0.md`. Local copy of the package: `Downloads\CIGAR 3.0.0.7z`
-   (DLL sha256 `afef2eb1...`).
-   - Not seen in game before release: the release build itself, the right-offset slider and the
-     five panel pages (the author build with them is deployed; the user's retest 3 has R3-C1..C8).
+   `dist/nexus-page/upload-3.0.0.md`. DLL sha256 `afef2eb1...`. The `Downloads\CIGAR 3.0.0` folder
+   and archive were gone on 2026-09-28; rebuild with `tools\Build.ps1 -Package` if a copy is needed.
+   - The slider and the five pages passed retest 3 in the author build; the release build itself
+     has not been launched.
    - Open: a GitHub release for 3.0.0 and the push, only when the user asks.
 4. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
