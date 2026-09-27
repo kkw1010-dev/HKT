@@ -1,0 +1,23 @@
+[b]CIGAR - FAQ[/b]
+
+[b]Prompts show ??? (question marks)[/b]
+That is a font issue, not a CIGAR setting. SkyPrompt draws the prompts with its own font (Jost by default), which has no letters for languages such as Chinese, Japanese or Russian, so names from a translated game come out as ???.
+- Put a .ttf font that covers your language (for example Noto Sans SC for Chinese) into Data/Interface/ImGuiIcons/Fonts/
+- Pick it in SkyPrompt's settings: Theme → Appearance → Font
+- If the SKSE Menu Framework menus show ??? too, install the SKSE Menu Framework release for your language
+CIGAR's own text is in English or Korean; other game languages get English.
+
+[b]Observe (hold to zoom) does not zoom[/b]
+Fixed in 2.1.1: the zoom did nothing in first person. Please update to the latest version.
+- The prompt shows after you stand still for 5 seconds with your weapon sheathed, looking at a person or at distant scenery. Nearby objects and furniture never get it.
+- If another mod forces the camera FOV every frame, CIGAR cannot zoom, and it tells you so once with a notification.
+If it still does not zoom, post your CIGAR.log (Documents/My Games/Skyrim Special Edition/SKSE/CIGAR.log).
+
+[b]Does it work with OStim?[/b]
+There is no OStim integration. CIGAR only hides its own prompts while you are in an OStim scene (it checks OStim's scene faction), so they stay out of the way. OStim is not in my own setup, so this part has not been tested in game.
+
+[b]How does drinking work? Do I have to pay?[/b]
+It uses a drink you already carry (ale, mead, wine and the like), one per press, so there is nothing to pay. The prompt only shows while you are seated in a chair at an inn or in a house, your own home included.
+
+[b]Does it work on SSE 1.5.97?[/b]
+Several players on 1.5.97 have reported that it works. I have not tested it on 1.5.97 myself; my own testing is on 1.6.1170.
