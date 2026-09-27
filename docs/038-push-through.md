@@ -99,7 +99,7 @@ or HOLD before any module code.
 
 The user said go (through the orchestrator). Nothing below offers a prompt.
 
-### The probe (`src/PushProbe.*`, author build `f9fd8e0`, deployed)
+### The probe (`src/PushProbe.*`, author build `cc0b6e2`, deployed)
 
 - Author panel, `5. 세부 설정` → "탐침: NPC 밀기 (docs/038)". A button arms the probe; it fires on the
   NPC under the crosshair when the menu closes, so the measurement is not paused with the menu.

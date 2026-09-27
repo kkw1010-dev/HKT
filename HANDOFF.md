@@ -16,18 +16,20 @@ history of each module are in `docs/`, one file per module, and each file starts
   session.
 
 **Git.**
-- **3.0.0 shipped** (Nexus, 2026-09-27). `master` = `v3`, fast-forwarded, tag `v3.0.0`, all local:
-  `master` is 47 commits ahead of `origin/master`. GitHub (`kkw1010-dev/HKT`) is pushed only when the
-  user asks.
+- **3.0.0 shipped** (Nexus, 2026-09-27). `master` = `v3`; GitHub (`kkw1010-dev/HKT`) has both at
+  `8254180` and the tag `v3.0.0` (`affb7c0`). Local commits after that are pushed only when the user
+  asks.
+- **History rewritten on 2026-09-28** (the user's decision): every commit from 2026-09-27 onward got a
+  new hash, and GitHub was force-pushed. The old-to-new map and a bundle of the old history are kept
+  locally in `../CIGAR-Personal/backups/`. Hashes in these docs are the new ones.
 - Branches:
-  - `master`: 3.0.0, local ahead of GitHub
+  - `master` = `v3`: 3.0.0 and later; keep working on `v3` and fast-forward `master`
   - `v2`: 2.x, on GitHub (2.1.2)
-  - `v3`: same commit as `master`; keep working here or on `master`
-  - `brace`: abandoned, kept, never merged
+  - `brace`: abandoned, kept, never merged (forks before the rewritten range, so unchanged)
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **b20d119 author build** (2026-09-28): 3.0.0, the log-only NPC push probe
+- `mods\CIGAR` holds the **e860764 author build** (2026-09-28): 3.0.0, the log-only NPC push probe
   with the stage-0b gesture buttons (`src/PushProbe.*`, `docs/038`), and the personal-module hook
   (empty registry). `verify_deploy.py` passed every check. The right-offset setting and the five
   pages passed retest 3.
