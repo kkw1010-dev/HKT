@@ -328,7 +328,8 @@ namespace CIGAR::PushProbe
 			}
 		}
 
-		// Stage 0b: the clips of tools/push_test_assets.py; values and lengths must match it.
+		// Stage 0b/0c: the clips of tools/push_test_assets.py; values and lengths must match it. A value of 0
+		// is the automatic pick by the gap (stage 0c, the user's two options of 2026-09-28).
 		constexpr std::array kGestures{
 			Gesture{ 3801, 2, 2.67f, "3801 문 열기 · 왼팔" },
 			Gesture{ 3802, 2, 0.33f, "3802 방패 밀치기 · 왼팔" },
@@ -336,7 +337,19 @@ namespace CIGAR::PushProbe
 			Gesture{ 3804, 1, 2.33f, "3804 건네기 · 오른팔" },
 			Gesture{ 3805, 0, 2.87f, "3805 EVG 비집기 · 상체" },
 			Gesture{ 3806, 2, 2.87f, "3806 EVG 비집기 · 왼팔" },
+			Gesture{ 3805, 0, 0.30f, "3805 상체 · 0.3초에 끊기" },
+			Gesture{ 3805, 0, 0.50f, "3805 상체 · 0.5초에 끊기" },
+			Gesture{ 3805, 0, 0.80f, "3805 상체 · 0.8초에 끊기" },
+			Gesture{ 0, 0, 0.0f, "간격별 자동 (정면 3805 · 왼쪽 3806)" },
 		};
+		constexpr int kFull3805 = 4;
+		constexpr int kLeft3806 = 5;
+		// Probe values (Claude's, not the user's): an NPC up to this far ahead and this far to either side
+		// is in the way; within kAutoStraight of the line ahead it is straight ahead.
+		constexpr float kAutoAhead = 120.0f;
+		constexpr float kAutoCorridor = 80.0f;
+		constexpr float kAutoStraight = 30.0f;
+		constexpr float kKeptSpeed = 40.0f;  // average speed during the clip that still counts as walking on
 		constexpr auto kClipVariable = "iGPMAAnimationType";
 		constexpr auto kArmVariable = "iGPMAOffsetType";
 		constexpr auto kArmWait = 20s;         // an armed gesture is dropped if the player does not move by then
@@ -347,11 +360,10 @@ namespace CIGAR::PushProbe
 		struct GestureRun
 		{
 			int index = -1;
+			std::string note;  // why the automatic pick chose this clip
 			Clock::time_point armed;
 			Clock::time_point start;
-			Clock::time_point lastSample;
 			RE::NiPoint3 startPos;
-			RE::NiPoint3 lastPos;
 			float speedBefore = 0.0f;
 			float sumSpeed = 0.0f;
 			int samples = 0;
@@ -371,6 +383,88 @@ namespace CIGAR::PushProbe
 			return state->IsWalking() || state->IsRunning() || state->IsSprinting();
 		}
 
+		// The nearest living, non-hostile NPC in the way: ahead of the player, inside the corridor.
+		RE::Actor* InTheWay(RE::PlayerCharacter* a_player, float& a_ahead, float& a_side)
+		{
+			auto* lists = RE::ProcessLists::GetSingleton();
+			if (!lists) {
+				return nullptr;
+			}
+			const auto pos = a_player->GetPosition();
+			const float heading = a_player->GetAngleZ();
+			const RE::NiPoint3 forward{ std::sin(heading), std::cos(heading), 0.0f };
+			const RE::NiPoint3 right{ std::cos(heading), -std::sin(heading), 0.0f };
+			RE::Actor* best = nullptr;
+			for (auto& handle : lists->highActorHandles) {
+				const auto actor = handle.get();
+				if (!actor || actor.get() == a_player || actor->IsDead() || actor->IsHostileToActor(a_player) ||
+					!actor->HasKeywordString("ActorTypeNPC")) {
+					continue;
+				}
+				const auto to = actor->GetPosition() - pos;
+				const float ahead = to.x * forward.x + to.y * forward.y;
+				const float side = to.x * right.x + to.y * right.y;
+				if (ahead > 0.0f && ahead <= kAutoAhead && std::abs(side) <= kAutoCorridor && (!best || ahead < a_ahead)) {
+					best = actor.get();
+					a_ahead = ahead;
+					a_side = side;
+				}
+			}
+			return best;
+		}
+
+		void Result(RE::PlayerCharacter* a_player, float a_speedAfter, std::string_view a_how)
+		{
+			const auto& g = kGestures[run.index];
+			a_player->RemoveAnimationGraphEventSink(AnimSink::Get());
+			gesturePlayer = nullptr;
+			const float during = run.samples ? run.sumSpeed / static_cast<float>(run.samples) : 0.0f;
+			const bool kept = during >= kKeptSpeed;
+			const std::string how = run.note.empty() ? std::string(a_how) : std::format("[{}] {}", run.note, a_how);
+			Log("RESULT gesture {} {}: speed before {:.0f}, during {:.0f}, after {:.0f} ({}); moved {:.0f} units while playing; "
+				"player anim events {}; {}",
+				g.label, how, run.speedBefore, during, a_speedAfter, Movement(a_player), run.stopPos.GetDistance(run.startPos),
+				gestureEvents.load(), kept ? "KEPT MOVING" : "MOVEMENT DROPPED (average below walking)");
+			SetStatus(std::format("gesture {}: {}, speed during {:.0f}", g.label, kept ? "kept moving" : "movement dropped", during));
+			run = {};
+		}
+
+		void Stop(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_pos, std::string_view a_why)
+		{
+			const auto& g = kGestures[run.index];
+			const bool sent = a_player->NotifyAnimationGraph("OffsetGPMAStop");
+			const bool clip = a_player->SetGraphVariableInt(kClipVariable, 0);
+			const bool arm = a_player->SetGraphVariableInt(kArmVariable, 0);
+			run.playing = false;
+			run.stopped = true;
+			run.stopAt = Clock::now();
+			run.stopPos = a_pos;
+			Log("gesture {} stop after {:.2f} s ({}): OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", g.label,
+				std::chrono::duration<float>(run.stopAt - run.start).count(), a_why, sent, kClipVariable, clip, kArmVariable, arm);
+		}
+
+		void Start(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_pos, float a_speed, const Clock::time_point& a_now)
+		{
+			const auto& g = kGestures[run.index];
+			bool installed = false;
+			const bool read = a_player->GetGraphVariableBool("bGPMAInstalled", installed);
+			const bool arm = a_player->SetGraphVariableInt(kArmVariable, g.offsetType);
+			const bool clip = a_player->SetGraphVariableInt(kClipVariable, g.value);
+			gesturePlayer = a_player;
+			gestureStartTicks = a_now.time_since_epoch().count();
+			gestureEvents = 0;
+			const bool sink = a_player->AddAnimationGraphEventSink(AnimSink::Get());
+			const bool sent = a_player->NotifyAnimationGraph("OffsetGPMA");
+			run.waiting = false;
+			run.playing = true;
+			run.start = a_now;
+			run.startPos = a_pos;
+			run.speedBefore = a_speed;
+			Log("gesture {} start ({}): bGPMAInstalled {} (read {}), {}={} set {}, {}={} set {}, OffsetGPMA accepted {}, sink {}, "
+				"speed before {:.0f}", g.label, Movement(a_player), installed, read, kArmVariable, g.offsetType, arm, kClipVariable, g.value,
+				clip, sent, sink, a_speed);
+		}
+
 		void GestureTick(RE::PlayerCharacter* a_player)
 		{
 			const auto now = Clock::now();
@@ -382,73 +476,61 @@ namespace CIGAR::PushProbe
 			lastPlayerTick = now;
 
 			if (const int index = gestureArmed.exchange(-1); index >= 0) {
+				// r5 fault: a new arm used to drop a playing gesture without its stop or result.
+				if (run.playing) {
+					Stop(a_player, pos, "interrupted by a new arm");
+				}
+				if (run.stopped) {
+					Result(a_player, speed, "cut short by a new arm");
+				}
 				run = {};
 				run.index = index;
 				run.armed = now;
 				run.waiting = true;
-				Log("gesture {} armed: plays when the player moves", kGestures[index].label);
+				Log("gesture {} armed: plays when the player moves{}", kGestures[index].label,
+					kGestures[index].value == 0 ? " and a non-hostile NPC is in the way" : "");
 			}
 			if (run.index < 0) {
 				return;
 			}
-			const auto& g = kGestures[run.index];
 			if (run.waiting) {
-				if (!Moving(a_player)) {
-					if (now - run.armed > kArmWait) {
-						Log("gesture {} dropped: the player did not move within {} s", g.label, kArmWait.count());
-						SetStatus(std::format("gesture {}: dropped (did not move)", g.label));
-						run = {};
-					}
+				if (now - run.armed > kArmWait) {
+					Log("gesture {} dropped: nothing to play within {} s", kGestures[run.index].label, kArmWait.count());
+					SetStatus(std::format("gesture {}: dropped", kGestures[run.index].label));
+					run = {};
 					return;
 				}
-				bool installed = false;
-				const bool read = a_player->GetGraphVariableBool("bGPMAInstalled", installed);
-				const bool arm = a_player->SetGraphVariableInt(kArmVariable, g.offsetType);
-				const bool clip = a_player->SetGraphVariableInt(kClipVariable, g.value);
-				gesturePlayer = a_player;
-				gestureStartTicks = now.time_since_epoch().count();
-				gestureEvents = 0;
-				const bool sink = a_player->AddAnimationGraphEventSink(AnimSink::Get());
-				const bool sent = a_player->NotifyAnimationGraph("OffsetGPMA");
-				run.waiting = false;
-				run.playing = true;
-				run.start = now;
-				run.lastSample = now;
-				run.startPos = pos;
-				run.speedBefore = speed;
-				Log("gesture {} start ({}): bGPMAInstalled {} (read {}), {}={} set {}, {}={} set {}, OffsetGPMA accepted {}, sink {}, "
-					"speed before {:.0f}", g.label, Movement(a_player), installed, read, kArmVariable, g.offsetType, arm, kClipVariable,
-					g.value, clip, sent, sink, speed);
+				if (!Moving(a_player)) {
+					return;
+				}
+				if (kGestures[run.index].value == 0) {
+					float ahead = 0.0f;
+					float side = 0.0f;
+					auto* npc = InTheWay(a_player, ahead, side);
+					if (!npc) {
+						return;
+					}
+					const bool straight = std::abs(side) <= kAutoStraight;
+					const bool left = !straight && side < 0.0f;
+					const auto* label = kGestures[run.index].label;
+					run.index = left ? kLeft3806 : kFull3805;
+					run.note = std::format("auto: {} {:.0f} ahead, {:+.0f} to the side, {}", Util::NameOf(npc), ahead, side,
+						straight ? "straight ahead" : left ? "on the left" : "on the right (3805 stands in)");
+					Log("gesture {} picked {}: {}", label, kGestures[run.index].label, run.note);
+				}
+				Start(a_player, pos, speed, now);
 				return;
 			}
 			if (run.playing) {
 				run.sumSpeed += speed;
 				++run.samples;
-				if (now - run.start >= std::chrono::duration<float>(g.seconds)) {
-					const bool sent = a_player->NotifyAnimationGraph("OffsetGPMAStop");
-					const bool clip = a_player->SetGraphVariableInt(kClipVariable, 0);
-					const bool arm = a_player->SetGraphVariableInt(kArmVariable, 0);
-					run.playing = false;
-					run.stopped = true;
-					run.stopAt = now;
-					run.stopPos = pos;
-					Log("gesture {} stop after {:.2f} s: OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", g.label,
-						std::chrono::duration<float>(now - run.start).count(), sent, kClipVariable, clip, kArmVariable, arm);
+				if (now - run.start >= std::chrono::duration<float>(kGestures[run.index].seconds)) {
+					Stop(a_player, pos, "clip length");
 				}
 				return;
 			}
 			if (run.stopped && now - run.stopAt >= kAfterStop) {
-				a_player->RemoveAnimationGraphEventSink(AnimSink::Get());
-				gesturePlayer = nullptr;
-				const float during = run.samples ? run.sumSpeed / static_cast<float>(run.samples) : 0.0f;
-				const bool kept = run.speedBefore > 0.0f && during >= 0.5f * run.speedBefore;
-				Log("RESULT gesture {}: speed before {:.0f}, during {:.0f}, after {:.0f} ({}); moved {:.0f} units while playing; "
-					"player anim events {}; {}",
-					g.label, run.speedBefore, during, speed, Movement(a_player), run.stopPos.GetDistance(run.startPos), gestureEvents.load(),
-					kept ? "KEPT MOVING" : "MOVEMENT DROPPED (below half the speed before)");
-				SetStatus(std::format("gesture {}: {}, speed {:.0f} -> {:.0f}", g.label, kept ? "kept moving" : "movement dropped",
-					run.speedBefore, during));
-				run = {};
+				Result(a_player, speed, "complete");
 			}
 		}
 

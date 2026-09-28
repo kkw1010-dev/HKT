@@ -24,6 +24,7 @@ namespace CIGAR::PushProbe
 	// Stage 0b (docs/038): the push clip candidates of tools/push_test_assets.py ("CIGAR Push Test"),
 	// played on the player through Offset Movement Animation. Each is keyed on its own
 	// iGPMAAnimationType; iGPMAOffsetType picks the arm (0 both arms and upper body, 1 right, 2 left).
+	// Stage 0c adds 3805 cut short and a value-0 entry that picks 3805 or 3806 by where the NPC stands.
 	struct Gesture
 	{
 		int value;

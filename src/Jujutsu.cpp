@@ -46,7 +46,10 @@ namespace CIGAR
 
 		constexpr RE::FormID kHumanoidBodyPartData = 0x1D;
 
-		// A guard drops between blows; keep offering the target this long after it was last seen blocking.
+		// A guard drops between blows; keep offering the target this long after it was last seen blocking,
+		// unless it is swinging: a paired kill move is refused on an attacking target (r5, 2026-09-28: 7 of 7
+		// presses in the grace were refused with the victim mid-attack), so the prompt goes as the swing starts
+		// and comes back with the next guard (the user's choice, 2026-09-28).
 		constexpr auto kBlockGrace = 700ms;
 		// Tests 5-7: in 14 of 15 refused attempts the PLAYER's graph had IsAttacking set on every retry; the
 		// victim's state varied. The engine will not start a paired idle on an actor mid-attack, so an attacking
@@ -56,6 +59,15 @@ namespace CIGAR
 		// attackStop that comes with them) last only this long: the swing in progress at the press is cut,
 		// and the next one is left alone.
 		constexpr auto kPrepareWindow = 300ms;
+
+		bool GraphBool(RE::Actor* a_actor, const char* a_name);
+
+		// Mid-attack by either signal the refusals showed (r5: attack state 1-3 and IsAttacking).
+		bool Swinging(RE::Actor* a_actor)
+		{
+			const auto* state = a_actor->AsActorState();
+			return (state && state->GetAttackState() != RE::ATTACK_STATE_ENUM::kNone) || GraphBool(a_actor, "IsAttacking");
+		}
 
 		bool GraphBool(RE::Actor* a_actor, const char* a_name)
 		{
@@ -272,6 +284,7 @@ namespace CIGAR
 		}
 		RE::Actor* blocking = nullptr;
 		RE::Actor* recent = nullptr;
+		RE::Actor* swinging = nullptr;
 		const auto lastBlockerNow = lastBlocker.get();
 		for (auto* actor : Util::NearbyHostiles(a_player, Settings::JujutsuReach())) {
 			if (!IsHumanoid(actor) || actor->IsInKillMove() || actor->IsOnMount() || actor->IsPlayerTeammate()) {
@@ -286,12 +299,17 @@ namespace CIGAR
 				break;
 			}
 			if (!recent && actor == lastBlockerNow.get() && Clock::now() - blockSeen < kBlockGrace) {
-				recent = actor;
+				if (Swinging(actor)) {
+					swinging = actor;
+				} else {
+					recent = actor;
+				}
 			}
 		}
 		auto* target = blocking ? blocking : recent;
 		// Blocking flips with every guard raised and dropped, so the gate carries the target, not the flag.
-		a_gate = std::format("target={} why={}", target ? Util::NameOf(target) : "-"s, target ? "-" : "no-blocking-humanoid");
+		a_gate = std::format("target={} why={}", target ? Util::NameOf(target) : "-"s,
+			target ? "-" : swinging ? "target-swinging" : "no-blocking-humanoid");
 		return target;
 	}
 
