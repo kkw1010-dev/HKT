@@ -189,6 +189,31 @@ namespace
 		}
 	};
 
+	// Logs the player's own equips and unequips (armour left out: outfit changes would flood the log),
+	// so a test reads from the log whether a D-pad press that ran a prompt also fired a Favorites
+	// hotkey (docs/016).
+	class EquipWatch final : public RE::BSTEventSink<RE::TESEquipEvent>
+	{
+	public:
+		static EquipWatch* GetSingleton()
+		{
+			static EquipWatch singleton;
+			return &singleton;
+		}
+
+		RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* a_event, RE::BSTEventSource<RE::TESEquipEvent>*) override
+		{
+			if (a_event && a_event->actor && a_event->actor->IsPlayerRef()) {
+				const auto* form = RE::TESForm::LookupByID(a_event->baseObject);
+				if (!form || !form->Is(RE::FormType::Armor)) {
+					logs::info("player equip: {} {} ({:08X})", a_event->equipped ? "on" : "off", form ? Util::NameOf(form) : "?"s,
+						a_event->baseObject);
+				}
+			}
+			return RE::BSEventNotifyControl::kContinue;
+		}
+	};
+
 	void InitializeLog()
 	{
 		auto path = logs::log_directory();
@@ -307,6 +332,10 @@ namespace
 				logs::info("menu watch registered");
 			} else {
 				logs::error("UI unavailable: prompts will stay on screen over menus");
+			}
+			if (auto* events = RE::ScriptEventSourceHolder::GetSingleton()) {
+				events->AddEventSink<RE::TESEquipEvent>(EquipWatch::GetSingleton());
+				logs::info("equip watch registered");
 			}
 			Dress::GetSingleton()->RegisterEvents();
 			Needs::GetSingleton()->RegisterEvents();

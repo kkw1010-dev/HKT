@@ -79,7 +79,7 @@ def check_dll(path):
         return
     with open(path, "rb") as f:
         data = f.read()
-    for text in ("gamepad paging: {}{}", " pad={}", "settings: gamepad buttons {}", "padButtons"):
+    for text in (" pad={}", "settings: gamepad buttons {}", "padButtons", "player equip: {} {} ({:08X})"):
         check(text.encode() in data, "the built DLL carries '%s'" % text)
 
 

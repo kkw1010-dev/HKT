@@ -19,9 +19,6 @@ namespace CIGAR
 		void WithdrawAll(const Module* a_owner);
 		// Takes every CIGAR prompt off the screen; each is offered again on its next tick (game thread).
 		void WithdrawEverything();
-		// True when SkyPrompt's gamepad paging (cycle_L / cycle_R in its settings.json) sits on D-pad left
-		// or right, the buttons of CIGAR's D-pad slots 3 and 4; read and logged once by Init.
-		bool PadPagingOnDpad();
 	}
 
 	// Every prompt's SkyPrompt event ID, unique across modules. SkyPrompt treats prompts with the

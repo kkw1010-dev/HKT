@@ -6,8 +6,6 @@
 #include "PromptAnchor.h"
 #include "Settings.h"
 
-#include <nlohmann/json.hpp>
-
 namespace CIGAR
 {
 	namespace
@@ -84,60 +82,12 @@ namespace CIGAR
 		}
 	}
 
-	namespace
-	{
-		bool padPagingOnDpad = false;
-
-		// SkyPrompt pages between mods' prompts with cycle_L / cycle_R; on a pad they default to D-pad left
-		// and right (268, 269), the buttons of CIGAR's D-pad slots 3 and 4. A prompt key that equals a paging
-		// key wins over paging while its prompt is up (SkyPrompt's InputHook, docs/016).
-		void ReadPadPaging()
-		{
-			const std::filesystem::path path{ L"Data/SKSE/Plugins/SkyPrompt/settings.json" };
-			std::ifstream in(path, std::ios::binary);
-			if (!in) {
-				logs::info("gamepad paging: SkyPrompt settings.json not found; its defaults (D-pad left and right) assumed");
-				padPagingOnDpad = true;
-				return;
-			}
-			try {
-				const auto j = nlohmann::json::parse(in);
-				const auto& mcp = j.at("MCP");
-				std::string seen;
-				for (const auto* side : { "cycle_L", "cycle_R" }) {
-					for (const auto* device : { "Gamepad (Xbox)", "Gamepad (PS4)" }) {
-						const auto it = mcp.find(side);
-						if (it == mcp.end() || !it->contains(device)) {
-							continue;
-						}
-						const auto code = (*it)[device].get<std::uint32_t>();
-						seen += std::format("{}{} {}={}", seen.empty() ? "" : ", ", side, device, code);
-						if (code == Settings::kDpadButtons[2] || code == Settings::kDpadButtons[3]) {
-							padPagingOnDpad = true;
-						}
-					}
-				}
-				logs::info("gamepad paging: {}{}", seen.empty() ? "no gamepad paging keys"s : seen,
-					padPagingOnDpad ? " (D-pad left/right: CIGAR's D-pad slots 3-4 take them while shown)" : "");
-			} catch (const std::exception& e) {
-				logs::warn("gamepad paging: SkyPrompt settings.json unreadable ({}); D-pad paging assumed", e.what());
-				padPagingOnDpad = true;
-			}
-		}
-	}
-
-	bool Prompts::PadPagingOnDpad()
-	{
-		return padPagingOnDpad;
-	}
-
 	bool Prompts::Init()
 	{
 		if (clientID == 0) {
 			clientID = SkyPromptAPI::RequestClientID();
 		}
 		logs::info("SkyPrompt client id {} (API {}.{})", clientID, SkyPromptAPI::MAJOR, SkyPromptAPI::MINOR);
-		ReadPadPaging();
 		// A shared event ID makes one key press fire every prompt that uses it.
 		std::map<SkyPromptAPI::EventID, std::string> owners;
 		for (const auto& [owner, slot] : Slots()) {

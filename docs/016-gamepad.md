@@ -205,12 +205,10 @@ so: "tested with an Xbox controller; PlayStation pads not tested".
   what each does; the key list gains "마우스 가운데", "마우스 4", "마우스 5" (and 6-8 for mice that have
   them). Changing the preset takes every prompt down so each is offered again with its new button, as a
   key change does now.
-- Panel warnings:
-  - D-pad preset and SkyPrompt's gamepad `cycle_L` / `cycle_R` on D-pad left or right (read from
-    SkyPrompt's `settings.json` through the VFS): "3·4번 슬롯(D-pad 왼쪽·오른쪽)이 떠 있는 동안에는
-    SkyPrompt 페이지 넘김 대신 프롬프트가 실행됩니다".
-  - A prompt key equal to TDM's lock key, besides the Grapple, Acheron and Valhalla keys it checks
-    now. This modlist's TDM lock key is 258, the middle mouse button.
+- No panel warnings for this (the user, 2026-09-28, struck the two planned ones: D-pad Left/Right
+  slots overriding SkyPrompt's paging, and a prompt key equal to TDM's lock key). The player seasons
+  to taste; CIGAR answers only for technical errors and for prompts showing in reasonable situations,
+  not for the consequences of settings the player picked.
 - `Rest.cpp` pass time: a mouse key is not a keyboard hold (`KeyDown` maps scan codes), so it ends on
   SkyPrompt's key-up like a pad hold.
 - `tools/verify_deploy.py`: the prompt-key check accepts the mouse codes.
@@ -220,8 +218,9 @@ so: "tested with an Xbox controller; PlayStation pads not tested".
   ships the D-pad preset or a mouse key. It also reports this modlist's SkyPrompt paging keys and the
   controlmap's gameplay D-pad binds (here: Up/Down Favorites, Left/Right Hotkey1/2, SkyPrompt paging
   268/269 from `TAKEALOOK - MCM and INI`).
-- Log: every offer line names the pad button (`pad=266`), `Init` logs `gamepad paging: ...` once, and
-  `settings: gamepad buttons ...` / `control panel: gamepad buttons set to ...` record the preset.
+- Log: every offer line names the pad button (`pad=266`); `settings: gamepad buttons ...` /
+  `control panel: gamepad buttons set to ...` record the preset; `player equip: on|off <item>` (armour
+  left out) shows whether a D-pad press that ran a prompt also fired a Favorites hotkey.
 - Texts: README (both), the Nexus description's Input line, and the pinned FAQ.
 
 **Tests** (Xbox controller only; a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme
@@ -232,12 +231,11 @@ so: "tested with an Xbox controller; PlayStation pads not tested".
    not open; with no prompt, D-pad Up opens Favorites.
 3. Two prompts (for example 주시하기 and 앉기): Up and Down; a hold prompt and pass time on the D-pad, pass
    time ending on release.
-4. Three or four prompts in combat (bandit: 록온, 무기 전환, 유술, ...): Left and Right fire; the panel shows
-   the paging warning; paging to another mod's prompts still works while slots 3-4 are free.
+4. Three or four prompts in combat (bandit: 록온, 무기 전환, 유술, ...): Left and Right fire; paging to
+   another mod's prompts still works while slots 3-4 are free.
 5. Preset changed in the panel: prompts come back with the new buttons.
 6. Keyboard and pad alternated: the icons follow the device.
-7. Mouse: slot 1 on a side button fires, including a hold prompt; slot 1 on the middle button shows
-   the TDM warning.
+7. Mouse: slot 1 on a side button fires, including a hold prompt.
 
 Facts read from SkyPrompt's source on 2026-09-28 (`QTR-Modding/SkyPrompt`, `main`, MIT), the ground for
 both options:

@@ -6,7 +6,6 @@
 #include "Grapple.h"
 #include "Needs.h"
 #include "Surrender.h"
-#include "TDMLock.h"
 #include "BookRead.h"
 #include "ItemEquip.h"
 #include "Jujutsu.h"
@@ -406,12 +405,6 @@ namespace CIGAR::Panel
 						 "Uses SkyPrompt's buttons (A/B/X/Y by default, or what you set in SkyPrompt's Controls)") :
 					 L("프롬프트가 떠 있는 동안 그 방향은 즐겨찾기·단축키 대신 프롬프트를 실행합니다. 프롬프트가 없으면 원래대로입니다",
 						 "While a prompt shows, its direction runs the prompt instead of Favorites or a hotkey; with no prompt it works as usual"));
-			if (preset == 1 && Prompts::PadPagingOnDpad()) {
-				ImGui::PushTextWrapPos(0.0f);
-				ImGui::TextColored(kWarn, "%s", L("경고: SkyPrompt의 페이지 넘김이 D-pad 왼쪽·오른쪽입니다. 3·4번 프롬프트가 떠 있는 동안에는 페이지 넘김 대신 프롬프트가 실행됩니다",
-					"Warning: SkyPrompt pages with D-pad left and right. While prompts 3 or 4 show, those directions run the prompt instead of paging"));
-				ImGui::PopTextWrapPos();
-			}
 
 			// A key shared by two slots fires both prompts; a key another mod listens to fires that mod too.
 			for (std::size_t a = 0; a < keys.size(); ++a) {
@@ -422,13 +415,10 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-			// TDM's lock key is often a mouse button (the middle one in this modlist), which a prompt key can
-			// now be too.
-			const std::array<std::pair<const char*, std::int64_t>, 4> others{ {
+			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
 				{ L("그래플", "Grapple"), Grapple::GetSingleton()->Key() },
 				{ L("Acheron 항복", "Acheron surrender"), Surrender::GetSingleton()->SurrenderKey() },
 				{ L("Valhalla 처형", "Valhalla execution"), Execute::GetSingleton()->ExecutionKey() },
-				{ L("TDM 록온", "TDM lock-on"), TDMLock::Key() },
 			} };
 			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
 				for (const auto& [who, code] : others) {
