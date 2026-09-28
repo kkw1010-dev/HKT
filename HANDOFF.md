@@ -17,7 +17,12 @@ history of each module are in `docs/`, one file per module, and each file starts
   (SkyPrompt's buttons by default, or D-pad 1 Up / 2 Down / 3 Left / 4 Right) and the mouse's middle
   and side buttons; design, log lines and tests in `docs/016` "Decided". It ships with push-through and
   the 유술 swing gate. Tested on Xbox only (the user's pad); release texts say PlayStation pads were not
-  tested. `tools/check_input_map.py` guards it in every build.
+  tested. `tools/check_input_map.py` guards it in every build. Deployed as `de8ff68` (no panel warnings, the user's
+  call; a `player equip:` log line for the hotkey check); r6 items D0-D8 in `TEST-next-ingame.md`.
+- **Pandora rewrote `mt_behavior.hkx` at 2026-09-28 21:06** (not a CIGAR action; md5 4149d75c...), so
+  `verify_deploy` fails its Jujutsu baseline. Not restored: the file is outside `mods\CIGAR` and the run
+  may carry other mods' updates. r6 U1 re-tests Jujutsu on it; if U1 plays, run
+  `python tools/verify_deploy.py --accept-behaviour`, otherwise take it to the orchestrator.
 - 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
   save-loaded half was not run. The save button was not CIGAR's.
 - The `CIGAR Push Test` clips stay in `mods\CIGAR` until the combination is chosen; then
