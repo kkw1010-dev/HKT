@@ -8,10 +8,10 @@
   ],
   "files": {
     "meshes/actors/character/behaviors/mt_behavior.hkx": {
-      "md5": "cb3a5b0334f0362db5f6625419657355",
+      "md5": "4149d75ce684a592d60a81b66c2cb04c",
       "module": "Jujutsu",
-      "why": "The pre-Private-Needs copy. Jujutsu test 12 (2026-09-20) played 20 of 20 presses on this file; the 2026-09-19 15:40 Pandora output (md5 3168ff4dc477112852889102a421cecc, same strings in a different order) played 5 of 13. See docs/012-jujutsu.md.",
-      "spare": "build/mt_behavior.jujutsu-good.hkx"
+      "why": "The Pandora output of 2026-09-28 21:06 (MO2 Opt, State Behavior Framework 1.4 -> 2.0). r7 U1 (2026-09-29) played 10 Jujutsu presses on it; the 4 refusals were presses as the target began a swing. The earlier confirmed copy (cb3a5b03..., test 12, 20 of 20) is build/mt_behavior.jujutsu-good.hkx and C:/TAKEALOOK/_backups/2026-09-28 pandora before sbf2. See docs/012-jujutsu.md.",
+      "spare": "build/mt_behavior.jujutsu-sbf2.hkx"
     }
   }
 }

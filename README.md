@@ -65,9 +65,9 @@ All 24 modules passed the CIGAR 2.0 final in-game test on 2026-09-25 (44 of 44 c
 
 A prompt dismissed with SkyPrompt's double tap stays hidden until the situation changes (pass time,
 helmet, chair drink, observe, Wizard Warrior). Prompts hide while a menu is open. Prompt keys are
-keyboard keys or the mouse's middle and side buttons; a gamepad uses SkyPrompt's own buttons or, as a
-Keys-page preset, the D-pad (1 Up, 2 Down, 3 Left, 4 Right; `docs/016`). Gamepad support is tested with
-an Xbox controller only.
+keyboard keys or the mouse's middle and side buttons; a gamepad uses SkyPrompt's own buttons or the
+D-pad (`docs/016`). Checked with an Xbox controller; gamepad and mouse work is closed (the user,
+2026-09-29).
 
 ## Known issues
 

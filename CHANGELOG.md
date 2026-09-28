@@ -5,12 +5,8 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 ## Unreleased
 
 New
-- **D-pad for gamepads.** The Keys page has a gamepad setting: SkyPrompt's own buttons (the default,
-  unchanged) or the D-pad, with prompt 1 on Up, 2 Down, 3 Left and 4 Right. While a prompt shows, its
-  direction runs the prompt instead of Favorites or a hotkey; with no prompt the D-pad works as usual.
-  Tested with an Xbox controller; PlayStation controllers were not tested.
-- **Mouse buttons as prompt keys.** The middle and side mouse buttons can be picked as prompt keys.
-  The left and right buttons stay attack and block.
+- **Gamepad D-pad and mouse buttons.** The Keys page can put prompts on the D-pad, and the mouse's
+  middle and side buttons can be prompt keys. Checked with an Xbox controller.
 
 Fixed
 - **A crash while prompts change.** SkyPrompt 2.4.0 could crash while drawing if a prompt was taken

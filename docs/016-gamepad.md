@@ -223,6 +223,9 @@ so: "tested with an Xbox controller; PlayStation pads not tested".
   left out) shows whether a D-pad press that ran a prompt also fired a Favorites hotkey.
 - Texts: README (both), the Nexus description's Input line, and the pinned FAQ.
 
+**Closed (the user, 2026-09-29):** r7 passed D1-D5, D7 and D8 on an Xbox pad (D6 skipped). No more
+gamepad or mouse tests or work; release texts only say it is implemented and checked on Xbox.
+
 The r6 crash in D2 (2026-09-28 23:30:09) was a SkyPrompt race, not the D-pad codes: `docs/039`.
 
 **Tests** (Xbox controller only; a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme

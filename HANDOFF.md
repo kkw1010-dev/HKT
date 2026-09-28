@@ -25,6 +25,11 @@ history of each module are in `docs/`, one file per module, and each file starts
   hook on SkyPrompt's own Present call site; `check_input_map.py` enforces it. The next run's log must
   show `prompt queue: Present hooked`, `ticks run on thread M, Present on thread N` (M != N confirms
   the premise). r6 D2 onward, U1 and K1 carry over.
+- **r7 (2026-09-29), `b26e031`:** T0 confirmed the premise (ticks on pool threads 8784/34920, Present on
+  30696, and a tick seen inside Present); T1 10x draw/sheathe with no CTD; D1-D5, D7, D8 passed, D6
+  skipped; U1 passed (10 plays, 4 refusals on swing starts), so the SBF 2.0 `mt_behavior.hkx` is the new
+  baseline; K1 withdrawn (no save-then-load tests, the user's rule); B5: no prompt showed during the wash,
+  now also guaranteed by a tick-level wash guard in `main.cpp`. Gamepad and mouse work is closed.
 - **Deployed: `b26e031`** (the queue). r7 checklist in `TEST-next-ingame.md` "r7": T0 thread
   premise, T1 draw/sheathe stress, D2-D8, K1 (save-loaded half), U1; bandit `0003DE8A`. No upstream
   SkyPrompt report (the user's decision); `docs/039` also answers "why not SkyPrompt 2.3.15".

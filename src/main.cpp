@@ -124,6 +124,10 @@ namespace
 
 	std::atomic_bool frameworkBlocked{ false };
 
+	// While Bathing in Skyrim's wash animation plays, no CIGAR prompt belongs on screen (the user,
+	// 2026-09-29: "목욕하기는 원래 프롬프트가 안 떠야 정상"). Game thread.
+	bool washBlocked = false;
+
 	// Logs when the HUD menu's movie is shown or hidden, so a report of a vanishing HUD can be told
 	// apart from CIGAR's own prompts going away.
 	void LogHudVisibility(RE::UI* a_ui)
@@ -260,6 +264,22 @@ namespace
 			menuBlocked = !blockingMenus.empty();
 		}
 		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused()) || menuBlocked || frameworkBlocked) {
+			return;
+		}
+		// Bathe keeps its own prompt's state through the wash (it must not come straight back), so it is
+		// left out of the withdrawal; its prompt was already taken down when the wash was accepted.
+		if (const bool washing = Bathe::GetSingleton()->Washing(Util::Player()); washing != washBlocked) {
+			washBlocked = washing;
+			if (washing) {
+				for (auto* module : Modules()) {
+					if (module != static_cast<const Module*>(Bathe::GetSingleton())) {
+						Prompts::WithdrawAll(module);
+					}
+				}
+			}
+			logs::info("BiS wash {}: prompts {}", washing ? "started" : "ended", washing ? "off" : "back");
+		}
+		if (washBlocked) {
 			return;
 		}
 		for (auto* module : Modules()) {

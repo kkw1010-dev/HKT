@@ -17,9 +17,8 @@ Text is in English or Korean, following your game's language.
   in-game settings panel. CIGAR works without the panel.
 
 Everything else is optional; see "Other mods" below. Tested on Skyrim 1.6.1170 (Anniversary Edition)
-with SkyPrompt 2.4.0 and 2.3.15. Prompt keys can be keyboard keys or the mouse's middle and side
-buttons. A gamepad uses SkyPrompt's own gamepad buttons, or the D-pad if you pick that on the Keys page.
-Gamepad support was tested with an Xbox controller; PlayStation controllers were not tested.
+with SkyPrompt 2.4.0 and 2.3.15. Gamepads use SkyPrompt's buttons or the D-pad; the mouse's middle and
+side buttons can be prompt keys. Checked with an Xbox controller.
 
 Prompt text follows the language CIGAR uses; item, quest and character names come from your game,
 so a translated game shows its own names inside English prompts.
@@ -139,11 +138,8 @@ The in-game menu has a **CIGAR** section with five pages.
 1. **Combat**, 2. **Non-combat** and 3. **Mod integrations**: switch each feature on or off; a feature
    switched off takes its prompts away at once. Mod integrations work only with their mod installed
    and wait quietly without it.
-4. **Keys**: the four prompt keys (keyboard, or the mouse's middle and side buttons), the **gamepad
-   buttons**, and the prompt only switches above. A clash with another mod's key is shown. The gamepad buttons are SkyPrompt's own (A, B, X, Y by default, or what you set
-   in SkyPrompt's Controls) or the **D-pad**: 1 Up, 2 Down, 3 Left, 4 Right. While a prompt shows, its
-   D-pad direction runs the prompt instead of Favorites or a hotkey; with no prompt the D-pad works as
-   usual.
+4. **Keys**: the four prompt keys, the gamepad buttons (SkyPrompt's or the D-pad), and the prompt
+   only switches above. A clash with another mod's key is shown.
 5. **Options**: whether SkyPrompt is connected, the **language** (Auto, your game's language, 한국어
    or English), the **prompt position** (how far to the right prompts sit in third person: 0, 10, 15,
    20 or 30, default 15), when prompts start (potion thresholds, hunger stage, needs level, weapon swap
