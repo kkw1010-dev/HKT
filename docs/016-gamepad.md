@@ -168,34 +168,65 @@ would reopen the reason this file gives against it.
    own pad session. What can go in now is one line in the readme and the pinned FAQ: on a gamepad, set
    the prompt buttons in SkyPrompt's own settings (Controls, gamepad device); CIGAR follows them.
 
-## Open (2026-09-28): two options, the user decides
+## Decided (the user, 2026-09-28): two pad presets, and the mouse's middle and side buttons
 
-Not decided yet. The user has said that claiming gamepad support should come with at least a pad
-mapping. Three questions are with the user: pad slots in CIGAR and whether the D-pad is in them; the
-mouse's middle and side buttons; and whether either joins the next release.
+The pad gets a preset, not a per-button picker; the mouse joins the keyboard key list. Whether this
+goes into the next release is still open, so nothing is coded yet.
 
-- **A. Point to SkyPrompt's Controls only.** No code. One line in the readme and the pinned FAQ: on a
-  gamepad, set the prompt buttons in SkyPrompt's own settings (Controls, gamepad device); CIGAR's
-  prompts follow them, as every SkyPrompt mod's do.
-- **B. Add pad and mouse slots to CIGAR's key page.** About 150-250 lines, no engine code:
-  - `Settings`: `padKeys[4]`, each "0 = follow SkyPrompt" by default (no change for today's pad
-    players), saved in `CIGAR.json`, stored as SKSE's linear codes like SkyPrompt's own settings.
-  - `Panel` (4. Keys): a pad row under the keyboard row, "SkyPrompt 기본" first in its list, with the
-    keyboard row's kind of warnings (two slots on one button; D-pad left or right is SkyPrompt's
-    paging).
-  - `Prompt.cpp` `Offer`: a second pair `{ kGamepad, padKey }` when set.
-  - Mouse: the middle and side buttons (SkyPrompt's 256+ codes) join the keyboard list; left and right
-    stay out (attack and block). The pass-time backstop already ends a non-keyboard hold on key-up.
-  - Open within B: whether the pad list includes the D-pad. The keyboard's arrow keys were rejected
-    because other mods' SkyPrompt prompts (Grapple's QTE) need them; the same reason could apply to the
-    D-pad, while IAMTOKKO most likely wants exactly the D-pad.
-  - Tests: each pad slot fires its prompt; with that prompt up, Favorites and the hotkeys do not also
-    fire, and with none up they still work; "follow SkyPrompt" unchanged; a hold prompt and pass time
-    on the pad; keyboard and pad alternated; more than four prompts (paging); the mouse buttons.
+- **Pad preset 1, "SkyPrompt 설정 따름" (default).** As today: CIGAR lists no pad button, so the pad
+  uses SkyPrompt's slot buttons (A/B/X/Y by default) and whatever the player set in SkyPrompt's
+  Controls.
+- **Pad preset 2, "D-pad".** Slots 1-4 on the four D-pad directions.
+- **Mouse.** The middle and side buttons join the prompt-key list; left and right stay out (attack and
+  block).
 
-The "sundae-gukbap" remark does not decide between them: it means Skyrim is the dish and CIGAR's
-modules the seasoning (README "Principles"). A same-day text here that read it as "key settings are
-the seasoning" and reversed the verdict on that basis was withdrawn.
+### Implementation plan (Claude's design; nothing built)
+
+**D-pad slot order: 1 Up, 2 Down, 3 Left, 4 Right** (SKSE linear codes 266, 267, 268, 269). Why:
+
+- A prompt takes the lowest free slot (`AcquireKeySlot`), so slot 1 carries most prompts and slot 2
+  most of the rest; three or four CIGAR prompts at once are rare.
+- Up and Down are vanilla Favorites only, which SkyPrompt swallows just while such a prompt is up.
+  Left and Right are also SkyPrompt's paging between mods' prompts (`cycle_L` 268 / `cycle_R` 269
+  here), and a prompt on a paging key blocks paging while it shows. Putting them last keeps paging
+  intact in almost every situation.
+- Left before Right: Right is "next page", the paging move used more; it is the last to be taken.
+
+**Code** (about 120-180 lines, no engine code):
+
+- `Settings`: `prompt.padPreset` = `"skyprompt"` (default) or `"dpad"` in `CIGAR.json`; the
+  prompt-key validation also accepts the mouse codes 258-263 (middle, then side buttons).
+- `Prompt.cpp` `Offer`: the keyboard pair becomes `{ kMouse, key }` for 256 and up; with the D-pad preset
+  a second pair `{ kGamepad, 266 + slot }`. The offer log line names the pad button.
+- `Panel` (4. Keys): under the keyboard row, a "게임패드" choice of the two presets with a line on
+  what each does; the key list gains "마우스 가운데", "마우스 4", "마우스 5" (and 6-8 for mice that have
+  them). Changing the preset takes every prompt down so each is offered again with its new button, as a
+  key change does now.
+- Panel warnings:
+  - D-pad preset and SkyPrompt's gamepad `cycle_L` / `cycle_R` on D-pad left or right (read from
+    SkyPrompt's `settings.json` through the VFS): "3·4번 슬롯(D-pad 왼쪽·오른쪽)이 떠 있는 동안에는
+    SkyPrompt 페이지 넘김 대신 프롬프트가 실행됩니다".
+  - A prompt key equal to TDM's lock key, besides the Grapple, Acheron and Valhalla keys it checks
+    now. This modlist's TDM lock key is 258, the middle mouse button.
+- `Rest.cpp` pass time: a mouse key is not a keyboard hold (`KeyDown` maps scan codes), so it ends on
+  SkyPrompt's key-up like a pad hold.
+- `tools/verify_deploy.py`: the prompt-key check accepts the mouse codes.
+- Texts: README (both), the Nexus description's Input line, and the pinned FAQ.
+
+**Tests** (a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme
+0001BCD8` for a bandit):
+
+1. Default preset: pad prompts on A/B/X/Y as before (regression).
+2. D-pad preset, one prompt (sit or lie at a floor spot): D-pad Up fires it; with it up, Favorites does
+   not open; with no prompt, D-pad Up opens Favorites.
+3. Two prompts (for example 주시하기 and 앉기): Up and Down; a hold prompt and pass time on the D-pad, pass
+   time ending on release.
+4. Three or four prompts in combat (bandit: 록온, 무기 전환, 유술, ...): Left and Right fire; the panel shows
+   the paging warning; paging to another mod's prompts still works while slots 3-4 are free.
+5. Preset changed in the panel: prompts come back with the new buttons.
+6. Keyboard and pad alternated: the icons follow the device.
+7. Mouse: slot 1 on a side button fires, including a hold prompt; slot 1 on the middle button shows
+   the TDM warning.
 
 Facts read from SkyPrompt's source on 2026-09-28 (`QTR-Modding/SkyPrompt`, `main`, MIT), the ground for
 both options:
