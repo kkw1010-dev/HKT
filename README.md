@@ -24,6 +24,11 @@ user's decision: the release is English).
   idle and says so in the log. No per-mod patches, no MCM toggles to enable or detect one.
 - **Self-reporting.** Every module logs its gate inputs and actions to `CIGAR.log`, and silent
   blockers raise one notification.
+- **The kitchen decides the dish; the seasoning is on the table** (the user, 2026-09-28, "순대국밥집").
+  What an interaction is and when it is offered is designed and fixed. Personal adjustments, such as
+  which key or button a prompt uses or how far to the side prompts sit, are all offered to the player,
+  on every input device the mod says it supports. A missing adjustment is a gap to fill, not a request
+  to decline.
 
 ## Modules (2.0)
 
