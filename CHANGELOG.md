@@ -13,6 +13,9 @@ New
   The left and right buttons stay attack and block.
 
 Fixed
+- **A crash while prompts change.** SkyPrompt 2.4.0 could crash while drawing if a prompt was taken
+  away at the same moment (for example when drawing a weapon ended the Observe prompt). CIGAR now
+  sends and removes its prompts on the thread SkyPrompt draws on.
 - **Jujutsu** no longer keeps its prompt up for an enemy that has dropped its guard to attack; the
   throw could not start then anyway.
 

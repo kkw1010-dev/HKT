@@ -19,6 +19,12 @@ history of each module are in `docs/`, one file per module, and each file starts
   the 유술 swing gate. Tested on Xbox only (the user's pad); release texts say PlayStation pads were not
   tested. `tools/check_input_map.py` guards it in every build. Deployed as `de8ff68` (no panel warnings, the user's
   call; a `player equip:` log line for the hotkey check); r6 items D0-D8 in `TEST-next-ingame.md`.
+- **r6 CTD (23:30:09, D2) and the fix: `docs/039`.** A SkyPrompt 2.4.0 race (`Manager::ShowQueue`
+  reuses row indices across a lock release), hit when a CIGAR withdraw from a task lands between its
+  two loops. It was not the D-pad codes. Every SkyPrompt call now goes through a queue drained by a
+  hook on SkyPrompt's own Present call site; `check_input_map.py` enforces it. The next run's log must
+  show `prompt queue: Present hooked`, `ticks run on thread M, Present on thread N` (M != N confirms
+  the premise). r6 D2 onward, U1 and K1 carry over.
 - **Pandora rewrote `mt_behavior.hkx` at 2026-09-28 21:06** (not a CIGAR action; md5 4149d75c...), so
   `verify_deploy` fails its Jujutsu baseline. Not restored: the file is outside `mods\CIGAR` and the run
   carries other mods' updates: MO2 Opt ran it on purpose for State Behavior Framework 1.4 -> 2.0 (Q1).

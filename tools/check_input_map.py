@@ -3,13 +3,16 @@
 Every failure here is silent in game: a D-pad slot sent with the wrong code gets no icon and never
 fires, a mouse code the panel lists but Settings rejects falls back to the default key without a
 word, a mouse key read as a scan code ends pass time after 0.3 s, and a shipped CIGAR.json with the
-D-pad preset takes Favorites and the hotkeys from every pad player who never chose it. The last part
-only reports how this modlist's SkyPrompt and controlmap use the D-pad, which the r6 test reads.
+D-pad preset takes Favorites and the hotkeys from every pad player who never chose it. A SkyPrompt call
+made outside the render-thread queue can race SkyPrompt's drawing (the CTD of 2026-09-28 23:30:09), and
+a button code with no icon file shows SkyPrompt's unknown-key icon. The last part only reports how this
+modlist's SkyPrompt and controlmap use the D-pad, which the r6 test reads.
 
 Usage: check_input_map.py [path to the built CIGAR.dll]
 """
 import json
 import os
+import pathlib
 import re
 import sys
 
@@ -73,13 +76,54 @@ def check_source():
     check("258 <= k <= 263" in verify, "verify_deploy.py accepts the same mouse keys")
 
 
+def check_prompt_queue():
+    """Every SkyPrompt call goes through PromptSlot::Deliver, which the Present hook runs on the render
+    thread (src/Prompt.cpp). A direct call from a tick races SkyPrompt 2.4.0's Manager::ShowQueue, which
+    reuses row indices across a lock release, and a row removed in between makes it lock a null row."""
+    calls = []
+    for path in sorted(pathlib.Path(SRC).glob("*.cpp")):
+        function = "?"
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            header = re.match(r"^\t(?:[\w:<>,\*& ]+\s)?([\w:~]+)\(.*\)\s*(?:const)?\s*$", line)
+            if header and not line.strip().startswith(("if", "for", "while", "return", "switch")):
+                function = header.group(1)
+            if re.search(r"SkyPromptAPI::(SendPrompt|RemovePrompt)\(", line):
+                calls.append("%s:%d %s" % (path.name, number, function))
+    stray = [c for c in calls if not c.startswith("Prompt.cpp:") or not c.endswith(" PromptSlot::Deliver")]
+    check(len(calls) == 2 and not stray,
+          "SkyPrompt send/remove only in PromptSlot::Deliver: %s" % (", ".join(stray) or "%d calls" % len(calls)))
+    main = read("main.cpp")
+    load = main[main.find("SKSEPluginLoad"):]
+    check("Prompts::InstallRenderHook();" in load, "the Present hook is installed at plugin load")
+    prompt = read("Prompt.cpp")
+    check("RelocationID(75461, 77246)" in prompt and "Relocate(0x9, 0x9, 0x15)" in prompt,
+          "the hook sits on BSGraphics::Renderer::End's Present call, SkyPrompt's own draw site")
+
+
+def check_icons():
+    """SkyPrompt 2.4.0 draws D-pad 266-269 with the Up/Down/Left/Right icons and mouse 258-263 with
+    Mouse3-Mouse8 (IconFont.cpp), loaded from Interface/ImGuiIcons/Icons of the winning mod."""
+    if not os.path.isdir(MODS):
+        note("no MO2 modlist here; icon files are not checked")
+        return
+    names = ["Up", "Down", "Left", "Right"] + ["Mouse%d" % n for n in range(3, 9)]
+    missing = []
+    for name in names:
+        found = winner(os.path.join("Interface", "ImGuiIcons", "Icons", name + ".png"))
+        if not found:
+            missing.append(name)
+    check(not missing, "SkyPrompt has an icon for every D-pad and mouse prompt key%s"
+          % (": missing " + ", ".join(missing) if missing else ""))
+
+
 def check_dll(path):
     if not path:
         note("no DLL given; its strings are not checked")
         return
     with open(path, "rb") as f:
         data = f.read()
-    for text in (" pad={}", "settings: gamepad buttons {}", "padButtons", "player equip: {} {} ({:08X})"):
+    for text in (" pad={}", "settings: gamepad buttons {}", "padButtons", "player equip: {} {} ({:08X})",
+                 "prompt queue: Present hooked (chained: {})", "prompt queue: ticks run on thread {}, Present on thread {}"):
         check(text.encode() in data, "the built DLL carries '%s'" % text)
 
 
@@ -174,6 +218,8 @@ def report_modlist():
 
 def main():
     check_source()
+    check_prompt_queue()
+    check_icons()
     check_dll(sys.argv[1] if len(sys.argv) > 1 else None)
     check_shipped_default()
     report_modlist()

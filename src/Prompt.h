@@ -19,7 +19,30 @@ namespace CIGAR
 		void WithdrawAll(const Module* a_owner);
 		// Takes every CIGAR prompt off the screen; each is offered again on its next tick (game thread).
 		void WithdrawEverything();
+
+		// Every SkyPrompt call CIGAR makes (send, remove) waits in a queue that a hook on the frame's
+		// Present call drains, on the render thread, where SkyPrompt draws too. CIGAR's modules run on
+		// the game's task thread, which runs alongside the render thread; SkyPrompt 2.4.0 draws from row
+		// indices it collected before drawing, and a prompt removed from another thread in between made
+		// it lock a null row (CTD 2026-09-28 23:30:09; docs/016). Installed at plugin load.
+		void InstallRenderHook();
+		// Called by main's tick: notes the first tick that runs while the render thread is inside
+		// Present (the evidence that the two run at once), once per session.
+		void NoteTick();
 	}
+
+	// What SkyPrompt reads through GetPrompts().
+	struct PromptData
+	{
+		std::string text;
+		SkyPromptAPI::PromptType type{ SkyPromptAPI::kSinglePress };
+		RE::FormID refID{ 0 };
+		// The keyboard or mouse key, and the gamepad button when the D-pad preset is on.
+		std::array<std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>, 2> buttons{};
+		std::size_t buttonCount{ 0 };
+		std::uint32_t color{ 0xFFFFFFFF };
+		float progress{ 0.0f };
+	};
 
 	// Every prompt's SkyPrompt event ID, unique across modules. SkyPrompt treats prompts with the
 	// same (event, action) as one interaction, so a shared ID fires every owner at once. SkyPrompt
@@ -113,23 +136,29 @@ namespace CIGAR
 		std::span<const SkyPromptAPI::Prompt> GetPrompts() const override;
 		void ProcessEvent(SkyPromptAPI::PromptEvent a_event) const override;
 
+		// Render thread only (the queue in Prompt.cpp): publishes a_data where GetPrompts() reads it and
+		// sends the prompt, or removes it. a_note, when set, is the offer line logged with the result.
+		void Deliver(bool a_send, PromptData&& a_data, const std::string& a_note);
+
 	private:
 		void Offer(std::string a_text);
 		void KeepAlive();
+		void Send(std::string a_note = {});
 
 		Module* owner;
 		SkyPromptAPI::EventID id;
-		std::string text;
-		std::array<SkyPromptAPI::Prompt, 1> prompts;
-		// The keyboard or mouse key, and the gamepad button when the D-pad preset is on.
-		std::array<std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>, 2> buttons{};
+		// Game thread: what the prompt should show.
+		PromptData desired;
 		bool offered{ false };
 		bool hold{ false };
 		bool repeat{ false };
 		std::chrono::steady_clock::time_point lastSent{};
-		std::uint32_t color{ 0xFFFFFFFF };
-		float progress{ 0.0f };
 		std::uint32_t key{ 0 };
 		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
+		// Render thread: what SkyPrompt reads. The text before the last change stays alive one more
+		// round, for an event SkyPrompt queued with the old text.
+		PromptData published;
+		std::string previousText;
+		std::array<SkyPromptAPI::Prompt, 1> prompts;
 	};
 }

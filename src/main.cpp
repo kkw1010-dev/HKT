@@ -236,6 +236,7 @@ namespace
 		if (!gameReady) {
 			return;
 		}
+		Prompts::NoteTick();
 		auto* ui = RE::UI::GetSingleton();
 		const auto* player = Util::Player();
 		if (const bool open = FrameworkWindowOpen(); open != frameworkBlocked) {
@@ -428,6 +429,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		logs::critical("could not register the SKSE message listener");
 		return false;
 	}
+	// Before the game renders its first frame, so the call is never patched while it runs.
+	CIGAR::Prompts::InstallRenderHook();
 
 	auto* serialization = SKSE::GetSerializationInterface();
 	serialization->SetUniqueID(kSerializationID);

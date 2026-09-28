@@ -82,6 +82,121 @@ namespace CIGAR
 		}
 	}
 
+	namespace
+	{
+		using Clock = std::chrono::steady_clock;
+
+		struct Command
+		{
+			PromptSlot* slot;
+			bool send;
+			PromptData data;
+			std::string note;
+		};
+
+		std::mutex queueLock;
+		std::vector<Command> queue;
+		// Held while a batch is delivered, so the fallback below never delivers alongside the hook.
+		std::mutex deliverLock;
+
+		// The hook's last call, and the render thread's ID (0 until the first call).
+		std::atomic<Clock::rep> lastPresent{ 0 };
+		std::atomic<std::uint32_t> renderThread{ 0 };
+		std::atomic_bool inPresent{ false };
+		bool hookInstalled = false;
+		// Without a Present call for this long, the queue is delivered from the game thread instead,
+		// as before the hook (logged): prompts keep working if another mod cuts the call chain.
+		constexpr auto kPresentSilence = 5s;
+		std::atomic_bool fallbackLogged{ false };
+
+		void Deliver()
+		{
+			std::scoped_lock deliver(deliverLock);
+			std::vector<Command> batch;
+			{
+				std::scoped_lock guard(queueLock);
+				batch.swap(queue);
+			}
+			for (auto& command : batch) {
+				command.slot->Deliver(command.send, std::move(command.data), command.note);
+			}
+		}
+
+		bool PresentAlive()
+		{
+			const auto last = lastPresent.load();
+			return hookInstalled && last != 0 && Clock::now() - Clock::time_point(Clock::duration(last)) < kPresentSilence;
+		}
+
+		void Enqueue(Command&& a_command)
+		{
+			{
+				std::scoped_lock guard(queueLock);
+				queue.push_back(std::move(a_command));
+			}
+			if (PresentAlive()) {
+				fallbackLogged = false;
+				return;
+			}
+			if (!fallbackLogged.exchange(true)) {
+				logs::warn("prompt queue: no Present call for {} s (hook {}); SkyPrompt calls go out from the game thread until it returns",
+					std::chrono::duration_cast<std::chrono::seconds>(kPresentSilence).count(), hookInstalled ? "installed" : "not installed");
+			}
+			Deliver();
+		}
+
+		// BSGraphics::Renderer::End's call to Present, the call SkyPrompt draws in (its DrawHook, same site).
+		struct PresentHook
+		{
+			static void thunk(std::uint32_t a_timer)
+			{
+				lastPresent = Clock::now().time_since_epoch().count();
+				if (renderThread.load() == 0) {
+					renderThread = ::GetCurrentThreadId();
+					logs::info("prompt queue: first Present call on thread {} (SkyPrompt draws on this thread)", renderThread.load());
+				}
+				Deliver();
+				inPresent = true;
+				func(a_timer);
+				inPresent = false;
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
+
+	void Prompts::InstallRenderHook()
+	{
+		const REL::Relocation<std::uintptr_t> target{ REL::RelocationID(75461, 77246) };
+		const auto site = target.address() + REL::Relocate(0x9, 0x9, 0x15);
+		// A 5-byte relative call (E8) is what SkyPrompt and the other overlays hook here; anything else
+		// means a different runtime layout, and the queue then delivers from the game thread.
+		if (*reinterpret_cast<const std::uint8_t*>(site) != 0xE8) {
+			logs::error("prompt queue: no call at the Present site ({:02X}); SkyPrompt calls go out from the game thread",
+				*reinterpret_cast<const std::uint8_t*>(site));
+			return;
+		}
+		SKSE::AllocTrampoline(14);
+		PresentHook::func = SKSE::GetTrampoline().write_call<5>(site, PresentHook::thunk);
+		hookInstalled = true;
+		logs::info("prompt queue: Present hooked (chained: {})", PresentHook::func.address() != 0);
+	}
+
+	void Prompts::NoteTick()
+	{
+		static bool noted = false;
+		static bool threadLogged = false;
+		if (!threadLogged && renderThread.load() != 0) {
+			threadLogged = true;
+			logs::info("prompt queue: ticks run on thread {}, Present on thread {}", ::GetCurrentThreadId(), renderThread.load());
+		}
+		if (!noted && inPresent.load()) {
+			noted = true;
+			logs::info("prompt queue: a tick ran while the render thread was inside Present (threads {} and {}): "
+					   "SkyPrompt calls from ticks would race its drawing",
+				::GetCurrentThreadId(), renderThread.load());
+		}
+	}
+
 	bool Prompts::Init()
 	{
 		if (clientID == 0) {
@@ -150,33 +265,36 @@ namespace CIGAR
 		if (!Prompts::Available()) {
 			return;
 		}
-		// SkyPrompt reads the prompt later through GetPrompts(), so the text must outlive this call.
-		text = std::move(a_text);
+		desired.text = std::move(a_text);
 		// The keyboard key comes from CIGAR's settings; a device without a listed key (the gamepad)
 		// gets SkyPrompt's default for the slot SkyPrompt picks. SkyPrompt keeps a queued prompt's key,
 		// so the slot is held until the prompt is withdrawn.
 		const int slot = AcquireKeySlot(id);
-		std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>> keys;
 		key = 0;
-		progress = 0.0f;
+		desired.progress = 0.0f;
+		desired.buttonCount = 0;
 		SkyPromptAPI::ButtonID pad = 0;
 		if (slot >= 0) {
 			key = Settings::PromptKeys()[slot];
 			// SkyPrompt's mouse codes start at 256; a device with no listed button uses SkyPrompt's own.
-			buttons[0] = { key >= 256 ? RE::INPUT_DEVICE::kMouse : RE::INPUT_DEVICE::kKeyboard, key };
-			std::size_t count = 1;
+			desired.buttons[0] = { key >= 256 ? RE::INPUT_DEVICE::kMouse : RE::INPUT_DEVICE::kKeyboard, key };
+			desired.buttonCount = 1;
 			if (Settings::PadButtons() == Settings::PadPreset::kDpad) {
 				pad = Settings::kDpadButtons[slot];
-				buttons[1] = { RE::INPUT_DEVICE::kGamepad, pad };
-				count = 2;
+				desired.buttons[1] = { RE::INPUT_DEVICE::kGamepad, pad };
+				desired.buttonCount = 2;
 			}
-			keys = std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>>(buttons.data(), count);
 		}
+		desired.type = promptType;
 		// The player, or the marker PromptAnchor moves ahead of the head in third person.
-		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, PromptAnchor::RefID(), keys, color);
-		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
+		desired.refID = PromptAnchor::RefID();
+		Send(std::format("offer event={} '{}' slot={} key={}{}", id, desired.text, slot + 1, key, pad ? std::format(" pad={}", pad) : ""));
+	}
+
+	void PromptSlot::Send(std::string a_note)
+	{
 		lastSent = std::chrono::steady_clock::now();
-		owner->Log("offer event={} '{}' slot={} key={}{} sent={}", id, text, slot + 1, key, pad ? std::format(" pad={}", pad) : "", sent);
+		Enqueue({ this, true, desired, std::move(a_note) });
 	}
 
 	void PromptSlot::KeepAlive()
@@ -186,44 +304,54 @@ namespace CIGAR
 		if (!Prompts::Available() || now - lastSent < kKeepAliveInterval) {
 			return;
 		}
-		lastSent = now;
-		static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
+		Send();
 	}
 
 	void PromptSlot::SetColor(std::uint32_t a_color)
 	{
-		if (color == a_color) {
+		if (desired.color == a_color) {
 			return;
 		}
-		color = a_color;
+		desired.color = a_color;
 		if (offered && Prompts::Available()) {
 			// SkyPrompt refreshes text, colour and progress of a prompt that is already queued.
-			prompts[0].text_color = color;
-			lastSent = std::chrono::steady_clock::now();
-			static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
+			Send();
 		}
 	}
 
 	void PromptSlot::SetLive(std::string a_text, float a_progress)
 	{
-		if (!offered || !Prompts::Available() || (a_text == text && a_progress == progress)) {
+		if (!offered || !Prompts::Available() || (a_text == desired.text && a_progress == desired.progress)) {
 			return;
 		}
-		// SkyPrompt reads the text through GetPrompts() later, so it lives in the member.
-		text = std::move(a_text);
-		progress = a_progress;
-		prompts[0].text = text;
-		prompts[0].progress = progress;
-		lastSent = std::chrono::steady_clock::now();
-		static_cast<void>(SkyPromptAPI::SendPrompt(this, clientID));
+		desired.text = std::move(a_text);
+		desired.progress = a_progress;
+		Send();
 	}
 
 	void PromptSlot::Withdraw()
 	{
 		if (Prompts::Available()) {
-			SkyPromptAPI::RemovePrompt(this, clientID);
+			Enqueue({ this, false, {}, {} });
 		}
 		ReleaseKeySlot(id);
+	}
+
+	void PromptSlot::Deliver(bool a_send, PromptData&& a_data, const std::string& a_note)
+	{
+		if (!a_send) {
+			SkyPromptAPI::RemovePrompt(this, clientID);
+			return;
+		}
+		// SkyPrompt keeps string_views into the text: the old text is kept one more round.
+		previousText = std::move(published.text);
+		published = std::move(a_data);
+		const std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>> keys(published.buttons.data(), published.buttonCount);
+		prompts[0] = SkyPromptAPI::Prompt(published.text, id, 0, published.type, published.refID, keys, published.color, published.progress);
+		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
+		if (!a_note.empty()) {
+			owner->Log("{} sent={}", a_note, sent);
+		}
 	}
 
 	std::span<const SkyPromptAPI::Prompt> PromptSlot::GetPrompts() const

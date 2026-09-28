@@ -223,6 +223,8 @@ so: "tested with an Xbox controller; PlayStation pads not tested".
   left out) shows whether a D-pad press that ran a prompt also fired a Favorites hotkey.
 - Texts: README (both), the Nexus description's Input line, and the pinned FAQ.
 
+The r6 crash in D2 (2026-09-28 23:30:09) was a SkyPrompt race, not the D-pad codes: `docs/039`.
+
 **Tests** (Xbox controller only; a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme
 0001BCD8` for a bandit):
 
