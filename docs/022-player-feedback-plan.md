@@ -93,13 +93,12 @@ throw), not by capping NPC blocking, which would strip shield NPCs down to reckl
 A rule engine also grows the development cost with every condition, action, parser and editor
 that must be validated and supported.
 
-**Designed, not configured, and still seasoned to taste (the user, 2026-09-28).** The user put it as
-a sundae-gukbap restaurant: the kitchen decides the dish, and every seasoning is on the table, so a
-customer who finds it bland adjusts it and nobody complains. For CIGAR the dish is the interaction:
-what a prompt does and when it appears stays designed and closed, which is why player-written rules
-stay declined. The seasoning is personal adjustment: keys and buttons, and the few tuning values the
-panel already offers. Those are all put in front of the player, on every input device the mod says it
-supports; a missing one is a gap to fill.
+**Skyrim is the dish, CIGAR the seasoning (the user, 2026-09-28).** The user put it as a
+sundae-gukbap restaurant: the dish is the game, Skyrim, and CIGAR with each of its modules is a
+seasoning on the table; how much goes in is the player's call, which is what the per-module switches
+are. The user did not design it as a principle; players took it that way (a Nexus review: "everything
+optional, too"). And the motive is not technical pride or deciding what experience players should
+have: the work is analysing what players really need, as 유술 did with the endless block loop.
 
 ### Part 1, in game (2026-09-24)
 

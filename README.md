@@ -24,11 +24,13 @@ user's decision: the release is English).
   idle and says so in the log. No per-mod patches, no MCM toggles to enable or detect one.
 - **Self-reporting.** Every module logs its gate inputs and actions to `CIGAR.log`, and silent
   blockers raise one notification.
-- **The kitchen decides the dish; the seasoning is on the table** (the user, 2026-09-28, "순대국밥집").
-  What an interaction is and when it is offered is designed and fixed. Personal adjustments, such as
-  which key or button a prompt uses or how far to the side prompts sit, are all offered to the player,
-  on every input device the mod says it supports. A missing adjustment is a gap to fill, not a request
-  to decline.
+- **Skyrim is the dish; CIGAR is the seasoning on the table** (the user, 2026-09-28, "순대국밥집").
+  Each module is a seasoning, and how much of it goes in is the player's choice: every module has its
+  own switch. The user did not set out to make it so; players read it that way (a Nexus review:
+  "everything optional, too").
+- **Players' real needs, not technique.** The work is finding what players actually need and
+  designing for that, not showing technical skill or deciding what experience players must have.
+  유술 is the model (`docs/022`).
 
 ## Modules (2.0)
 
