@@ -13,9 +13,11 @@ history of each module are in `docs/`, one file per module, and each file starts
 - **Waiting for the user's choice** of the combination (`docs/038`, three options: 3805 cut short,
   pick by the gap, a real blend on HOLD). Recommended: test the first two in one short probe round.
   The next probe build also stops a running gesture before starting a new one.
-- **Gamepad and mouse mapping: decided, not built.** Two pad presets (SkyPrompt's buttons by default,
-  or D-pad 1 Up / 2 Down / 3 Left / 4 Right) and the mouse's middle and side buttons; plan and tests in
-  `docs/016` "Decided". Whether it joins the next release is open; do not code before that.
+- **Gamepad and mouse mapping: built for the next release, test r6 pending.** Two pad presets
+  (SkyPrompt's buttons by default, or D-pad 1 Up / 2 Down / 3 Left / 4 Right) and the mouse's middle
+  and side buttons; design, log lines and tests in `docs/016` "Decided". It ships with push-through and
+  the 유술 swing gate. Tested on Xbox only (the user's pad); release texts say PlayStation pads were not
+  tested. `tools/check_input_map.py` guards it in every build.
 - 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
   save-loaded half was not run. The save button was not CIGAR's.
 - The `CIGAR Push Test` clips stay in `mods\CIGAR` until the combination is chosen; then

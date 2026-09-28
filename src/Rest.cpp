@@ -838,9 +838,10 @@ namespace CIGAR
 		passHolding = true;
 		passHeldSince = Clock::now();
 		// A gamepad hold never has the listed keyboard key down, so the key backstop below would stop
-		// it after 0.3 s; such a hold ends on SkyPrompt's key-up event alone.
+		// it after 0.3 s; such a hold ends on SkyPrompt's key-up event alone. So does a mouse key (256 and
+		// up), which KeyDown's scan-code lookup cannot read.
 		const auto key = passTime.Key();
-		passByKeyboard = key != 0 && KeyDown(key);
+		passByKeyboard = key != 0 && key < 256 && KeyDown(key);
 		Log("pass time held ({})", passByKeyboard ? "keyboard" : "another device; ends on key up");
 	}
 

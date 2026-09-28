@@ -152,15 +152,21 @@ def check_prompt_keys():
     path = os.path.join(MOD, "SKSE", "Plugins", "CIGAR.json")
     try:
         with open(path, encoding="utf-8") as f:
-            keys = json.load(f).get("prompt", {}).get("keys")
+            prompt = json.load(f).get("prompt", {})
     except (OSError, ValueError) as e:
         check(False, "CIGAR.json readable: %s" % e)
         return
+    # An unknown value falls back to SkyPrompt's buttons with only a log warning (docs/016).
+    pad = prompt.get("padButtons", "skyprompt")
+    check(pad in ("skyprompt", "dpad"), "CIGAR.json gamepad buttons are skyprompt or dpad: %s" % pad)
+    note("gamepad buttons: %s" % ("D-pad (1 Up, 2 Down, 3 Left, 4 Right)" if pad == "dpad" else "SkyPrompt's own"))
+    keys = prompt.get("keys")
     if keys is None:
         note("CIGAR.json has no prompt keys: the defaults 1-4 apply")
         return
-    valid = isinstance(keys, list) and len(keys) == 4 and all(isinstance(k, int) and 0 < k < 256 for k in keys)
-    check(valid, "CIGAR.json prompt keys are four keyboard scan codes: %s" % keys)
+    # Keyboard scan codes, or the mouse's middle and side buttons (258-263; src/Settings.h IsPromptKey).
+    valid = isinstance(keys, list) and len(keys) == 4 and all(isinstance(k, int) and (0 < k < 256 or 258 <= k <= 263) for k in keys)
+    check(valid, "CIGAR.json prompt keys are four keyboard or mouse keys: %s" % keys)
     if valid:
         check(len(set(keys)) == 4, "CIGAR.json prompt keys are distinct: %s" % keys)
 

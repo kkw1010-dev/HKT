@@ -57,6 +57,9 @@ Write-Host "built: $dll"
 & python (Join-Path $PSScriptRoot 'check_menu_framework.py')
 if ($LASTEXITCODE -ne 0) { throw 'Control-panel checks failed.' }
 
+& python (Join-Path $PSScriptRoot 'check_input_map.py') $dll
+if ($LASTEXITCODE -ne 0) { throw 'Prompt input checks failed.' }
+
 if ($Package) {
     & python (Join-Path $PSScriptRoot 'make_release.py') $dll
     if ($LASTEXITCODE -ne 0) { throw 'Release packaging failed.' }

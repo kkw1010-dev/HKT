@@ -6,6 +6,8 @@
 #include "PromptAnchor.h"
 #include "Settings.h"
 
+#include <nlohmann/json.hpp>
+
 namespace CIGAR
 {
 	namespace
@@ -82,12 +84,60 @@ namespace CIGAR
 		}
 	}
 
+	namespace
+	{
+		bool padPagingOnDpad = false;
+
+		// SkyPrompt pages between mods' prompts with cycle_L / cycle_R; on a pad they default to D-pad left
+		// and right (268, 269), the buttons of CIGAR's D-pad slots 3 and 4. A prompt key that equals a paging
+		// key wins over paging while its prompt is up (SkyPrompt's InputHook, docs/016).
+		void ReadPadPaging()
+		{
+			const std::filesystem::path path{ L"Data/SKSE/Plugins/SkyPrompt/settings.json" };
+			std::ifstream in(path, std::ios::binary);
+			if (!in) {
+				logs::info("gamepad paging: SkyPrompt settings.json not found; its defaults (D-pad left and right) assumed");
+				padPagingOnDpad = true;
+				return;
+			}
+			try {
+				const auto j = nlohmann::json::parse(in);
+				const auto& mcp = j.at("MCP");
+				std::string seen;
+				for (const auto* side : { "cycle_L", "cycle_R" }) {
+					for (const auto* device : { "Gamepad (Xbox)", "Gamepad (PS4)" }) {
+						const auto it = mcp.find(side);
+						if (it == mcp.end() || !it->contains(device)) {
+							continue;
+						}
+						const auto code = (*it)[device].get<std::uint32_t>();
+						seen += std::format("{}{} {}={}", seen.empty() ? "" : ", ", side, device, code);
+						if (code == Settings::kDpadButtons[2] || code == Settings::kDpadButtons[3]) {
+							padPagingOnDpad = true;
+						}
+					}
+				}
+				logs::info("gamepad paging: {}{}", seen.empty() ? "no gamepad paging keys"s : seen,
+					padPagingOnDpad ? " (D-pad left/right: CIGAR's D-pad slots 3-4 take them while shown)" : "");
+			} catch (const std::exception& e) {
+				logs::warn("gamepad paging: SkyPrompt settings.json unreadable ({}); D-pad paging assumed", e.what());
+				padPagingOnDpad = true;
+			}
+		}
+	}
+
+	bool Prompts::PadPagingOnDpad()
+	{
+		return padPagingOnDpad;
+	}
+
 	bool Prompts::Init()
 	{
 		if (clientID == 0) {
 			clientID = SkyPromptAPI::RequestClientID();
 		}
 		logs::info("SkyPrompt client id {} (API {}.{})", clientID, SkyPromptAPI::MAJOR, SkyPromptAPI::MINOR);
+		ReadPadPaging();
 		// A shared event ID makes one key press fire every prompt that uses it.
 		std::map<SkyPromptAPI::EventID, std::string> owners;
 		for (const auto& [owner, slot] : Slots()) {
@@ -159,16 +209,24 @@ namespace CIGAR
 		std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>> keys;
 		key = 0;
 		progress = 0.0f;
+		SkyPromptAPI::ButtonID pad = 0;
 		if (slot >= 0) {
 			key = Settings::PromptKeys()[slot];
-			buttons[0] = { RE::INPUT_DEVICE::kKeyboard, key };
-			keys = buttons;
+			// SkyPrompt's mouse codes start at 256; a device with no listed button uses SkyPrompt's own.
+			buttons[0] = { key >= 256 ? RE::INPUT_DEVICE::kMouse : RE::INPUT_DEVICE::kKeyboard, key };
+			std::size_t count = 1;
+			if (Settings::PadButtons() == Settings::PadPreset::kDpad) {
+				pad = Settings::kDpadButtons[slot];
+				buttons[1] = { RE::INPUT_DEVICE::kGamepad, pad };
+				count = 2;
+			}
+			keys = std::span<const std::pair<RE::INPUT_DEVICE, SkyPromptAPI::ButtonID>>(buttons.data(), count);
 		}
 		// The player, or the marker PromptAnchor moves ahead of the head in third person.
 		prompts[0] = SkyPromptAPI::Prompt(text, id, 0, promptType, PromptAnchor::RefID(), keys, color);
 		const bool sent = SkyPromptAPI::SendPrompt(this, clientID);
 		lastSent = std::chrono::steady_clock::now();
-		owner->Log("offer event={} '{}' slot={} key={} sent={}", id, text, slot + 1, key, sent);
+		owner->Log("offer event={} '{}' slot={} key={}{} sent={}", id, text, slot + 1, key, pad ? std::format(" pad={}", pad) : "", sent);
 	}
 
 	void PromptSlot::KeepAlive()

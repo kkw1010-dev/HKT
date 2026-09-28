@@ -26,6 +26,7 @@ namespace CIGAR::Settings
 		std::map<std::string, bool, std::less<>> enabled;
 		float placeRange = kPlaceRangeDefault;
 		PromptKeyArray promptKeys = kDefaultPromptKeys;
+		PadPreset padPreset = PadPreset::kSkyPrompt;
 		int eatMinStage = Eat::kMinStageDefault;
 		int needsMinPercent = Needs::kMinPercentDefault;
 		float swapRange = WeaponSwap::kRangeDefault;
@@ -96,6 +97,7 @@ namespace CIGAR::Settings
 			j["dress"]["placeRange"] = placeRange;
 			j["prompt"]["keys"] = promptKeys;
 			j["prompt"]["rightOffset"] = promptRight;
+			j["prompt"]["padButtons"] = padPreset == PadPreset::kDpad ? "dpad" : "skyprompt";
 			j["eat"]["minStage"] = eatMinStage;
 			j["needs"]["minPercent"] = needsMinPercent;
 			j["language"] = language;
@@ -149,6 +151,7 @@ namespace CIGAR::Settings
 		}
 		placeRange = kPlaceRangeDefault;
 		promptKeys = kDefaultPromptKeys;
+		padPreset = PadPreset::kSkyPrompt;
 		eatMinStage = Eat::kMinStageDefault;
 		needsMinPercent = Needs::kMinPercentDefault;
 		ResetPromptOnly();
@@ -182,15 +185,22 @@ namespace CIGAR::Settings
 				if (const auto keys = it->find("keys"); keys != it->end() && keys->is_array()) {
 					for (std::size_t i = 0; i < kPromptKeyCount && i < keys->size(); ++i) {
 						const auto& v = (*keys)[i];
-						// Keyboard scan codes only; anything else keeps that slot's default.
-						if (v.is_number_unsigned() && v.get<std::uint32_t>() > 0 && v.get<std::uint32_t>() < 256) {
+						// Keyboard scan codes and the mouse's middle and side buttons; anything else keeps the default.
+						if (v.is_number_unsigned() && IsPromptKey(v.get<std::uint32_t>())) {
 							promptKeys[i] = v.get<std::uint32_t>();
 						} else {
-							logs::warn("settings: prompt key {} is not a keyboard key ({}); using {}", i + 1, v.dump(), promptKeys[i]);
+							logs::warn("settings: prompt key {} is not a keyboard or mouse key ({}); using {}", i + 1, v.dump(), promptKeys[i]);
 						}
 					}
 				}
 				promptRight = SnappedPromptRight(it->value("rightOffset", kPromptRightDefault));
+				if (const auto pad = it->find("padButtons"); pad != it->end() && pad->is_string()) {
+					if (*pad == "dpad") {
+						padPreset = PadPreset::kDpad;
+					} else if (*pad != "skyprompt") {
+						logs::warn("settings: prompt.padButtons '{}' is neither skyprompt nor dpad; using skyprompt", pad->get<std::string>());
+					}
+				}
 			}
 			if (const auto it = j.find("eat"); it != j.end() && it->is_object()) {
 				eatMinStage = std::clamp(it->value("minStage", Eat::kMinStageDefault), Eat::kMinStageLow, Eat::kMinStageHigh);
@@ -250,6 +260,7 @@ namespace CIGAR::Settings
 		logs::info("settings: dress place range {:.0f}", placeRange);
 		logs::info("settings: prompt keys {} {} {} {}", promptKeys[0], promptKeys[1], promptKeys[2], promptKeys[3]);
 		logs::info("settings: prompt right offset {:.0f} (third person)", promptRight);
+		logs::info("settings: gamepad buttons {}", padPreset == PadPreset::kDpad ? "D-pad (1 Up, 2 Down, 3 Left, 4 Right)" : "SkyPrompt's own");
 		logs::info("settings: language {}", language);
 		for (const auto& [target, state] : promptOnly) {
 			logs::info("settings: {} prompt-only {} (manual key {})", target, state.on ? "on" : "off", state.manualKey);
@@ -318,7 +329,7 @@ namespace CIGAR::Settings
 
 	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key)
 	{
-		if (a_slot >= kPromptKeyCount || a_key == 0 || a_key >= 256) {
+		if (a_slot >= kPromptKeyCount || !IsPromptKey(a_key)) {
 			return;
 		}
 		{
@@ -328,6 +339,27 @@ namespace CIGAR::Settings
 		}
 		logs::info("control panel: prompt key {} set to {}", a_slot + 1, a_key);
 		// SkyPrompt keeps a queued prompt's key, so take every prompt down; each is offered again.
+		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
+	}
+
+	PadPreset PadButtons()
+	{
+		std::scoped_lock guard(lock);
+		return padPreset;
+	}
+
+	void SetPadButtons(PadPreset a_preset)
+	{
+		{
+			std::scoped_lock guard(lock);
+			if (padPreset == a_preset) {
+				return;
+			}
+			padPreset = a_preset;
+			SaveLocked();
+		}
+		logs::info("control panel: gamepad buttons set to {}", a_preset == PadPreset::kDpad ? "D-pad" : "SkyPrompt's own");
+		// SkyPrompt keeps a queued prompt's buttons, so take every prompt down; each is offered again.
 		SKSE::GetTaskInterface()->AddTask([] { Prompts::WithdrawEverything(); });
 	}
 

@@ -170,8 +170,10 @@ would reopen the reason this file gives against it.
 
 ## Decided (the user, 2026-09-28): two pad presets, and the mouse's middle and side buttons
 
-The pad gets a preset, not a per-button picker; the mouse joins the keyboard key list. Whether this
-goes into the next release is still open, so nothing is coded yet.
+The pad gets a preset, not a per-button picker; the mouse joins the keyboard key list. It ships in
+the next release with push-through and the 유술 swing gate (the user, through the orchestrator,
+2026-09-28). The user has only an Xbox pad, so it is tested on Xbox alone, and the release texts say
+so: "tested with an Xbox controller; PlayStation pads not tested".
 
 - **Pad preset 1, "SkyPrompt 설정 따름" (default).** As today: CIGAR lists no pad button, so the pad
   uses SkyPrompt's slot buttons (A/B/X/Y by default) and whatever the player set in SkyPrompt's
@@ -180,7 +182,7 @@ goes into the next release is still open, so nothing is coded yet.
 - **Mouse.** The middle and side buttons join the prompt-key list; left and right stay out (attack and
   block).
 
-### Implementation plan (Claude's design; nothing built)
+### Implementation (Claude's design; built 2026-09-28)
 
 **D-pad slot order: 1 Up, 2 Down, 3 Left, 4 Right** (SKSE linear codes 266, 267, 268, 269). Why:
 
@@ -194,8 +196,9 @@ goes into the next release is still open, so nothing is coded yet.
 
 **Code** (about 120-180 lines, no engine code):
 
-- `Settings`: `prompt.padPreset` = `"skyprompt"` (default) or `"dpad"` in `CIGAR.json`; the
-  prompt-key validation also accepts the mouse codes 258-263 (middle, then side buttons).
+- `Settings`: `prompt.padButtons` = `"skyprompt"` (default) or `"dpad"` in `CIGAR.json`; the
+  prompt-key validation also accepts the mouse codes 258-263 (middle, then side buttons;
+  `Settings::IsPromptKey`).
 - `Prompt.cpp` `Offer`: the keyboard pair becomes `{ kMouse, key }` for 256 and up; with the D-pad preset
   a second pair `{ kGamepad, 266 + slot }`. The offer log line names the pad button.
 - `Panel` (4. Keys): under the keyboard row, a "게임패드" choice of the two presets with a line on
@@ -211,9 +214,17 @@ goes into the next release is still open, so nothing is coded yet.
 - `Rest.cpp` pass time: a mouse key is not a keyboard hold (`KeyDown` maps scan codes), so it ends on
   SkyPrompt's key-up like a pad hold.
 - `tools/verify_deploy.py`: the prompt-key check accepts the mouse codes.
+- `tools/check_input_map.py` (run by `Build.ps1` after every build) fails the build when the D-pad
+  codes, the mouse range, the panel's key list, `Prompt.cpp`'s device choice, `Rest.cpp`'s scan-code
+  guard or `verify_deploy.py` disagree, when the DLL lacks the new log lines, or when `dist/CIGAR.json`
+  ships the D-pad preset or a mouse key. It also reports this modlist's SkyPrompt paging keys and the
+  controlmap's gameplay D-pad binds (here: Up/Down Favorites, Left/Right Hotkey1/2, SkyPrompt paging
+  268/269 from `TAKEALOOK - MCM and INI`).
+- Log: every offer line names the pad button (`pad=266`), `Init` logs `gamepad paging: ...` once, and
+  `settings: gamepad buttons ...` / `control panel: gamepad buttons set to ...` record the preset.
 - Texts: README (both), the Nexus description's Input line, and the pinned FAQ.
 
-**Tests** (a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme
+**Tests** (Xbox controller only; a new game, third person; `coc WhiterunBanneredMare` for the town, `player.placeatme
 0001BCD8` for a bandit):
 
 1. Default preset: pad prompts on A/B/X/Y as before (regression).

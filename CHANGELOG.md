@@ -2,6 +2,20 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
+## Unreleased
+
+New
+- **D-pad for gamepads.** The Keys page has a gamepad setting: SkyPrompt's own buttons (the default,
+  unchanged) or the D-pad, with prompt 1 on Up, 2 Down, 3 Left and 4 Right. While a prompt shows, its
+  direction runs the prompt instead of Favorites or a hotkey; with no prompt the D-pad works as usual.
+  Tested with an Xbox controller; PlayStation controllers were not tested.
+- **Mouse buttons as prompt keys.** The middle and side mouse buttons can be picked as prompt keys.
+  The left and right buttons stay attack and block.
+
+Fixed
+- **Jujutsu** no longer keeps its prompt up for an enemy that has dropped its guard to attack; the
+  throw could not start then anyway.
+
 ## 3.0.0 (2026-09-27)
 
 New

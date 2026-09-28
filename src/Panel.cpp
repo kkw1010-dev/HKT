@@ -6,6 +6,7 @@
 #include "Grapple.h"
 #include "Needs.h"
 #include "Surrender.h"
+#include "TDMLock.h"
 #include "BookRead.h"
 #include "ItemEquip.h"
 #include "Jujutsu.h"
@@ -197,11 +198,20 @@ namespace CIGAR::Panel
 			KeyName{ 0x58, "F12" }, KeyName{ 0x52, "Num 0" }, KeyName{ 0x4F, "Num 1" }, KeyName{ 0x50, "Num 2" },
 			KeyName{ 0x51, "Num 3" }, KeyName{ 0x4B, "Num 4" }, KeyName{ 0x4C, "Num 5" }, KeyName{ 0x4D, "Num 6" },
 			KeyName{ 0x47, "Num 7" }, KeyName{ 0x48, "Num 8" }, KeyName{ 0x49, "Num 9" },
+			// The mouse's middle and side buttons (SkyPrompt's mouse codes); NameOf names them.
+			KeyName{ 258, "" }, KeyName{ 259, "" }, KeyName{ 260, "" }, KeyName{ 261, "" }, KeyName{ 262, "" },
+			KeyName{ 263, "" },
 		};
 
 		std::string NameOf(std::int64_t a_code)
 		{
+			if (a_code == 258) {
+				return L("마우스 가운데", "Mouse Middle");
+			}
 			for (const auto& key : kKeys) {
+				if (key.code >= 256) {
+					continue;
+				}
 				if (key.code == a_code) {
 					return key.name;
 				}
@@ -339,10 +349,18 @@ namespace CIGAR::Panel
 
 		void RenderKeys()
 		{
+			// The names are fixed at the first draw, in the language resolved then (like the page names).
+			static const auto labels = [] {
+				std::vector<std::string> result;
+				for (const auto& key : kKeys) {
+					result.push_back(NameOf(key.code));
+				}
+				return result;
+			}();
 			static const auto names = [] {
-				std::array<const char*, kKeys.size()> result{};
-				for (std::size_t i = 0; i < kKeys.size(); ++i) {
-					result[i] = kKeys[i].name;
+				std::vector<const char*> result;
+				for (const auto& label : labels) {
+					result.push_back(label.c_str());
 				}
 				return result;
 			}();
@@ -373,7 +391,27 @@ namespace CIGAR::Panel
 				}
 			}
 			ImGui::TextColored(kDim, "%s", kRelease ? L("프롬프트가 화면에 뜬 순서대로 1번째 키부터 배정됩니다", "Prompts take the keys in the order they appear, from the first") :
-			                                          L("화면에 뜬 순서대로 1번째부터 배정. 게임패드는 SkyPrompt 기본값", "Assigned in the order shown, from the first. Gamepads use SkyPrompt's defaults"));
+			                                          L("화면에 뜬 순서대로 1번째부터 배정", "Assigned in the order shown, from the first"));
+
+			// The gamepad: two presets, not a per-button picker (the user, 2026-09-28; docs/016).
+			int preset = Settings::PadButtons() == Settings::PadPreset::kDpad ? 1 : 0;
+			const std::array<const char*, 2> presets{ L("SkyPrompt 설정 따름 (기본)", "Follow SkyPrompt (default)"),
+				L("D-pad (1 위 · 2 아래 · 3 왼쪽 · 4 오른쪽)", "D-pad (1 Up · 2 Down · 3 Left · 4 Right)") };
+			ImGui::SetNextItemWidth(320.0f);
+			if (ImGui::Combo(L("게임패드 버튼##pad", "Gamepad buttons##pad"), &preset, presets.data(), static_cast<int>(presets.size()))) {
+				Settings::SetPadButtons(preset == 1 ? Settings::PadPreset::kDpad : Settings::PadPreset::kSkyPrompt);
+			}
+			Help(preset == 0 ?
+					 L("SkyPrompt의 버튼을 씁니다(기본 A·B·X·Y, SkyPrompt 설정의 Controls에서 바꾼 값도 따름)",
+						 "Uses SkyPrompt's buttons (A/B/X/Y by default, or what you set in SkyPrompt's Controls)") :
+					 L("프롬프트가 떠 있는 동안 그 방향은 즐겨찾기·단축키 대신 프롬프트를 실행합니다. 프롬프트가 없으면 원래대로입니다",
+						 "While a prompt shows, its direction runs the prompt instead of Favorites or a hotkey; with no prompt it works as usual"));
+			if (preset == 1 && Prompts::PadPagingOnDpad()) {
+				ImGui::PushTextWrapPos(0.0f);
+				ImGui::TextColored(kWarn, "%s", L("경고: SkyPrompt의 페이지 넘김이 D-pad 왼쪽·오른쪽입니다. 3·4번 프롬프트가 떠 있는 동안에는 페이지 넘김 대신 프롬프트가 실행됩니다",
+					"Warning: SkyPrompt pages with D-pad left and right. While prompts 3 or 4 show, those directions run the prompt instead of paging"));
+				ImGui::PopTextWrapPos();
+			}
 
 			// A key shared by two slots fires both prompts; a key another mod listens to fires that mod too.
 			for (std::size_t a = 0; a < keys.size(); ++a) {
@@ -384,10 +422,13 @@ namespace CIGAR::Panel
 					}
 				}
 			}
-			const std::array<std::pair<const char*, std::int64_t>, 3> others{ {
+			// TDM's lock key is often a mouse button (the middle one in this modlist), which a prompt key can
+			// now be too.
+			const std::array<std::pair<const char*, std::int64_t>, 4> others{ {
 				{ L("그래플", "Grapple"), Grapple::GetSingleton()->Key() },
 				{ L("Acheron 항복", "Acheron surrender"), Surrender::GetSingleton()->SurrenderKey() },
 				{ L("Valhalla 처형", "Valhalla execution"), Execute::GetSingleton()->ExecutionKey() },
+				{ L("TDM 록온", "TDM lock-on"), TDMLock::Key() },
 			} };
 			for (std::size_t slot = 0; slot < keys.size(); ++slot) {
 				for (const auto& [who, code] : others) {

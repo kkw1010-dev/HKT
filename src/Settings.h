@@ -15,15 +15,38 @@ namespace CIGAR::Settings
 	inline constexpr float kPlaceRangeMax = 600.0f;
 	float PlaceRange();
 	void SetPlaceRange(float a_range);
-	// The keyboard keys (DirectInput scan codes) of CIGAR's prompt key slots. SkyPrompt allows at most
+	// The keyboard or mouse keys of CIGAR's prompt key slots: DirectInput scan codes, or SkyPrompt's
+	// mouse codes for the middle and side buttons (258 middle, 259 and up the side buttons; 256 and 257
+	// are attack and block and stay out, the user's choice of 2026-09-28). SkyPrompt allows at most
 	// four prompts per client at once; each prompt on screen takes the lowest free slot. The default
-	// is SkyPrompt's own default, 1-4. Gamepads keep SkyPrompt's default buttons.
+	// is SkyPrompt's own default, 1-4.
 	inline constexpr std::size_t kPromptKeyCount = 4;
 	using PromptKeyArray = std::array<std::uint32_t, kPromptKeyCount>;
 	inline constexpr PromptKeyArray kDefaultPromptKeys{ 2, 3, 4, 5 };
+	inline constexpr std::uint32_t kMouseFirst = 258;
+	inline constexpr std::uint32_t kMouseLast = 263;
+	constexpr bool IsPromptKey(std::uint32_t a_code)
+	{
+		return (a_code > 0 && a_code < 256) || (a_code >= kMouseFirst && a_code <= kMouseLast);
+	}
 	PromptKeyArray PromptKeys();
 	// Saves the file and takes every prompt off the screen, so each is offered again with its new key.
 	void SetPromptKey(std::size_t a_slot, std::uint32_t a_key);
+
+	// The gamepad buttons of the slots (the user, 2026-09-28; docs/016): SkyPrompt's own slot buttons
+	// (A/B/X/Y by default, or what the player set in SkyPrompt's Controls), or the D-pad with slot 1 Up,
+	// 2 Down, 3 Left, 4 Right. Up and Down come first because the lowest free slot is taken first and
+	// Left and Right are also SkyPrompt's paging buttons.
+	enum class PadPreset
+	{
+		kSkyPrompt,
+		kDpad
+	};
+	// SKSE's linear gamepad codes (the ones SkyPrompt's settings store): 266 Up, 267 Down, 268 Left, 269 Right.
+	inline constexpr PromptKeyArray kDpadButtons{ 266, 267, 268, 269 };
+	PadPreset PadButtons();
+	// Saves the file and takes every prompt off the screen, so each is offered again with its new button.
+	void SetPadButtons(PadPreset a_preset);
 
 	// Prompt-only mode for another mod's own key ("grapple", "surrender", "valhalla", "fillherup"): the module moves that
 	// mod's key to a key no keyboard sends (F13/F14), so only CIGAR's prompt triggers it and the
