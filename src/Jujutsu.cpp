@@ -171,7 +171,14 @@ namespace CIGAR
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent* a_event, RE::BSTEventSource<RE::TESDeathEvent>*) override
 			{
 				if (a_event && a_event->dead && a_event->actorDying && a_event->actorDying.get() != RE::PlayerCharacter::GetSingleton()) {
-					deathSinceLoad = true;
+					// The first one is logged, so the log shows where the refusal window closes (r7: the
+					// user asked why 유술 worked at once, 2026-09-29).
+					if (!deathSinceLoad.exchange(true)) {
+						const auto* dying = a_event->actorDying.get();
+						const auto* killer = a_event->actorKiller.get();
+						logs::info("[Jujutsu] first death since the load: {} {:08X}, killed by {}", Util::NameOf(dying), dying->GetFormID(),
+							killer ? std::format("{} {:08X}", Util::NameOf(killer), killer->GetFormID()) : "-"s);
+					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}
