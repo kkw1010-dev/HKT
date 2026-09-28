@@ -23,7 +23,7 @@ history of each module are in `docs/`, one file per module, and each file starts
   `verify_deploy` fails its Jujutsu baseline. Not restored: the file is outside `mods\CIGAR` and the run
   carries other mods' updates: MO2 Opt ran it on purpose for State Behavior Framework 1.4 -> 2.0 (Q1).
   The previous output, with the Jujutsu copy cb3a5b03, is backed up in
-  `C:\TAKEALOOK\_backups6-09-28 pandora before sbf2`. r6 U1 re-tests Jujutsu on it; if U1 plays, run
+  `C:\TAKEALOOK\_backups\2026-09-28 pandora before sbf2`. r6 U1 re-tests Jujutsu on it; if U1 plays, run
   `python tools/verify_deploy.py --accept-behaviour`; if it fails, tell MO2 Opt, which will roll SBF
   back to 1.4 and rerun Pandora.
 - 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
