@@ -351,3 +351,32 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - U1: 도적이 휘두를 때 `[Jujutsu] gate target=- why=target-swinging`, 누른 시도의 `pair started ...` 대 `finished (refused)`.
   `pair started`가 나오면 21:06 Pandora 출력(SBF 2.0)에서도 유술이 도는 것이므로 `verify_deploy --accept-behaviour`로
   기준을 옮깁니다.
+
+## r8 탐침: 접촉 후 비집고 지나가기 (가)(나) 비교 (작성자 빌드 7822eab, 2026-09-29)
+
+두 버튼은 5. 세부 설정의 "탐침: NPC 밀기" 칸 맨 아래에 있습니다: **"비집기 (가) 내 캡슐 축소"**,
+**"비집기 (나) 그 NPC 충돌 끄기"**. 버튼을 누르고 메뉴를 닫은 뒤, 30초 안에 NPC에게 몸을 대고 계속 밀고 걸어가면 적용됩니다.
+지나가서 떨어지면(또는 3초가 지나면) 원래대로 돌아갑니다. 비집는 동작(간격별 자동)도 같이 나옵니다. 손으로 적을 것은 없습니다.
+CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝난 것으로 칩니다.
+
+- **준비:** 여관, 3인칭, 무기 넣은 상태. 시험마다 농부를 새로 부릅니다(부르면 내 자리에 나타납니다).
+  ```
+  coc WhiterunBanneredMare
+  player.placeatme 001034E4
+  ```
+- **Q1. 넓은 곳 (가):** 1층 가운데에서 농부를 부르고 뒤로 서너 걸음 물러난 뒤, (가)를 누르고 농부 정면으로 걸어가 밉니다.
+- **Q2. 넓은 곳 (나):** 같은 방법으로 (나).
+- **Q3. 좁은 곳 (가):** 문틀(여관 방문이나 출입문 안쪽) 한가운데에 서서 농부를 부릅니다. 문 반대편으로 물러났다가 (가)를 누르고,
+  문틀에 선 농부를 밀고 지나갑니다.
+- **Q4. 좁은 곳 (나):** Q3과 같은 방법으로 (나).
+- **Q5. 벽과 NPC 사이 (가)(나) 각각:** 벽에 등을 붙이고 농부를 부른 뒤 옆으로 비켜났다가, 벽과 농부 사이로 밀고 지나갑니다.
+- **고르기(있으면):** (가)와 (나) 중 더 자연스러운 쪽. 없으면 "없음".
+
+로그에서 보는 것(Claude가 판정):
+- 시작: `squeeze (가|나) start: touching <이름> ... via <신호>; <interior|exterior> cell ...; nearest door ...; <바꾼 값 전 -> 후>`.
+  신호가 `the controller's bumped character`이면 엔진의 접촉 값이 잡힌 것이고, `no controller bump reported`면 거리로 잡은 것입니다.
+- 진행: `squeeze +N s: 거리, 지나간 정도, 속도`.
+- 복원: `squeeze ... undo (clear of the NPC | time limit 3 s): ...; 값 복원`.
+- 결과: `RESULT squeeze ... PASSED | DID NOT PASS`, 복원 뒤 `POPPED | no pop`(예상보다 40 넘게 튀었는지), `N s stuck while moving`(끼임),
+  `the NPC moved N (z ±N)`. (나)에서 z가 크게 음수면 NPC가 바닥으로 꺼진 것입니다.
+- (가)의 `(the NPC's controller uses this shape too)`가 보이면 캡슐이 NPC와 공유돼서 그 NPC도 같이 작아진 것입니다.
