@@ -289,7 +289,7 @@ Xbox 패드를 연결하고 시작합니다. 기존 세이브로도 됩니다. C
   띄웁니다. 키보드를 아무 키나 한 번 누르면 키보드 아이콘(1)으로, 패드를 만지면 D-pad 아이콘으로 바뀌는지 봅니다. 바르지는 않습니다.
 - **D4. 2·3·4번 = 아래·왼쪽·오른쪽(전투):** 단검을 뽑고 "독 바르기"가 떠 있는 채로 도적을 부릅니다.
   ```
-  player.placeatme 0001BCD8
+  player.placeatme 0003DE8A
   ```
   록온, 그래플(가까울 때), 유술(도적이 막을 때), 원거리·근접 무기 전환 같은 프롬프트가 겹쳐 뜹니다. **화면의 D-pad 아이콘대로**
   아래·왼쪽·오른쪽을 한 번씩 눌러 봅니다. 왼쪽을 누를 때 철 검(단축키 1)이 **손에 들리지 않아야** 합니다.
@@ -314,3 +314,40 @@ Xbox 패드를 연결하고 시작합니다. 기존 세이브로도 됩니다. C
 - D5: `player equip: on 철 검`.
 - D7: `offer ... key=259`, `pass time held (another device; ends on key up)`, `pass time stopped (...): held N s`에서 N이 누른
   시간과 맞음(0.3초에서 끊기지 않음).
+
+## r7 (b26e031, 2026-09-28): r6 CTD 수정 확인, 이어서 D2-D8, K1, U1
+
+r6은 D2에서 CTD로 멈췄습니다. 원인은 SkyPrompt 2.4.0의 그리기 중 경쟁이었고 D-pad 코드와는 무관했습니다(docs/039).
+이 빌드는 CIGAR의 SkyPrompt 호출을 모두 SkyPrompt가 그리는 스레드로 옮겼습니다. 순서대로 진행하되, 손으로 적을 것은 없습니다.
+CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝난 것으로 칩니다.
+
+- **T0. 스레드 확인(할 일 없음):** 세이브를 불러오거나 새 게임을 시작하면 로그가 알아서 남습니다.
+- **T1. CTD 재현 시도:** 여관에서 무기를 넣은 채 NPC를 바라보고 5초 동안 서 있어 "주시하기"와 "탈의하기" 같은 프롬프트를
+  띄웁니다. 그 상태에서 무기 뽑기·넣기를 **10번 빠르게 반복**합니다(키보드 5번, 패드 5번). r6에서 CTD가 난 동작입니다.
+- **D2~D8:** 위 "D0-D8" 절의 D2부터 D8까지 그대로 합니다(도적은 0003DE8A로 바뀌었습니다).
+- **K1. 세이브를 불러온 직후의 유술(아무도 죽기 전):**
+  1. 도적이 없는 곳에서 콘솔로 저장합니다: `save CIGAR_K1`
+  2. 바로 불러옵니다: `load CIGAR_K1`
+  3. 불러온 뒤 **아무것도 죽이지 말고** 도적을 불러 맨손으로 싸웁니다. 도적이 막을 때 유술 프롬프트를 몇 번 눌러 봅니다.
+     ```
+     player.placeatme 0003DE8A
+     ```
+  4. 그다음 그 도적을 아무 방법으로나 쓰러뜨립니다(K1 끝, U1로 이어짐).
+- **U1. 유술(첫 죽음 이후):** 도적을 한 명 더 불러 맨손으로 싸웁니다. 막을 때 유술 프롬프트가 뜨고, 휘두르기 시작하면
+  바로 사라지는지 봅니다. 떠 있을 때 여러 번 눌러 봅니다.
+  ```
+  player.placeatme 0003DE8A
+  ```
+
+로그에서 보는 것(Claude가 판정):
+- T0: `prompt queue: Present hooked (chained: true)`, `prompt queue: first Present call on thread N`,
+  `prompt queue: ticks run on thread M, Present on thread N`에서 M이 N과 다르면 전제가 확정됩니다.
+  `a tick ran while the render thread was inside Present`가 찍히면 둘이 실제로 겹친다는 직접 증거입니다.
+  `WARN prompt queue: no Present call`이나 `ERROR prompt queue: no call at the Present site`가 **없어야** 합니다.
+- T1: CTD 없음. 뽑기·넣기마다 Observe·Dress의 offer 줄이 이어집니다.
+- D2~D8: 위 절의 기준 그대로입니다.
+- K1: 불러온 뒤 첫 죽음 전의 누름에 `known issue: no actor has died since the load`가 찍히면, 그 창이 세이브를 불러와도
+  생긴다는 뜻입니다(r5는 새 게임만 봤습니다). `pair started`가 나오면 창이 없는 것입니다.
+- U1: 도적이 휘두를 때 `[Jujutsu] gate target=- why=target-swinging`, 누른 시도의 `pair started ...` 대 `finished (refused)`.
+  `pair started`가 나오면 21:06 Pandora 출력(SBF 2.0)에서도 유술이 도는 것이므로 `verify_deploy --accept-behaviour`로
+  기준을 옮깁니다.

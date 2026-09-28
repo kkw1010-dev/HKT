@@ -89,8 +89,24 @@ build logs it: see below.
   `Right`, `Mouse3`-`Mouse8`). A missing icon would not crash, but SkyPrompt would show its
   unknown-key icon.
 
-## Upstream
+## SkyPrompt's side
 
-The index reuse in `Manager::ShowQueue` is SkyPrompt's bug. Two fixes would close it: one lock across
-both loops, or collecting `SubManager*` and holding the lock throughout. It can reach any SkyPrompt
-client that calls from a task. Reporting it upstream is public posting, so it waits for the user.
+Recorded as a SkyPrompt 2.4.0 `ShowQueue` race, avoided on CIGAR's side. No upstream report is
+made; that is the user's decision (2026-09-28), so do not propose one.
+
+### SkyPrompt 2.3.15 instead of 2.4.0?
+
+The user asked what going back to 2.3.15 would cost. Answer, from the source at `v2.3.15`:
+
+- It would not remove the gap. 2.3.15 has the same two loops. It holds raw `SubManager*` across the
+  lock release, so a row removed in between becomes a use-after-free instead of a null read.
+- Prompts on mouse button 5 (code 260) would not show at all. The icon name is `"Mouse5 "` with a
+  trailing space, so the texture fails and `ButtonQueue::Show` skips the key. This was fixed in
+  2.3.19 (#51).
+- It would also lose everything from 2.3.16 to 2.4.0, including:
+  - the fix for remaining prompts fading in again when another prompt is removed;
+  - the fix for the crash when quitting after using a prompt;
+  - full translation support and the client handshake;
+  - the diamond and list layouts, theme editing and the activation pop;
+  - VR support.
+- CIGAR's queue works the same on both versions.
