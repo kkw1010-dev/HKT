@@ -116,3 +116,54 @@ These were never chased, and by the scope above they should not be:
 - Whether `cycle_L` / `cycle_R` paging works on a pad past four prompts.
 - Slot 4 on Xbox is `A`, the activate button; no conflict was reported, but it
   was not deliberately exercised.
+
+## Review 2026-09-28: gamepad slots in CIGAR's panel? (review only, nothing changed)
+
+The Nexus requests for modifier and arrow keys (IAMTOKKO) most likely mean a pad player who wants the
+prompts on pad buttons such as the D-pad. The user asked whether "gamepad support" needs a pad button
+mapping in CIGAR. Modifier and arrow keys stay rejected.
+
+**Verdict: do not add pad slots to CIGAR's panel; point pad players to SkyPrompt's own Controls
+settings.** The mapping already exists there, it applies to CIGAR's prompts, and a CIGAR-side mapping
+would reopen the reason this file gives against it.
+
+1. **The API can take a pad button per prompt.** `SkyPromptAPI::Prompt::button_key` is a span of
+   `(RE::INPUT_DEVICE, ButtonID)` pairs (`include/SkyPrompt/API.hpp:60`), API 2.0, the same in
+   2.3.15 and 2.4.0 (`docs/007`). `ButtonID` is commented as `RE::BSWin32GamepadDevice::Key` among
+   others (line 38), and that enum has the D-pad (`kUp` 0x0001 ... `kRight` 0x0008). **But** SkyPrompt's
+   own `settings.json` stores pad buttons as SKSE's linear codes (266 D-pad Up ... 276 A, 279 Y), so
+   which code space the per-prompt pairs expect is unresolved; a wrong guess gives a prompt no pad
+   button at all. It needs SkyPrompt's source or one in-game test to settle.
+2. **SkyPrompt already lets the player remap the pad.** Its 2.4.0 DLL carries the control-panel
+   strings `$SkyPromptMCPControlsDeviceSelection`, `$SkyPromptMCPControlsButton`,
+   `$SkyPromptMCPControlsMaxButtons`, `$SkyPromptMCPControlsCycleLeft/Right` (its own SKSE Menu
+   Framework panel, "Controls"), and `settings.json` keeps four buttons per device. CIGAR lists only a
+   keyboard key per prompt (`src/Prompt.cpp:164`), so on a pad every CIGAR prompt uses SkyPrompt's slot
+   buttons: whatever the player sets there, D-pad included, applies to CIGAR as to every other
+   SkyPrompt mod. (Read from the DLL strings; the panel itself was not opened in game.)
+3. **What a CIGAR pad row would take** (if the user still wants one):
+   - `Settings`: a second array of four pad buttons, "unset = SkyPrompt's own" by default, saved in
+     `CIGAR.json`.
+   - `Panel`: a pad list beside the keyboard list (a fixed list of pad buttons, like `kKeys`; no
+     capture code), with the conflict warnings below.
+   - `Prompt.cpp:164`: a second pair `{ kGamepad, padKey }` when set.
+   - `Rest.cpp:843/881`: nothing; the pass-time backstop already treats a non-keyboard hold as ending
+     on SkyPrompt's key-up.
+   - No other code assumes the prompt key is a keyboard key (the prompt-only keys F13-F15 and the
+     synthetic presses are other mods' keyboard keys and stay so).
+   - Size: about 150-250 lines, plus settling the code space and one in-game session with a pad.
+4. **Risks.**
+   - **The D-pad is taken.** In this modlist's `controlmap.txt` (winner: "No Numpad Hotkeys and Custom
+     Keybinds") the gameplay D-pad is Favorites (up and down) and Hotkey1/Hotkey2 (left and right),
+     and SkyPrompt pages prompts with D-pad left and right. Whether SkyPrompt swallows a button while
+     its prompt shows is unverified; if not, a D-pad prompt also opens Favorites or equips a hotkey.
+   - **Split buttons.** Per-prompt pad keys make CIGAR's prompts use other buttons than every other
+     SkyPrompt mod on screen at the same time (Grapple's QTE, for one), the reason given above.
+   - **Regression.** With "unset" as the default nothing changes for pad players on SkyPrompt's
+     buttons; any other default would move their buttons.
+   - **Tests if built:** each D-pad direction as a slot (the prompt fires; do Favorites or a hotkey also
+     fire), a hold prompt and pass time on the pad, more than four prompts (paging), keyboard and pad
+     alternated, the "unset" regression.
+5. **Next release.** Not with push-through and the 유술 gate: the code space is unsettled and it needs its
+   own pad session. What can go in now is one line in the readme and the pinned FAQ: on a gamepad, set
+   the prompt buttons in SkyPrompt's own settings (Controls, gamepad device); CIGAR follows them.
