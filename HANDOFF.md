@@ -30,7 +30,10 @@ history of each module are in `docs/`, one file per module, and each file starts
   skipped; U1 passed (10 plays, 4 refusals on swing starts), so the SBF 2.0 `mt_behavior.hkx` is the new
   baseline; K1 withdrawn (no save-then-load tests, the user's rule); B5: no prompt showed during the wash,
   now also guaranteed by a tick-level wash guard in `main.cpp`. Gamepad and mouse work is closed.
-- **Deployed: `b26e031`** (the queue). r7 checklist in `TEST-next-ingame.md` "r7": T0 thread
+- **Deployed now: the author build of `124578a`** (queue, wash guard, squeeze probe, and the Jujutsu
+  line `first death since the load: <who>, killed by <whom>`). K1-style save-then-load tests are not
+  proposed any more; a loaded save's refusal window is read from ordinary play logs.
+- **Deployed earlier: `b26e031`** (the queue). r7 checklist in `TEST-next-ingame.md` "r7": T0 thread
   premise, T1 draw/sheathe stress, D2-D8, K1 (save-loaded half), U1; bandit `0003DE8A`. No upstream
   SkyPrompt report (the user's decision); `docs/039` also answers "why not SkyPrompt 2.3.15".
 - **Squeeze feature, stage 0d probe built (`7822eab`), NOT deployed yet** (the game was running r7 on
