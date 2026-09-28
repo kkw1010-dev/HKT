@@ -777,3 +777,20 @@ least four to six sessions of about 30 minutes, covering the window on AE; vanil
 executions, Acheron defeats, NPC-on-NPC kill moves and the kill camera for side effects; and a save and
 load after each. The SE path could not be tested here at all. By the user's standing choice this stays
 a disclosed known issue unless K1/K2 show a single, clearly benign cause.
+
+### r5 (the user's run of 2026-09-28): K1 and J1 read from the log
+
+- The log has one session, a new game at 17:51:57; **no save was loaded**, so K1's comparison (a
+  save-less start against a loaded save) had only its first half here.
+- J1: 7 presses between 18:27:25 and 18:28:02 on one spawned bandit (요른 코르드센, `FF002E6E`), all
+  refused. **None was the first-death window:** the death watch had already seen a death, so the
+  `known issue` line never appeared (0 in the log). In **every try the victim was attacking**
+  (`gAttack=true`, attack state 1-3) and not blocking. That is the ordinary refusal of a paired kill
+  move on a swinging target, the same cause as Execute missing a press.
+- So J1 "failed" for another reason than the one it was built to show. A cheap, engine-free
+  improvement is a candidate: keep the prompt only while the target blocks, or hold an accepted press
+  until the target's swing ends instead of giving up after 0.3 s. Not changed.
+- **The greyed save button** was not CIGAR's: CIGAR has no code that affects saving (it only reads
+  `PlayerControls`), and the player was not in combat when the Journal Menu was open (18:32-18:34).
+  The likely cause is the save-less start itself (a new game begun without character creation); not
+  verified.

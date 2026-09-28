@@ -212,3 +212,62 @@ Yes, as a renamed copy, or not at all:
 - **In-game items** (for the checklist): walk past an NPC and fire each row once; the user compares by
   eye. The log only proves each clip played on a moving player and stopped; which reads as "squeeze
   past" is the user's judgement.
+
+## Stage 0 results (r5, the user's run of 2026-09-28 17:42-18:34, `CIGAR.log`)
+
+One session: a new game started at 17:51:57 (no save was loaded in this log). All P and G items were
+run; the user picked **3805 (EVG Squeeze, upper body)**.
+
+### NPC side: GO with the direct graph events; ActionBumpedInto is dropped
+
+| Route | Result |
+|---|---|
+| `ActionBumpedInto` through `TESActionData` (P4) | `Process()` returned **false**; nothing moved, no events. The user's "not sure it worked" is right: it did nothing. Dropped |
+| Graph events `NPC_BumpFromFront` / `...FromBack` / `...FromLeft` / `...FromRight` (P5) | Accepted 9 of 15. Every accepted one **displaced** the NPC 50-84 units, no hostility, combat or crime, and **no dialogue line** |
+| Natural walking bump (P2, engine `small`) | Displaced in most windows (75-198 units, partly the NPC's own walking), not in some (0-20 units) |
+| Natural sprint bump (P3, engine `big`) | Displaced 51-63 units |
+
+- **Refusals:** all six refused events were on 미카엘 while he was in dialogue or his bard scene (head
+  tracking, `IdleDialogueLock`, scene lines of subtype 14). 신미어 accepted all four. The behaviour graph
+  refuses the event in those states; nothing else was touched.
+- **NPC Animation Remix 2.1.0** ships no `bump_*` clips (71 OAR submods, none on the bump clips), and an
+  OAR replacement cannot make a graph refuse an event. It is not the cause of the partial result.
+- **Dialogue.** Natural bumps made the NPC talk: 12 `ActorCollidewithActor` lines (subtype 98, one from a
+  mod topic `JB1CDORearBump`), plus hello and idle lines. The direct events produced none (14 of 15
+  windows; the other was 미카엘's scene line). That meets the user's "no NPC line" by construction.
+- **Small or big.** The direct events play the same four bump idles the engine uses for both; the
+  displacement is the idle's own (50-84 units), close to the natural ones. There is no separate small
+  or big version to choose.
+
+### Player side: GO with EVG Squeeze; the combination below needs one choice
+
+- Every gesture started while walking, with `bGPMAInstalled`, both variables set and `OffsetGPMA`
+  accepted, and stopped with both variables back at 0. Movement kept in all but the first 3801 run,
+  which is a false alarm (the player was just starting to move, speed before 0).
+- **Probe fault found:** arming a new gesture while one still plays dropped the old one without its
+  stop or result line (3803, 3804). It did no harm (the next start overwrote the variables); the next
+  probe build stops the running gesture first.
+- **What the Squeeze clip does** (decoded, stripped copy): the shoulder line turns about 100° within
+  0.5 s, holds until about 1.9 s, and is back at 2.67 s. The left hand leads (up to 45 units ahead),
+  the right hand trails (up to 28 behind). 3805 and 3806 are the same clip with different masks: 3805
+  plays both arms and the upper body, 3806 the left arm only.
+
+### Combining 3805 and 3806 (the user asked for it)
+
+Offset Movement Animation plays one clip at a time with one of three masks (both arms and upper body,
+right arm, left arm). There is no "upper body plus left arm" mask, and this machine can decode `.hkx`
+but not write animation tracks yet. Three ways, cheapest first:
+
+1. **3805 cut short** (no file edit): stop it early, while the turn is half done (about 50° at 0.3 s),
+   so the body shoulders past instead of turning fully sideways, then the layer blends back. Values to
+   compare: 0.3, 0.5 and 0.8 s.
+2. **Pick by the gap** (no file edit): the NPC straight ahead (a tight gap) gets the full 3805; an NPC
+   standing off to the left gets 3806 (the left hand leads, no turn). An NPC off to the right has no
+   mirrored arm-only clip: 3805 there too, or no gesture.
+3. **A real blend** (a new clip): the Squeeze turn scaled down plus the left-arm lead, the right arm left
+   free. It needs an `.hkx` writer that is not on this machine (docs/038 research item D) and possibly a
+   new mask in the behaviour patch (a Pandora run, which this modlist avoids). HOLD.
+
+Recommendation: test 1 and 2 together in one short round (a probe build with three cut lengths and the
+gap rule), then build the module on the user's pick. The NPC side is settled (direct events, skip NPCs
+in dialogue, scenes or furniture).

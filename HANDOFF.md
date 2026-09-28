@@ -5,20 +5,20 @@
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
 
-### Next session starts here (2026-09-28, end of day)
+### Next session starts here (2026-09-28, after r5)
 
-- **Waiting for the user's in-game run** of `TEST-next-ingame.md` **P1-P5** (NPC bump probe) and
-  **G1-G7** (push clip comparison, pick one). Both are in the deployed author build `e860764`; the
-  orchestrator posts the checklist page. Then:
-  1. Read `SKSE\CIGAR.log` (`[PushProbe]` lines): `RESULT ... DISPLACED`, `natural small|big bump`,
-     `PROBLEM:`, and for each gesture `start` / `RESULT gesture ... KEPT MOVING` / `stop`.
-  2. Decide GO or HOLD for push-through with the user (`docs/038`); record the picked clip as the
-     user's choice.
-  3. After the pick, take the test clips out: `python tools/push_test_assets.py --remove` (Skyrim and
-     MO2 closed; only `mods\CIGAR` changes).
-- Nothing is uncommitted. `v3` = `master`, a few local commits ahead of GitHub (`8254180`; pushed only
-  when the user asks). `../CIGAR-Personal` is committed too (no remote).
-- Build lock and `mods\` lock: ask the orchestrator each time; deploy only with Skyrim and MO2 closed.
+- **r5 is read** (`docs/038` "Stage 0 results", `docs/012` "r5"). Push-through: the NPC side is GO with
+  the direct bump graph events (displaced 50-84 units, no line, no hostility; `ActionBumpedInto` did
+  nothing). The user picked **3805 (EVG Squeeze, upper body)** and asked to combine it with 3806.
+- **Waiting for the user's choice** of the combination (`docs/038`, three options: 3805 cut short,
+  pick by the gap, a real blend on HOLD). Recommended: test the first two in one short probe round.
+  The next probe build also stops a running gesture before starting a new one.
+- 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
+  save-loaded half was not run. The save button was not CIGAR's.
+- The `CIGAR Push Test` clips stay in `mods\CIGAR` until the combination is chosen; then
+  `python tools/push_test_assets.py --remove` (Skyrim and MO2 closed).
+- Nothing is uncommitted. `v3` = `master`, local commits ahead of GitHub (`8254180`; pushed only when
+  the user asks). Build lock and `mods\` lock: ask the orchestrator.
 
 ### Current state (2026-09-27 handover, read this first)
 
