@@ -44,9 +44,10 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `TCL_LIGHT_HOOK_ANALYSIS.md` is someone else's untracked file; leave it.
 
 **Deploy.**
-- `mods\CIGAR` holds the **e860764 author build** (2026-09-28): 3.0.0, the log-only NPC push probe
-  with the stage-0b gesture buttons (`src/PushProbe.*`, `docs/038`), and the personal-module hook
-  (empty registry). `verify_deploy.py` passed every check. The right-offset setting and the five
+- `mods\CIGAR` holds the **7ea581c author build** (2026-09-28): 3.0.0, the log-only NPC push probe
+  with the stage-0b and 0c gesture buttons (`src/PushProbe.*`, `docs/038`), the 유술 swing gate
+  (`docs/012`), and the personal-module hook (empty registry). `verify_deploy.py` passed every check.
+  Next in-game run: `TEST-next-ingame.md` G9-G14 and U1. The right-offset setting and the five
   pages passed retest 3.
 - **Test assets in `mods\CIGAR`:** `meshes\OpenAnimationReplacer\CIGAR Push Test` (six OAR submods,
   `tools/push_test_assets.py --deploy`). Author test only; take them out with `--remove` when the
