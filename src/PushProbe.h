@@ -37,6 +37,19 @@ namespace CIGAR::PushProbe
 	// length, both graph variables back at 0.
 	void ArmGesture(std::size_t a_index);
 
+	// Stage 0d (docs/038, approved by the user 2026-09-29): squeeze past an NPC the player is pressing
+	// against, two ways compared. Unlike the rest of this probe, these write engine values, and undo them
+	// once the player is clear of the NPC or after 3 s. kShrink halves the player's controller capsule
+	// radius; kGhost switches off the collision flag of that NPC's controller body (the body other
+	// characters bump), so only that NPC stops blocking. Both also play the automatic gesture.
+	enum class Squeeze
+	{
+		kShrink,
+		kGhost
+	};
+	// Any thread: arms one; it applies when the player next touches an NPC while moving (within 30 s).
+	void ArmSqueeze(Squeeze a_how);
+
 	// kDataLoaded: the dialogue event sink.
 	void RegisterEvents();
 	// Game thread, every 100 ms while the game runs.

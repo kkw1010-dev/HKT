@@ -534,6 +534,277 @@ namespace CIGAR::PushProbe
 			}
 		}
 
+		// Stage 0d: squeeze past a touching NPC. Probe values (Claude's, not the user's).
+		constexpr float kShrinkFactor = 0.5f;     // (가) the player's capsule radius is multiplied by this
+		constexpr float kContactAhead = 75.0f;    // an NPC this close ahead counts as touching when no bump is reported
+		constexpr float kClearPast = 30.0f;       // the player is past the NPC once this far beyond it
+		constexpr float kClearDistance = 70.0f;   // and this far from it: then the change is undone
+		constexpr auto kSqueezeLimit = 3s;        // undone after this at the latest
+		constexpr auto kSqueezeArmWait = 30s;
+		constexpr auto kAfterRestore = 600ms;     // speed and position are followed this long after the undo
+		constexpr float kDoorRange = 200.0f;
+		constexpr int kAutoGesture = static_cast<int>(kGestures.size()) - 1;
+
+		std::atomic<int> squeezeArmed{ -1 };
+
+		const char* SqueezeName(int a_how)
+		{
+			return a_how == static_cast<int>(Squeeze::kShrink) ? "(가) 캡슐 축소" : "(나) 그 NPC 충돌 끄기";
+		}
+
+		struct SqueezeRun
+		{
+			int how = -1;
+			bool waiting = false;
+			bool active = false;
+			bool after = false;
+			Clock::time_point armed;
+			Clock::time_point start;
+			Clock::time_point restoredAt;
+			RE::ActorHandle npc;
+			std::string npcName;
+			RE::NiPoint3 playerStart;
+			RE::NiPoint3 npcStart;
+			RE::NiPoint3 axis;  // horizontal unit vector from the player to the NPC at the start
+			RE::NiPoint3 lastPos;
+			Clock::time_point lastTick;
+			RE::NiPoint3 restorePos;
+			RE::NiPoint3 npcAtRestore;
+			float speedAtRestore = 0.0f;
+			float maxPast = -1.0e9f;
+			bool passed = false;
+			float slowAfter = 0.0f;  // seconds after the undo spent below 20 u/s while moving
+			// (가): each capsule changed, kept alive by its bhkShape, with its old radius.
+			std::vector<std::tuple<RE::NiPointer<RE::bhkShape>, RE::hkpConvexShape*, float>> radii;
+			// (나): the NPC's controller body, kept alive, and its old filter word.
+			RE::hkRefPtr<RE::hkpRigidBody> body;
+			std::uint32_t oldFilter = 0;
+		};
+		SqueezeRun squeeze;  // game thread
+
+		float Past(const RE::NiPoint3& a_player, const RE::NiPoint3& a_npc)
+		{
+			return (a_player.x - a_npc.x) * squeeze.axis.x + (a_player.y - a_npc.y) * squeeze.axis.y;
+		}
+
+		float Flat(const RE::NiPoint3& a_a, const RE::NiPoint3& a_b)
+		{
+			return std::hypot(a_a.x - a_b.x, a_a.y - a_b.y);
+		}
+
+		// The NPC the player's controller reports bumping, or, failing that, one right ahead.
+		RE::Actor* Touching(RE::PlayerCharacter* a_player, std::string& a_signal)
+		{
+			auto* controller = a_player->GetCharController();
+			if (controller && controller->bumpedCharCollisionObject.get()) {
+				if (auto* ref = RE::TESHavokUtilities::FindCollidableRef(*controller->bumpedCharCollisionObject->GetCollidable())) {
+					if (auto* actor = ref->As<RE::Actor>(); actor && actor != a_player && !actor->IsDead()) {
+						a_signal = std::format("the controller's bumped character (force {:.2f})", controller->bumpedForce);
+						return actor;
+					}
+				}
+			}
+			float ahead = 0.0f;
+			float side = 0.0f;
+			if (auto* actor = InTheWay(a_player, ahead, side); actor && ahead <= kContactAhead) {
+				a_signal = std::format("{:.0f} ahead, {:+.0f} to the side (no controller bump reported)", ahead, side);
+				return actor;
+			}
+			return nullptr;
+		}
+
+		std::string Surroundings(RE::PlayerCharacter* a_player)
+		{
+			float nearest = kDoorRange + 1.0f;
+			std::string door;
+			if (auto* tes = RE::TES::GetSingleton()) {
+				const auto pos = a_player->GetPosition();
+				tes->ForEachReferenceInRange(a_player, kDoorRange, [&](RE::TESObjectREFR* a_ref) {
+					const auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
+					if (base && base->Is(RE::FormType::Door)) {
+						if (const float d = a_ref->GetPosition().GetDistance(pos); d < nearest) {
+							nearest = d;
+							door = Util::NameOf(base);
+						}
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
+			const auto* cell = a_player->GetParentCell();
+			return std::format("{} cell {}; nearest door {}", cell && cell->IsInteriorCell() ? "interior" : "exterior",
+				cell ? Util::NameOf(cell) : "?"s,
+				nearest <= kDoorRange ? std::format("'{}' {:.0f} away", door, nearest) : std::format("none within {:.0f}", kDoorRange));
+		}
+
+		std::string Shrink(RE::PlayerCharacter* a_player, RE::Actor* a_npc)
+		{
+			auto* controller = a_player->GetCharController();
+			if (!controller) {
+				return "no player controller: nothing changed";
+			}
+			const auto* npcController = a_npc->GetCharController();
+			std::string out = std::format("controller radius {:.3f} destRadius {:.3f} scale {:.2f}", controller->radius,
+				controller->destRadius, controller->scale);
+			for (std::size_t i = 0; i < 2; ++i) {
+				RE::NiPointer<RE::bhkShape> shape = controller->shapes[i];
+				auto* hk = shape ? static_cast<RE::hkpShape*>(shape->referencedObject.get()) : nullptr;
+				if (!hk) {
+					out += std::format("; shape{} none", i);
+					continue;
+				}
+				if (hk->type != RE::hkpShapeType::kCapsule) {
+					out += std::format("; shape{} type {} (not a capsule, left alone)", i, static_cast<int>(hk->type));
+					continue;
+				}
+				auto* capsule = static_cast<RE::hkpConvexShape*>(hk);
+				const bool again = std::ranges::any_of(squeeze.radii, [&](const auto& a_entry) { return std::get<1>(a_entry) == capsule; });
+				const bool shared = npcController && (npcController->shapes[0].get() == shape.get() || npcController->shapes[1].get() == shape.get());
+				if (again) {
+					out += std::format("; shape{} is shape0 again", i);
+					continue;
+				}
+				const float old = capsule->radius;
+				capsule->radius = old * kShrinkFactor;
+				squeeze.radii.emplace_back(shape, capsule, old);
+				out += std::format("; shape{} capsule radius {:.3f} -> {:.3f}{}", i, old, capsule->radius,
+					shared ? " (the NPC's controller uses this shape too)" : "");
+			}
+			return out;
+		}
+
+		std::string Ghost(RE::Actor* a_npc)
+		{
+			auto* npcController = a_npc->GetCharController();
+			auto* body = npcController ? npcController->GetRigidBody() : nullptr;
+			if (!body) {
+				return "the NPC's controller has no body: nothing changed";
+			}
+			auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+			squeeze.body = RE::hkRefPtr<RE::hkpRigidBody>(body);
+			squeeze.oldFilter = filter.filter;
+			filter.SetNoCollision(true);
+			return std::format("NPC body filter {:08X} -> {:08X} (layer {}, system group {}), NPC z {:.0f}", squeeze.oldFilter, filter.filter,
+				static_cast<int>(filter.GetCollisionLayer()), filter.GetSystemGroup(), a_npc->GetPosition().z);
+		}
+
+		std::string Undo()
+		{
+			std::string out;
+			for (auto& [shape, capsule, old] : squeeze.radii) {
+				out += std::format("{}capsule radius {:.3f} -> {:.3f}", out.empty() ? "" : "; ", capsule->radius, old);
+				capsule->radius = old;
+			}
+			squeeze.radii.clear();
+			if (auto* body = squeeze.body.get()) {
+				auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+				out += std::format("{}NPC body filter {:08X} -> {:08X}", out.empty() ? "" : "; ", filter.filter, squeeze.oldFilter);
+				filter.filter = squeeze.oldFilter;
+				squeeze.body = {};
+			}
+			return out.empty() ? "nothing to undo" : out;
+		}
+
+		void SqueezeTick(RE::PlayerCharacter* a_player)
+		{
+			const auto now = Clock::now();
+			const auto pos = a_player->GetPosition();
+			const float dt = std::chrono::duration<float>(now - squeeze.lastTick).count();
+			const float speed = dt > 0.0f && dt < 1.0f ? Flat(pos, squeeze.lastPos) / dt : 0.0f;
+			squeeze.lastPos = pos;
+			squeeze.lastTick = now;
+
+			if (const int how = squeezeArmed.exchange(-1); how >= 0) {
+				if (squeeze.active) {
+					Log("squeeze {}: interrupted by a new arm; {}", SqueezeName(squeeze.how), Undo());
+				}
+				squeeze = {};
+				squeeze.how = how;
+				squeeze.waiting = true;
+				squeeze.armed = now;
+				squeeze.lastPos = pos;
+				squeeze.lastTick = now;
+				Log("squeeze {} armed: applies when the player touches an NPC while moving (within {} s)", SqueezeName(how), kSqueezeArmWait.count());
+				SetStatus(std::format("squeeze {} armed: walk into an NPC", SqueezeName(how)));
+				return;
+			}
+			if (squeeze.waiting) {
+				if (now - squeeze.armed > kSqueezeArmWait) {
+					Log("squeeze {} dropped: no NPC touched within {} s", SqueezeName(squeeze.how), kSqueezeArmWait.count());
+					SetStatus(std::format("squeeze {}: dropped", SqueezeName(squeeze.how)));
+					squeeze = {};
+					return;
+				}
+				if (!Moving(a_player)) {
+					return;
+				}
+				std::string signal;
+				auto* npc = Touching(a_player, signal);
+				if (!npc) {
+					return;
+				}
+				squeeze.waiting = false;
+				squeeze.active = true;
+				squeeze.start = now;
+				squeeze.npc = npc->GetHandle();
+				squeeze.npcName = Util::NameOf(npc);
+				squeeze.playerStart = pos;
+				squeeze.npcStart = npc->GetPosition();
+				const float d = std::max(Flat(squeeze.npcStart, pos), 1.0f);
+				squeeze.axis = { (squeeze.npcStart.x - pos.x) / d, (squeeze.npcStart.y - pos.y) / d, 0.0f };
+				const auto change = squeeze.how == static_cast<int>(Squeeze::kShrink) ? Shrink(a_player, npc) : Ghost(npc);
+				Log("squeeze {} start: touching {} {:08X} at {:.0f} via {}; {}; {}", SqueezeName(squeeze.how), squeeze.npcName, npc->GetFormID(), d,
+					signal, Surroundings(a_player), change);
+				gestureArmed = kAutoGesture;
+				SetStatus(std::format("squeeze {}: on {}", SqueezeName(squeeze.how), squeeze.npcName));
+				return;
+			}
+			if (squeeze.active) {
+				const auto npc = squeeze.npc.get();
+				const auto npcPos = npc ? npc->GetPosition() : squeeze.npcStart;
+				const float past = Past(pos, npcPos);
+				const float gap = Flat(pos, npcPos);
+				squeeze.maxPast = std::max(squeeze.maxPast, past);
+				squeeze.passed = squeeze.passed || past >= kClearPast;
+				const float t = std::chrono::duration<float>(now - squeeze.start).count();
+				Log("  squeeze +{:.1f}s: {:.0f} from the NPC, {:+.0f} past it, speed {:.0f}{}", t, gap, past, speed, Moving(a_player) ? "" : " (not moving)");
+				const bool clear = squeeze.passed && gap >= kClearDistance;
+				if (!clear && now - squeeze.start < kSqueezeLimit) {
+					return;
+				}
+				squeeze.active = false;
+				squeeze.after = true;
+				squeeze.restoredAt = now;
+				squeeze.restorePos = pos;
+				squeeze.npcAtRestore = npcPos;
+				squeeze.speedAtRestore = speed;
+				Log("squeeze {} undo ({}): {:.0f} from the NPC, {:+.0f} past it; {}", SqueezeName(squeeze.how),
+					clear ? "clear of the NPC" : std::format("time limit {} s", kSqueezeLimit.count()), gap, past, Undo());
+				return;
+			}
+			if (squeeze.after) {
+				if (Moving(a_player) && speed < 20.0f) {
+					squeeze.slowAfter += dt;
+				}
+				if (now - squeeze.restoredAt < kAfterRestore) {
+					return;
+				}
+				const float span = std::chrono::duration<float>(now - squeeze.restoredAt).count();
+				const float moved = Flat(pos, squeeze.restorePos);
+				const float expected = squeeze.speedAtRestore * span;
+				const auto npc = squeeze.npc.get();
+				const auto npcPos = npc ? npc->GetPosition() : squeeze.npcAtRestore;
+				Log("RESULT squeeze {} on {}: {}, moved {:.0f} while applied (max {:+.0f} past the NPC); after the undo the player moved {:.0f} in {:.2f} s "
+					"against {:.0f} expected from speed {:.0f} ({}), {:.1f} s stuck while moving; the NPC moved {:.0f} (z {:+.0f}) from where it stood",
+					SqueezeName(squeeze.how), squeeze.npcName, squeeze.passed ? "PASSED" : "DID NOT PASS", Flat(squeeze.restorePos, squeeze.playerStart),
+					squeeze.maxPast, moved, span, expected, squeeze.speedAtRestore,
+					moved > expected + 40.0f ? "POPPED" : "no pop", squeeze.slowAfter, Flat(npcPos, squeeze.npcStart), npcPos.z - squeeze.npcStart.z);
+				SetStatus(std::format("squeeze {}: {}", SqueezeName(squeeze.how), squeeze.passed ? "passed" : "did not pass"));
+				squeeze = {};
+				squeeze.lastPos = pos;
+				squeeze.lastTick = now;
+			}
+		}
+
 		class TopicSink final : public RE::BSTEventSink<RE::TESTopicInfoEvent>
 		{
 		public:
@@ -597,6 +868,12 @@ namespace CIGAR::PushProbe
 		SetStatus(std::format("gesture {} armed: close the menu and walk", kGestures[a_index].label));
 	}
 
+	void ArmSqueeze(Squeeze a_how)
+	{
+		squeezeArmed = static_cast<int>(a_how);
+		SetStatus(std::format("squeeze {} armed: close the menu and walk into an NPC", SqueezeName(static_cast<int>(a_how))));
+	}
+
 	void RegisterEvents()
 	{
 		if (auto* holder = RE::ScriptEventSourceHolder::GetSingleton()) {
@@ -624,6 +901,7 @@ namespace CIGAR::PushProbe
 		} else if (!seen.empty()) {
 			seen.clear();
 		}
+		SqueezeTick(player);
 		GestureTick(player);
 	}
 

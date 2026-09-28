@@ -632,6 +632,15 @@ namespace CIGAR::Panel
 						PushProbe::ArmGesture(i);
 					}
 				}
+				// Stage 0d: squeeze past a touching NPC, two ways compared (writes engine values, undone after).
+				ImGui::TextColored(kDim, "%s", "비집기 (누르고 메뉴를 닫은 뒤 NPC에 몸을 대고 밀고 가면 적용, 지나가면 복원):");
+				if (ImGui::Button("비집기 (가) 내 캡슐 축소##pp-sq-shrink")) {
+					PushProbe::ArmSqueeze(PushProbe::Squeeze::kShrink);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("비집기 (나) 그 NPC 충돌 끄기##pp-sq-ghost")) {
+					PushProbe::ArmSqueeze(PushProbe::Squeeze::kGhost);
+				}
 				ImGui::TextColored(kDim, "%s", PushProbe::Status().c_str());
 			}
 
