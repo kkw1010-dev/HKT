@@ -168,17 +168,37 @@ would reopen the reason this file gives against it.
    own pad session. What can go in now is one line in the readme and the pinned FAQ: on a gamepad, set
    the prompt buttons in SkyPrompt's own settings (Controls, gamepad device); CIGAR follows them.
 
-## Decision (the user, 2026-09-28): no pad slots; point to SkyPrompt's Controls
+## Open (2026-09-28): two options, the user decides
 
-The first review's conclusion was taken: CIGAR adds no gamepad slots, and the readme and the pinned FAQ
-get one line saying that on a gamepad the prompt buttons are set in SkyPrompt's own settings
-(Controls, gamepad device), which CIGAR follows. That line goes in with the next release texts.
+Not decided yet. The user has said that claiming gamepad support should come with at least a pad
+mapping. Three questions are with the user: pad slots in CIGAR and whether the D-pad is in them; the
+mouse's middle and side buttons; and whether either joins the next release.
 
-(A same-day reversal written here from a misreading of the user's "sundae-gukbap" remark was withdrawn;
-the remark means Skyrim is the dish and CIGAR's modules are the seasoning, see README "Principles".)
+- **A. Point to SkyPrompt's Controls only.** No code. One line in the readme and the pinned FAQ: on a
+  gamepad, set the prompt buttons in SkyPrompt's own settings (Controls, gamepad device); CIGAR's
+  prompts follow them, as every SkyPrompt mod's do.
+- **B. Add pad and mouse slots to CIGAR's key page.** About 150-250 lines, no engine code:
+  - `Settings`: `padKeys[4]`, each "0 = follow SkyPrompt" by default (no change for today's pad
+    players), saved in `CIGAR.json`, stored as SKSE's linear codes like SkyPrompt's own settings.
+  - `Panel` (4. Keys): a pad row under the keyboard row, "SkyPrompt 기본" first in its list, with the
+    keyboard row's kind of warnings (two slots on one button; D-pad left or right is SkyPrompt's
+    paging).
+  - `Prompt.cpp` `Offer`: a second pair `{ kGamepad, padKey }` when set.
+  - Mouse: the middle and side buttons (SkyPrompt's 256+ codes) join the keyboard list; left and right
+    stay out (attack and block). The pass-time backstop already ends a non-keyboard hold on key-up.
+  - Open within B: whether the pad list includes the D-pad. The keyboard's arrow keys were rejected
+    because other mods' SkyPrompt prompts (Grapple's QTE) need them; the same reason could apply to the
+    D-pad, while IAMTOKKO most likely wants exactly the D-pad.
+  - Tests: each pad slot fires its prompt; with that prompt up, Favorites and the hotkeys do not also
+    fire, and with none up they still work; "follow SkyPrompt" unchanged; a hold prompt and pass time
+    on the pad; keyboard and pad alternated; more than four prompts (paging); the mouse buttons.
 
-Facts read from SkyPrompt's source on 2026-09-28 (`QTR-Modding/SkyPrompt`, `main`, MIT), which back the
-pointer to SkyPrompt's Controls:
+The "sundae-gukbap" remark does not decide between them: it means Skyrim is the dish and CIGAR's
+modules the seasoning (README "Principles"). A same-day text here that read it as "key settings are
+the seasoning" and reversed the verdict on that basis was withdrawn.
+
+Facts read from SkyPrompt's source on 2026-09-28 (`QTR-Modding/SkyPrompt`, `main`, MIT), the ground for
+both options:
 
 - SkyPrompt's own gamepad picker offers every pad button from 266 up, D-pad included
   (`Input::Manager::GetKeys`).

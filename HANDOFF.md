@@ -13,6 +13,8 @@ history of each module are in `docs/`, one file per module, and each file starts
 - **Waiting for the user's choice** of the combination (`docs/038`, three options: 3805 cut short,
   pick by the gap, a real blend on HOLD). Recommended: test the first two in one short probe round.
   The next probe build also stops a running gesture before starting a new one.
+- **Gamepad and mouse mapping: open.** Two options in `docs/016` "Open" (A: point to SkyPrompt's
+  Controls; B: pad and mouse slots in CIGAR's key page). Wait for the user's choice.
 - 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
   save-loaded half was not run. The save button was not CIGAR's.
 - The `CIGAR Push Test` clips stay in `mods\CIGAR` until the combination is chosen; then
