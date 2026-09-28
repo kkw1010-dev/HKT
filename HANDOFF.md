@@ -21,8 +21,11 @@ history of each module are in `docs/`, one file per module, and each file starts
   call; a `player equip:` log line for the hotkey check); r6 items D0-D8 in `TEST-next-ingame.md`.
 - **Pandora rewrote `mt_behavior.hkx` at 2026-09-28 21:06** (not a CIGAR action; md5 4149d75c...), so
   `verify_deploy` fails its Jujutsu baseline. Not restored: the file is outside `mods\CIGAR` and the run
-  may carry other mods' updates. r6 U1 re-tests Jujutsu on it; if U1 plays, run
-  `python tools/verify_deploy.py --accept-behaviour`, otherwise take it to the orchestrator.
+  carries other mods' updates: MO2 Opt ran it on purpose for State Behavior Framework 1.4 -> 2.0 (Q1).
+  The previous output, with the Jujutsu copy cb3a5b03, is backed up in
+  `C:\TAKEALOOK\_backups6-09-28 pandora before sbf2`. r6 U1 re-tests Jujutsu on it; if U1 plays, run
+  `python tools/verify_deploy.py --accept-behaviour`; if it fails, tell MO2 Opt, which will roll SBF
+  back to 1.4 and rerun Pandora.
 - 유술 J1 in r5 was refused because the target was attacking, not the first-death window; K1's
   save-loaded half was not run. The save button was not CIGAR's.
 - The `CIGAR Push Test` clips stay in `mods\CIGAR` until the combination is chosen; then
