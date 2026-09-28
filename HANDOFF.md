@@ -25,6 +25,13 @@ history of each module are in `docs/`, one file per module, and each file starts
   hook on SkyPrompt's own Present call site; `check_input_map.py` enforces it. The next run's log must
   show `prompt queue: Present hooked`, `ticks run on thread M, Present on thread N` (M != N confirms
   the premise). r6 D2 onward, U1 and K1 carry over.
+- **Deployed: `b26e031`** (the queue). r7 checklist in `TEST-next-ingame.md` "r7": T0 thread
+  premise, T1 draw/sheathe stress, D2-D8, K1 (save-loaded half), U1; bandit `0003DE8A`. No upstream
+  SkyPrompt report (the user's decision); `docs/039` also answers "why not SkyPrompt 2.3.15".
+- **Feature request under review, nothing built:** NPC contact (the player controller's
+  `bumpedCharCollisionObject`) -> prompt -> shrink the player's collision briefly -> squeeze past with
+  the auto gesture -> restore. Sent to the orchestrator as feasible, with the shrink method (capsule
+  radius, or that NPC's collision only) to be settled by a stage-0 probe first; waiting for a go.
 - **Pandora rewrote `mt_behavior.hkx` at 2026-09-28 21:06** (not a CIGAR action; md5 4149d75c...), so
   `verify_deploy` fails its Jujutsu baseline. Not restored: the file is outside `mods\CIGAR` and the run
   carries other mods' updates: MO2 Opt ran it on purpose for State Behavior Framework 1.4 -> 2.0 (Q1).
