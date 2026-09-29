@@ -8,12 +8,18 @@ namespace CIGAR
 	// 비켜 지나가기: when a non-hostile humanoid blocks the way, a hold prompt lets the player squeeze
 	// past. While it is held, the NPC being pressed against stops colliding with the player's
 	// controller (its controller body's no-collision flag, the probe's (나), the user's pick after r8b),
-	// plays the vanilla bump toward the side the player comes from, and the author build adds the
-	// Squeeze gesture. Everything is put back once the player is past. docs/038 "Stage 1".
+	// plays the vanilla bump toward the side the player comes from, and the player plays EVG Animated
+	// Traversal's Squeeze gesture. Everything is put back once the player is past. Needs EVG and Offset
+	// Movement Animation; without either it is off (the user's D17). docs/038 "Stage 1".
 	class Squeeze final : public Module
 	{
 	public:
 		static Squeeze* GetSingleton();
+
+		// At plugin load, before Open Animation Replacer reads its submods: builds CIGAR's gesture
+		// submod from the player's own EVG Animated Traversal (the user's D17, 2026-09-29: EVG is an
+		// optional integration, and without it Squeeze is off). CIGAR ships no clip.
+		static void PrepareClip();
 
 		const char* Name() const override { return "Squeeze"; }
 		void OnGameLoaded() override;
@@ -72,7 +78,9 @@ namespace CIGAR
 		std::optional<Pass> pass;
 		RE::FormID passCell{ 0 };
 
-		// The author build's gesture (Offset Movement Animation); none in the release build.
+		// The gesture (Offset Movement Animation); without it the feature is off.
+		bool gpmaChecked{ false };
+		bool gpmaInstalled{ false };
 		bool gesturePlaying{ false };
 		Clock::time_point gestureStart{};
 		float gestureSeconds{ 0.0f };
@@ -82,5 +90,9 @@ namespace CIGAR
 		Clock::time_point lastBumpAt{};
 
 		bool restoreWarned{ false };
+
+		// PrepareClip's result, read on load.
+		static inline bool clipReady{ false };
+		static inline std::string clipNote{ "not prepared" };
 	};
 }

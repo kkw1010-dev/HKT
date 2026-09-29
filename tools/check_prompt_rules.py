@@ -7,7 +7,8 @@ every build. Both failures below are silent in game: no error, only a prompt tha
    Use LookupForm(id, plugin) and then As<T>() for those.
 2. Non-combat prompts must fill a ring (the user's rule, 2026-09-29). A single press acts on the first
    tap, so SkyPrompt's double-tap decline can never reach it. Every PromptSlot must be set to kHold or
-   kHoldAndKeep unless it is listed in COMBAT below.
+   kHoldAndKeep unless it is listed in COMBAT below, or in COMBAT_ONLY_PRESS (a press in combat and a
+   ring out of it; both types must be set).
 """
 import glob
 import os
@@ -27,9 +28,13 @@ COMBAT = {
     ("Jujutsu", "jujutsu"),
     ("LockOn", "lock"),
     ("Grapple", "grapple"),
-    ("Potion", "drink"),
     ("Helmet", "on"),  # offered only in combat
     ("WizardWarrior", "activate"),  # raised on weapon draw
+}
+
+# A press in combat, a ring out of it (the user's D18, 2026-09-29): the module must set both types.
+COMBAT_ONLY_PRESS = {
+    ("Potion", "drink"),
 }
 
 failures = []
@@ -80,6 +85,11 @@ def rings():
         cpp = header[:-2] + ".cpp"
         text = read(header) + (read(cpp) if os.path.exists(cpp) else "")
         for slot in slots:
+            if (module, slot) in COMBAT_ONLY_PRESS:
+                both = all(re.search(r"\b" + slot + r"\.SetPromptType\([^;]*SkyPromptAPI::" + t, text)
+                           for t in ("kSinglePress", "kHold"))
+                check(both, f"{module}.{slot} is a press in combat and a ring out of combat")
+                continue
             if (module, slot) in COMBAT:
                 check(True, f"{module}.{slot} is a combat prompt (single press allowed)")
                 continue

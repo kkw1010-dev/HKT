@@ -95,6 +95,8 @@ namespace CIGAR
 
 
 		Need offeredNeed{ Need::kNone };
+		// Whether the prompt on screen was offered in combat (a press) or out of it (a ring).
+		bool offeredInCombat{ false };
 		RE::AlchemyItem* offeredPotion{ nullptr };
 		Clock::time_point scannedAt{};
 		Clock::time_point quietUntil{};

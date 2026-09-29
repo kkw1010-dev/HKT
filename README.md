@@ -44,7 +44,7 @@ All 24 modules passed the CIGAR 2.0 final in-game test on 2026-09-25 (44 of 44 c
 | `Needs` | 소변 보기, 대변 보기 | Private Needs - Orgasm |
 | `Deflate` | 배출 | Fill Her Up Baka Edition |
 | `Rest` | 앉기, 눕기, 기대기, 손 녹이기, 시간 보내기 | — |
-| `Squeeze` | 비켜 지나가기 (a person blocking the way) | — |
+| `Squeeze` | 비켜 지나가기 (a person blocking the way) | EVG Animated Traversal, Offset Movement Animation |
 | `ChairDrink` | 마시기 (seated at an inn or home) | — |
 | `Observe` | 주시하기 (zoom on a person or a distant view) | — |
 | `ItemEquip` | 장착하기 (newly acquired gear; armor only if better and not over an enchanted piece) | — |

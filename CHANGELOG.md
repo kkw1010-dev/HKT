@@ -5,13 +5,17 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 ## Unreleased
 
 New
-- **Squeeze Past.** When a person blocks your way while you walk with the weapon sheathed, hold the
-  prompt to slip past them; they give way with the game's own bump, and everything goes back once
-  you are past. Not for people talking, using furniture, or enemies.
+- **Squeeze Past** (with EVG Animated Traversal and Offset Movement Animation installed). When a
+  person blocks your way while you walk with the weapon sheathed, hold the prompt to slip past them
+  with EVG's squeeze motion; they give way with the game's own bump, and everything goes back once
+  you are past. Not for people talking, using furniture, or enemies. CIGAR ships no animation: at
+  startup it prepares its gesture from your own copy of EVG (a small OAR folder, "CIGAR Squeeze").
 - **Gamepad D-pad and mouse buttons.** The Keys page can put prompts on the D-pad, and the mouse's
   middle and side buttons can be prompt keys. Checked with an Xbox controller.
 
 Changed
+- **Potions: a hold out of combat.** In combat the potion prompt is still a single press; out of
+  combat it fills a ring, so it can be dismissed with a double tap.
 - **Fewer messages in the top-right corner.** Messages about states you chose yourself (Bathing in
   Skyrim or Private Needs switched off in their menus, Helmet Toggle 2 installed) and a mannequin's
   checks before a swap now go to `CIGAR.log` only. A feature that stops working because another mod

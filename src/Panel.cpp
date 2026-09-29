@@ -126,7 +126,7 @@ namespace CIGAR::Panel
 			Label{ "QuestAction", "퀘스트 행동", "Quest Actions", "",
 				"그레이비어드가 샤우트를 보여 달라고 하면 그 샤우트를 장착하는 프롬프트가 뜹니다.",
 				"When the Greybeards ask to see a shout, a prompt equips that shout." },
-			Label{ "Squeeze", "비켜 지나가기", "Squeeze Past", "",
+			Label{ "Squeeze", "비켜 지나가기", "Squeeze Past", "EVG Animated Traversal, Offset Movement Animation",
 				"무기를 넣고 걷다가 사람에게 길이 막히면 비켜 지나가기가 뜹니다. 누르고 있는 동안 부딪힌 사람을 밀치고 지나가며, 지나가면 원래대로 돌아옵니다. 대화 중이거나 가구를 쓰는 사람, 적에게는 뜨지 않습니다.",
 				"Walking with the weapon sheathed, a person blocking the way brings up a squeeze-past prompt. While held you slip past whoever you bump into, and everything goes back once you are past. Not for people in conversation, using furniture, or enemies." },
 			Label{ "Rest", "앉기·눕기·기대기", "Sit, Lie & Lean", "",

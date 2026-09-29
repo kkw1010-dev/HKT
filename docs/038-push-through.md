@@ -353,9 +353,22 @@ The plan above, with these values and differences (each logged, so r10 can check
   weapon drawn, seated, swimming, mounted, first person, a scene.
 - **Bump:** the side the player comes from, relative to the NPC's heading; once per NPC with a
   1.5 s cooldown.
-- **Gesture:** author build only until the user decides D17 (the public clip): 3805 straight ahead or
-  on the right, 3806 on the left, full 2.87 s, skipped when Helmet's clip is playing on the same layer or
-  Offset Movement Animation is missing. The release build has no gesture and ships no clip.
+- **Gesture (the user's D17, 2026-09-29: EVG as an optional integration; without EVG the feature is
+  off, no gesture-less fallback).** CIGAR ships no clip. At plugin load (`Squeeze::PrepareClip`,
+  before OAR parses its submods: in r8b OAR parsed at 19:46:46, CIGAR loaded at 19:43:48) it reads the
+  player's own `EVG Animated Traversal/Squeeze/mt_leverfloorpull.hkx` (loose), clears its annotations
+  in place (86 in track 0: AMR's `animmotion` root motion and furniture events that would move or stop
+  a walking player; the stage 0b copy was stripped with hkanno for the same reason) and writes
+  `meshes/OpenAnimationReplacer/CIGAR Squeeze` with its own two `config.json` files and the clip as
+  `GPMAOffsetAnimation.hkx`, keyed on `iGPMAAnimationType == 3810`. Through MO2 the files land in the
+  overwrite folder; they are rewritten only when they differ, and removed when EVG is gone. The
+  stripper was run as a standalone harness on EVG 2.1's file: 86 cleared, a second pass finds 0, and
+  exactly one byte differs from the original (the count). The side decides the mask: iGPMAOffsetType 0
+  (upper body) straight ahead or on the right, 2 (left arm) on the left; full 2.87 s; skipped when
+  Helmet's clip is playing on the same layer. Offset Movement Animation (`bGPMAInstalled`) is required
+  too; without it the feature is off. Both builds use this path (the old `CIGAR Push Test` 3801-3806
+  submods in `mods\CIGAR` are no longer used; remove with `tools/push_test_assets.py --remove` while
+  MO2 and Skyrim are closed).
 - **Self-reporting:** `start:` with the filter word before and after and whether the no-collision bit
   stuck (if not, the pass ends at once); `RESULT squeeze on <npc> (<why>): PASSED | DID NOT PASS` with
   the filter restored and read back; a WARN and one HUD notice per session if the read-back differs.

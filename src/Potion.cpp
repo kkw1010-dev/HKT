@@ -442,17 +442,28 @@ namespace CIGAR
 			ready ? std::to_string(examined) : "-"s, ready ? std::to_string(candidates) : "-"s,
 			offeredPotion ? Util::NameOf(offeredPotion) : "-"s));
 
+		// In combat a single press; out of combat a ring, so the double tap can decline it (the user,
+		// D18, 2026-09-29). Entering or leaving combat offers the prompt again with its type.
+		const bool combat = Util::Player()->IsInCombat();
 		// The prompt names the potion, so a different need or bottle is offered again with its name.
-		if (drink.Offered() && (need != was || !offeredPotion)) {
+		if (drink.Offered() && (need != was || !offeredPotion || combat != offeredInCombat)) {
 			drink.Withdraw();
 			drink.Reset();
 		}
 		auto* potion = offeredPotion;
 		const bool showRatio = need == Need::kHealth || need == Need::kStamina || need == Need::kMagicka;
 		const int percent = static_cast<int>(ratio * 100.0f);
-		drink.Update(ready && potion != nullptr, [potion, showRatio, percent] {
-			return showRatio ? Text::F("마시기: {} ({}%)", "Drink: {} ({}%)", Util::NameOf(potion), percent)
-			                 : Text::F("마시기: {}", "Drink: {}", Util::NameOf(potion));
+		if (!drink.Offered()) {
+			offeredInCombat = combat;
+			drink.SetPromptType(combat ? SkyPromptAPI::kSinglePress : SkyPromptAPI::kHold);
+		}
+		drink.Update(ready && potion != nullptr, [potion, showRatio, percent, combat] {
+			if (combat) {
+				return showRatio ? Text::F("마시기: {} ({}%)", "Drink: {} ({}%)", Util::NameOf(potion), percent)
+				                 : Text::F("마시기: {}", "Drink: {}", Util::NameOf(potion));
+			}
+			return showRatio ? Text::F("마시기 (길게): {} ({}%)", "Drink (hold): {} ({}%)", Util::NameOf(potion), percent)
+			                 : Text::F("마시기 (길게): {}", "Drink (hold): {}", Util::NameOf(potion));
 		});
 	}
 

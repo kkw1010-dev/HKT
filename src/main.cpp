@@ -453,6 +453,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	}
 	// Before the game renders its first frame, so the call is never patched while it runs.
 	CIGAR::Prompts::InstallRenderHook();
+	// Before OAR reads its submods (it parses data\meshes after the data load).
+	CIGAR::Squeeze::PrepareClip();
 
 	auto* serialization = SKSE::GetSerializationInterface();
 	serialization->SetUniqueID(kSerializationID);

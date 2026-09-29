@@ -420,8 +420,8 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - **S6. 거절:** 두 번 톡톡 누릅니다. 막힌 채로 있는 동안 다시 나오지 않아야 합니다.
 
 로그에서 보는 것(Claude가 판정):
-- `[Squeeze] ready: squeeze past on; gesture on`.
-- S1~S4: `ring filled`, `start: <이름> ... (no collision true) ... bump NPC_Bump... accepted true`, `gesture 3805|3806 ...`,
+- 로드 전: `[Squeeze] clip ready: gesture submod ... (31152 bytes, 86 annotations cleared; written)`. 불러온 뒤: `[Squeeze] ready: ...`, `Offset Movement Animation found: on`.
+- S1~S4: `ring filled`, `start: <이름> ... (no collision true) ... bump NPC_Bump... accepted true`, `gesture 3810 (upper body|left arm, ...)`,
   `RESULT squeeze on <이름> (past the NPC): PASSED ... read back <원래 값>`. `STILL OVERLAPPING`, `WARN`이 없어야 합니다.
 - S4: 두 사람 모두 `start:`가 있고, 두 번째 앞에 `(the next NPC)` 또는 `(past the NPC)`로 첫 사람이 풀립니다.
 - S5: `released before the ring filled: nothing changed`, `start:` 없음.

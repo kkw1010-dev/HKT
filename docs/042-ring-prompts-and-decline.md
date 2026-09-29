@@ -48,9 +48,11 @@ Already rings: BookRead, ChairDrink, Helmet (off), ItemEquip, MannequinSwap, Obs
 Poison, QuestAction, QuestTrack, Recharge, Rest (all five), Surrender.
 
 Combat prompts, single press on purpose: WeaponSwap (원거리 무기, 근접 무기), Execute, Jujutsu,
-LockOn, Grapple, Potion, Helmet (on, offered only in combat), Wizard Warrior (on, raised on weapon
-draw). Potion is on the combat page although it also offers stamina potions out of combat; it
-stays a press with the combat page.
+LockOn, Grapple, Helmet (on, offered only in combat), Wizard Warrior (on, raised on weapon draw).
+
+Potion (the user's D18, 2026-09-29): a single press in combat, a ring ("마시기 (길게)") out of combat,
+so the double tap declines it there. Entering or leaving combat offers it again with the other type.
+`check_prompt_rules.py` lists it as `COMBAT_ONLY_PRESS` and requires both types to be set.
 
 ## Self-reporting
 

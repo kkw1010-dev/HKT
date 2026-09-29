@@ -30,8 +30,11 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 - **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
 - **Waiting on in-game results (r9, r10):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
   decline) and "r10" (S1-S6 Squeeze Past) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.
-- **Open for the user (orchestrator's D17, D18):** the public Squeeze gesture clip; whether Potion
-  becomes a ring (single press until then).
+- **D17, D18 decided (the user, 21:50) and built:** Squeeze needs EVG Animated Traversal (and Offset
+  Movement Animation), off without it; CIGAR builds its gesture submod at plugin load from the
+  player's own EVG clip (`docs/038` "As built"). Potion: a press in combat, a ring out of it.
+- **Cleanup when MO2 and Skyrim are closed:** `python tools/push_test_assets.py --remove` (the old
+  3801-3806 test submods, unused now).
 - **Release D09: on hold (the user).** `CHANGELOG.md` "Unreleased" holds the next release:
   - the gamepad D-pad preset and mouse buttons (closed; texts say "checked with an Xbox controller");
   - the crash fix (SkyPrompt calls on the render thread);

@@ -1,5 +1,9 @@
 #include "Squeeze.h"
 
+#include <cstring>
+#include <expected>
+#include <unordered_map>
+
 #include "Text.h"
 #include "Util.h"
 
@@ -33,15 +37,161 @@ namespace CIGAR
 		constexpr const char* kBumpLeft = "NPC_BumpedFromLeft";
 		constexpr const char* kBumpRight = "NPC_BumpedFromRight";
 
-#ifndef CIGAR_RELEASE
-		// Author build only, until the user picks the public clip (D17): EVG Squeeze from the user's own
-		// install, in the author-only OAR mod `CIGAR Push Test` (tools/push_test_assets.py). 3805 plays the
-		// upper body, 3806 the left arm only; the same clip, 2.87 s.
-		constexpr std::int32_t kGestureFull = 3805;
-		constexpr std::int32_t kGestureLeft = 3806;
+		// The gesture: EVG Animated Traversal's Squeeze, played on Offset Movement Animation's layer through
+		// CIGAR's own OAR submod while iGPMAAnimationType holds kGestureValue (Helmet uses 2 and 6, the old
+		// probe 3801-3806). iGPMAOffsetType 0 plays it on the upper body, 2 on the left arm only.
+		constexpr std::int32_t kGestureValue = 3810;
 		constexpr float kGestureSeconds = 2.87f;
 		constexpr float kGestureStraight = 30.0f;  // within this of the line ahead the NPC is straight ahead
-#endif
+
+		// PrepareClip's files, Data-relative (through MO2's VFS; new files land in its overwrite).
+		constexpr auto kEvgClip =
+			"Data/meshes/actors/character/animations/OpenAnimationReplacer/EVG Animated Traversal/Squeeze/mt_leverfloorpull.hkx";
+		constexpr auto kModFolder = "Data/meshes/OpenAnimationReplacer/CIGAR Squeeze";
+		constexpr auto kSubmodFolder = "Data/meshes/OpenAnimationReplacer/CIGAR Squeeze/Squeeze";
+		constexpr auto kClipOut =
+			"Data/meshes/OpenAnimationReplacer/CIGAR Squeeze/Squeeze/Actors/Character/Animations/GPMAOffsetAnimation.hkx";
+
+		// CIGAR's own OAR configs (the push-test format that played in r5 and r8b). 3810 is kGestureValue.
+		constexpr std::string_view kModConfig = R"({
+    "name": "CIGAR Squeeze",
+    "author": "CIGAR",
+    "description": "Written by CIGAR at load. The clip is the player's own EVG Animated Traversal Squeeze, annotations cleared."
+}
+)";
+		constexpr std::string_view kSubmodConfig = R"({
+    "name": "Squeeze",
+    "priority": 753810,
+    "conditions": [
+        {
+            "condition": "CompareValues",
+            "requiredVersion": "1.0.0.0",
+            "Value A": { "graphVariable": "iGPMAAnimationType", "graphVariableType": "Int" },
+            "Comparison": "==",
+            "Value B": { "value": 3810.0 }
+        }
+    ]
+}
+)";
+
+		std::uint32_t U32(const std::vector<char>& a_b, std::size_t a_at)
+		{
+			std::uint32_t v = 0;
+			std::memcpy(&v, a_b.data() + a_at, 4);
+			return v;
+		}
+
+		// Clears every annotation of every animation in a 64-bit Havok 2010.2 packfile, in place, and
+		// returns how many there were, or an error. EVG's Squeeze carries Animation Motion Revolution's
+		// `animmotion` root motion and furniture events (IdleStop, IdleFurnitureExit): on a walking player
+		// they would move or stop it (the stage 0b copy was stripped with hkanno for the same reason).
+		// Layout (checked on EVG 2.1's file: 86 annotations, all in track 0 of 99): hkaAnimation holds its
+		// annotationTracks hkArray at +40 (pointer) and +48 (size); a track is 24 bytes with its
+		// annotations' size at +16. Only sizes are written; pointers and string data stay.
+		std::expected<int, std::string> StripAnnotations(std::vector<char>& a_b)
+		{
+			const auto size = a_b.size();
+			if (size < 0x100 || U32(a_b, 0) != 0x57E0E057 || U32(a_b, 4) != 0x10C0C010) {
+				return std::unexpected("not a Havok packfile"s);
+			}
+			if (static_cast<std::uint8_t>(a_b[0x10]) != 8) {
+				return std::unexpected("not a 64-bit packfile"s);
+			}
+			if (std::string_view(a_b.data() + 0x28, 14) != "hk_2010.2.0-r1") {
+				return std::unexpected("not Havok 2010.2.0-r1"s);
+			}
+			struct Section
+			{
+				std::uint32_t start, local, global, virt, exports;
+			};
+			std::optional<Section> classes, data;
+			for (std::size_t i = 0; i < 3; ++i) {
+				const std::size_t at = 0x40 + 0x30 * i;
+				const std::string_view tag(a_b.data() + at, strnlen(a_b.data() + at, 19));
+				const Section s{ U32(a_b, at + 20), U32(a_b, at + 24), U32(a_b, at + 28), U32(a_b, at + 32), U32(a_b, at + 36) };
+				if (tag == "__classnames__") {
+					classes = s;
+				} else if (tag == "__data__") {
+					data = s;
+				}
+			}
+			if (!classes || !data || static_cast<std::size_t>(data->start) + data->exports > size || classes->start >= size) {
+				return std::unexpected("sections not found"s);
+			}
+			const std::size_t ds = data->start;
+			std::unordered_map<std::uint32_t, std::uint32_t> local;
+			for (std::size_t p = ds + data->local; p + 8 <= ds + data->global; p += 8) {
+				const auto src = U32(a_b, p);
+				if (src != 0xFFFFFFFF) {
+					local[src] = U32(a_b, p + 4);
+				}
+			}
+			int cleared = 0;
+			int animations = 0;
+			for (std::size_t p = ds + data->virt; p + 12 <= ds + data->exports; p += 12) {
+				const auto object = U32(a_b, p);
+				if (object == 0xFFFFFFFF) {
+					continue;
+				}
+				const std::size_t nameAt = classes->start + static_cast<std::size_t>(U32(a_b, p + 8));
+				if (nameAt >= size) {
+					return std::unexpected("class name out of range"s);
+				}
+				const std::string_view name(a_b.data() + nameAt, strnlen(a_b.data() + nameAt, size - nameAt));
+				if (!name.starts_with("hka") || !name.ends_with("Animation")) {
+					continue;
+				}
+				++animations;
+				if (ds + object + 56 > size) {
+					return std::unexpected("animation out of range"s);
+				}
+				const auto tracks = U32(a_b, ds + object + 48);
+				if (tracks == 0) {
+					continue;
+				}
+				const auto found = local.find(object + 40);
+				if (found == local.end() || ds + found->second + 24ull * tracks > size) {
+					return std::unexpected("annotation tracks not found"s);
+				}
+				for (std::uint32_t k = 0; k < tracks; ++k) {
+					const std::size_t field = ds + found->second + 24ull * k + 16;
+					const auto n = U32(a_b, field);
+					if (n > 100000) {
+						return std::unexpected("implausible annotation count"s);
+					}
+					cleared += static_cast<int>(n);
+					std::memset(a_b.data() + field, 0, 4);
+				}
+			}
+			if (animations == 0) {
+				return std::unexpected("no animation in the file"s);
+			}
+			return cleared;
+		}
+
+		// Writes a_bytes to a_path unless it already holds exactly them; false when the write failed.
+		bool WriteIfChanged(const std::filesystem::path& a_path, std::string_view a_bytes, bool& a_wrote)
+		{
+			a_wrote = false;
+			std::error_code ec;
+			if (std::filesystem::file_size(a_path, ec) == a_bytes.size() && !ec) {
+				std::ifstream in(a_path, std::ios::binary);
+				const std::string old((std::istreambuf_iterator<char>(in)), {});
+				if (old == a_bytes) {
+					return true;
+				}
+			}
+			std::filesystem::create_directories(a_path.parent_path(), ec);
+			{
+				std::ofstream out(a_path, std::ios::binary | std::ios::trunc);
+				out.write(a_bytes.data(), static_cast<std::streamsize>(a_bytes.size()));
+				if (!out.good()) {
+					return false;
+				}
+			}
+			a_wrote = true;
+			return std::filesystem::file_size(a_path, ec) == a_bytes.size() && !ec;
+		}
 		constexpr auto kClipVariable = "iGPMAAnimationType";
 		constexpr auto kArmVariable = "iGPMAOffsetType";
 
@@ -114,6 +264,47 @@ namespace CIGAR
 		}
 	}
 
+	void Squeeze::PrepareClip()
+	{
+		clipReady = false;
+		std::ifstream in(kEvgClip, std::ios::binary);
+		if (!in) {
+			// Without EVG the feature is off (D17); a copy left from an earlier install goes too.
+			std::error_code ec;
+			const auto removed = std::filesystem::remove_all(kModFolder, ec);
+			clipNote = std::format("EVG Animated Traversal's Squeeze clip not found (loose file {}){}", kEvgClip,
+				removed > 0 && removed != static_cast<std::uintmax_t>(-1) ? std::format("; removed {} file(s) of CIGAR's old copy", removed) : "");
+			logs::info("[Squeeze] off: {}", clipNote);
+			return;
+		}
+		std::vector<char> clip((std::istreambuf_iterator<char>(in)), {});
+		const auto stripped = StripAnnotations(clip);
+		if (!stripped) {
+			clipNote = std::format("EVG's Squeeze clip could not be read ({}, {} bytes)", stripped.error(), clip.size());
+			logs::warn("[Squeeze] off: {}", clipNote);
+			return;
+		}
+		// Read back: a second pass over the result must find nothing left.
+		auto check = clip;
+		const auto left = StripAnnotations(check);
+		bool wroteMod = false;
+		bool wroteSub = false;
+		bool wroteClip = false;
+		const bool ok = left && *left == 0 &&
+		                WriteIfChanged(std::filesystem::path(kModFolder) / "config.json", kModConfig, wroteMod) &&
+		                WriteIfChanged(std::filesystem::path(kSubmodFolder) / "config.json", kSubmodConfig, wroteSub) &&
+		                WriteIfChanged(kClipOut, std::string_view(clip.data(), clip.size()), wroteClip);
+		if (!ok) {
+			clipNote = std::format("the gesture submod could not be written under {}", kModFolder);
+			logs::warn("[Squeeze] off: {}", clipNote);
+			return;
+		}
+		clipReady = true;
+		clipNote = std::format("gesture submod {} ({} bytes, {} annotations cleared; {})", kModFolder, clip.size(), *stripped,
+			wroteMod || wroteSub || wroteClip ? "written" : "already current");
+		logs::info("[Squeeze] clip ready: {}", clipNote);
+	}
+
 	Squeeze::Squeeze()
 	{
 		// A hold that lasts while held: key down and up come to OnHold, SkyPrompt draws the ring.
@@ -142,14 +333,14 @@ namespace CIGAR
 		lastBumped = 0;
 		lastBumpAt = {};
 		restoreWarned = false;
-#ifdef CIGAR_RELEASE
-		Log("ready: squeeze past on (no gesture in this build)");
-#else
-		bool gpma = false;
-		auto* player = Util::Player();
-		const bool read = player && player->GetGraphVariableBool("bGPMAInstalled", gpma);
-		Log("ready: squeeze past on; gesture {} (bGPMAInstalled {}, read {})", gpma ? "on" : "off", gpma, read);
-#endif
+		gpmaChecked = false;
+		gpmaInstalled = false;
+		// Without EVG the whole feature is off, with one line (the user's D17: no gesture-less fallback).
+		if (!clipReady) {
+			Log("off: {}", clipNote);
+		} else {
+			Log("ready: {}", clipNote);
+		}
 	}
 
 	RE::Actor* Squeeze::Blocker(RE::PlayerCharacter* a_player, float& a_ahead, float& a_side, std::string& a_why) const
@@ -195,7 +386,20 @@ namespace CIGAR
 	void Squeeze::FastTick()
 	{
 		auto* player = Util::Player();
-		if (!player) {
+		if (!player || !clipReady) {
+			return;
+		}
+		// Offset Movement Animation plays the gesture; the player's graph answers once it is loaded.
+		if (!gpmaChecked && player->Is3DLoaded()) {
+			bool installed = false;
+			if (player->GetGraphVariableBool("bGPMAInstalled", installed)) {
+				gpmaChecked = true;
+				gpmaInstalled = installed;
+				Log("{}", installed ? "Offset Movement Animation found: on"
+				                    : "off: Offset Movement Animation is not in the behaviour (bGPMAInstalled false)");
+			}
+		}
+		if (!gpmaInstalled) {
 			return;
 		}
 		const auto now = Clock::now();
@@ -374,9 +578,8 @@ namespace CIGAR
 		pass.reset();
 	}
 
-	void Squeeze::PlayGesture([[maybe_unused]] RE::PlayerCharacter* a_player, [[maybe_unused]] float a_side)
+	void Squeeze::PlayGesture(RE::PlayerCharacter* a_player, float a_side)
 	{
-#ifndef CIGAR_RELEASE
 		if (gesturePlaying) {
 			return;
 		}
@@ -393,7 +596,7 @@ namespace CIGAR
 		}
 		const bool straight = std::abs(a_side) <= kGestureStraight;
 		const bool left = !straight && a_side < 0.0f;
-		const std::int32_t value = left ? kGestureLeft : kGestureFull;
+		const std::int32_t value = kGestureValue;
 		const std::int32_t arms = left ? 2 : 0;
 		const bool arm = a_player->SetGraphVariableInt(kArmVariable, arms);
 		const bool clip = a_player->SetGraphVariableInt(kClipVariable, value);
@@ -401,13 +604,12 @@ namespace CIGAR
 		gesturePlaying = sent;
 		gestureStart = Clock::now();
 		gestureSeconds = kGestureSeconds;
-		Log("gesture {} ({}): {}={} set {}, {}={} set {}, OffsetGPMA accepted {}", value,
+		Log("gesture {} ({}, {}): {}={} set {}, {}={} set {}, OffsetGPMA accepted {}", value, left ? "left arm" : "upper body",
 			straight ? "straight ahead" : left ? "on the left" : "on the right", kArmVariable, arms, arm, kClipVariable, value, clip, sent);
 		if (!sent) {
 			a_player->SetGraphVariableInt(kClipVariable, 0);
 			a_player->SetGraphVariableInt(kArmVariable, 0);
 		}
-#endif
 	}
 
 	void Squeeze::StopGesture(RE::PlayerCharacter* a_player, std::string_view a_why)
