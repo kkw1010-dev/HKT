@@ -41,7 +41,11 @@ namespace CIGAR
 		// CIGAR's own OAR submod while iGPMAAnimationType holds kGestureValue (Helmet uses 2 and 6, the old
 		// probe 3801-3806). iGPMAOffsetType 0 plays it on the upper body, 2 on the left arm only.
 		constexpr std::int32_t kGestureValue = 3810;
-		constexpr float kGestureSeconds = 2.87f;
+		// Used when the clip's own length cannot be read (EVG 2.1's Squeeze is 2.87 s).
+		constexpr float kGestureFallbackSeconds = 2.87f;
+		// The prepared clip's length, from its hkaAnimation (the winner may be another mod's Squeeze:
+		// in the user's order EVG Animations Replacer's, 3.13 s).
+		float clipSeconds = kGestureFallbackSeconds;
 		constexpr float kGestureStraight = 30.0f;  // within this of the line ahead the NPC is straight ahead
 
 		// PrepareClip's files, Data-relative (through MO2's VFS; new files land in its overwrite).
@@ -144,6 +148,11 @@ namespace CIGAR
 				++animations;
 				if (ds + object + 56 > size) {
 					return std::unexpected("animation out of range"s);
+				}
+				float duration = 0.0f;
+				std::memcpy(&duration, a_b.data() + ds + object + 20, 4);
+				if (duration > 0.1f && duration < 30.0f) {
+					clipSeconds = duration;
 				}
 				const auto tracks = U32(a_b, ds + object + 48);
 				if (tracks == 0) {
@@ -300,7 +309,7 @@ namespace CIGAR
 			return;
 		}
 		clipReady = true;
-		clipNote = std::format("gesture submod {} ({} bytes, {} annotations cleared; {})", kModFolder, clip.size(), *stripped,
+		clipNote = std::format("gesture submod {} ({} bytes, {:.2f} s, {} annotations cleared; {})", kModFolder, clip.size(), clipSeconds, *stripped,
 			wroteMod || wroteSub || wroteClip ? "written" : "already current");
 		logs::info("[Squeeze] clip ready: {}", clipNote);
 	}
@@ -603,7 +612,7 @@ namespace CIGAR
 		const bool sent = a_player->NotifyAnimationGraph("OffsetGPMA");
 		gesturePlaying = sent;
 		gestureStart = Clock::now();
-		gestureSeconds = kGestureSeconds;
+		gestureSeconds = clipSeconds;
 		Log("gesture {} ({}, {}): {}={} set {}, {}={} set {}, OffsetGPMA accepted {}", value, left ? "left arm" : "upper body",
 			straight ? "straight ahead" : left ? "on the left" : "on the right", kArmVariable, arms, arm, kClipVariable, value, clip, sent);
 		if (!sent) {

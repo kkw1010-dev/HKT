@@ -372,3 +372,10 @@ The plan above, with these values and differences (each logged, so r10 can check
 - **Self-reporting:** `start:` with the filter word before and after and whether the no-collision bit
   stuck (if not, the pass ends at once); `RESULT squeeze on <npc> (<why>): PASSED | DID NOT PASS` with
   the filter restored and read back; a WARN and one HUD notice per session if the read-back differs.
+
+**Found in the first run (warmup5, 2026-09-29 22:57):** the VFS winner of EVG's Squeeze path is
+**EVG Animations Replacer** (Nexus 168747), not EVG 2.1: 67,120 bytes, 3.13 s, 156 tracks, 9
+annotations (7 `animmotion`, IdleChairSitting, IdleStop, IdleFurnitureExit), all cleared; the written
+copy parses with 0. CIGAR takes whichever Squeeze the player's order uses. The gesture length was a
+fixed 2.87 s and cut this clip 0.26 s short; it is now read from the clip's hkaAnimation duration
+(`clip ready: ... 3.13 s ...`), 2.87 s only when it cannot be read. Not built yet (after r9).
