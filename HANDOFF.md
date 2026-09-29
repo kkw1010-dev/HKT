@@ -13,7 +13,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 공개 CIGAR 파일에는 개인판 내용을 적지 않습니다. 푸시 전에는 CIGAR-Personal\tools\check_public.py를 돌립니다.
 ```
 
-## Now (2026-09-29)
+## Now (2026-09-30)
 
 - **Deployed (2026-09-30, after the code review, `docs/043`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
   `038a6cf1d484662208b08758f6ffbdece627184517635d74d93c3e1a36b0de8a`; `verify_deploy` passed in full.
@@ -22,8 +22,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
     each build.
-  - Squeeze Past (`src/Squeeze.*`, `docs/038` "As built"): the probe's (나) as a module; gesture in
-    the author build only until the user decides D17. The probe keeps (나) only.
+  - Squeeze Past (`src/Squeeze.*`, `docs/038` "As built" and "r9"): needs EVG Animated Traversal
+    (D17); gate fixed after r9 (windowed speed, lingering prompt, scene/furniture NPCs, trace line,
+    `tools/replay_squeeze_gate.py`).
+  - The 2026-09-30 code review: 20 findings fixed, 4 not changed with reasons (`docs/043`).
   - HUD notices split (`docs/041` "Applied"): `Util::NotifyDiagnostic` is log-only in the release
     build; nine call sites use it, the rest stay HUD after reviewing CX-03.
   - The personal module fix (see CIGAR-Personal `HANDOFF.md`).
@@ -31,13 +33,13 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   block tick by tick, most inn NPCs refused as scene or furniture); fixed and deployed, r10 again.
   Everything else in r9 passed and the log confirms it (Potion's decline was not exercised).
 - **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
-- **Waiting on in-game results (r9, r10):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
-  decline) and "r10" (S1-S6 Squeeze Past) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.
+- **Waiting on in-game results (r10):** `TEST-next-ingame.md` "r10" (S1-S6 Squeeze Past, r10-P potion,
+  and the passive review checks). Read `CIGAR.log` after the game closes; for Squeeze also run
+  `python tools/replay_squeeze_gate.py`.
 - **D17, D18 decided (the user, 21:50) and built:** Squeeze needs EVG Animated Traversal (and Offset
   Movement Animation), off without it; CIGAR builds its gesture submod at plugin load from the
   player's own EVG clip (`docs/038` "As built"). Potion: a press in combat, a ring out of it.
-- **Cleanup when MO2 and Skyrim are closed:** `python tools/push_test_assets.py --remove` (the old
-  3801-3806 test submods, unused now).
+- **Push Test submods removed** (2026-09-29, MO2 Opt's lock). CIGAR writes `overwrite\meshes\OpenAnimationReplacer\CIGAR Squeeze` at each launch (registered with MO2 Opt as a runtime file).
 - **Release D09: on hold (the user).** `CHANGELOG.md` "Unreleased" holds the next release:
   - the gamepad D-pad preset and mouse buttons (closed; texts say "checked with an Xbox controller");
   - the crash fix (SkyPrompt calls on the render thread);
