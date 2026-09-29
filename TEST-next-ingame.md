@@ -427,3 +427,9 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - S5: `released before the ring filled: nothing changed`, `start:` 없음.
 - S6: `event=43 declined: hidden while its condition holds`.
 - 프롬프트가 안 뜨면 gate 줄의 `npc=- (...)`가 이유를 말합니다.
+
+## r10-P. 물약: 전투 밖은 링, 전투 중은 한 번 누르기 (D18, 2026-09-29)
+
+- **준비:** `player.additem 0003EADE 5`(MAG_RestoreHealth02, 물약 - 체력 회복 하급; 현재 로드 오더에서 Apothecary.esp가 덮어씀), `player.damageav health 60`을 체력이 50% 아래가 될 때까지 반복. 전투는 `player.placeatme 0003DE8A`(EncBandit01WarriorNordM, 산적)로 만듭니다.
+- **P1 전투 밖:** "마시기 (길게): ..."가 뜨면 두 번 톡톡 → 사라지고, 체력이 낮은 동안 다시 나오지 않아야 합니다. `player.restoreav health 500`으로 채웠다가 다시 깎으면 다시 뜹니다. 그때 길게 눌러 마십니다. 다시 체력을 깎고 산적을 부른 뒤 전투 중에는 "마시기: ..."를 한 번 눌러 마십니다.
+- **로그:** 전투 밖 `offer event=17 '마시기 (길게): 물약 - 체력 회복 하급 (N%)'`, `event=17 declined: hidden while its condition holds`, 이후 `event=17 no longer declined`; 전투 중 `offer event=17 '마시기: ...'`와 `prompt event accepted (0) event=17`.
