@@ -68,7 +68,7 @@ namespace CIGAR
 		}
 		if (auto* handler = RE::TESDataHandler::GetSingleton(); handler && handler->LookupModByName("Helmet Toggle 2.esp")) {
 			Log("WARN Helmet Toggle 2 is loaded: its scripts re-hide or re-equip headgear on every change");
-			Util::Notify(Text::L("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음", "CIGAR: Helmet Toggle 2 is on. Helmet changes may conflict"));
+			Util::NotifyDiagnostic(Text::L("CIGAR: Helmet Toggle 2가 켜져 있음. 투구 전환이 충돌할 수 있음", "CIGAR: Helmet Toggle 2 is on. Helmet changes may conflict"));
 		}
 		Log("ready: keywords helmet={} head={} circlet={}, dungeon types {} of {}, stowed {}", armorHelmet != nullptr,
 			clothingHead != nullptr, clothingCirclet != nullptr, dungeonKeywords.size(), kDungeonTypes.size(), stowed.size());

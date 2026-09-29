@@ -15,29 +15,30 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-29)
 
-- **Deployed (2026-09-29, after r8b):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `c584d476b349f15e1bb5d5e7218795ba0550b1c020eccd7067db9104e25288eb`; `verify_deploy` passed in full.
-  Commit hashes: the "Ring prompts" commits of this date in both repos.
+- **Deployed (2026-09-29 20:5x):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `642d546d9f1e48115d25e2571013f696173e3fd16388fc7baebd178fde6225c8`; `verify_deploy` passed in full.
+  The release preset (`build\dist`) also compiles, with no personal marker and no private word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
     each build.
-  - Squeeze probe: (가) removed (it never changed anything); (나) kept. The feature is planned, not built
-    (`docs/038` "Stage 1 plan"); open for the user: the public build's gesture clip.
+  - Squeeze Past (`src/Squeeze.*`, `docs/038` "As built"): the probe's (나) as a module; gesture in
+    the author build only until the user decides D17. The probe keeps (나) only.
+  - HUD notices split (`docs/041` "Applied"): `Util::NotifyDiagnostic` is log-only in the release
+    build; nine call sites use it, the rest stay HUD after reviewing CX-03.
   - The personal module fix (see CIGAR-Personal `HANDOFF.md`).
 - **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
-- **Waiting on in-game results (r9):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
-  decline) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.
-- **Open (`docs/041`):** the release-HUD notification audit (diagnostic notices to the log only in the
-  release build). The Bathe decline half is done by `docs/042`.
-- **Open for the user:** whether Potion (combat page, also offers stamina potions out of combat) should
-  become a ring.
+- **Waiting on in-game results (r9, r10):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
+  decline) and "r10" (S1-S6 Squeeze Past) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.
+- **Open for the user (orchestrator's D17, D18):** the public Squeeze gesture clip; whether Potion
+  becomes a ring (single press until then).
 - **Release D09: on hold (the user).** `CHANGELOG.md` "Unreleased" holds the next release:
   - the gamepad D-pad preset and mouse buttons (closed; texts say "checked with an Xbox controller");
   - the crash fix (SkyPrompt calls on the render thread);
   - the Jujutsu swing gate.
-  Not in it yet: push-through (probe stage) and the r8 script-link guard (add a CHANGELOG line when
-  the release is cut). Package with `tools\Build.ps1 -Package` (`tools/make_release.py`), and run
+  Added 2026-09-29, untested in game until r9/r10: Squeeze Past, ring prompts, declines that stay
+  declined, fewer HUD messages. Not in it yet: the r8 script-link guard (add a CHANGELOG line when the
+  release is cut). Package with `tools\Build.ps1 -Package` (`tools/make_release.py`), and run
   CIGAR-Personal `tools/check_public.py` first.
 - **GitHub (HKT):** `origin/master` = `8254180`. Local was 41 commits ahead before this handoff commit, none pushed.
 - **D07 filter plan (before the next push).** `TCL_LIGHT_HOOK_ANALYSIS.md` moved to CIGAR-Personal

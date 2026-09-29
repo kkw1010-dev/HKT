@@ -20,6 +20,38 @@ debug-message setting.
 - Preserve enough context in the log to explain why a prompt did not appear. Check that ordinary
   blocked conditions do not put notifications in the upper-right corner during normal play.
 
+### Framework (2026-09-29)
+
+`Util::NotifyDiagnostic` exists next to `Util::Notify`: shown in the author build, log only
+(`notice (log only in this build): ...`) in the release build. Nine call sites use it (below); the
+classification came from the read-only CX-03 table (`C:\TAKEALOOK\_codex\results\CX-03.md`),
+reviewed before it is applied.
+
+### Applied (2026-09-29): the CX-03 table, reviewed
+
+The rule for the review (the orchestrator, relaying the user): the game experience first, and a
+feature must never die silently without the player learning why. Codex's table sorted the 50
+call sites into action results (HUD) and diagnostics (log only). Taken as proposed for every action
+result. Changed where the second rule outweighs "it is a diagnostic":
+
+| Call site | CX-03 | Applied | Why |
+|---|---|---|---|
+| Link failures with the other mod installed: BaboKey, Deflate, Eat, Execute, Needs (link) | log only | HUD, once | The mod is there and CIGAR's feature for it is dead; the player cannot know why otherwise |
+| Unusable keys: Grapple, LockOn (TDM), Surrender (Acheron) | log only | HUD, once | Same: the prompt is off because of a key the player did not knowingly break |
+| ChairDrink: no drinks or places found | log only | HUD, once | The whole module is dead |
+| SkyPrompt missing (main) | log only | HUD | Every prompt is dead; the player has to install SkyPrompt |
+| Observe: another mod overrides the FOV | log only | HUD, once | The player just held Observe and nothing zoomed: a failed action |
+| Rest: abnormal timescale, could not stand up | HUD | HUD | Both hurt play until the player acts |
+
+Log only in the release build (`Util::NotifyDiagnostic`): Bathe (Bathing in Skyrim switched off in
+its MCM), Needs (Private Needs switched off in its MCM), Helmet (Helmet Toggle 2 is on),
+MannequinSwap's four pre-accept checks (they fire while the player looks at a mannequin, which is
+the "message when a prompt is blocked" of the Nexus report), PromptAnchor's two fallbacks (prompts
+still show, on the player). The first two are states the player chose in another mod's menu.
+
+Duplicate prompt IDs stay HUD; `PromptID::Unique()` makes them a compile error, so it cannot fire.
+The "See the log" wording is left as it is for now.
+
 ## Bathe and Shower double-tap decline
 
 Done 2026-09-29 by the generic decline latch in `PromptSlot` (`docs/042`), not by a Bathe override:

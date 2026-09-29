@@ -301,7 +301,7 @@ contact was found by distance (`no controller bump reported`), never by the cont
   runs). Started from 70-80 away at a run, 3805 dropped the speed (28 of 83; the first (가) runs).
 - **The user picked (나)** (SQ-PICK, 2026-09-29).
 
-## Stage 1 plan: (나) as the feature (not built)
+## Stage 1 plan: (나) as the feature (built 2026-09-29, `src/Squeeze.*`, not yet tested in game)
 
 A new module `Squeeze` (non-combat page); `PushProbe` stays in the author build as the probe.
 
@@ -332,3 +332,30 @@ Open for the user before the public build:
 - **The gesture clip.** 3805/3806 are EVG Animated Traversal's Squeeze copied from the user's own
   install; CIGAR never ships another mod's file. The public build needs a clip CIGAR may ship (a
   vanilla one, option A) or no gesture; the author and personal builds can keep the EVG copy.
+
+### As built (2026-09-29)
+
+The plan above, with these values and differences (each logged, so r10 can check them):
+
+- **Blocked:** moving input, the nearest actor ahead within **80** units and **50** to either side,
+  speed under **50** u/s, for **0.3 s** (the user's). The user's starting reach was 70; r8b measured
+  contacts at up to 73 ahead, centre to centre, so 80 is mine and flagged to the user. Corridor and
+  speed are mine.
+- **Hold:** `kHoldAndKeep` with key down and up; nothing changes until the key has been down 0.5 s
+  (`ring filled` in the log). While held, every NPC met in the corridor is squeezed past, one at a
+  time; the next one first lets the previous go.
+- **Release does not restore the NPC being passed.** Restoring while the two overlap pushes them
+  apart (the probe's POPPED); that NPC is let go by its own rule instead: 30 past along the player's
+  heading and 70 away, no forward progress for 3 s, a 10 s cap, the NPC gone, a cell change, combat,
+  the module switched off or a load. The log's `STILL OVERLAPPING` marks an undo closer than 40.
+- **Skips** (logged as the gate's `npc=- (<name>: <why>)`): dead, not humanoid, hostile or in combat,
+  mounted, in a scene, talking to the player, in furniture, in a SexLab/OStim scene. The player: combat,
+  weapon drawn, seated, swimming, mounted, first person, a scene.
+- **Bump:** the side the player comes from, relative to the NPC's heading; once per NPC with a
+  1.5 s cooldown.
+- **Gesture:** author build only until the user decides D17 (the public clip): 3805 straight ahead or
+  on the right, 3806 on the left, full 2.87 s, skipped when Helmet's clip is playing on the same layer or
+  Offset Movement Animation is missing. The release build has no gesture and ships no clip.
+- **Self-reporting:** `start:` with the filter word before and after and whether the no-collision bit
+  stuck (if not, the pass ends at once); `RESULT squeeze on <npc> (<why>): PASSED | DID NOT PASS` with
+  the filter restored and read back; a WARN and one HUD notice per session if the read-back differs.

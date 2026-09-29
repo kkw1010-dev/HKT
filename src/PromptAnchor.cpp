@@ -227,7 +227,7 @@ namespace CIGAR::PromptAnchor
 			hookDead = true;
 			Log("WARN PlayerCharacter::Update has not reached CIGAR for {} s (another mod replaced it?): prompts stay on the player",
 				std::chrono::duration_cast<std::chrono::seconds>(kHookSilence).count());
-			Util::Notify(Text::L("CIGAR: 프롬프트 위치 갱신 중단. 플레이어 기준으로 표시. 로그 확인",
+			Util::NotifyDiagnostic(Text::L("CIGAR: 프롬프트 위치 갱신 중단. 플레이어 기준으로 표시. 로그 확인",
 				"CIGAR: Prompt placement stopped updating; prompts stay on the player. See the log"));
 			SetStatus("update hook not called: prompts on the player");
 		}
@@ -240,7 +240,7 @@ namespace CIGAR::PromptAnchor
 			} else if (++placeFailures >= kMaxPlaceFailures && !gaveUpNotified) {
 				gaveUpNotified = true;
 				Log("WARN the marker could not be placed {} times: prompts stay on the player until the next load", kMaxPlaceFailures);
-				Util::Notify(Text::L("CIGAR: 프롬프트 마커를 만들 수 없음. 플레이어 기준으로 표시",
+				Util::NotifyDiagnostic(Text::L("CIGAR: 프롬프트 마커를 만들 수 없음. 플레이어 기준으로 표시",
 					"CIGAR: Could not place the prompt marker; prompts stay on the player"));
 				SetStatus("marker failed: prompts on the player");
 			}

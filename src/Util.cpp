@@ -31,6 +31,16 @@ namespace CIGAR::Util
 		RE::SendHUDMessage::ShowHUDMessage(a_text.c_str());
 	}
 
+	void NotifyDiagnostic(const std::string& a_text)
+	{
+#ifdef CIGAR_RELEASE
+		logs::info("notice (log only in this build): {}", a_text);
+#else
+		logs::info("notice: {}", a_text);
+		RE::SendHUDMessage::ShowHUDMessage(a_text.c_str());
+#endif
+	}
+
 	bool IsBusy(RE::Actor* a_actor)
 	{
 		return a_actor->IsInCombat() || a_actor->IsOnMount();

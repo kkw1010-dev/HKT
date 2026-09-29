@@ -6,6 +6,7 @@
 #include "Grapple.h"
 #include "LockOn.h"
 #include "Needs.h"
+#include "Squeeze.h"
 #include "Surrender.h"
 #include "Dress.h"
 #include "Jujutsu.h"
@@ -50,7 +51,7 @@ namespace CIGAR
 				BookRead::GetSingleton(),
 				Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 				QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
-				PartyOutfit::GetSingleton(), MannequinSwap::GetSingleton(), WizardWarrior::GetSingleton()
+				PartyOutfit::GetSingleton(), MannequinSwap::GetSingleton(), WizardWarrior::GetSingleton(), Squeeze::GetSingleton()
 			};
 #ifdef CIGAR_PERSONAL
 			const auto personal = Personal::Modules();

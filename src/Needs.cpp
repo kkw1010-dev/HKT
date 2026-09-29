@@ -304,7 +304,7 @@ namespace CIGAR
 		if (!s.running && !warnedStopped) {
 			warnedStopped = true;
 			Log("WARN PNO's main quest is not running; switch PNO on in its MCM");
-			Util::Notify(Text::L("CIGAR: Private Needs 꺼짐. MCM에서 켜야 용변 프롬프트 표시", "CIGAR: Private Needs is off. Enable it in its MCM for relief prompts"));
+			Util::NotifyDiagnostic(Text::L("CIGAR: Private Needs 꺼짐. MCM에서 켜야 용변 프롬프트 표시", "CIGAR: Private Needs is off. Enable it in its MCM for relief prompts"));
 		}
 
 		// The prompt shows the fill; offer it again when the level changes.

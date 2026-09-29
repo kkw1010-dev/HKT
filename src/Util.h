@@ -13,8 +13,13 @@ namespace CIGAR::Util
 	// " sexlab=<bool> ostim=<bool>": which frameworks were found, for the ready lines.
 	std::string DescribeScenes();
 
-	// Shows a HUD notification (UTF-8).
+	// HUD notices come in two kinds (docs/041). Notify: the result of an action the player just asked
+	// for, or a failure the player has to act on; always shown. NotifyDiagnostic: a gate, integration or
+	// debug state; shown in the author build (the user's self-reporting rule), only logged in the release
+	// build (a player's Nexus report of 2026-09-29). Which call site is which: the CX-03 table, reviewed and
+	// applied 2026-09-29 (docs/041 "Applied").
 	void Notify(const std::string& a_text);
+	void NotifyDiagnostic(const std::string& a_text);
 
 	bool IsBusy(RE::Actor* a_actor);
 

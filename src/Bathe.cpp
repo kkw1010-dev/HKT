@@ -142,7 +142,7 @@ namespace CIGAR
 			if (!bisOn && !warnedBisOff) {
 				warnedBisOff = true;
 				Log("WARN Bathing in Skyrim is disabled in its MCM; no bathe prompt is offered");
-				Util::Notify(Text::L("CIGAR: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시", "CIGAR: Bathing in Skyrim is disabled. Enable it in its MCM for bathing prompts"));
+				Util::NotifyDiagnostic(Text::L("CIGAR: BiS 비활성 상태. MCM에서 켜야 목욕 프롬프트 표시", "CIGAR: Bathing in Skyrim is disabled. Enable it in its MCM for bathing prompts"));
 			}
 		}
 		wasInWater = inWater;

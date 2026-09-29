@@ -406,3 +406,24 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 로그에서 보는 것(Claude가 판정):
 - R1: `event=1 declined: hidden while its condition holds`, 물 밖에서 1초 뒤 `event=1 no longer declined`. 짧게 한 번 누를 때는 `accepted`가 없어야 합니다.
 - R2: `event=20 declined: hidden until the player is 300 units away or in another cell`, 멀리 간 뒤 `event=20 no longer declined`.
+
+## r10: 비켜 지나가기 (docs/038 Stage 1, 2026-09-29)
+
+무기를 넣고 3인칭으로 합니다. 손으로 적을 것은 없습니다. CTD가 나면 거기서 멈추고 알려 주세요.
+준비: `coc WhiterunBanneredMare`. 시험마다 농부를 새로 부릅니다(`player.placeatme 001034E4`).
+
+- **S1. 넓은 곳:** 농부 정면으로 걸어가 몸을 댑니다. "비켜 지나가기 (누르고 있기)"가 뜨면 누른 채로 계속 걸어 지나갑니다.
+- **S2. 문틀:** 문틀 가운데 선 농부를 같은 방법으로 지나갑니다.
+- **S3. 벽과 NPC 사이, 옆으로 스치기:** 벽에 붙은 농부의 옆구리를 스치듯 지나갑니다.
+- **S4. 두 사람 연속:** 농부를 둘 불러 일렬로 세우고, 한 번 누른 채로 둘 다 지나갑니다.
+- **S5. 짧게 한 번:** 프롬프트가 떴을 때 짧게 한 번만 누릅니다. 아무 일도 없어야 합니다.
+- **S6. 거절:** 두 번 톡톡 누릅니다. 막힌 채로 있는 동안 다시 나오지 않아야 합니다.
+
+로그에서 보는 것(Claude가 판정):
+- `[Squeeze] ready: squeeze past on; gesture on`.
+- S1~S4: `ring filled`, `start: <이름> ... (no collision true) ... bump NPC_Bump... accepted true`, `gesture 3805|3806 ...`,
+  `RESULT squeeze on <이름> (past the NPC): PASSED ... read back <원래 값>`. `STILL OVERLAPPING`, `WARN`이 없어야 합니다.
+- S4: 두 사람 모두 `start:`가 있고, 두 번째 앞에 `(the next NPC)` 또는 `(past the NPC)`로 첫 사람이 풀립니다.
+- S5: `released before the ring filled: nothing changed`, `start:` 없음.
+- S6: `event=43 declined: hidden while its condition holds`.
+- 프롬프트가 안 뜨면 gate 줄의 `npc=- (...)`가 이유를 말합니다.

@@ -437,13 +437,13 @@ namespace CIGAR
 				notifiedBlock = key;
 				Log("WARN no swap with this mannequin: {}", block);
 				if (block.starts_with("capacity")) {
-					Util::Notify(Text::L("CIGAR: 마네킹 슬롯 부족. 의상 교환 불가", "CIGAR: The mannequin has too few free slots for this outfit"));
+					Util::NotifyDiagnostic(Text::L("CIGAR: 마네킹 슬롯 부족. 의상 교환 불가", "CIGAR: The mannequin has too few free slots for this outfit"));
 				} else if (block.starts_with("duplicate")) {
-					Util::Notify(Text::L("CIGAR: 마네킹이 같은 장비를 두 개 받지 않음. 의상 교환 불가", "CIGAR: The mannequin refuses a second piece of the same armor"));
+					Util::NotifyDiagnostic(Text::L("CIGAR: 마네킹이 같은 장비를 두 개 받지 않음. 의상 교환 불가", "CIGAR: The mannequin refuses a second piece of the same armor"));
 				} else if (block.starts_with("kept")) {
-					Util::Notify(Text::L("CIGAR: 벗을 수 없는 장비가 자리를 차지함. 의상 교환 불가", "CIGAR: A piece you cannot take off blocks the mannequin's outfit"));
+					Util::NotifyDiagnostic(Text::L("CIGAR: 벗을 수 없는 장비가 자리를 차지함. 의상 교환 불가", "CIGAR: A piece you cannot take off blocks the mannequin's outfit"));
 				} else {
-					Util::Notify(Text::L("CIGAR: 마네킹 슬롯을 읽을 수 없음. 로그 확인", "CIGAR: The mannequin's slots cannot be read. See the log"));
+					Util::NotifyDiagnostic(Text::L("CIGAR: 마네킹 슬롯을 읽을 수 없음. 로그 확인", "CIGAR: The mannequin's slots cannot be read. See the log"));
 				}
 			}
 		}

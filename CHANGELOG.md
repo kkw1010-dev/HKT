@@ -5,10 +5,17 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 ## Unreleased
 
 New
+- **Squeeze Past.** When a person blocks your way while you walk with the weapon sheathed, hold the
+  prompt to slip past them; they give way with the game's own bump, and everything goes back once
+  you are past. Not for people talking, using furniture, or enemies.
 - **Gamepad D-pad and mouse buttons.** The Keys page can put prompts on the D-pad, and the mouse's
   middle and side buttons can be prompt keys. Checked with an Xbox controller.
 
 Changed
+- **Fewer messages in the top-right corner.** Messages about states you chose yourself (Bathing in
+  Skyrim or Private Needs switched off in their menus, Helmet Toggle 2 installed) and a mannequin's
+  checks before a swap now go to `CIGAR.log` only. A feature that stops working because another mod
+  could not be linked still tells you once.
 - **Non-combat prompts are held, not tapped.** Bathe, shower, undress, get dressed, eat, relief,
   deflate, BaboDialogue's action choice and ending Wizard Warrior Mode now fill a ring while you
   hold the key, like the other non-combat prompts. A single tap no longer starts them, so the
