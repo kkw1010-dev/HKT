@@ -38,7 +38,8 @@ namespace CIGAR
 
 		RE::TESForm* FormOf(const RE::BSScript::Variable* a_var)
 		{
-			return a_var && a_var->IsObject() ? a_var->Unpack<RE::TESForm*>() : nullptr;
+			// An element whose declared type is unlinked holds garbage (Util::ScriptProperty, CTD 2026-09-29).
+			return a_var && a_var->IsObject() && Util::LinkedAs(a_var->GetType().GetTypeInfo(), nullptr) ? a_var->Unpack<RE::TESForm*>() : nullptr;
 		}
 	}
 

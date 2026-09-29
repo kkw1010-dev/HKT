@@ -197,6 +197,15 @@ namespace CIGAR::Util
 			if (vm && a_handle != vm->GetObjectHandlePolicy()->EmptyHandle()) {
 				vm->FindBoundObject(a_handle, a_class, object);
 			}
+			// A script Papyrus failed to link ("Unable to link types") still binds an object, but its
+			// property values are garbage; unpacking one crashed the r8 new game (2026-09-29 18:16:37,
+			// BaboKey). Such an object is refused here, before any property is read.
+			if (object && !LinkedAs(object->GetTypeInfo(), a_class)) {
+				const auto* type = object->GetTypeInfo();
+				logs::warn("script {} on handle {:X} is not usable (type {}, link state {}): integration skipped", a_class, a_handle,
+					type && type->GetName() ? type->GetName() : "-", type ? static_cast<int>(type->linkedValid) : -1);
+				object = nullptr;
+			}
 			return object;
 		}
 	}
@@ -209,6 +218,22 @@ namespace CIGAR::Util
 	RE::VMHandle Handle(RE::BGSRefAlias* a_alias)
 	{
 		return HandleOf(RE::BGSRefAlias::VMTYPEID, a_alias);
+	}
+
+	bool LinkedAs(const RE::BSScript::ObjectTypeInfo* a_type, const char* a_class)
+	{
+		if (!a_type || a_type->linkedValid != RE::BSScript::ObjectTypeInfo::LinkValidState::kLinkedValid) {
+			return false;
+		}
+		if (!a_class) {
+			return true;
+		}
+		for (const auto* type = a_type; type; type = type->GetParent()) {
+			if (type->GetName() && EqualsNoCase(type->GetName(), a_class)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	RE::BSTSmartPointer<RE::BSScript::Object> ScriptObject(RE::TESForm* a_form, const char* a_class)

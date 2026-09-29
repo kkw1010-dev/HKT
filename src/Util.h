@@ -46,15 +46,23 @@ namespace CIGAR::Util
 	RE::VMHandle Handle(RE::TESForm* a_form);
 	RE::VMHandle Handle(RE::BGSRefAlias* a_alias);
 
-	// A form-typed Auto property of a bound script object, or null.
+	// True when a_type is linked and valid and is a_class or derives from it (a_class null: any class).
+	bool LinkedAs(const RE::BSScript::ObjectTypeInfo* a_type, const char* a_class);
+
+	// A form-typed Auto property of a bound script object, or null. Neither the owning script nor the
+	// property's declared type may be unlinked: an unlinked script's values are garbage, and unpacking
+	// one crashes (CTD 2026-09-29 18:16:37). ScriptObject() already refuses unlinked owners.
 	template <class T>
 	T* ScriptProperty(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name)
 	{
-		if (!a_object) {
+		if (!a_object || !LinkedAs(a_object->GetTypeInfo(), nullptr)) {
 			return nullptr;
 		}
 		const auto* var = a_object->GetProperty(a_name);
-		if (!var || !var->IsObject()) {
+		if (!var || !var->IsObject() || !LinkedAs(var->GetType().GetTypeInfo(), nullptr)) {
+			if (var && var->IsObject()) {
+				logs::warn("script property {} has an unlinked type: not read", a_name);
+			}
 			return nullptr;
 		}
 		return var->Unpack<T*>();
