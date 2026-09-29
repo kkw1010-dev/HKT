@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "Prompt.h"
 
+#include <deque>
+
 namespace CIGAR
 {
 	// 비켜 지나가기: when a non-hostile humanoid blocks the way, a hold prompt lets the player squeeze
@@ -40,8 +42,18 @@ namespace CIGAR
 
 		Squeeze();
 
-		// The NPC in the way, or null; a_why names what ruled the nearest one out.
-		RE::Actor* Blocker(RE::PlayerCharacter* a_player, float& a_ahead, float& a_side, std::string& a_why) const;
+		// The nearest actor ahead (within 150, in the corridor), whether it is in the block box and why it
+		// is refused, for the gate and its trace line.
+		struct Near
+		{
+			std::string name;
+			float ahead{ 0.0f };
+			float side{ 0.0f };
+			float dz{ 0.0f };
+			bool inBox{ false };
+			std::string why;
+		};
+		RE::Actor* Nearest(RE::PlayerCharacter* a_player, Near& a_near) const;
 		void Begin(RE::PlayerCharacter* a_player, RE::Actor* a_npc, float a_ahead, float a_side);
 		// Puts the NPC's filter word back and reads it back; a_why goes to the log.
 		void End(RE::PlayerCharacter* a_player, std::string_view a_why);
@@ -51,10 +63,11 @@ namespace CIGAR
 		PromptSlot prompt{ this, kSqueeze };
 
 		// Blocked detection (game thread).
-		RE::NiPoint3 lastPos{};
-		Clock::time_point lastTick{};
-		Clock::time_point blockedSince{};
-		bool blocked{ false };
+		std::deque<std::pair<Clock::time_point, RE::NiPoint3>> trail;
+		RE::FormID contactID{ 0 };
+		Clock::time_point contactSince{};
+		Clock::time_point shownUntil{};
+		std::string lastTrace;
 
 		// The hold: the key is down (pressing) and, after the ring, active.
 		bool pressing{ false };

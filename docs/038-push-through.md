@@ -379,3 +379,29 @@ annotations (7 `animmotion`, IdleChairSitting, IdleStop, IdleFurnitureExit), all
 copy parses with 0. CIGAR takes whichever Squeeze the player's order uses. The gesture length was a
 fixed 2.87 s and cut this clip 0.26 s short; it is now read from the clip's hkaAnimation duration
 (`clip ready: ... 3.13 s ...`), 2.87 s only when it cannot be read. Not built yet (after r9).
+
+### r9 (the user's run of 2026-09-29 23:16-23:53): S1-S6 all failed; cause and fix
+
+- **One offer in the whole run** (23:31:32, 신미어), withdrawn on the next tick: S1's "showed once and
+  went". The gate's `slow` came from one 100 ms step and flipped around the threshold every tick while
+  the player pressed into 신미어, so "slow for 0.3 s" almost never held, and the prompt followed the
+  block tick by tick.
+- **Almost everyone was refused.** In the box, the refusals were `in furniture` (리싱, 카르크, 교링,
+  카들린, 신미어, ...) and `in a scene` (로르글룬드, 시거드, 아이돌라프, ...): the inn's people are in ambient
+  scenes or on furniture most of the time, so the skip list of this plan left almost nobody. No
+  spawned farmer (`WEFarmerMale`, 001034E4) ever appeared ahead in the gate lines, so the run gives no
+  evidence either way about spawned NPCs.
+- **Fix (built 2026-09-29):** speed is the average over 0.3 s; contact is the same NPC in the box for
+  0.3 s; blocked is contact and that average under 60 u/s; the prompt then stays up 1.5 s after the
+  block ends (all mine). NPCs in a scene or furniture are squeezed past without the bump (their graph
+  refuses it there anyway, r5); still refused: dead, not humanoid, hostile or in combat, mounted,
+  talking to the player, in a SexLab/OStim scene.
+- **Reproducible without the game:** while an actor is within 150 ahead, a `trace` line logs the
+  gate's raw inputs (nearest actor, ahead, side, dz, in the box, refusal, windowed speed, contact
+  time, blocked, shown) whenever they change after rounding. `tools/replay_squeeze_gate.py` reads them
+  back, lists each contact and re-decides "blocked" for any `--speed` and `--for`, next to what the game
+  decided.
+- The gesture length is read from the clip (3.13 s in this order).
+- Passed in the same run, confirmed in the log: W3 (`10 fillable forms`, `FILLED`), R1 (`event=1
+  declined` / `no longer declined`), R2 (`event=20 ...` three times), Potion (ring accepted out of
+  combat, press accepted in combat). Potion's decline was not exercised (no `event=17 declined`).

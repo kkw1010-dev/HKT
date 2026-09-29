@@ -15,8 +15,8 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-29)
 
-- **Deployed (2026-09-29, after D17/D18, `1b1db68`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `1c44adc154f9d1703e8e785de940ec46f5cc47cabf18c34fefdd732a81687636`; `verify_deploy` passed in full.
+- **Deployed (2026-09-29, after r9, the Squeeze gate fix):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `a6648765852054a41234a2e1c5eb2b8360725789a0c1f8180b9780231c3d4a1c`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
@@ -27,6 +27,9 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   - HUD notices split (`docs/041` "Applied"): `Util::NotifyDiagnostic` is log-only in the release
     build; nine call sites use it, the rest stay HUD after reviewing CX-03.
   - The personal module fix (see CIGAR-Personal `HANDOFF.md`).
+- **r9 is read** (`docs/038` "r9"): Squeeze S1-S6 failed (tick-noisy speed, the prompt followed the
+  block tick by tick, most inn NPCs refused as scene or furniture); fixed and deployed, r10 again.
+  Everything else in r9 passed and the log confirms it (Potion's decline was not exercised).
 - **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
 - **Waiting on in-game results (r9, r10):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
   decline) and "r10" (S1-S6 Squeeze Past) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.

@@ -16,8 +16,15 @@ namespace CIGAR
 		// ahead, centre to centre, so 80 (mine). The corridor and the speed are mine.
 		constexpr float kBlockAhead = 80.0f;
 		constexpr float kBlockCorridor = 50.0f;
-		constexpr float kBlockedSpeed = 50.0f;  // units per second; walking is about 80, running 300
+		// r9: speed from one 100 ms step flipped around 50 every tick while pressing into 신미어, so the 0.3 s
+		// never held; now the average over kSpeedWindow. Walking is about 80, running 300. Mine.
+		constexpr float kBlockedSpeed = 60.0f;
+		constexpr auto kSpeedWindow = 300ms;
 		constexpr auto kBlockedFor = 300ms;
+		// r9 S1: the prompt showed for one tick and went; it now stays this long after the block ends. Mine.
+		constexpr auto kLinger = 1500ms;
+		// The trace line covers actors this far ahead (the box is kBlockAhead).
+		constexpr float kTraceAhead = 150.0f;
 		// The ring: the key must be down this long before anything is changed (docs/042; Deflate's value).
 		constexpr auto kRingFill = 500ms;
 		// Past the NPC: this far beyond it along the player's heading, and this far from it (the probe's).
@@ -255,21 +262,28 @@ namespace CIGAR
 			if (a_npc->IsOnMount() || a_npc->IsAMount()) {
 				return "mounted";
 			}
-			// r5: the graph refuses the bump in dialogue and scenes; the prompt leaves those NPCs alone.
-			if (a_npc->GetCurrentScene()) {
-				return "in a scene";
-			}
 			if (const auto* topics = RE::MenuTopicManager::GetSingleton(); topics && topics->speaker.get().get() == a_npc) {
 				return "talking to the player";
-			}
-			const auto* state = a_npc->AsActorState();
-			if (a_npc->GetOccupiedFurniture().get().get() || (state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal)) {
-				return "in furniture";
 			}
 			if (Util::InScene(a_npc)) {
 				return "in a scene framework";
 			}
 			return {};
+		}
+
+		// Why this NPC gets no bump, or null. r9: most townspeople in the inn were in an ambient scene or a
+		// furniture (wall leans, counters), and refusing them left almost nobody to squeeze past. They are
+		// squeezed past now, only without the bump, which their graph refuses there anyway (r5).
+		const char* NoBump(RE::Actor* a_npc)
+		{
+			if (a_npc->GetCurrentScene()) {
+				return "in a scene";
+			}
+			const auto* state = a_npc->AsActorState();
+			if (a_npc->GetOccupiedFurniture().get().get() || (state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal)) {
+				return "in furniture";
+			}
+			return nullptr;
 		}
 	}
 
@@ -336,9 +350,11 @@ namespace CIGAR
 		lastGate.clear();
 		pressing = false;
 		active = false;
-		blocked = false;
+		trail.clear();
+		contactID = 0;
+		shownUntil = {};
+		lastTrace.clear();
 		gesturePlaying = false;
-		lastTick = {};
 		lastBumped = 0;
 		lastBumpAt = {};
 		restoreWarned = false;
@@ -352,8 +368,9 @@ namespace CIGAR
 		}
 	}
 
-	RE::Actor* Squeeze::Blocker(RE::PlayerCharacter* a_player, float& a_ahead, float& a_side, std::string& a_why) const
+	RE::Actor* Squeeze::Nearest(RE::PlayerCharacter* a_player, Near& a_near) const
 	{
+		a_near = {};
 		auto* lists = RE::ProcessLists::GetSingleton();
 		if (!lists) {
 			return nullptr;
@@ -363,7 +380,6 @@ namespace CIGAR
 		const auto forward = Forward(heading);
 		const auto right = Right(heading);
 		RE::Actor* best = nullptr;
-		float bestAhead = kBlockAhead + 1.0f;
 		for (auto& handle : lists->highActorHandles) {
 			const auto actor = handle.get();
 			if (!actor || actor.get() == a_player || !actor->Is3DLoaded()) {
@@ -372,22 +388,19 @@ namespace CIGAR
 			const auto to = actor->GetPosition() - pos;
 			const float ahead = to.x * forward.x + to.y * forward.y;
 			const float side = to.x * right.x + to.y * right.y;
-			if (ahead <= 0.0f || ahead > kBlockAhead || std::abs(side) > kBlockCorridor || std::abs(to.z) > 100.0f || ahead >= bestAhead) {
+			if (ahead <= 0.0f || ahead > kTraceAhead || std::abs(side) > kBlockCorridor || std::abs(to.z) > 100.0f ||
+				(best && ahead >= a_near.ahead)) {
 				continue;
 			}
 			best = actor.get();
-			bestAhead = ahead;
-			a_ahead = ahead;
-			a_side = side;
+			a_near.ahead = ahead;
+			a_near.side = side;
+			a_near.dz = to.z;
 		}
-		if (!best) {
-			a_why = "none ahead";
-			return nullptr;
-		}
-		a_why = Refusal(best, a_player);
-		if (!a_why.empty()) {
-			a_why = std::format("{}: {}", Util::NameOf(best), a_why);
-			return nullptr;
+		if (best) {
+			a_near.name = Util::NameOf(best);
+			a_near.inBox = a_near.ahead <= kBlockAhead;
+			a_near.why = Refusal(best, a_player);
 		}
 		return best;
 	}
@@ -413,10 +426,13 @@ namespace CIGAR
 		}
 		const auto now = Clock::now();
 		const auto pos = player->GetPosition();
-		const float dt = std::chrono::duration<float>(now - lastTick).count();
-		const float speed = dt > 0.0f && dt < 1.0f ? Flat(pos, lastPos) / dt : 0.0f;
-		lastPos = pos;
-		lastTick = now;
+		// Speed over the last kSpeedWindow, not one tick (r9); -1 until the window is filled.
+		trail.emplace_back(now, pos);
+		while (trail.size() > 2 && now - trail[1].first >= kSpeedWindow) {
+			trail.pop_front();
+		}
+		const float window = std::chrono::duration<float>(now - trail.front().first).count();
+		const float speed = now - trail.front().first >= kSpeedWindow && window > 0.0f ? Flat(pos, trail.front().second) / window : -1.0f;
 
 		if (gesturePlaying && now - gestureStart >= std::chrono::duration<float>(gestureSeconds)) {
 			StopGesture(player, "clip length");
@@ -434,17 +450,15 @@ namespace CIGAR
 		const bool mounted = player->IsOnMount();
 		const auto* camera = RE::PlayerCamera::GetSingleton();
 		const bool firstPerson = camera && camera->IsInFirstPerson();
-		const bool busy = Util::IsBusy(player);
 		const bool scene = Util::InScene(player);
 		const bool moving = Moving(player);
 		// Non-combat, third person first (docs/038).
-		const bool free = !combat && !drawn && !seated && !swimming && !mounted && !firstPerson && !busy && !scene;
+		const bool free = !combat && !drawn && !seated && !swimming && !mounted && !firstPerson && !scene;
 
 		if (pass) {
 			auto npc = pass->npc.get();
 			const auto* cell = player->GetParentCell();
-			const float heading = player->GetAngleZ();
-			const auto forward = Forward(heading);
+			const auto forward = Forward(player->GetAngleZ());
 			if (!npc || npc->IsDead() || !npc->Is3DLoaded()) {
 				End(player, "the NPC is gone");
 			} else if ((cell ? cell->GetFormID() : 0) != passCell) {
@@ -470,39 +484,52 @@ namespace CIGAR
 			}
 		}
 
-		float ahead = 0.0f;
-		float side = 0.0f;
-		std::string why;
-		auto* npc = moving && free ? Blocker(player, ahead, side, why) : nullptr;
-		if (!moving) {
-			why = "not moving";
-		} else if (!free) {
-			why = "not free";
-		}
+		Near ahead;
+		auto* nearest = moving && free ? Nearest(player, ahead) : nullptr;
+		auto* npc = nearest && ahead.inBox && ahead.why.empty() ? nearest : nullptr;
 		const bool mine = npc && pass && pass->npc.get().get() == npc;
-		const bool slow = speed < kBlockedSpeed;
-		if (npc && slow && !mine) {
-			if (!blocked) {
-				blocked = true;
-				blockedSince = now;
-			}
-		} else {
-			blocked = false;
+		// Contact: the same NPC in the box, the player moving, for kBlockedFor.
+		const RE::FormID id = npc && !mine ? npc->GetFormID() : 0u;
+		if (id != contactID) {
+			contactID = id;
+			contactSince = now;
 		}
-		const bool blockedLong = blocked && now - blockedSince >= kBlockedFor;
+		const float contact = id ? std::chrono::duration<float>(now - contactSince).count() : 0.0f;
+		const bool slow = speed >= 0.0f && speed < kBlockedSpeed;
+		const bool blocked = id && now - contactSince >= kBlockedFor && slow;
+		if (blocked) {
+			shownUntil = now + kLinger;
+		}
+		const bool lingering = free && now < shownUntil;
 
-		LogGate(std::format("moving={} slow={} npc={} combat={} drawn={} seated={} swim={} mount={} firstPerson={} busy={} scene={} "
-							"blocked={} pressing={} active={} passing={}",
-			moving, slow, npc ? Util::NameOf(npc) : "- (" + why + ")", combat, drawn, seated, swimming, mounted, firstPerson, busy, scene,
-			blockedLong, pressing, active, pass ? pass->name : "-"s));
+		// The gate's raw inputs while an actor is near ahead, rounded, logged on change: enough to replay the
+		// decision without the game (tools/replay_squeeze_gate.py).
+		if (nearest) {
+			auto trace = std::format("trace near={} ahead={:.0f} side={:+.0f} dz={:+.0f} box={} refuse={} speed={:.0f} contact={:.1f} blocked={} shown={}",
+				ahead.name, std::round(ahead.ahead / 5.0f) * 5.0f, std::round(ahead.side / 5.0f) * 5.0f, std::round(ahead.dz / 10.0f) * 10.0f,
+				ahead.inBox, ahead.why.empty() ? "-" : ahead.why, std::round(speed / 10.0f) * 10.0f, contact, blocked, lingering);
+			if (trace != lastTrace) {
+				Log("{}", trace);
+				lastTrace = std::move(trace);
+			}
+		} else if (!lastTrace.empty()) {
+			lastTrace.clear();
+			Log("trace near=- ({})", !moving ? "not moving" : !free ? "not free" : "nobody within 150 ahead");
+		}
+
+		LogGate(std::format("moving={} free={} (combat={} drawn={} seated={} swim={} mount={} firstPerson={} scene={}) npc={} "
+							"blocked={} shown={} pressing={} active={} passing={}",
+			moving, free, combat, drawn, seated, swimming, mounted, firstPerson, scene,
+			npc ? Util::NameOf(npc) : nearest ? "- (" + ahead.name + ": " + (ahead.inBox ? ahead.why : "not in reach"s) + ")" : "-"s,
+			blocked, lingering, pressing, active, pass ? pass->name : "-"s));
 
 		if (active && npc && !mine && free) {
 			if (pass) {
 				End(player, "the next NPC");
 			}
-			Begin(player, npc, ahead, side);
+			Begin(player, npc, ahead.ahead, ahead.side);
 		}
-		prompt.Update(free && (blockedLong || pressing || active), [] { return std::string(Text::L("비켜 지나가기 (누르고 있기)", "Squeeze Past (hold)")); });
+		prompt.Update(free && (lingering || pressing || active), [] { return std::string(Text::L("비켜 지나가기 (누르고 있기)", "Squeeze Past (hold)")); });
 	}
 
 	void Squeeze::Begin(RE::PlayerCharacter* a_player, RE::Actor* a_npc, float a_ahead, float a_side)
@@ -530,7 +557,9 @@ namespace CIGAR
 
 		std::string bump = "cooldown";
 		const auto id = a_npc->GetFormID();
-		if (id != lastBumped || p.start - lastBumpAt >= kBumpCooldown) {
+		if (const auto* quiet = NoBump(a_npc)) {
+			bump = std::format("skipped ({})", quiet);
+		} else if (id != lastBumped || p.start - lastBumpAt >= kBumpCooldown) {
 			const auto* event = BumpEvent(a_npc, p.playerStart);
 			const bool accepted = a_npc->NotifyAnimationGraph(event);
 			bump = std::format("{} accepted {}", event, accepted);

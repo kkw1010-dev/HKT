@@ -426,7 +426,9 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - S4: 두 사람 모두 `start:`가 있고, 두 번째 앞에 `(the next NPC)` 또는 `(past the NPC)`로 첫 사람이 풀립니다.
 - S5: `released before the ring filled: nothing changed`, `start:` 없음.
 - S6: `event=43 declined: hidden while its condition holds`.
-- 프롬프트가 안 뜨면 gate 줄의 `npc=- (...)`가 이유를 말합니다.
+- 프롬프트가 안 뜨면 gate 줄의 `npc=- (이름: 이유)`와 `trace near=... box=... refuse=... speed=... contact=... blocked=...` 줄이 이유를 말합니다.
+  `python tools/replay_squeeze_gate.py`로 게임 없이 다시 판정할 수 있습니다(r9 수정, docs/038 "r9").
+- 장면·가구 속 NPC도 지나갑니다. 그때 start 줄의 bump는 `skipped (in a scene|in furniture)`입니다.
 
 ## r10-P. 물약: 전투 밖은 링, 전투 중은 한 번 누르기 (D18, 2026-09-29)
 
