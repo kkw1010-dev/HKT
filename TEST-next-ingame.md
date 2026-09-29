@@ -435,3 +435,11 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - **준비:** `player.additem 0003EADE 5`(MAG_RestoreHealth02, 물약 - 체력 회복 하급; 현재 로드 오더에서 Apothecary.esp가 덮어씀), `player.damageav health 60`을 체력이 50% 아래가 될 때까지 반복. 전투는 `player.placeatme 0003DE8A`(EncBandit01WarriorNordM, 산적)로 만듭니다.
 - **P1 전투 밖:** "마시기 (길게): ..."가 뜨면 두 번 톡톡 → 사라지고, 체력이 낮은 동안 다시 나오지 않아야 합니다. `player.restoreav health 500`으로 채웠다가 다시 깎으면 다시 뜹니다. 그때 길게 눌러 마십니다. 다시 체력을 깎고 산적을 부른 뒤 전투 중에는 "마시기: ..."를 한 번 눌러 마십니다.
 - **로그:** 전투 밖 `offer event=17 '마시기 (길게): 물약 - 체력 회복 하급 (N%)'`, `event=17 declined: hidden while its condition holds`, 이후 `event=17 no longer declined`; 전투 중 `offer event=17 '마시기: ...'`와 `prompt event accepted (0) event=17`.
+
+## r10 로그 확인 (코드 검토 수정분, docs/043, Claude가 평소 플레이 로그로 판정)
+
+별도 행동은 없습니다. 평소처럼 플레이한 로그에서 다음을 봅니다.
+- 한 번 누른 프롬프트가 2초 뒤 같은 키로 되살아나지 않는지: 같은 event의 `offer` 줄이 수락 직후 조건 변화 없이 다시 나오지 않아야 합니다.
+- Rest gate에 `beast=false`가 찍힙니다(짐승 형태면 true, 앉기·눕기 없음).
+- 유술이 중간에 끊긴 경우에만: `pair cut short while the victim is still in its kill move`, 이어서 `the cut-short pair ended: ... the victim stays alive`.
+- `WARN`, `notice (log only`, `.bad`가 새로 생기지 않았는지.
