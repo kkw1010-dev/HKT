@@ -5,6 +5,7 @@
 #include "Module.h"
 #include "PromptAnchor.h"
 #include "Settings.h"
+#include "Util.h"
 
 namespace CIGAR
 {
@@ -15,6 +16,9 @@ namespace CIGAR
 		// SkyPrompt fades a prompt out after its lifetime setting; re-sending well within it keeps
 		// the prompt up.
 		constexpr auto kKeepAliveInterval = 2s;
+		// A declined prompt's situation has ended once its condition has been false this long; the
+		// margin keeps a one-tick flicker (an idle, a pitch jitter) from bringing it back. My choice.
+		constexpr auto kDeclineRelease = 1s;
 
 		const char* EventName(SkyPromptAPI::PromptEventType a_type)
 		{
@@ -240,6 +244,13 @@ namespace CIGAR
 		keySlots.fill(0);
 	}
 
+	void Prompts::ClearDeclines()
+	{
+		for (auto [owner, slot] : Slots()) {
+			slot->ClearDecline();
+		}
+	}
+
 	PromptSlot::PromptSlot(Module* a_owner, SkyPromptAPI::EventID a_id) :
 		owner(a_owner),
 		id(a_id)
@@ -249,6 +260,14 @@ namespace CIGAR
 
 	void PromptSlot::Update(bool a_can, const std::function<std::string()>& a_text)
 	{
+		if (declined) {
+			if (DeclineOver(a_can)) {
+				declined = false;
+				owner->Log("event={} no longer declined: the situation changed", id);
+			} else {
+				a_can = false;
+			}
+		}
 		if (a_can && !offered) {
 			offered = true;
 			Offer(a_text());
@@ -258,6 +277,49 @@ namespace CIGAR
 			offered = false;
 			Withdraw();
 		}
+	}
+
+	void PromptSlot::Decline()
+	{
+		declined = true;
+		declineFalseSince = {};
+		declinedCell = 0;
+		if (const auto* player = Util::Player()) {
+			declinedAt = player->GetPosition();
+			if (const auto* cell = player->GetParentCell()) {
+				declinedCell = cell->GetFormID();
+			}
+		}
+		if (offered) {
+			offered = false;
+			Withdraw();
+		}
+		if (declineDistance > 0.0f) {
+			owner->Log("event={} declined: hidden until the player is {:.0f} units away or in another cell", id, declineDistance);
+		} else {
+			owner->Log("event={} declined: hidden while its condition holds", id);
+		}
+	}
+
+	bool PromptSlot::DeclineOver(bool a_can)
+	{
+		if (declineDistance > 0.0f) {
+			const auto* player = Util::Player();
+			if (!player) {
+				return false;
+			}
+			const auto* cell = player->GetParentCell();
+			return (cell ? cell->GetFormID() : 0) != declinedCell || player->GetPosition().GetDistance(declinedAt) > declineDistance;
+		}
+		const auto now = std::chrono::steady_clock::now();
+		if (a_can) {
+			declineFalseSince = {};
+			return false;
+		}
+		if (declineFalseSince == std::chrono::steady_clock::time_point{}) {
+			declineFalseSince = now;
+		}
+		return now - declineFalseSince >= kDeclineRelease;
 	}
 
 	void PromptSlot::Offer(std::string a_text)
@@ -378,7 +440,10 @@ namespace CIGAR
 			});
 		}
 		if (type == SkyPromptAPI::kDeclined) {
-			SKSE::GetTaskInterface()->AddTask([module, eventID]() { module->OnDeclined(eventID); });
+			SKSE::GetTaskInterface()->AddTask([self, module, eventID]() {
+				self->Decline();
+				module->OnDeclined(eventID);
+			});
 		}
 		if (hold) {
 			const bool down = type == SkyPromptAPI::kDown;

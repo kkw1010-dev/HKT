@@ -96,3 +96,11 @@ with prompt-only off R works again. That third step also made MCM Memory record 
 profile again at 09:36; `verify_deploy.py` failed the next build on it, and the row was set back to
 -1 (backup `Default.json.bak_20260925_fhu-key-again`). Switching prompt-only off in a test is
 therefore followed by that check failing until the row is reset.
+
+## Ring (2026-09-29)
+
+The user's rule for non-combat actions (`docs/042`): the prompt is `kHoldAndKeep`, so SkyPrompt draws
+its ring, and FHU's `OnKeyDown` goes out only once the key has been down for 0.5 s (`kRingFill`, my
+choice). A tap, or the double tap that declines, sends nothing, so it neither pushes nor starts FHU's
+5 s cooldown; the log says `released before the ring filled: nothing sent to FHU`. The release after a
+full hold still sends `OnKeyUp` as before.

@@ -114,7 +114,7 @@ parsed for record IDs and property values.
 - **Accept.** `DispatchMethodCall2(QK_QuestMain, "QK_MainQuestScript", "ToggleAbility")`. Two
   seconds later it checks `QK_SpellToggle`: it logs `on: QK_SpellToggle = 1`, or a WARN plus one
   notification when WW did not turn on (self-reporting).
-- **Prompts.** 마검사 모드 is ID 41 and 마검사 해제 is ID 42, both single press. The panel label is
+- **Prompts.** 마검사 모드 is ID 41 and 마검사 해제 is ID 42, 마검사 모드 a single press (raised on weapon draw), 마검사 해제 a ring since 2026-09-29 (`docs/042`). The panel label is
   마검사 모드 / Wizard Warrior Mode.
 - **Off check.** Two seconds after 마검사 해제 it checks that `QK_SpellToggle` is 0: `off: ...`,
   or a WARN plus one notification.

@@ -271,3 +271,64 @@ but not write animation tracks yet. Three ways, cheapest first:
 Recommendation: test 1 and 2 together in one short round (a probe build with three cut lengths and the
 gap rule), then build the module on the user's pick. The NPC side is settled (direct events, skip NPCs
 in dialogue, scenes or furniture).
+
+## Stage 0d results (r8b, the user's run of 2026-09-29 19:43-20:31, `CIGAR.log`)
+
+Probe build `7822eab` (in the deployed `e277228`): after contact, (가) halves the player's controller
+capsule, (나) sets the no-collision flag on that NPC's controller body; either is undone once the
+player is 30 past and 70 away from the NPC, or after 3 s. All runs were in the Bannered Mare; every
+contact was found by distance (`no controller bump reported`), never by the controller's bump field.
+
+| Item | The user | Log |
+|---|---|---|
+| Q1 (가) open floor | fail | 2 runs on 미카엘, DID NOT PASS (one POPPED 53 against 11 expected after the undo) |
+| Q2 (나) open floor | pass | PASSED, no pop, the NPC did not move |
+| Q3 (가) door frame | pass | PASSED, but nothing was changed (below) |
+| Q4 (나) door frame | pass | PASSED |
+| Q5 wall gap | fail, "only (나) worked" | (가) DID NOT PASS; (나) first try DID NOT PASS (side contact at -59, 3 s limit, max +6 past), then 3 of 3 PASSED |
+
+- **(가) never did anything.** Every (가) start logged `shape0 type 9 (not a capsule, left alone)` for
+  both shapes: the player controller's shapes are not `hkpCapsuleShape`, so nothing was shrunk. Its
+  two "passes" were NPCs standing off to the side. That matches the user's note ("(가) never
+  worked, so I can't judge it"). **Dropped from the probe** (2026-09-29, the orchestrator relaying
+  the user).
+- **(나): 6 of 7 passed.** No pop after any undo (moved 50-58 in 0.6-0.7 s against 47-59 expected),
+  no stuck time except 0.3 s in the one failure, and the NPC's z stayed within ±2 (no fall through
+  the floor). The one failure grazed the NPC at 59 to the side: "past" is measured along the
+  player-to-NPC line at the start, which is diagonal to the walk for a side contact, so the player
+  moved 116 while "past" stayed at +6 and the 3 s limit ended it.
+- **The gesture.** Started while already touching, 3805/3806 kept the walk (KEPT MOVING in all (나)
+  runs). Started from 70-80 away at a run, 3805 dropped the speed (28 of 83; the first (가) runs).
+- **The user picked (나)** (SQ-PICK, 2026-09-29).
+
+## Stage 1 plan: (나) as the feature (not built)
+
+A new module `Squeeze` (non-combat page); `PushProbe` stays in the author build as the probe.
+
+- **Prompt.** "비켜 지나가기 (누르고 있기)" / "Squeeze Past (hold)" (the user's name, 2026-09-28), shown
+  when blocked: moving input, a non-hostile humanoid within 70 units in the forward cone, speed
+  collapsed for 0.3 s (the user's values). Type `kHoldAndKeep` with the same 0.5 s ring as Deflate
+  (`docs/042`): a tap does nothing, the double tap declines (hidden until the condition has been false
+  for 1 s). While held, each NPC touched in turn is squeezed past without a new press.
+- **What it does per NPC.** Set the no-collision flag on that NPC's controller body (the r8b code,
+  `Ghost`), play the bump graph event matching the side (`NPC_BumpFrom*`, r5: displaces 50-84, no line,
+  no hostility), and the gesture by the gap (3805 ahead or right, 3806 left) only when already within
+  touching distance, so the walk keeps its speed.
+- **Undo.** Restore the filter word once the player is 30 past and 70 away, with "past" measured
+  along the player's heading, not the start line (the Q5 failure). The time limit becomes "3 s with no
+  forward progress" instead of 3 s flat. Also restore on release, decline, combat, a menu, cell change,
+  load and the module being switched off. Only one NPC is ghosted at a time; a new one first restores
+  the previous.
+- **Skips.** NPCs in dialogue, a scene or furniture (the graph refuses the bump there, r5), hostile or
+  in combat, mounted, and anything not humanoid.
+- **Self-reporting.** One start and one undo line per NPC with the filter word before and after;
+  after every undo the module reads the word back and logs a WARN (one notification per session) if it
+  is not the old value. `verify_deploy.py`: the module's panel toggle and prompt ID. The PushProbe
+  `RESULT` line format is kept so the r8b numbers stay comparable.
+- **In game (r10):** open floor, door frame, wall gap with a side contact, two NPCs in a row on one
+  hold, a tap (nothing), a decline (hidden while blocked).
+
+Open for the user before the public build:
+- **The gesture clip.** 3805/3806 are EVG Animated Traversal's Squeeze copied from the user's own
+  install; CIGAR never ships another mod's file. The public build needs a clip CIGAR may ship (a
+  vanilla one, option A) or no gesture; the author and personal builds can keep the EVG copy.

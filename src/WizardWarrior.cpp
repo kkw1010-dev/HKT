@@ -110,7 +110,7 @@ namespace CIGAR
 		const bool free = allowSwitch && !scene && !quiet;
 		activate.Update(free && drawn && !on && !dismissedOn, [] { return Text::L("마검사 모드", "Wizard Warrior Mode"); });
 		// Off only out of combat: sheathing mid-fight can be a stance change (the user, 2026-09-27).
-		deactivate.Update(free && !drawn && on && !combat && !dismissedOff, [] { return Text::L("마검사 해제", "End Wizard Warrior"); });
+		deactivate.Update(free && !drawn && on && !combat && !dismissedOff, [] { return Text::L("마검사 해제 (길게)", "End Wizard Warrior (hold)"); });
 	}
 
 	void WizardWarrior::Toggle(bool a_turnOn)

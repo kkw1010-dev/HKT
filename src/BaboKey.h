@@ -24,7 +24,12 @@ namespace CIGAR
 			kAct = PromptID::kBaboAct
 		};
 
-		BaboKey() { act.SetRepeat(true); }
+		// A ring, not a single press (the user's rule for non-combat actions, 2026-09-29).
+		BaboKey()
+		{
+			act.SetRepeat(true);
+			act.SetPromptType(SkyPromptAPI::kHold);
+		}
 
 		bool Resolve();
 		std::int32_t NotificationKey() const;

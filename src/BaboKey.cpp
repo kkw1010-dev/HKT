@@ -164,7 +164,7 @@ namespace CIGAR
 		std::string gate;
 		const bool live = KeyIsLive(gate);
 		LogGate(std::move(gate));
-		act.Update(live, [] { return std::string(Text::L("행동 선택", "Choose Action")); });
+		act.Update(live, [] { return std::string(Text::L("행동 선택 (길게)", "Choose Action (hold)")); });
 	}
 
 	void BaboKey::OnAccepted(std::uint16_t a_eventID)

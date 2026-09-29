@@ -8,6 +8,15 @@ New
 - **Gamepad D-pad and mouse buttons.** The Keys page can put prompts on the D-pad, and the mouse's
   middle and side buttons can be prompt keys. Checked with an Xbox controller.
 
+Changed
+- **Non-combat prompts are held, not tapped.** Bathe, shower, undress, get dressed, eat, relief,
+  deflate, BaboDialogue's action choice and ending Wizard Warrior Mode now fill a ring while you
+  hold the key, like the other non-combat prompts. A single tap no longer starts them, so the
+  double tap can always dismiss them. Combat prompts are unchanged.
+- **Dismissed prompts stay dismissed.** Any prompt you dismiss with a double tap stays hidden until
+  the situation changes: you leave the water, stand up, walk away and so on. Sitting and lying down
+  used to come back at once.
+
 Fixed
 - **A crash while prompts change.** SkyPrompt 2.4.0 could crash while drawing if a prompt was taken
   away at the same moment (for example when drawing a weapon ended the Observe prompt). CIGAR now

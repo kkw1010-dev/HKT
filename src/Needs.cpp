@@ -91,6 +91,9 @@ namespace CIGAR
 		// worn items) must not leave it gone.
 		urinate.SetRepeat(true);
 		defecate.SetRepeat(true);
+		// A ring, not a single press (the user's rule for non-combat actions, 2026-09-29).
+		urinate.SetPromptType(SkyPromptAPI::kHold);
+		defecate.SetPromptType(SkyPromptAPI::kHold);
 	}
 
 	Needs* Needs::GetSingleton()
@@ -315,8 +318,8 @@ namespace CIGAR
 		}
 		offeredBladder = s.bladderLevel;
 		offeredBowel = s.bowelLevel;
-		urinate.Update(s.canUrinate, [&s] { return Text::F("소변 보기 ({:.0f}%)", "Urinate ({:.0f}%)", s.bladderPercent); });
-		defecate.Update(s.canDefecate, [&s] { return Text::F("대변 보기 ({:.0f}%)", "Defecate ({:.0f}%)", s.bowelPercent); });
+		urinate.Update(s.canUrinate, [&s] { return Text::F("소변 보기 (길게): {:.0f}%", "Urinate (hold): {:.0f}%", s.bladderPercent); });
+		defecate.Update(s.canDefecate, [&s] { return Text::F("대변 보기 (길게): {:.0f}%", "Defecate (hold): {:.0f}%", s.bowelPercent); });
 	}
 
 	void Needs::OnAccepted(std::uint16_t a_eventID)

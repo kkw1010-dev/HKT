@@ -58,6 +58,10 @@ namespace CIGAR
 		std::atomic<std::int32_t> inflationType{ -1 };
 		std::atomic_bool queryPending{ false };
 		bool holding{ false };
+		// The key is down but not yet for kRingFill: nothing has gone to FHU (a tap or a double-tap
+		// decline must not start its push loop or its 5 s cooldown).
+		bool pressing{ false };
+		std::chrono::steady_clock::time_point pressedAt{};
 		std::chrono::steady_clock::time_point holdStart{};
 		std::chrono::steady_clock::time_point busyUntil{};
 	};

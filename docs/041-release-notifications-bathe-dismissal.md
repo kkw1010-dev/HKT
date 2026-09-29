@@ -22,6 +22,10 @@ debug-message setting.
 
 ## Bathe and Shower double-tap decline
 
+Done 2026-09-29 by the generic decline latch in `PromptSlot` (`docs/042`), not by a Bathe override:
+each prompt is independent, and it comes back once its own condition has been false for 1 s. Both
+prompts are also rings now. The notification audit above is still open.
+
 SkyPrompt's `kDeclined` is already passed to `Module::OnDeclined` by `src/Prompt.cpp`.
 `Bathe` has no override today. `PromptSlot::Update` continues to keep an eligible prompt alive,
 so a double-tap decline can be followed by the prompt returning under the same conditions.

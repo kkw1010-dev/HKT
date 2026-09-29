@@ -20,6 +20,9 @@ namespace CIGAR
 		// A SexLab scene's end still re-dresses the player and resets the face for a moment; starting
 		// FHU's strip and deflate idle inside that window lets SexLab undo them.
 		constexpr auto kSettle = 3s;
+		// How long the key must be down before FHU's key-down is sent (the ring, the user's rule for
+		// non-combat actions, 2026-09-29). Twice Observe's tap length; my choice.
+		constexpr auto kRingFill = 500ms;
 
 		class TypeResult final : public RE::BSScript::IStackCallbackFunctor
 		{
@@ -53,6 +56,8 @@ namespace CIGAR
 	Deflate::Deflate()
 	{
 		deflate.SetHoldMode(true);
+		// SkyPrompt draws the ring; the hold itself still reports key down and up (docs/019).
+		deflate.SetPromptType(SkyPromptAPI::kHoldAndKeep);
 	}
 
 	Deflate* Deflate::GetSingleton()
@@ -116,6 +121,7 @@ namespace CIGAR
 		deflate.Reset();
 		lastGate.clear();
 		holding = false;
+		pressing = false;
 		busyUntil = {};
 		inflationType = -1;
 		queryPending = false;
@@ -202,10 +208,16 @@ namespace CIGAR
 			busyUntil = now + kSettle;
 		}
 		const bool settling = now < busyUntil;
+		if (pressing && now - pressedAt >= kRingFill) {
+			pressing = false;
+			holding = true;
+			holdStart = now;
+			SendKey("OnKeyDown", true);
+		}
 
-		LogGate(std::format("tracked={} type={} animating={} sexlab={} settling={} holding={}", tracked, type, animating, sexlab, settling, holding));
+		LogGate(std::format("tracked={} type={} animating={} sexlab={} settling={} pressing={} holding={}", tracked, type, animating, sexlab, settling, pressing, holding));
 		// While held, FHU itself is animating; keep the prompt so the release still arrives.
-		const bool can = holding || (tracked && type > 0 && !settling);
+		const bool can = holding || pressing || (tracked && type > 0 && !settling);
 		deflate.Update(can, [] { return std::string(Text::L("배출 (길게 누르기)", "Deflate (hold)")); });
 	}
 
@@ -238,13 +250,18 @@ namespace CIGAR
 			return;
 		}
 		if (a_down) {
-			if (holding) {
+			if (holding || pressing) {
 				return;
 			}
-			holding = true;
-			holdStart = std::chrono::steady_clock::now();
-			SendKey("OnKeyDown", true);
+			// Sent from Tick once the key has been down for kRingFill.
+			pressing = true;
+			pressedAt = std::chrono::steady_clock::now();
 		} else {
+			if (pressing) {
+				pressing = false;
+				Log("released before the ring filled: nothing sent to FHU");
+				return;
+			}
 			if (!holding) {
 				return;
 			}

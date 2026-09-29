@@ -195,8 +195,8 @@ namespace CIGAR
 		if (settling) {
 			return;
 		}
-		undress.Update(!context.empty() && counted && dressed, [] { return std::string(Text::L("탈의하기", "Undress")); });
-		dress.Update(canDress, [] { return std::string(Text::L("착용하기", "Get Dressed")); });
+		undress.Update(!context.empty() && counted && dressed, [] { return std::string(Text::L("탈의하기 (길게)", "Undress (hold)")); });
+		dress.Update(canDress, [] { return std::string(Text::L("착용하기 (길게)", "Get Dressed (hold)")); });
 	}
 
 	void Dress::OnAccepted(std::uint16_t a_eventID)

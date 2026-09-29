@@ -39,12 +39,13 @@ namespace CIGAR::PushProbe
 
 	// Stage 0d (docs/038, approved by the user 2026-09-29): squeeze past an NPC the player is pressing
 	// against, two ways compared. Unlike the rest of this probe, these write engine values, and undo them
-	// once the player is clear of the NPC or after 3 s. kShrink halves the player's controller capsule
-	// radius; kGhost switches off the collision flag of that NPC's controller body (the body other
-	// characters bump), so only that NPC stops blocking. Both also play the automatic gesture.
+	// once the player is clear of the NPC or after 3 s. kGhost switches off the collision flag of that
+	// NPC's controller body (the body other characters bump), so only that NPC stops blocking; it also
+	// plays the automatic gesture. (가), halving the player's capsule, was dropped after r8b: the
+	// player controller's shapes are not capsules (type 9), so it never changed anything; the user
+	// picked (나) (2026-09-29).
 	enum class Squeeze
 	{
-		kShrink,
 		kGhost
 	};
 	// Any thread: arms one; it applies when the player next touches an NPC while moving (within 30 s).

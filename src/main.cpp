@@ -327,6 +327,7 @@ namespace
 			}
 			Util::ResolveScenes();
 			PromptAnchor::OnGameLoaded();
+			Prompts::ClearDeclines();
 			for (auto* module : Modules()) {
 				module->OnGameLoaded();
 			}

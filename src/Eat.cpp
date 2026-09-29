@@ -40,6 +40,8 @@ namespace CIGAR
 	Eat::Eat()
 	{
 		eat.SetRepeat(true);
+		// A ring, not a single press (the user's rule for non-combat actions, 2026-09-29).
+		eat.SetPromptType(SkyPromptAPI::kHold);
 	}
 
 	Eat* Eat::GetSingleton()
@@ -228,7 +230,7 @@ namespace CIGAR
 			eat.Reset();
 		}
 		offeredFood = live ? food : nullptr;
-		eat.Update(live, [food] { return Text::F("먹기: {}", "Eat: {}", Util::NameOf(food)); });
+		eat.Update(live, [food] { return Text::F("먹기 (길게): {}", "Eat (hold): {}", Util::NameOf(food)); });
 	}
 
 	void Eat::OnAccepted(std::uint16_t a_eventID)

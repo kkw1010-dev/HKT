@@ -535,7 +535,6 @@ namespace CIGAR::PushProbe
 		}
 
 		// Stage 0d: squeeze past a touching NPC. Probe values (Claude's, not the user's).
-		constexpr float kShrinkFactor = 0.5f;     // (가) the player's capsule radius is multiplied by this
 		constexpr float kContactAhead = 75.0f;    // an NPC this close ahead counts as touching when no bump is reported
 		constexpr float kClearPast = 30.0f;       // the player is past the NPC once this far beyond it
 		constexpr float kClearDistance = 70.0f;   // and this far from it: then the change is undone
@@ -549,7 +548,8 @@ namespace CIGAR::PushProbe
 
 		const char* SqueezeName(int a_how)
 		{
-			return a_how == static_cast<int>(Squeeze::kShrink) ? "(가) 캡슐 축소" : "(나) 그 NPC 충돌 끄기";
+			(void)a_how;
+			return "(나) 그 NPC 충돌 끄기";
 		}
 
 		struct SqueezeRun
@@ -574,8 +574,6 @@ namespace CIGAR::PushProbe
 			float maxPast = -1.0e9f;
 			bool passed = false;
 			float slowAfter = 0.0f;  // seconds after the undo spent below 20 u/s while moving
-			// (가): each capsule changed, kept alive by its bhkShape, with its old radius.
-			std::vector<std::tuple<RE::NiPointer<RE::bhkShape>, RE::hkpConvexShape*, float>> radii;
 			// (나): the NPC's controller body, kept alive, and its old filter word.
 			RE::hkRefPtr<RE::hkpRigidBody> body;
 			std::uint32_t oldFilter = 0;
@@ -636,42 +634,6 @@ namespace CIGAR::PushProbe
 				nearest <= kDoorRange ? std::format("'{}' {:.0f} away", door, nearest) : std::format("none within {:.0f}", kDoorRange));
 		}
 
-		std::string Shrink(RE::PlayerCharacter* a_player, RE::Actor* a_npc)
-		{
-			auto* controller = a_player->GetCharController();
-			if (!controller) {
-				return "no player controller: nothing changed";
-			}
-			const auto* npcController = a_npc->GetCharController();
-			std::string out = std::format("controller radius {:.3f} destRadius {:.3f} scale {:.2f}", controller->radius,
-				controller->destRadius, controller->scale);
-			for (std::size_t i = 0; i < 2; ++i) {
-				RE::NiPointer<RE::bhkShape> shape = controller->shapes[i];
-				auto* hk = shape ? static_cast<RE::hkpShape*>(shape->referencedObject.get()) : nullptr;
-				if (!hk) {
-					out += std::format("; shape{} none", i);
-					continue;
-				}
-				if (hk->type != RE::hkpShapeType::kCapsule) {
-					out += std::format("; shape{} type {} (not a capsule, left alone)", i, static_cast<int>(hk->type));
-					continue;
-				}
-				auto* capsule = static_cast<RE::hkpConvexShape*>(hk);
-				const bool again = std::ranges::any_of(squeeze.radii, [&](const auto& a_entry) { return std::get<1>(a_entry) == capsule; });
-				const bool shared = npcController && (npcController->shapes[0].get() == shape.get() || npcController->shapes[1].get() == shape.get());
-				if (again) {
-					out += std::format("; shape{} is shape0 again", i);
-					continue;
-				}
-				const float old = capsule->radius;
-				capsule->radius = old * kShrinkFactor;
-				squeeze.radii.emplace_back(shape, capsule, old);
-				out += std::format("; shape{} capsule radius {:.3f} -> {:.3f}{}", i, old, capsule->radius,
-					shared ? " (the NPC's controller uses this shape too)" : "");
-			}
-			return out;
-		}
-
 		std::string Ghost(RE::Actor* a_npc)
 		{
 			auto* npcController = a_npc->GetCharController();
@@ -690,11 +652,6 @@ namespace CIGAR::PushProbe
 		std::string Undo()
 		{
 			std::string out;
-			for (auto& [shape, capsule, old] : squeeze.radii) {
-				out += std::format("{}capsule radius {:.3f} -> {:.3f}", out.empty() ? "" : "; ", capsule->radius, old);
-				capsule->radius = old;
-			}
-			squeeze.radii.clear();
 			if (auto* body = squeeze.body.get()) {
 				auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
 				out += std::format("{}NPC body filter {:08X} -> {:08X}", out.empty() ? "" : "; ", filter.filter, squeeze.oldFilter);
@@ -751,7 +708,7 @@ namespace CIGAR::PushProbe
 				squeeze.npcStart = npc->GetPosition();
 				const float d = std::max(Flat(squeeze.npcStart, pos), 1.0f);
 				squeeze.axis = { (squeeze.npcStart.x - pos.x) / d, (squeeze.npcStart.y - pos.y) / d, 0.0f };
-				const auto change = squeeze.how == static_cast<int>(Squeeze::kShrink) ? Shrink(a_player, npc) : Ghost(npc);
+				const auto change = Ghost(npc);
 				Log("squeeze {} start: touching {} {:08X} at {:.0f} via {}; {}; {}", SqueezeName(squeeze.how), squeeze.npcName, npc->GetFormID(), d,
 					signal, Surroundings(a_player), change);
 				gestureArmed = kAutoGesture;

@@ -380,3 +380,29 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - 결과: `RESULT squeeze ... PASSED | DID NOT PASS`, 복원 뒤 `POPPED | no pop`(예상보다 40 넘게 튀었는지), `N s stuck while moving`(끼임),
   `the NPC moved N (z ±N)`. (나)에서 z가 크게 음수면 NPC가 바닥으로 꺼진 것입니다.
 - (가)의 `(the NPC's controller uses this shape too)`가 보이면 캡슐이 NPC와 공유돼서 그 NPC도 같이 작아진 것입니다.
+
+## r8b 판정 (2026-09-29, Claude)
+
+- Q1~Q5: `docs/038` "Stage 0d results". (가)는 한 번도 적용되지 않았습니다(플레이어 충돌 모양이 캡슐이 아님). 그래서 탐침에서 뺐습니다.
+  (나)는 7번 중 6번 통과했고, 튐과 바닥 꺼짐은 없었습니다. 사용자가 (나)를 골랐습니다.
+- BaboKey: 연결됨(`Babo monitor=C47E22B8 ... ready`).
+- 개인판 항목은 CIGAR-Personal `HANDOFF.md`에 있습니다.
+
+## r9: 링 프롬프트와 거절 유지 (docs/042, 2026-09-29)
+
+비전투 프롬프트는 이제 전부 길게 눌러 링을 채워야 실행됩니다. 두 번 톡톡 눌러 거절하면 상황이 바뀔 때까지 다시 나오지 않습니다.
+손으로 적을 것은 없습니다. CTD가 나면 거기서 멈추고 알려 주세요.
+
+- **R1. 목욕 링과 거절:** 리버우드 강에 무기를 넣고 들어가 탈의까지 합니다(탈의도 이제 길게 누릅니다).
+  ```
+  coc Riverwood
+  ```
+  1. 목욕하기 키를 **한 번 짧게** 누릅니다 → 아무 일도 없어야 합니다.
+  2. **두 번 톡톡** 누릅니다 → 목욕하기가 사라지고, 물속에 있는 동안 다시 나오지 않아야 합니다.
+  3. 물 밖으로 나갔다가 다시 들어갑니다 → 다시 나와야 합니다. 이번에는 **길게** 눌러 목욕합니다.
+- **R2. 앉기 거절:** 평지에 서서 바닥을 내려다봅니다. 앉기·눕기가 뜨면 앉기 키를 **두 번 톡톡** 누릅니다.
+  그 자리에서 조금 움직였다 멈춰도 앉기가 다시 나오지 않아야 합니다. 몇 걸음(약 4미터 이상) 떨어진 곳에서 멈추면 다시 나와야 합니다.
+
+로그에서 보는 것(Claude가 판정):
+- R1: `event=1 declined: hidden while its condition holds`, 물 밖에서 1초 뒤 `event=1 no longer declined`. 짧게 한 번 누를 때는 `accepted`가 없어야 합니다.
+- R2: `event=20 declined: hidden until the player is 300 units away or in another cell`, 멀리 간 뒤 `event=20 no longer declined`.

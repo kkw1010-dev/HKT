@@ -248,6 +248,12 @@ namespace CIGAR
 		lie.SetPromptType(SkyPromptAPI::kHold);
 		lean.SetPromptType(SkyPromptAPI::kHold);
 		warm.SetPromptType(SkyPromptAPI::kHold);
+		// A declined pose stays hidden while the player stays about where they declined it (the user's
+		// rule, 2026-09-29): their gate drops with every step, so "false once" would bring it back at
+		// the next stop. 300 units is Observe's leave distance; my choice.
+		for (auto* slot : { &sit, &lie, &lean, &warm }) {
+			slot->SetDeclineDistance(300.0f);
+		}
 		// The clock runs fast while the key is down (hold mode reports down and up). HoldAndKeep
 		// draws SkyPrompt's ring, and the text and progress show the multiplier live.
 		passTime.SetHoldMode(true);

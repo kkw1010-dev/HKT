@@ -41,7 +41,12 @@ namespace CIGAR
 			kDress = PromptID::kDress
 		};
 
-		Dress() = default;
+		// A ring, not a single press (the user's rule for non-combat actions, 2026-09-29).
+		Dress()
+		{
+			undress.SetPromptType(SkyPromptAPI::kHold);
+			dress.SetPromptType(SkyPromptAPI::kHold);
+		}
 
 		void OnAim(RE::ObjectRefHandle a_handle);
 		const char* PlaceKind(RE::TESObjectREFR* a_ref);

@@ -147,8 +147,8 @@ namespace CIGAR
 		}
 		wasInWater = inWater;
 
-		bathe.Update(inWater && !busy && strippable == 0 && bisOn, [this] { return Text::L("목욕하기", "Bathe") + DirtText(); });
-		shower.Update(underFall && bisOn, [this] { return Text::L("샤워하기", "Shower") + DirtText(); });
+		bathe.Update(inWater && !busy && strippable == 0 && bisOn, [this] { return Text::L("목욕하기 (길게)", "Bathe (hold)") + DirtText(); });
+		shower.Update(underFall && bisOn, [this] { return Text::L("샤워하기 (길게)", "Shower (hold)") + DirtText(); });
 	}
 
 	void Bathe::OnAccepted(std::uint16_t a_eventID)

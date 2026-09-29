@@ -31,6 +31,10 @@ $Output    = Join-Path $Repo (Join-Path 'build' $Preset)
 
 if (-not (Test-Path $VsDevCmd)) { throw "Missing Visual Studio Build Tools: $VsDevCmd" }
 
+# Source rules whose breakage is silent in game (typed form lookups, ring prompts); before compiling.
+& python (Join-Path $PSScriptRoot 'check_prompt_rules.py')
+if ($LASTEXITCODE -ne 0) { throw 'Prompt-rule checks failed.' }
+
 # No build servers left behind: Ninja (no MSBuild nodes), /Z7 debug info (no mspdbsrv),
 # and no VS telemetry helper.
 $env:MSBUILDDISABLENODEREUSE = '1'

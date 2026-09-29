@@ -19,6 +19,8 @@ namespace CIGAR
 		void WithdrawAll(const Module* a_owner);
 		// Takes every CIGAR prompt off the screen; each is offered again on its next tick (game thread).
 		void WithdrawEverything();
+		// Forgets every decline (PromptSlot::Declined); on game load, where no situation carries over.
+		void ClearDeclines();
 
 		// Every SkyPrompt call CIGAR makes (send, remove) waits in a queue that a hook on the frame's
 		// Present call drains, on the render thread, where SkyPrompt draws too. CIGAR's modules run on
@@ -132,6 +134,16 @@ namespace CIGAR
 		std::uint32_t Key() const { return offered ? key : 0; }
 		// kHold shows SkyPrompt's progress ring and accepts only after a full hold.
 		void SetPromptType(SkyPromptAPI::PromptType a_type) { promptType = a_type; }
+		// A prompt the player declines (SkyPrompt's double tap) stays hidden while the situation that
+		// raised it lasts (the user's rule, 2026-09-29, for every prompt). By default the situation has
+		// ended once a_can has been false for kDeclineRelease. With a distance, it ends once the player
+		// is that far from where they declined or in another cell: for prompts whose a_can drops with
+		// every step (Rest's poses), where "false once" would bring them back at the next stop.
+		void SetDeclineDistance(float a_distance) { declineDistance = a_distance; }
+		bool Declined() const { return declined; }
+		void ClearDecline() { declined = false; }
+		// Game thread: the player declined this prompt.
+		void Decline();
 
 		std::span<const SkyPromptAPI::Prompt> GetPrompts() const override;
 		void ProcessEvent(SkyPromptAPI::PromptEvent a_event) const override;
@@ -143,6 +155,8 @@ namespace CIGAR
 	private:
 		void Offer(std::string a_text);
 		void KeepAlive();
+		// True once the declined situation has ended (see SetDeclineDistance).
+		bool DeclineOver(bool a_can);
 		void Send(std::string a_note = {});
 
 		Module* owner;
@@ -155,6 +169,11 @@ namespace CIGAR
 		std::chrono::steady_clock::time_point lastSent{};
 		std::uint32_t key{ 0 };
 		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
+		bool declined{ false };
+		float declineDistance{ 0.0f };
+		RE::NiPoint3 declinedAt{};
+		RE::FormID declinedCell{ 0 };
+		std::chrono::steady_clock::time_point declineFalseSince{};
 		// Render thread: what SkyPrompt reads. The text before the last change stays alive one more
 		// round, for an event SkyPrompt queued with the old text.
 		PromptData published;

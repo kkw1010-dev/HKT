@@ -28,7 +28,13 @@ namespace CIGAR
 			kShower = PromptID::kShower
 		};
 
-		Bathe() = default;
+		// Non-combat actions fill a ring (the user's rule, 2026-09-29): a single press would act on
+		// the first tap, so the double-tap decline could never reach it.
+		Bathe()
+		{
+			bathe.SetPromptType(SkyPromptAPI::kHold);
+			shower.SetPromptType(SkyPromptAPI::kHold);
+		}
 
 		bool ResolveBiS();
 		bool UnderWaterfall(RE::PlayerCharacter* a_player) const;

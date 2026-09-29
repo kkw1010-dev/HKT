@@ -23,7 +23,9 @@ namespace CIGAR
 		void OnDeclined(std::uint16_t a_eventID) override;
 
 	private:
-		WizardWarrior() = default;
+		// 마검사 해제 is shown out of combat only, so it fills a ring (the user's rule for non-combat
+		// actions, 2026-09-29); 마검사 모드 is raised with the weapon drawn, in combat, and stays a press.
+		WizardWarrior() { deactivate.SetPromptType(SkyPromptAPI::kHold); }
 
 		enum : std::uint16_t
 		{

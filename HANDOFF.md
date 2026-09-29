@@ -1,4 +1,4 @@
-# CIGAR — session handoff (updated 2026-09-29 18:45, session "Cigar", handing over)
+# CIGAR — session handoff (updated 2026-09-29, session "Cigar", after r8b)
 
 ## 시작 프롬프트 (새 세션에 붙여 넣기)
 
@@ -15,23 +15,23 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-29)
 
-- **Deployed:** CIGAR `e277228` plus CIGAR-Personal `1a345aa`, author build, at 2026-09-29 18:38:53.
-  DLL SHA-256 `ed450e356a576ed003054ff70ef9539bf396a27690e038bac21185777e6ffc7f`. `verify_deploy`
-  passed in full, including the check that the personal modules are in.
-- **In this build:**
-  - The r8 CTD guard (`e277228`, Crash Triage `2026-09-29-18-16-37`). `Util::ScriptObject` refuses
-    a Papyrus script object that is not `kLinkedValid` or is not the expected class, with one warning
-    line. `ScriptProperty` and MannequinSwap's element unpack also check the declared type. Each
-    integration's own "did not resolve, prompt off" path then takes over.
-  - The SkyPrompt render-thread queue (`docs/039`).
-  - The BiS wash guard.
-  - The Jujutsu "first death since the load" line.
-  - The squeeze probe (가)/(나) (`docs/038`, author build only).
-  - The personal modules (see CIGAR-Personal `HANDOFF.md`).
-- **Waiting on in-game results (r8):**
-  - The squeeze probe Q1-Q5 (`TEST-next-ingame.md` "r8 탐침"; the items went to worker A).
-  - The personal module checks listed in CIGAR-Personal's HANDOFF.
-  - Read the logs after the game closes: `CIGAR.log` in `Documents\My Games\Skyrim Special Edition\SKSE`.
+- **Deployed (2026-09-29, after r8b):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `c584d476b349f15e1bb5d5e7218795ba0550b1c020eccd7067db9104e25288eb`; `verify_deploy` passed in full.
+  Commit hashes: the "Ring prompts" commits of this date in both repos.
+- **In this build (new):**
+  - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
+    (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
+    each build.
+  - Squeeze probe: (가) removed (it never changed anything); (나) kept. The feature is planned, not built
+    (`docs/038` "Stage 1 plan"); open for the user: the public build's gesture clip.
+  - The personal module fix (see CIGAR-Personal `HANDOFF.md`).
+- **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
+- **Waiting on in-game results (r9):** `TEST-next-ingame.md` "r9" (R1 bathe ring and decline, R2 sit
+  decline) plus the personal item in CIGAR-Personal's HANDOFF. Read `CIGAR.log` after the game closes.
+- **Open (`docs/041`):** the release-HUD notification audit (diagnostic notices to the log only in the
+  release build). The Bathe decline half is done by `docs/042`.
+- **Open for the user:** whether Potion (combat page, also offers stamina potions out of combat) should
+  become a ring.
 - **Release D09: on hold (the user).** `CHANGELOG.md` "Unreleased" holds the next release:
   - the gamepad D-pad preset and mouse buttons (closed; texts say "checked with an Xbox controller");
   - the crash fix (SkyPrompt calls on the render thread);

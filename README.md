@@ -63,8 +63,10 @@ All 24 modules passed the CIGAR 2.0 final in-game test on 2026-09-25 (44 of 44 c
 | `Jujutsu` | 유술 (four hand-to-hand takedowns, and a lethal neck break) | — |
 | `Surrender` | 항복 | Acheron (+ Yamete Kudasai) |
 
-A prompt dismissed with SkyPrompt's double tap stays hidden until the situation changes (pass time,
-helmet, chair drink, observe, Wizard Warrior). Prompts hide while a menu is open. Prompt keys are
+A prompt dismissed with SkyPrompt's double tap stays hidden until the situation changes, for every
+prompt (`docs/042`). Every non-combat action is a hold prompt that fills a ring, so a tap never acts
+and the double tap can always decline it; combat prompts stay single presses. Prompts hide while a
+menu is open. Prompt keys are
 keyboard keys or the mouse's middle and side buttons; a gamepad uses SkyPrompt's own buttons or the
 D-pad (`docs/016`). Checked with an Xbox controller; gamepad and mouse work is closed (the user,
 2026-09-29).
