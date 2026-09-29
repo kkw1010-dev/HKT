@@ -1,6 +1,64 @@
-# CIGAR — session handoff (updated 2026-09-28, end of day, session "Cigar")
+# CIGAR — session handoff (updated 2026-09-29 18:45, session "Cigar", handing over)
 
-## Start here
+## 시작 프롬프트 (새 세션에 붙여 넣기)
+
+```
+세션 이름 Cigar. 모델 Opus, 추론 high, 권한 bypass.
+C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고 이어서 하세요.
+개인판(CIGAR-Personal) 작업은 그 저장소의 HANDOFF.md를 함께 읽으세요.
+사용자에게는 한국어로 답하고, 저장소 문서는 영어로 씁니다.
+커밋은 로컬에만 하고, GitHub 푸시는 사용자가 요청할 때만 합니다.
+보고는 SendMessage로 "오케스트레이터"에게 짧게 합니다. 오케스트레이터의 지시는 사용자 지시입니다.
+빌드는 C++ 잠금 규칙을 따르고 자기 PID만 정리합니다. 배포는 SkyrimSE.exe가 꺼져 있을 때만 합니다.
+공개 CIGAR 파일에는 개인판 내용을 적지 않습니다. 푸시 전에는 CIGAR-Personal\tools\check_public.py를 돌립니다.
+```
+
+## Now (2026-09-29)
+
+- **Deployed:** CIGAR `e277228` plus CIGAR-Personal `1a345aa`, author build, at 2026-09-29 18:38:53.
+  DLL SHA-256 `ed450e356a576ed003054ff70ef9539bf396a27690e038bac21185777e6ffc7f`. `verify_deploy`
+  passed in full, including the check that the personal modules are in.
+- **In this build:**
+  - The r8 CTD guard (`e277228`, Crash Triage `2026-09-29-18-16-37`). `Util::ScriptObject` refuses
+    a Papyrus script object that is not `kLinkedValid` or is not the expected class, with one warning
+    line. `ScriptProperty` and MannequinSwap's element unpack also check the declared type. Each
+    integration's own "did not resolve, prompt off" path then takes over.
+  - The SkyPrompt render-thread queue (`docs/039`).
+  - The BiS wash guard.
+  - The Jujutsu "first death since the load" line.
+  - The squeeze probe (가)/(나) (`docs/038`, author build only).
+  - The personal modules (see CIGAR-Personal `HANDOFF.md`).
+- **Waiting on in-game results (r8):**
+  - The squeeze probe Q1-Q5 (`TEST-next-ingame.md` "r8 탐침"; the items went to worker A).
+  - The personal module checks listed in CIGAR-Personal's HANDOFF.
+  - Read the logs after the game closes: `CIGAR.log` in `Documents\My Games\Skyrim Special Edition\SKSE`.
+- **Release D09: on hold (the user).** `CHANGELOG.md` "Unreleased" holds the next release:
+  - the gamepad D-pad preset and mouse buttons (closed; texts say "checked with an Xbox controller");
+  - the crash fix (SkyPrompt calls on the render thread);
+  - the Jujutsu swing gate.
+  Not in it yet: push-through (probe stage) and the r8 script-link guard (add a CHANGELOG line when
+  the release is cut). Package with `tools\Build.ps1 -Package` (`tools/make_release.py`), and run
+  CIGAR-Personal `tools/check_public.py` first.
+- **GitHub (HKT):** `origin/master` = `8254180`. Local was 41 commits ahead before this handoff commit, none pushed.
+- **D07 filter plan (before the next push).** `TCL_LIGHT_HOOK_ANALYSIS.md` moved to CIGAR-Personal
+  `docs/archive` (CIGAR `03ffed1` deletes it). It was never pushed, but the unpushed commit `ec84d68`
+  adds it. Before pushing, rewrite only `origin/master..HEAD` so that no commit carries the file, for
+  example `git filter-repo --path TCL_LIGHT_HOOK_ANALYSIS.md --invert-paths --refs origin/master..HEAD`
+  on a fresh clone. Then check that the final tree is unchanged, run CIGAR-Personal `tools/check_public.py --pre-push`, and
+  push only on the user's word.
+- **Procedures:**
+  - Build: `tools\Build.ps1`. It runs `check_menu_framework.py` and `check_input_map.py`. `-Deploy`
+    also copies; the usual deploy is to copy `buildelease\CIGAR.dll` and `.pdb` into
+    `mods\CIGAR\SKSE\Plugins` by hand while Skyrim is closed.
+  - Verify: `python toolserify_deploy.py`.
+  - Package: `tools\Build.ps1 -Package`.
+  - In-game checklist: `TEST-next-ingame.md`.
+  - Crashes: `TKL-Agent\Crash Triage`.
+- **Session rules:** Opus with high effort, bypass permission mode. Orchestrator instructions are
+  the user's. Downloads go to the "경량 에이전트" session. No upstream bug reports to other mod
+  authors. Gamepad and mouse work is closed.
+
+## Start here (older, 2026-09-28)
 
 Reply to the user in Korean. Read this section, then `README.md`. The design rationale and the test
 history of each module are in `docs/`, one file per module, and each file starts with its status.
