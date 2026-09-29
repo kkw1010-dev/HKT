@@ -27,6 +27,9 @@ namespace CIGAR
 		// HT_PlayerAlias: the head is reached 0.7 s into the take-off clip, which ends 1.85 s later.
 		constexpr auto kReachHead = 700ms;
 		constexpr auto kClipTail = 1850ms;
+		// Without a clip the queued unequip still needs a moment; Tick must not read the helmet as put back
+		// on meanwhile and forget it (review 2026-09-30). Mine.
+		constexpr auto kSettle = 500ms;
 		constexpr std::uint32_t kRecordHelmet = 'HELM';
 		constexpr std::uint32_t kRecordVersion = 1;
 		constexpr std::uint32_t kMaxStowed = 8;
@@ -219,16 +222,14 @@ namespace CIGAR
 					armor->GetFormID(), returned);
 			}
 			removing.clear();
-			if (clipRunning) {
-				step = Step::kStopClip;
-				stepAt = Clock::now() + kClipTail;
-			} else {
-				step = Step::kIdle;
-			}
+			step = Step::kStopClip;
+			stepAt = Clock::now() + (clipRunning ? kClipTail : kSettle);
 			return;
 		}
-		// Step::kStopClip
-		Clip(player, 0, kClipStop);
+		// Step::kStopClip (also the settle without a clip)
+		if (clipRunning) {
+			Clip(player, 0, kClipStop);
+		}
 		clipRunning = false;
 		step = Step::kIdle;
 	}

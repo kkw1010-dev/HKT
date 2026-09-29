@@ -377,6 +377,8 @@ namespace CIGAR
 			execute.Reset();
 		}
 		offeredVictim = live ? victim : nullptr;
+		// A decline covers this target only (review 2026-09-30).
+		execute.SetSituation(victim ? victim->GetFormID() : 0);
 		execute.Update(live, [victim] { return Text::F("처형: {}", "Execute: {}", Util::NameOf(victim)); });
 	}
 

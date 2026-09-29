@@ -278,7 +278,9 @@ namespace CIGAR
 		auto* args = RE::MakeFunctionArguments(RE::BSFixedString("iSurrenderKey"), static_cast<std::int32_t>(a_key));
 		RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> callback;
 		const bool queued = vm->DispatchMethodCall2(handle, kAcheronMCMScript, "SetSettingInt", args, callback);
-		surrenderKey = a_key;
+		if (queued) {
+			surrenderKey = a_key;  // only when Acheron was actually told (review 2026-09-30)
+		}
 		Log("Acheron iSurrenderKey -> {} requested queued={}", a_key, queued);
 	}
 

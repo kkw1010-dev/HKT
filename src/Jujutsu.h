@@ -85,6 +85,8 @@ namespace CIGAR
 
 		Phase phase{ Phase::kIdle };
 		RE::ActorHandle victim;
+		// The victim of a non-lethal pair cut short while its kill move still ran (Finish, orphan guard).
+		RE::ActorHandle orphanVictim;
 		RE::TESIdleForm* playing{ nullptr };
 		Clock::time_point phaseStart{};
 		Clock::time_point settleUntil{};

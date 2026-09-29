@@ -56,6 +56,12 @@ namespace CIGAR
 	{
 		look.Reset();
 		lastGate.clear();
+		// Loaded while zoomed in or easing back: put the FOV back, as OnDisabled does (review 2026-09-30).
+		if (zooming || easing) {
+			SetFOV(baseFOV);
+			currentFOV = baseFOV;
+			Log("loaded while observing: fov back to {:.1f}", baseFOV);
+		}
 		zooming = false;
 		easing = false;
 		dismissed = false;

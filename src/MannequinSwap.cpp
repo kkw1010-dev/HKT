@@ -492,6 +492,13 @@ namespace CIGAR
 		if (phase != Phase::kIdle) {
 			Log("WARN switched off in the middle of a swap: the pieces stay where they are now");
 		}
+		// Begin took Helmet's stowed list; while the take is waiting those helmets are still the player's,
+		// so hand them back or Helmet forgets them (review 2026-09-30).
+		if (phase == Phase::kTakeWait) {
+			for (const auto id : stowedHelmets) {
+				Helmet::GetSingleton()->Stow(id);
+			}
+		}
 		Reset();
 	}
 
@@ -548,7 +555,13 @@ namespace CIGAR
 	{
 		for (const auto& piece : give) {
 			const auto before = Util::ItemCount(a_mannequin, piece.armor);
-			a_player->RemoveItem(piece.armor, 1, RE::ITEM_REMOVE_REASON::kStoreInContainer, piece.extra, a_mannequin);
+			// Captured at accept time, seconds ago: the list may be gone (taken off in a menu, a helmet
+			// stowed), and a freed list passed to RemoveItem would corrupt the heap. Look it up again.
+			auto* extra = HasExtra(a_player, piece.armor, piece.extra) ? piece.extra : WornExtra(a_player, piece.armor);
+			if (extra != piece.extra) {
+				Log("  give: {}: its item data changed since the accept; using the {}", piece.text, extra ? "worn copy" : "first copy");
+			}
+			a_player->RemoveItem(piece.armor, 1, RE::ITEM_REMOVE_REASON::kStoreInContainer, extra, a_mannequin);
 			if (Util::ItemCount(a_mannequin, piece.armor) <= before) {
 				Abort(a_player, a_mannequin, std::format("{} did not move to the mannequin", piece.text));
 				return;
@@ -637,7 +650,12 @@ namespace CIGAR
 		for (const auto id : stowedHelmets) {
 			Helmet::GetSingleton()->Stow(id);
 		}
-		Util::Notify(Text::L("CIGAR: 의상 교환 실패. 원래대로 되돌림", "CIGAR: The outfit swap failed and was undone"));
+		if (a_player && a_mannequin) {
+			Util::Notify(Text::L("CIGAR: 의상 교환 실패. 원래대로 되돌림", "CIGAR: The outfit swap failed and was undone"));
+		} else {
+			// Nothing was undone: say that, not "undone" (review 2026-09-30).
+			Util::Notify(Text::L("CIGAR: 의상 교환 중 마네킹이 사라짐. 로그 확인", "CIGAR: The mannequin vanished during the swap. See the log"));
+		}
 		Reset();
 	}
 

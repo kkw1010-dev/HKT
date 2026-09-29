@@ -270,6 +270,8 @@ namespace CIGAR
 		if (offeredItem != a_itemID) {
 			equip.Withdraw();
 			equip.Reset();
+			// A new target is a new situation: a decline of the last one does not carry over (review 2026-09-30).
+			equip.ClearDecline();
 		}
 		offeredItem = a_itemID;
 		expiresAt = Clock::now() + kOfferWindow;

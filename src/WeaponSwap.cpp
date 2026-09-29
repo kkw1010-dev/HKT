@@ -391,7 +391,7 @@ namespace CIGAR
 			auto* right = player->GetEquippedObject(false);
 			auto* left = player->GetEquippedObject(true);
 			savedMelee = s.hands == Hands::kMelee && right ? right->As<RE::TESObjectWEAP>() : nullptr;
-			savedLeft = left && left != right ? left : nullptr;
+			savedLeft = left && !(left == right && IsTwoHanded(right->As<RE::TESObjectWEAP>())) ? left : nullptr;  // two identical one-handers too (review 2026-09-30)
 			manager->EquipObject(player, pick.weapon, pick.extra);
 			const bool ammoChanged = pick.ammo && player->GetCurrentAmmo() != pick.ammo;
 			if (ammoChanged) {

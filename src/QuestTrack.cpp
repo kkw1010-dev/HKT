@@ -189,6 +189,8 @@ namespace CIGAR
 		if (offeredQuest != a_questID) {
 			track.Withdraw();
 			track.Reset();
+			// A new target is a new situation: a decline of the last one does not carry over (review 2026-09-30).
+			track.ClearDecline();
 		}
 		offeredQuest = a_questID;
 		offeredLabel = QuestLabel(quest, a_objectiveIndex);

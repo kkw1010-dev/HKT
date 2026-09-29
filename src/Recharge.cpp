@@ -205,11 +205,21 @@ namespace CIGAR
 					}
 					const auto count = xList->GetCount();
 					inLists += count;
-					const auto soul = xList->GetSoulLevel();
+					// A pre-filled gem can sit in a list of its own without a soul entry (owned, stolen):
+					// its soul is then the base form's (review 2026-09-30).
+					auto soul = xList->GetSoulLevel();
+					const bool own = soul != RE::SOUL_LEVEL::kNone;
+					if (!own) {
+						soul = gem->GetContainedSoul();
+					}
 					if (soul == RE::SOUL_LEVEL::kNone || count <= 0) {
 						continue;
 					}
 					++result.filled;
+					if (!own && reusable) {
+						skip(gem, "reusable, pre-filled");
+						continue;
+					}
 					if (xList->HasQuestObjectAlias()) {
 						skip(gem, "quest");
 						continue;
@@ -267,7 +277,8 @@ namespace CIGAR
 				for (auto* xList : *data.second->extraLists) {
 					if (xList) {
 						inLists += xList->GetCount();
-						total += xList->GetSoulLevel() != RE::SOUL_LEVEL::kNone ? xList->GetCount() : 0;
+						const bool filled = xList->GetSoulLevel() != RE::SOUL_LEVEL::kNone || gem->GetContainedSoul() != RE::SOUL_LEVEL::kNone;
+						total += filled ? xList->GetCount() : 0;
 					}
 				}
 			}

@@ -29,6 +29,21 @@ Changed
   used to come back at once.
 
 Fixed
+- **Prompts that came back on a key another prompt now used.** An accepted or withdrawn prompt could
+  reappear two seconds later on its old key while another prompt held it, so one press ran both.
+- **Pass time left the world fast after a save.** Saving while holding pass time kept the game speed up
+  for the rest of the session.
+- **Jujutsu killed a knocked-down target** when the move was cut short (the module switched off, or a
+  move that did not start in time).
+- **A dismissed prompt no longer hides the next one.** A new item, quest, book or execution target, or
+  combat starting, brings the prompt back.
+- **Mannequin swap:** a possible crash when a piece was taken off in a menu during the swap; stowed
+  helmets are no longer forgotten when the module is switched off mid-swap.
+- **Smaller fixes:** the helmet could be forgotten right after taking it off; dual-wielding two identical
+  weapons lost the left one on a weapon swap; surrender's slow motion lasted through a dialogue; putting
+  the party clothes on twice forgot your own gear; Observe's zoom stayed after loading mid-zoom;
+  recharging skipped some pre-filled soul gems; sit and lie were offered in beast forms; a bad value in
+  CIGAR.json is kept as CIGAR.json.bad instead of being overwritten.
 - **A crash while prompts change.** SkyPrompt 2.4.0 could crash while drawing if a prompt was taken
   away at the same moment (for example when drawing a weapon ended the Observe prompt). CIGAR now
   sends and removes its prompts on the thread SkyPrompt draws on.

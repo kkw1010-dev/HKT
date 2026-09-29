@@ -453,6 +453,8 @@ namespace CIGAR
 		auto* potion = offeredPotion;
 		const bool showRatio = need == Need::kHealth || need == Need::kStamina || need == Need::kMagicka;
 		const int percent = static_cast<int>(ratio * 100.0f);
+		// A decline out of combat does not hide an emergency in combat, nor another need (review 2026-09-30).
+		drink.SetSituation((static_cast<std::uint64_t>(need) << 1) | (combat ? 1u : 0u));
 		if (!drink.Offered()) {
 			offeredInCombat = combat;
 			drink.SetPromptType(combat ? SkyPromptAPI::kSinglePress : SkyPromptAPI::kHold);

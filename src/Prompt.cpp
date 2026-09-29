@@ -113,9 +113,9 @@ namespace CIGAR
 		constexpr auto kPresentSilence = 5s;
 		std::atomic_bool fallbackLogged{ false };
 
-		void Deliver()
+		// Caller holds deliverLock.
+		void DeliverLocked()
 		{
-			std::scoped_lock deliver(deliverLock);
 			std::vector<Command> batch;
 			{
 				std::scoped_lock guard(queueLock);
@@ -146,7 +146,11 @@ namespace CIGAR
 				logs::warn("prompt queue: no Present call for {} s (hook {}); SkyPrompt calls go out from the game thread until it returns",
 					std::chrono::duration_cast<std::chrono::seconds>(kPresentSilence).count(), hookInstalled ? "installed" : "not installed");
 			}
-			Deliver();
+			// The fallback never runs while SkyPrompt draws: the hook holds deliverLock across its drawing, so
+			// a queue left for the next Present is safer than a send racing the draw (review 2026-09-30).
+			if (std::unique_lock deliver(deliverLock, std::try_to_lock); deliver.owns_lock()) {
+				DeliverLocked();
+			}
 		}
 
 		// BSGraphics::Renderer::End's call to Present, the call SkyPrompt draws in (its DrawHook, same site).
@@ -159,7 +163,8 @@ namespace CIGAR
 					renderThread = ::GetCurrentThreadId();
 					logs::info("prompt queue: first Present call on thread {} (SkyPrompt draws on this thread)", renderThread.load());
 				}
-				Deliver();
+				std::scoped_lock deliver(deliverLock);
+				DeliverLocked();
 				inPresent = true;
 				func(a_timer);
 				inPresent = false;
@@ -248,6 +253,7 @@ namespace CIGAR
 	{
 		for (auto [owner, slot] : Slots()) {
 			slot->ClearDecline();
+			slot->Reset();
 		}
 	}
 
@@ -260,6 +266,13 @@ namespace CIGAR
 
 	void PromptSlot::Update(bool a_can, const std::function<std::string()>& a_text)
 	{
+		if (spent) {
+			if (!a_can) {
+				spent = false;
+				offered = false;
+			}
+			return;
+		}
 		if (declined) {
 			if (DeclineOver(a_can)) {
 				declined = false;
@@ -283,6 +296,7 @@ namespace CIGAR
 	{
 		declined = true;
 		declineFalseSince = {};
+		declinedSituation = situation;
 		declinedCell = 0;
 		if (const auto* player = Util::Player()) {
 			declinedAt = player->GetPosition();
@@ -303,6 +317,9 @@ namespace CIGAR
 
 	bool PromptSlot::DeclineOver(bool a_can)
 	{
+		if (situation != declinedSituation) {
+			return true;
+		}
 		if (declineDistance > 0.0f) {
 			const auto* player = Util::Player();
 			if (!player) {
@@ -375,7 +392,7 @@ namespace CIGAR
 			return;
 		}
 		desired.color = a_color;
-		if (offered && Prompts::Available()) {
+		if (offered && !spent && Prompts::Available()) {
 			// SkyPrompt refreshes text, colour and progress of a prompt that is already queued.
 			Send();
 		}
@@ -383,7 +400,7 @@ namespace CIGAR
 
 	void PromptSlot::SetLive(std::string a_text, float a_progress)
 	{
-		if (!offered || !Prompts::Available() || (a_text == desired.text && a_progress == desired.progress)) {
+		if (!offered || spent || !Prompts::Available() || (a_text == desired.text && a_progress == desired.progress)) {
 			return;
 		}
 		desired.text = std::move(a_text);
@@ -393,6 +410,9 @@ namespace CIGAR
 
 	void PromptSlot::Withdraw()
 	{
+		// Off screen means not offered: the next Update offers it afresh, with a key slot, instead of the
+		// keep-alive re-sending it on the slot released below (review 2026-09-30).
+		offered = false;
 		if (Prompts::Available()) {
 			Enqueue({ this, false, {}, {} });
 		}
@@ -461,6 +481,8 @@ namespace CIGAR
 			self->Withdraw();
 			if (self->repeat) {
 				self->Reset();
+			} else {
+				self->spent = true;
 			}
 			module->OnAccepted(eventID);
 		});

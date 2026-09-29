@@ -15,8 +15,8 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-29)
 
-- **Deployed (2026-09-29, after r9, the Squeeze gate fix):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `a6648765852054a41234a2e1c5eb2b8360725789a0c1f8180b9780231c3d4a1c`; `verify_deploy` passed in full.
+- **Deployed (2026-09-30, after the code review, `docs/043`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `038a6cf1d484662208b08758f6ffbdece627184517635d74d93c3e1a36b0de8a`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts

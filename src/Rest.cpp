@@ -402,9 +402,12 @@ namespace CIGAR
 		const bool controlsOn = controls && controls->IsMovementControlsEnabled() && controls->IsLookingControlsEnabled();
 		const bool menu = !ui || ui->IsApplicationMenuOpen() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME);
 		const bool pending = pendingPose != Pose::kStanding;
+		// A beast form (werewolf, vampire lord) is a non-playable race with no sit or lie idles (review 2026-09-30).
+		const auto* race = a_player->GetRace();
+		const bool beast = race && !race->GetPlayable();
 
 		const bool can = !moving && !combat && !drawn && !seated && !swimming && !sneaking && !airborne &&
-		                 !mounted && !driven && controlsOn && !menu && !pending && !a_player->IsDead();
+		                 !mounted && !driven && controlsOn && !menu && !pending && !beast && !a_player->IsDead();
 		if (!can) {
 			readySince = now;
 		}
@@ -436,10 +439,10 @@ namespace CIGAR
 
 		LogGate(std::format(
 			"pose=standing pitch={:.2f} floor={} lean={} fire={} moving={} combat={} drawn={} seated={} swim={} sneak={} "
-			"air={} mount={} animDriven={} controls={} menu={} pending={} ready={}",
+			"air={} mount={} animDriven={} controls={} menu={} pending={} beast={} ready={}",
 			pitch, floor, leanFound == Pose::kStanding ? "none" : PoseName(leanFound),
 			warmFound == Pose::kStanding ? "none" : PoseName(warmFound), moving, combat, drawn, seated,
-			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, ready));
+			swimming, sneaking, airborne, mounted, driven, controlsOn, menu, pending, beast, ready));
 
 		// Pass time also works in a chair the player sat in by the game's own activate (the user's
 		// request, 2026-09-24); getting up out of the chair ends it.
@@ -466,7 +469,9 @@ namespace CIGAR
 		sit.Update(available, [] { return std::string(Text::L("앉기 (길게)", "Sit (hold)")); });
 		lie.Update(available, [] { return std::string(Text::L("눕기 (길게)", "Lie Down (hold)")); });
 		if (leanShown != leanFound) {
-			// The text names the surface, so a different surface is a new prompt.
+			// The text names the surface, so a different surface is a new prompt (Reset too, or the
+			// keep-alive re-sends the old text on a key slot already given back; review 2026-09-30).
+			lean.Reset();
 			lean.Withdraw();
 			leanShown = leanFound;
 		}
@@ -704,10 +709,10 @@ namespace CIGAR
 		if (!player) {
 			return;
 		}
-		sit.Withdraw();
-		lie.Withdraw();
-		lean.Withdraw();
-		warm.Withdraw();
+		for (auto* slot : { &sit, &lie, &lean, &warm }) {
+			slot->Reset();
+			slot->Withdraw();
+		}
 		warmFound = Pose::kStanding;
 		leanFound = Pose::kStanding;
 		ListenToPlayer(player);
@@ -904,10 +909,15 @@ namespace CIGAR
 			const float speed = RE::BSTimer::QGlobalTimeMultiplier();
 			passSpeedMax = Settings::RestGameSpeed();
 			// Game speed is left alone when the panel has it off, or when something else already
-			// changed it (Surrender's slow motion).
-			const bool elsewhere = std::abs(speed - 1.0f) >= 0.01f;
-			const bool ownSpeed = timer && passSpeedMax > 1.0f && !elsewhere;
-			passSpeedSet = ownSpeed ? 1.0f : 0.0f;
+			// changed it (Surrender's slow motion). After a save mid-hold (BeforeSave) the speed is still
+			// ours: keeping ownership is what lets the release put it back (review 2026-09-30; it used to
+			// read our own x3 as "set elsewhere" and leave it for the rest of the session).
+			const bool owned = passSpeedSet > 0.0f;
+			const bool elsewhere = !owned && std::abs(speed - 1.0f) >= 0.01f;
+			const bool ownSpeed = owned || (timer && passSpeedMax > 1.0f && !elsewhere);
+			if (!owned) {
+				passSpeedSet = ownSpeed ? 1.0f : 0.0f;
+			}
 			Log("pass time: key held, timescale {:.1f}, clock rising to x{:.0f} over {:.0f}s, game speed {}", passBase,
 				kPassTimeMax, kPassTimeRamp,
 				ownSpeed    ? std::format("to x{:.1f}", passSpeedMax) :

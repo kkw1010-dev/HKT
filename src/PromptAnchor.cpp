@@ -42,6 +42,9 @@ namespace CIGAR::PromptAnchor
 		bool gaveUpNotified = false;
 		std::uint64_t lastFrames = 0;
 		Clock::time_point lastFrameSeen{};
+		// The last Tick: a long gap (a pause, a menu) stopped both the ticks and the player's Update, so it
+		// says nothing about the hook (review 2026-09-30).
+		Clock::time_point lastTickAt{};
 
 		std::mutex statusLock;
 		std::string status = "not installed";
@@ -89,7 +92,7 @@ namespace CIGAR::PromptAnchor
 				return;
 			}
 			const auto* middle = a_player->GetMiddleHighProcess();
-			const auto* head = middle ? middle->headNode : nullptr;
+			const auto* head = middle && a_player->Is3DLoaded() ? middle->headNode : nullptr;
 			if (!head) {
 				return;  // a transformation or a missing process; the next frame tries again
 			}
@@ -219,6 +222,10 @@ namespace CIGAR::PromptAnchor
 	void Tick()
 	{
 		const auto now = Clock::now();
+		if (now - lastTickAt > 500ms) {
+			lastFrameSeen = now;
+		}
+		lastTickAt = now;
 		// The update hook must keep being called while the game runs; Tick only runs then.
 		if (const auto f = frames.load(); f != lastFrames) {
 			lastFrames = f;

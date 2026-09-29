@@ -104,6 +104,12 @@ namespace CIGAR
 		// A lethal move lets KillActor and KillMoveEnd through, so the engine kills the victim itself.
 		std::atomic_bool armedLethal{ false };
 		std::atomic<std::int64_t> armedAtMs{ 0 };
+		// The hooks honour armedVictim only until this time (steady clock, ms). Unlimited while a move runs;
+		// set when a non-lethal pair is cut short, so its orphaned KillMoveEnd and KillActor are still
+		// swallowed (review 2026-09-30: they used to reach the engine and kill the victim), but a stale
+		// pointer never outlives kOrphanGuard.
+		std::atomic<std::int64_t> armedUntilMs{ INT64_MAX };
+		constexpr std::int64_t kOrphanGuardMs = 15000;
 		// Milliseconds after arming at which each victim event arrived, or -1; the game thread logs them.
 		std::atomic<std::int64_t> killActorAt{ -1 };
 		std::atomic<std::int64_t> playerKillActorAt{ -1 };
@@ -115,6 +121,12 @@ namespace CIGAR
 			return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 		}
 
+		RE::Actor* Armed()
+		{
+			auto* v = armedVictim.load();
+			return v && NowMs() <= armedUntilMs.load() ? v : nullptr;
+		}
+
 		void Stamp(std::atomic<std::int64_t>& a_slot)
 		{
 			std::int64_t expected = -1;
@@ -123,12 +135,13 @@ namespace CIGAR
 
 		bool KillActorHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
 		{
-			if (auto* v = armedVictim.load(); v) {
+			if (auto* v = Armed(); v) {
 				if (&a_actor == v) {
 					Stamp(killActorAt);
 					return armedLethal ? originalKillActor(a_this, a_actor, a_parameter) : true;
 				}
-				if (&a_actor == RE::PlayerCharacter::GetSingleton()) {
+				// Not during an orphan guard: the player's own death must never be swallowed then.
+				if (&a_actor == RE::PlayerCharacter::GetSingleton() && armedUntilMs.load() == INT64_MAX) {
 					Stamp(playerKillActorAt);
 					return armedLethal ? originalKillActor(a_this, a_actor, a_parameter) : true;
 				}
@@ -138,7 +151,7 @@ namespace CIGAR
 
 		bool KillMoveStartHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
 		{
-			if (&a_actor == armedVictim.load()) {
+			if (&a_actor == Armed()) {
 				Stamp(killMoveStartAt);
 			}
 			return originalKillMoveStart(a_this, a_actor, a_parameter);
@@ -146,11 +159,11 @@ namespace CIGAR
 
 		bool KillMoveEndHook(RE::AnimHandler* a_this, RE::Actor& a_actor, const RE::BSFixedString& a_parameter)
 		{
-			if (&a_actor == armedVictim.load() && armedLethal) {
+			if (&a_actor == Armed() && armedLethal) {
 				Stamp(killMoveEndAt);
 				return originalKillMoveEnd(a_this, a_actor, a_parameter);
 			}
-			if (&a_actor == armedVictim.load()) {
+			if (&a_actor == Armed()) {
 				// This is the event that kills a kill-move victim. Test 3: knocking it down when the player's
 				// side ended left it standing up for 0.5-2.5 s first, so it goes down now, on the next frame.
 				Stamp(killMoveEndAt);
@@ -242,6 +255,8 @@ namespace CIGAR
 		deathSinceLoad = false;
 		lastGate.clear();
 		armedVictim = nullptr;
+		armedUntilMs = INT64_MAX;
+		orphanVictim = {};
 		phase = Phase::kIdle;
 		victim = {};
 		offeredTarget = nullptr;
@@ -408,6 +423,8 @@ namespace CIGAR
 		killMoveEndAt = -1;
 		armedAtMs = NowMs();
 		armedLethal = lethal;
+		armedUntilMs = INT64_MAX;
+		orphanVictim = {};
 		armedVictim = a_victim;
 		// Valhalla plays its execution idles the same way (playPairedIdle = AIProcess::SetupSpecialIdle).
 		const bool requested = process->SetupSpecialIdle(a_player, RE::DEFAULT_OBJECT::kActionIdle, playing, true, false, a_victim);
@@ -494,6 +511,18 @@ namespace CIGAR
 	void Jujutsu::OnVictimKillMoveEnd()
 	{
 		if (phase != Phase::kRunning && phase != Phase::kStarting) {
+			// A pair cut short by Finish (timeout, no start, module off) ended now: its KillMoveEnd was
+			// swallowed by the orphan guard, so the victim lives; clear what that event would have.
+			if (phase == Phase::kIdle && orphanVictim) {
+				armedVictim = nullptr;
+				armedUntilMs = INT64_MAX;
+				auto* v = orphanVictim.get().get();
+				if (v && v->IsInKillMove()) {
+					v->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kIsInKillMove);
+				}
+				Log("the cut-short pair ended: its KillMoveEnd was swallowed, the victim stays alive ({})", DescribeVictim(v));
+				orphanVictim = {};
+			}
 			return;
 		}
 		auto victimPtr = victim.get();
@@ -708,11 +737,21 @@ namespace CIGAR
 
 	void Jujutsu::Finish(const char* a_reason)
 	{
-		armedVictim = nullptr;
 		auto victimPtr = victim.get();
+		// A non-lethal pair cut short may still be playing: its KillMoveEnd would kill the victim, so the
+		// hooks keep swallowing it for kOrphanGuardMs instead of being disarmed now (review 2026-09-30).
+		const bool orphan = !lethal && (phase == Phase::kStarting || phase == Phase::kRunning) && victimPtr && victimPtr->IsInKillMove();
+		if (orphan) {
+			armedUntilMs = NowMs() + kOrphanGuardMs;
+			orphanVictim = victim;
+			Log("pair cut short while the victim is still in its kill move: its KillMoveEnd stays swallowed for {} s",
+				kOrphanGuardMs / 1000);
+		} else {
+			armedVictim = nullptr;
+		}
 		if (auto* v = victimPtr.get()) {
 			// A pair cut short (timeout, module off) must not leave the victim flagged as in a kill move.
-			if (v->IsInKillMove() && phase != Phase::kPreparing) {
+			if (!orphan && v->IsInKillMove() && phase != Phase::kPreparing) {
 				v->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kIsInKillMove);
 				Log("cleared the victim's in-kill-move flag");
 			}

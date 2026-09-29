@@ -85,7 +85,9 @@ namespace CIGAR
 			configQuest != nullptr, kidnap ? std::format("{:08X}", kidnap->GetFormID()) : "-",
 			static_cast<bool>(kidnapScript), npcAnimating != nullptr, tiedUp != nullptr, scenario != nullptr,
 			centerMarker != nullptr, hasCaptured, Util::DescribeScenes(), NotificationKey());
-		return monitorScript && kidnapScript && npcAnimating && centerMarker && hasCaptured;
+		// The key comes from the config quest: without it CIGAR would send -1 while Babo listens to another
+		// key, and nothing would say so (review 2026-09-30). -1 itself is this modlist's normal value.
+		return monitorScript && kidnapScript && npcAnimating && centerMarker && hasCaptured && Util::ScriptObject(configQuest, kConfigScript);
 	}
 
 	std::int32_t BaboKey::NotificationKey() const

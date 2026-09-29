@@ -250,8 +250,15 @@ namespace CIGAR::Settings
 			}
 			source = "CIGAR.json";
 		} catch (const std::exception& e) {
-			source = "defaults (CIGAR.json unreadable)";
-			logs::error("settings: {} is unreadable ({}); using defaults", kPath.string(), e.what());
+			// The sections before the bad value are applied, the rest keep their defaults, and the next
+			// save writes that mix back (review 2026-09-30): keep the player's file first.
+			std::error_code ec;
+			auto bad = kPath;
+			bad += ".bad";
+			std::filesystem::copy_file(kPath, bad, std::filesystem::copy_options::overwrite_existing, ec);
+			source = "partly defaults (CIGAR.json has a bad value)";
+			logs::error("settings: {} has a bad value ({}); sections after it use defaults; the file was kept as {}{}", kPath.string(),
+				e.what(), bad.string(), ec ? std::format(" (copy failed: {})", ec.message()) : "");
 			return;
 		}
 		for (const auto& [name, on] : enabled) {

@@ -258,19 +258,20 @@ namespace CIGAR::Util
 
 	std::int32_t ScriptInt(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, std::int32_t a_default)
 	{
-		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		// Linked owners only, as ScriptProperty requires (review 2026-09-30: nothing enforced it here).
+		const auto* var = a_object && LinkedAs(a_object->GetTypeInfo(), nullptr) ? a_object->GetProperty(a_name) : nullptr;
 		return var && var->IsInt() ? var->GetSInt() : a_default;
 	}
 
 	bool ScriptBool(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name)
 	{
-		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		const auto* var = a_object && LinkedAs(a_object->GetTypeInfo(), nullptr) ? a_object->GetProperty(a_name) : nullptr;
 		return var && var->IsBool() && var->GetBool();
 	}
 
 	float ScriptFloat(const RE::BSTSmartPointer<RE::BSScript::Object>& a_object, const char* a_name, float a_default)
 	{
-		const auto* var = a_object ? a_object->GetProperty(a_name) : nullptr;
+		const auto* var = a_object && LinkedAs(a_object->GetTypeInfo(), nullptr) ? a_object->GetProperty(a_name) : nullptr;
 		return var && var->IsFloat() ? var->GetFloat() : a_default;
 	}
 

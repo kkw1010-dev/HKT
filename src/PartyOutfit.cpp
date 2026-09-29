@@ -97,12 +97,21 @@ namespace CIGAR
 			return;
 		}
 		if (a_eventID == kWear) {
-			stored.clear();
+			if (Util::ItemCount(player, outfit) <= 0) {
+				Log("party clothes no longer carried: not worn");
+				return;
+			}
+			// A second wear (the clothes taken off in the inventory, nothing else worn) must not forget the
+			// player's own gear: keep the old list unless something is worn now (review 2026-09-30).
+			std::vector<RE::FormID> worn;
 			for (auto* armor : Util::GetStrippable(player)) {
-				if (armor != outfit && armor != boots && stored.size() < kMaxStored) {
-					stored.push_back(armor->GetFormID());
+				if (armor != outfit && armor != boots && worn.size() < kMaxStored) {
+					worn.push_back(armor->GetFormID());
 					manager->UnequipObject(player, armor);
 				}
+			}
+			if (!worn.empty()) {
+				stored = std::move(worn);
 			}
 			manager->EquipObject(player, outfit);
 			if (boots && Util::ItemCount(player, boots) > 0) {

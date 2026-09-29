@@ -108,7 +108,8 @@ namespace CIGAR
 			quest ? std::format("{:08X}", quest->GetFormID()) : "-", playerAlias != nullptr, static_cast<bool>(ability),
 			inflater != nullptr, config != nullptr, inflateFaction != nullptr, oralFaction != nullptr,
 			animatingFaction != nullptr, sexlabAnimating != nullptr, DeflateKey());
-		return ability && questScript && inflateFaction && oralFaction && animatingFaction;
+		// defKey lives on the config quest; without it the key sent would be -1 regardless (review 2026-09-30).
+		return ability && questScript && inflateFaction && oralFaction && animatingFaction && Util::ScriptObject(config, kConfigScript);
 	}
 
 	std::int32_t Deflate::DeflateKey() const
@@ -132,10 +133,12 @@ namespace CIGAR
 				Util::Notify(Text::L("CIGAR: FHU 연동 실패. 배출 프롬프트 비활성", "CIGAR: Fill Her Up link failed. Deflate prompt off"));
 			}
 			inflater = nullptr;
+			shownKey = -1;
 			return;
 		}
 		Log("ready");
 		ApplyKeyMode();
+		shownKey = DeflateKey();
 	}
 
 	void Deflate::ApplyKeyMode()
@@ -185,8 +188,20 @@ namespace CIGAR
 		}
 	}
 
+	void Deflate::FastTick()
+	{
+		// Every 100 ms, so the ring is 0.5 s and not "0.5 to 1.5 s" on the 1 s tick (review 2026-09-30).
+		if (inflater && pressing && std::chrono::steady_clock::now() - pressedAt >= kRingFill) {
+			pressing = false;
+			holding = true;
+			holdStart = std::chrono::steady_clock::now();
+			SendKey("OnKeyDown", true);
+		}
+	}
+
 	void Deflate::Tick()
 	{
+		shownKey = inflater ? DeflateKey() : -1;
 		if (!inflater) {
 			return;
 		}
@@ -208,12 +223,6 @@ namespace CIGAR
 			busyUntil = now + kSettle;
 		}
 		const bool settling = now < busyUntil;
-		if (pressing && now - pressedAt >= kRingFill) {
-			pressing = false;
-			holding = true;
-			holdStart = now;
-			SendKey("OnKeyDown", true);
-		}
 
 		LogGate(std::format("tracked={} type={} animating={} sexlab={} settling={} pressing={} holding={}", tracked, type, animating, sexlab, settling, pressing, holding));
 		// While held, FHU itself is animating; keep the prompt so the release still arrives.
@@ -253,7 +262,7 @@ namespace CIGAR
 			if (holding || pressing) {
 				return;
 			}
-			// Sent from Tick once the key has been down for kRingFill.
+			// Sent from FastTick once the key has been down for kRingFill.
 			pressing = true;
 			pressedAt = std::chrono::steady_clock::now();
 		} else {

@@ -65,6 +65,7 @@ namespace CIGAR
 		// Blocked detection (game thread).
 		std::deque<std::pair<Clock::time_point, RE::NiPoint3>> trail;
 		RE::FormID contactID{ 0 };
+		RE::FormID failedID{ 0 };  // the last NPC Begin could not squeeze, logged once
 		Clock::time_point contactSince{};
 		Clock::time_point shownUntil{};
 		std::string lastTrace;

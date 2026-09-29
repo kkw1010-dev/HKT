@@ -16,6 +16,7 @@ namespace CIGAR
 		const char* Name() const override { return "Deflate"; }
 		void OnGameLoaded() override;
 		void Tick() override;
+		void FastTick() override;
 		void OnAccepted(std::uint16_t) override {}
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
 		void OnDisabled() override;
@@ -26,7 +27,9 @@ namespace CIGAR
 		// Game thread.
 		void ApplyKeyMode();
 		// The key FHU listens to now, or -1.
-		std::int32_t Key() const { return inflater ? DeflateKey() : -1; }
+		// The panel reads this on the render thread: a copy the game thread refreshes, never the VM
+		// (review 2026-09-30; Grapple, Surrender and Execute already work this way).
+		std::int32_t Key() const { return shownKey.load(); }
 
 		// Result of FHU's GetMostRecentInflationType(player), from a VM thread.
 		void SetInflationType(std::int32_t a_type);
@@ -57,6 +60,7 @@ namespace CIGAR
 
 		std::atomic<std::int32_t> inflationType{ -1 };
 		std::atomic_bool queryPending{ false };
+		std::atomic<std::int32_t> shownKey{ -1 };
 		bool holding{ false };
 		// The key is down but not yet for kRingFill: nothing has gone to FHU (a tap or a double-tap
 		// decline must not start its push loop or its 5 s cooldown).

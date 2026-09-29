@@ -265,6 +265,8 @@ namespace
 			menuBlocked = !blockingMenus.empty();
 		}
 		if (!player || !player->Is3DLoaded() || (ui && ui->GameIsPaused()) || menuBlocked || frameworkBlocked) {
+			// No tick ends Surrender's slow motion now, and a dialogue menu does not pause the world.
+			Surrender::GetSingleton()->EndSlow("prompts off");
 			return;
 		}
 		// Bathe keeps its own prompt's state through the wash (it must not come straight back), so it is
@@ -281,6 +283,7 @@ namespace
 			logs::info("BiS wash {}: prompts {}", washing ? "started" : "ended", washing ? "off" : "back");
 		}
 		if (washBlocked) {
+			Surrender::GetSingleton()->EndSlow("prompts off");
 			return;
 		}
 		for (auto* module : Modules()) {

@@ -19,7 +19,7 @@ namespace CIGAR
 		void WithdrawAll(const Module* a_owner);
 		// Takes every CIGAR prompt off the screen; each is offered again on its next tick (game thread).
 		void WithdrawEverything();
-		// Forgets every decline (PromptSlot::Declined); on game load, where no situation carries over.
+		// Forgets every decline and every accepted-and-spent prompt; on game load, where no situation carries over.
 		void ClearDeclines();
 
 		// Every SkyPrompt call CIGAR makes (send, remove) waits in a queue that a hook on the frame's
@@ -119,7 +119,11 @@ namespace CIGAR
 		// a_text is only called when the prompt is offered.
 		void Update(bool a_can, const std::function<std::string()>& a_text);
 		void Withdraw();
-		void Reset() { offered = false; }
+		void Reset()
+		{
+			offered = false;
+			spent = false;
+		}
 		// Offer the prompt again after it was accepted, as long as a_can still holds. Without this an
 		// accepted prompt stays gone until a_can has been false once.
 		void SetRepeat(bool a_repeat) { repeat = a_repeat; }
@@ -142,6 +146,9 @@ namespace CIGAR
 		// every step (Rest's poses), where "false once" would bring them back at the next stop.
 		void SetDeclineDistance(float a_distance) { declineDistance = a_distance; }
 		bool Declined() const { return declined; }
+		// What the prompt is about (a target, a need): a decline ends as soon as this changes, even while
+		// a_can stays true (review 2026-09-30: a new target or combat starting is a new situation).
+		void SetSituation(std::uint64_t a_situation) { situation = a_situation; }
 		void ClearDecline() { declined = false; }
 		// Game thread: the player declined this prompt.
 		void Decline();
@@ -170,10 +177,16 @@ namespace CIGAR
 		std::chrono::steady_clock::time_point lastSent{};
 		std::uint32_t key{ 0 };
 		SkyPromptAPI::PromptType promptType{ SkyPromptAPI::kSinglePress };
+		// Accepted without repeat: withdrawn, and not re-sent (keep-alive, live text, colour) until a_can
+		// has been false once (review 2026-09-30: the keep-alive re-sent it within 2 s on a key slot it had
+		// already given back).
+		bool spent{ false };
 		bool declined{ false };
 		float declineDistance{ 0.0f };
 		RE::NiPoint3 declinedAt{};
 		RE::FormID declinedCell{ 0 };
+		std::uint64_t situation{ 0 };
+		std::uint64_t declinedSituation{ 0 };
 		std::chrono::steady_clock::time_point declineFalseSince{};
 		// Render thread: what SkyPrompt reads. The text before the last change stays alive one more
 		// round, for an event SkyPrompt queued with the old text.

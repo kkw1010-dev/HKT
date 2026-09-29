@@ -126,7 +126,9 @@ namespace CIGAR
 					data = s;
 				}
 			}
-			if (!classes || !data || static_cast<std::size_t>(data->start) + data->exports > size || classes->start >= size) {
+			if (!classes || !data || classes->start >= size || static_cast<std::size_t>(data->start) + data->local > size ||
+				static_cast<std::size_t>(data->start) + data->global > size || static_cast<std::size_t>(data->start) + data->virt > size ||
+				static_cast<std::size_t>(data->start) + data->exports > size) {
 				return std::unexpected("sections not found"s);
 			}
 			const std::size_t ds = data->start;
@@ -210,6 +212,21 @@ namespace CIGAR
 		}
 		constexpr auto kClipVariable = "iGPMAAnimationType";
 		constexpr auto kArmVariable = "iGPMAOffsetType";
+
+		// An interior cell, or the worldspace of an exterior one: exterior cell borders are not a change of
+		// place, and ending a pass there restored the NPC's collision mid-overlap (review 2026-09-30).
+		RE::FormID Place(const RE::PlayerCharacter* a_player)
+		{
+			const auto* cell = a_player->GetParentCell();
+			if (!cell) {
+				return 0;
+			}
+			if (cell->IsInteriorCell()) {
+				return cell->GetFormID();
+			}
+			const auto* world = cell->GetRuntimeData().worldSpace;
+			return world ? world->GetFormID() : cell->GetFormID();
+		}
 
 		float Flat(const RE::NiPoint3& a_a, const RE::NiPoint3& a_b)
 		{
@@ -427,6 +444,10 @@ namespace CIGAR
 		const auto now = Clock::now();
 		const auto pos = player->GetPosition();
 		// Speed over the last kSpeedWindow, not one tick (r9); -1 until the window is filled.
+		// A gap (a menu or a pause stops the ticks) would read as standing still: start the window again.
+		if (!trail.empty() && now - trail.back().first > 500ms) {
+			trail.clear();
+		}
 		trail.emplace_back(now, pos);
 		while (trail.size() > 2 && now - trail[1].first >= kSpeedWindow) {
 			trail.pop_front();
@@ -457,12 +478,11 @@ namespace CIGAR
 
 		if (pass) {
 			auto npc = pass->npc.get();
-			const auto* cell = player->GetParentCell();
 			const auto forward = Forward(player->GetAngleZ());
 			if (!npc || npc->IsDead() || !npc->Is3DLoaded()) {
 				End(player, "the NPC is gone");
-			} else if ((cell ? cell->GetFormID() : 0) != passCell) {
-				End(player, "cell changed");
+			} else if (Place(player) != passCell) {
+				End(player, "cell or worldspace changed");
 			} else if (combat) {
 				End(player, "combat");
 			} else {
@@ -537,7 +557,10 @@ namespace CIGAR
 		auto* controller = a_npc->GetCharController();
 		auto* body = controller ? controller->GetRigidBody() : nullptr;
 		if (!body) {
-			Log("WARN {} {:08X} has no controller body: not squeezed", Util::NameOf(a_npc), a_npc->GetFormID());
+			if (failedID != a_npc->GetFormID()) {
+				failedID = a_npc->GetFormID();
+				Log("WARN {} {:08X} has no controller body: not squeezed", Util::NameOf(a_npc), a_npc->GetFormID());
+			}
 			return;
 		}
 		auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
@@ -552,8 +575,7 @@ namespace CIGAR
 		p.lastProgress = p.start;
 		filter.SetNoCollision(true);
 		const bool set = filter.QNoCollision();
-		const auto* cell = a_player->GetParentCell();
-		passCell = cell ? cell->GetFormID() : 0;
+		passCell = Place(a_player);
 
 		std::string bump = "cooldown";
 		const auto id = a_npc->GetFormID();
@@ -586,9 +608,16 @@ namespace CIGAR
 		if (auto* body = pass->body.get()) {
 			auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
 			const auto before = filter.filter;
-			filter.filter = pass->oldFilter;
-			restored = filter.filter == pass->oldFilter;
-			restore = std::format("NPC body filter {:08X} -> {:08X} (read back {:08X})", before, pass->oldFilter, filter.filter);
+			// Only the bit Begin set: the engine may have changed the rest of the word meanwhile (a ragdoll,
+			// a layer change), and writing the old word back would undo that (review 2026-09-30).
+			const bool hadBit = (pass->oldFilter & RE::CFilter::Flags::kNoCollision) != 0;
+			filter.SetNoCollision(hadBit);
+			restored = filter.QNoCollision() == hadBit;
+			restore = std::format("NPC body filter {:08X} -> {:08X} (no collision back to {}{})", before, filter.filter, hadBit,
+				(filter.filter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ==
+						(pass->oldFilter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ?
+					""s :
+					std::format("; other bits changed since the start, from {:08X}", pass->oldFilter));
 		}
 		const auto npc = pass->npc.get();
 		std::string where = "the NPC is gone";
@@ -657,6 +686,12 @@ namespace CIGAR
 			return;
 		}
 		gesturePlaying = false;
+		// The layer is shared with Helmet: when its clip took over meanwhile, leave it running (review 2026-09-30).
+		std::int32_t current = 0;
+		if (a_player->GetGraphVariableInt(kClipVariable, current) && current != kGestureValue) {
+			Log("gesture stop ({}): skipped, {}={} is not ours any more", a_why, kClipVariable, current);
+			return;
+		}
 		const bool sent = a_player->NotifyAnimationGraph("OffsetGPMAStop");
 		const bool clip = a_player->SetGraphVariableInt(kClipVariable, 0);
 		const bool arm = a_player->SetGraphVariableInt(kArmVariable, 0);

@@ -181,6 +181,8 @@ namespace CIGAR
 		if (offeredBook != a_itemID) {
 			read.Withdraw();
 			read.Reset();
+			// A new target is a new situation: a decline of the last one does not carry over (review 2026-09-30).
+			read.ClearDecline();
 		}
 		offeredBook = a_itemID;
 		expiresAt = Clock::now() + kOfferWindow;

@@ -29,6 +29,9 @@ namespace CIGAR
 		// later through OnKeyChecked).
 		void CheckKey();
 		void OnKeyChecked(std::optional<std::int64_t> a_key);
+		// Ends Surrender's slow motion if it owns it; main calls it while the ticks are held (a dialogue
+		// menu does not pause the world; review 2026-09-30). Safe to repeat.
+		void EndSlow(const char* a_reason);
 
 	private:
 		enum : std::uint16_t
@@ -45,7 +48,6 @@ namespace CIGAR
 		void SetAcheronKey(std::int64_t a_key);
 		bool AllEnemiesTimedOut(RE::PlayerCharacter* a_player) const;
 		void StartSlow();
-		void EndSlow(const char* a_reason);
 		void Pulse();
 
 		PromptSlot surrender{ this, kSurrender };
