@@ -7,11 +7,10 @@
 
 namespace CIGAR
 {
-	// 비켜 지나가기: when a non-hostile humanoid blocks the way, a hold prompt lets the player squeeze
-	// past. While it is held, the NPC being pressed against stops colliding with the player's
-	// controller (its controller body's no-collision flag, the probe's (나), the user's pick after r8b),
-	// a dull cloth sound plays and the player plays EVG Animated Traversal's Squeeze gesture. Standing
-	// NPCs only, no bump, and a fall guard (r10: a moving NPC without collision drops through the floor). Everything is put back once the player is past. Needs EVG and Offset
+	// 비켜 지나가기: when a non-hostile humanoid blocks the way, a prompt lets the player squeeze past,
+	// from the press and for as long as it is held. The player's controller takes that NPC's collision
+	// system group for the pass (way (A), the user's pick after r11), so the two do not collide while both
+	// keep the floor; a cloth sound plays and the player plays EVG Animated Traversal's Squeeze gesture. Everything is put back once the player is past. Needs EVG and Offset
 	// Movement Animation; without either it is off (the user's D17). docs/038 "Stage 1".
 	class Squeeze final : public Module
 	{
@@ -23,21 +22,17 @@ namespace CIGAR
 		// optional integration, and without it Squeeze is off). CIGAR ships no clip.
 		static void PrepareClip();
 
-		// How the player gets through (author-build probe, the user's D20, 2026-09-30):
-		// (D) the NPC's controller body stops colliding for the pass (standing NPCs only);
-		// (A) the player's controller takes the NPC's collision system group for the pass;
-		// (E) only inside the player's own movement step, the body it bumps into is made non-colliding and
-		//     put back before the step returns (CX-12: the way I'm Walkin' Here lets allies through).
-		enum class Way : int
+		// Author-build probe (the user, r11): after the player is through, move the NPC aside a little, so the
+		// verdict can be read from the log (how far aside, and z). The NPC keeps its collision in (A).
+		enum class Nudge : int
 		{
-			kD = 0,
-			kA = 1,
-			kE = 2
+			kNone = 0,
+			kSlide8 = 1,
+			kSlide15 = 2,
+			kBump = 3
 		};
-		static void SetWay(Way a_way);
-		static Way GetWay() { return static_cast<Way>(way.load()); }
-		// (E): the call hook on the player's movement step; at plugin load.
-		static void InstallMovementHook();
+		static void SetNudge(Nudge a_nudge);
+		static Nudge GetNudge() { return static_cast<Nudge>(nudge.load()); }
 
 		const char* Name() const override { return "Squeeze"; }
 		void OnGameLoaded() override;
@@ -71,6 +66,8 @@ namespace CIGAR
 		};
 		RE::Actor* Nearest(RE::PlayerCharacter* a_player, Near& a_near) const;
 		void Begin(RE::PlayerCharacter* a_player, RE::Actor* a_npc, float a_ahead, float a_side);
+		void StartNudge(RE::PlayerCharacter* a_player, RE::Actor* a_npc, float a_side);
+		void NudgeTick(RE::Actor* a_npc);
 		// Puts the NPC's filter word back and reads it back; a_why goes to the log.
 		void End(RE::PlayerCharacter* a_player, std::string_view a_why);
 		void PlayGesture(RE::PlayerCharacter* a_player, float a_side);
@@ -96,15 +93,23 @@ namespace CIGAR
 		{
 			RE::ActorHandle npc;
 			std::string name;
-			RE::hkRefPtr<RE::hkpRigidBody> body;
-			std::uint32_t oldFilter{ 0 };
-			// (A): the player's collidables whose system group was switched, and their words before.
-			bool group{ false };
-			bool step{ false };  // (E)
+			// The player's filter words switched to the NPC's group (each once), with their words before;
+			// the phantom and the body are kept alive while switched.
+			struct Switched
+			{
+				RE::CFilter* filter;
+				std::uint32_t old;
+				const char* what;
+			};
+			std::vector<Switched> switched;
 			RE::hkRefPtr<RE::hkpShapePhantom> phantom;
-			std::uint32_t phantomOld{ 0 };
 			RE::hkRefPtr<RE::hkpRigidBody> playerBody;
-			std::uint32_t playerBodyOld{ 0 };
+			// The nudge probe.
+			bool nudging{ false };
+			float nudgeLeft{ 0.0f };
+			RE::NiPoint3 nudgeDir{};
+			RE::NiPoint3 nudgeFrom{};
+			Clock::time_point nudgeAt{};
 			float stuck{ 0.0f };
 			int selfBumps{ 0 };
 			RE::NiPoint3 playerStart{};
@@ -127,7 +132,7 @@ namespace CIGAR
 		bool restoreWarned{ false };
 		Clock::time_point popWatchUntil{};
 		RE::NiPoint3 popStart{};
-		static inline std::atomic<int> way{ 0 };
+		static inline std::atomic<int> nudge{ 0 };
 
 		// PrepareClip's result, read on load.
 		static inline bool clipReady{ false };

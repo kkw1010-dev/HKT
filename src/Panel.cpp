@@ -128,8 +128,8 @@ namespace CIGAR::Panel
 				"그레이비어드가 샤우트를 보여 달라고 하면 그 샤우트를 장착하는 프롬프트가 뜹니다.",
 				"When the Greybeards ask to see a shout, a prompt equips that shout." },
 			Label{ "Squeeze", "비켜 지나가기", "Squeeze Past", "EVG Animated Traversal, Offset Movement Animation",
-				"무기를 넣고 걷다가 사람에게 길이 막히면 비켜 지나가기가 뜹니다. 누르고 있는 동안 부딪힌 사람을 밀치고 지나가며, 지나가면 원래대로 돌아옵니다. 대화 중이거나 가구를 쓰는 사람, 적에게는 뜨지 않습니다.",
-				"Walking with the weapon sheathed, a person blocking the way brings up a squeeze-past prompt. While held you slip past whoever you bump into, and everything goes back once you are past. Not for people in conversation, using furniture, or enemies." },
+				"무기를 넣고 걷다가 사람에게 길이 막히면 비켜 지나가기가 뜹니다. 누르는 즉시, 누르고 있는 동안 부딪힌 사람 사이로 빠져나가며, 지나가면 원래대로 돌아옵니다. 플레이어와 대화 중인 사람과 적에게는 뜨지 않습니다.",
+				"Walking with the weapon sheathed, a person blocking the way brings up a squeeze-past prompt. From the press and while held you slip past whoever you bump into, and everything goes back once you are past. Not for someone talking to you, or enemies." },
 			Label{ "Rest", "앉기·눕기·기대기", "Sit, Lie & Lean", "",
 				"무기를 넣고 가만히 서서 바닥을 내려다보면 앉기·눕기가, 앞에 벽·탁자·난간이 있으면 기대기가, 앞에 불이 있으면 손 녹이기가 뜹니다. 쉬는 동안이나 의자에 앉아 있는 동안 시간 보내기 키를 누르고 있으면 시간이 빨리 흐릅니다. 움직이면 천천히 일어납니다.",
 				"Standing still with the weapon sheathed: looking at the floor offers sit and lie down, a wall, table or railing ahead offers lean, a fire ahead offers warm hands. While resting or seated, holding pass time makes time fly. Moving gets up slowly." },
@@ -642,16 +642,18 @@ namespace CIGAR::Panel
 					PushProbe::ArmSqueeze(PushProbe::Squeeze::kGhost);
 				}
 				ImGui::TextColored(kDim, "%s", PushProbe::Status().c_str());
-				// D20 (2026-09-30): the 비켜 지나가기 module's way, switched here to compare both in one run.
-				int way = static_cast<int>(Squeeze::GetWay());
-				ImGui::TextColored(kDim, "%s", "비켜 지나가기 방식:");
-				bool changed = ImGui::RadioButton("(D) NPC 충돌 끄기##sq-way-d", &way, 0);
+				// The nudge probe after r11 (the user): move the NPC aside a little once the player is through.
+				int nudge = static_cast<int>(Squeeze::GetNudge());
+				ImGui::TextColored(kDim, "%s", "비켜 지나가기 뒤 NPC 밀어내기 (탐침):");
+				bool changed = ImGui::RadioButton("없음##sq-nudge-0", &nudge, 0);
 				ImGui::SameLine();
-				changed |= ImGui::RadioButton("(A) 충돌 그룹 공유##sq-way-a", &way, 1);
+				changed |= ImGui::RadioButton("옆으로 8##sq-nudge-1", &nudge, 1);
 				ImGui::SameLine();
-				changed |= ImGui::RadioButton("(E) 걸음마다 부딪힌 몸만##sq-way-e", &way, 2);
+				changed |= ImGui::RadioButton("옆으로 15##sq-nudge-2", &nudge, 2);
+				ImGui::SameLine();
+				changed |= ImGui::RadioButton("부딪힘 동작##sq-nudge-3", &nudge, 3);
 				if (changed) {
-					Squeeze::SetWay(static_cast<Squeeze::Way>(way));
+					Squeeze::SetNudge(static_cast<Squeeze::Nudge>(nudge));
 				}
 			}
 

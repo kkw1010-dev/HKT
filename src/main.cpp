@@ -455,10 +455,9 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		return false;
 	}
 	// Before the game renders its first frame, so the call is never patched while it runs.
-	// One trampoline for the two call hooks (Present and the movement step), 14 bytes each.
-	SKSE::AllocTrampoline(28);
+	// The trampoline for the Present call hook.
+	SKSE::AllocTrampoline(14);
 	CIGAR::Prompts::InstallRenderHook();
-	CIGAR::Squeeze::InstallMovementHook();
 	// Before OAR reads its submods (it parses data\meshes after the data load).
 	CIGAR::Squeeze::PrepareClip();
 

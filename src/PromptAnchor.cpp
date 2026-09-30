@@ -191,6 +191,31 @@ namespace CIGAR::PromptAnchor
 		}
 	}
 
+	namespace
+	{
+		// Which DLL a code address belongs to, for the log.
+		std::string ModuleOf(std::uintptr_t a_address)
+		{
+			HMODULE module = nullptr;
+			if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+					reinterpret_cast<LPCWSTR>(a_address), &module) || !module) {
+				return "unknown module";
+			}
+			wchar_t path[MAX_PATH]{};
+			GetModuleFileNameW(module, path, MAX_PATH);
+			return std::filesystem::path(path).filename().string();
+		}
+
+		// Read only: what sits in PlayerCharacter::Update's vtable slot now, and whether it is CIGAR's hook.
+		std::string SlotOwner()
+		{
+			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
+			const auto slot = *reinterpret_cast<const std::uintptr_t*>(vtbl.address() + sizeof(void*) * REL::Relocate(0xAD, 0xAD, 0xAF));
+			return slot == reinterpret_cast<std::uintptr_t>(&UpdateHook) ? "still CIGAR's hook (so the chain after it stopped calling on)" :
+			                                                                std::format("now {:X} in {}", slot, ModuleOf(slot));
+		}
+	}
+
 	void Install()
 	{
 		REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
@@ -232,8 +257,8 @@ namespace CIGAR::PromptAnchor
 			lastFrameSeen = now;
 		} else if (!hookDead && now - lastFrameSeen >= kHookSilence) {
 			hookDead = true;
-			Log("WARN PlayerCharacter::Update has not reached CIGAR for {} s (another mod replaced it?): prompts stay on the player",
-				std::chrono::duration_cast<std::chrono::seconds>(kHookSilence).count());
+			Log("WARN PlayerCharacter::Update has not reached CIGAR for {} s: prompts stay on the player; the vtable slot is {}",
+				std::chrono::duration_cast<std::chrono::seconds>(kHookSilence).count(), SlotOwner());
 			Util::NotifyDiagnostic(Text::L("CIGAR: 프롬프트 위치 갱신 중단. 플레이어 기준으로 표시. 로그 확인",
 				"CIGAR: Prompt placement stopped updating; prompts stay on the player. See the log"));
 			SetStatus("update hook not called: prompts on the player");

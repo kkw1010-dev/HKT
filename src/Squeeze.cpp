@@ -25,8 +25,6 @@ namespace CIGAR
 		constexpr auto kLinger = 1500ms;
 		// The trace line covers actors this far ahead (the box is kBlockAhead).
 		constexpr float kTraceAhead = 150.0f;
-		// The ring: the key must be down this long before anything is changed (docs/042; Deflate's value).
-		constexpr auto kRingFill = 500ms;
 		// Past the NPC: this far beyond it along the player's heading, and this far from it (the probe's).
 		constexpr float kClearPast = 30.0f;
 		constexpr float kClearDistance = 70.0f;
@@ -35,13 +33,10 @@ namespace CIGAR
 		constexpr auto kNoProgress = 3s;
 		constexpr float kProgressStep = 5.0f;
 		constexpr auto kPassCap = 10s;
-		// r10: the no-collision flag also takes the NPC's controller off the floor, so an NPC that moves
-		// while it is set drops through it (세이디아 z -479, 미카엘 z -488; the r8b NPCs stood still, z ±2).
-		// The bump moved them, so it is gone; walking NPCs are not squeezed; and an NPC that drops more than
-		// kFallGuard below where it stood is put back and its collision restored at once.
+		// The nudge probe reports a z change above this.
 		constexpr float kFallGuard = 8.0f;
-		// A dull cloth brush when the pass starts (the user's idea, 2026-09-30): vanilla PHYGenericClothL.
-		constexpr RE::FormID kClothSound = 0x0624AB;  // Skyrim.esm
+		// A cloth sound when the pass starts (the user's idea, 2026-09-30): vanilla ITMClothingUpSD (Skyrim.esm).
+		constexpr RE::FormID kClothSound = 0x03E879;
 
 		// The gesture: EVG Animated Traversal's Squeeze, played on Offset Movement Animation's layer through
 		// CIGAR's own OAR submod while iGPMAAnimationType holds kGestureValue (Helmet uses 2 and 6, the old
@@ -53,34 +48,6 @@ namespace CIGAR
 		// in the user's order EVG Animations Replacer's, 3.13 s).
 		float clipSeconds = kGestureFallbackSeconds;
 		constexpr float kGestureStraight = 30.0f;  // within this of the line ahead the NPC is straight ahead
-
-		// (E): written by the game thread, read by the hook wherever the movement step runs (compared only).
-		std::atomic<RE::Actor*> stepTarget{ nullptr };
-		std::atomic<int> stepApplied{ 0 };
-		std::atomic_bool hookInstalled{ false };
-		REL::Relocation<void(RE::Actor*, float)> originalMove;
-
-		void MoveHook(RE::Actor* a_actor, float a_delta)
-		{
-			auto* target = stepTarget.load();
-			auto* controller = target && a_actor && a_actor->IsPlayerRef() ? a_actor->GetCharController() : nullptr;
-			auto* body = controller ? controller->bumpedCharCollisionObject.get() : nullptr;
-			if (!body) {
-				originalMove(a_actor, a_delta);
-				return;
-			}
-			auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo.filter;
-			// Already non-colliding (I'm Walkin' Here for an ally, or D): leave it to whoever did it.
-			if ((filter & RE::CFilter::Flags::kNoCollision) != 0 || RE::TESHavokUtilities::FindCollidableRef(*body->GetCollidable()) != target) {
-				originalMove(a_actor, a_delta);
-				return;
-			}
-			const auto saved = filter;
-			filter |= RE::CFilter::Flags::kNoCollision;
-			originalMove(a_actor, a_delta);
-			filter = saved;  // the whole word, before this step returns (CX-12)
-			++stepApplied;
-		}
 
 		// PrepareClip's files, Data-relative (through MO2's VFS; new files land in its overwrite).
 		constexpr auto kEvgClip =
@@ -297,9 +264,6 @@ namespace CIGAR
 			if (Util::InScene(a_npc)) {
 				return "in a scene framework";
 			}
-			if (Squeeze::GetWay() == Squeeze::Way::kD && a_npc->IsMoving()) {
-				return "walking";  // (D) only: it would drop through the floor without collision (r10)
-			}
 			return {};
 		}
 	}
@@ -348,8 +312,10 @@ namespace CIGAR
 	Squeeze::Squeeze()
 	{
 		// A hold that lasts while held: key down and up come to OnHold, SkyPrompt draws the ring.
+		// The one non-combat exception to the ring rule (the user, r11): it acts on the press and lasts while
+		// held. Key down and up come to OnHold; check_prompt_rules.py names it.
 		prompt.SetHoldMode(true);
-		prompt.SetPromptType(SkyPromptAPI::kHoldAndKeep);
+		prompt.SetPromptType(SkyPromptAPI::kSinglePress);
 	}
 
 	Squeeze* Squeeze::GetSingleton()
@@ -457,10 +423,6 @@ namespace CIGAR
 		if (gesturePlaying && now - gestureStart >= std::chrono::duration<float>(gestureSeconds)) {
 			StopGesture(player, "clip length");
 		}
-		if (pressing && !active && now - pressedAt >= kRingFill) {
-			active = true;
-			Log("ring filled: squeezing past while held");
-		}
 
 		const auto* state = player->AsActorState();
 		const bool combat = player->IsInCombat();
@@ -485,7 +447,7 @@ namespace CIGAR
 			} else if (combat) {
 				End(player, "combat");
 			} else {
-				const auto npcPos = npc->GetPosition();
+				NudgeTick(npc.get());
 				if (moving && speed >= 0.0f && speed < 20.0f) {
 					pass->stuck += 0.1f;
 				}
@@ -496,19 +458,8 @@ namespace CIGAR
 						++pass->selfBumps;
 					}
 				}
-				if (pass->group && pos.z < pass->playerStart.z - kFallGuard) {
-					const auto dropped = pass->playerStart.z - pos.z;
-					End(player, "the player dropped");
-					Log("WARN the player dropped {:.0f} while squeezing past (A): the group was put back", dropped);
-				} else if (npcPos.z < pass->npcStart.z - kFallGuard) {
-					// Collision first, then the position: back where it stood, with its controller updated.
-					const auto dropped = pass->npcStart.z - npcPos.z;
-					const auto start = pass->npcStart;
-					End(player, "the NPC dropped");
-					npc->SetPosition(start, true);
-					Log("WARN {} dropped {:.0f} while squeezed past: collision restored and put back at z {:.0f} (now {:.0f})",
-						Util::NameOf(npc.get()), dropped, start.z, npc->GetPosition().z);
-				}
+				// No fall guard in (A): nobody's floor collision changes, and a walker going down stairs would read
+				// as a drop. The RESULT line logs both z changes.
 			}
 			if (pass && npc) {
 				const auto npcPos = npc->GetPosition();
@@ -596,80 +547,129 @@ namespace CIGAR
 			}
 			return;
 		}
-		auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+		const auto& npcFilter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+		const auto npcGroup = npcFilter.GetSystemGroup();
 		Pass p;
-		const auto chosen = GetWay();
-		p.group = chosen == Way::kA;
-		p.step = chosen == Way::kE;
 		p.npc = a_npc->GetHandle();
 		p.name = std::format("{} {:08X}", Util::NameOf(a_npc), a_npc->GetFormID());
-		p.body = RE::hkRefPtr<RE::hkpRigidBody>(body);
-		p.oldFilter = filter.filter;
 		p.playerStart = a_player->GetPosition();
 		p.npcStart = a_npc->GetPosition();
 		p.start = Clock::now();
 		p.lastProgress = p.start;
-		std::string change;
-		bool set = false;
-		if (p.step) {
-			// (E): nothing is changed here; the movement hook does it step by step while this NPC is the target.
-			set = hookInstalled.load();
-			stepTarget = a_npc;
-			stepApplied = 0;
-			change = std::format("(E) per-step no-collision on the bumped body while the player moves (hook {})",
-				set ? "installed" : "NOT installed");
-		} else if (!p.group) {
-			// (D): that NPC's controller body stops colliding with anything (the floor too, so no walker).
-			filter.SetNoCollision(true);
-			set = filter.QNoCollision();
-			change = std::format("(D) NPC body filter {:08X} -> {:08X} (no collision {})", p.oldFilter, filter.filter, set);
-		} else {
-			// (A) probe, the user's D20: the player's controller takes the NPC's collision system group, so the
-			// two stop colliding with each other while both keep the world. The player's controller is a proxy
-			// (its phantom does the sweeps) and may also have a rigid body; both are switched and read back.
-			const auto npcGroup = filter.GetSystemGroup();
-			auto* playerController = a_player->GetCharController();
-			auto* proxyController = playerController ? skyrim_cast<RE::bhkCharProxyController*>(playerController) : nullptr;
-			auto* proxy = proxyController ? proxyController->GetCharacterProxy() : nullptr;
-			auto* phantom = proxy ? proxy->shapePhantom : nullptr;
-			auto* playerBody = playerController ? playerController->GetRigidBody() : nullptr;
-			change = std::format("(A) NPC group {} (filter {:08X}, layer {}); player controller {}", npcGroup, p.oldFilter,
-				static_cast<int>(filter.GetCollisionLayer()), proxyController ? "proxy" : playerController ? "rigid body" : "none");
-			if (phantom) {
-				auto& pf = phantom->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
-				p.phantom = RE::hkRefPtr<RE::hkpShapePhantom>(phantom);
-				p.phantomOld = pf.filter;
-				pf.SetSystemGroup(npcGroup);
-				set = pf.GetSystemGroup() == npcGroup;
-				change += std::format("; phantom {:08X} -> {:08X} (layer {})", p.phantomOld, pf.filter, static_cast<int>(pf.GetCollisionLayer()));
+
+		// The user's pick after r11 (A): the player's controller takes the NPC's collision system group, so
+		// the two stop colliding with each other while both keep the world. The proxy's phantom does the
+		// sweeps; the controller's rigid body may be the same collidable (r11: switching both and restoring
+		// both in turn left the player on the NPC's group), so each filter word is switched once.
+		auto* playerController = a_player->GetCharController();
+		auto* proxyController = playerController ? skyrim_cast<RE::bhkCharProxyController*>(playerController) : nullptr;
+		auto* proxy = proxyController ? proxyController->GetCharacterProxy() : nullptr;
+		auto* phantom = proxy ? proxy->shapePhantom : nullptr;
+		auto* playerBody = playerController ? playerController->GetRigidBody() : nullptr;
+		std::string change = std::format("NPC group {} (filter {:08X}); player controller {}", npcGroup, npcFilter.filter,
+			proxyController ? "proxy" : playerController ? "rigid body" : "none");
+		auto take = [&](RE::hkpCollidable* a_collidable, const char* a_what) {
+			auto* filter = &a_collidable->broadPhaseHandle.collisionFilterInfo;
+			if (std::ranges::any_of(p.switched, [&](const auto& a_s) { return a_s.filter == filter; })) {
+				change += std::format("; {} shares the phantom's filter", a_what);
+				return;
 			}
-			if (playerBody) {
-				auto& bf = playerBody->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
-				p.playerBody = RE::hkRefPtr<RE::hkpRigidBody>(playerBody);
-				p.playerBodyOld = bf.filter;
-				bf.SetSystemGroup(npcGroup);
-				set = set || bf.GetSystemGroup() == npcGroup;
-				change += std::format("; body {:08X} -> {:08X} (layer {})", p.playerBodyOld, bf.filter, static_cast<int>(bf.GetCollisionLayer()));
-			}
+			p.switched.push_back({ filter, filter->filter, a_what });
+			filter->SetSystemGroup(npcGroup);
+			change += std::format("; {} {:08X} -> {:08X}", a_what, p.switched.back().old, filter->filter);
+		};
+		if (phantom) {
+			p.phantom = RE::hkRefPtr<RE::hkpShapePhantom>(phantom);
+			take(phantom->GetCollidableRW(), "phantom");
 		}
+		if (playerBody) {
+			p.playerBody = RE::hkRefPtr<RE::hkpRigidBody>(playerBody);
+			take(playerBody->GetCollidableRW(), "body");
+		}
+		const bool set = !p.switched.empty() &&
+		                 std::ranges::all_of(p.switched, [&](const auto& a_s) { return a_s.filter->GetSystemGroup() == npcGroup; });
 		passCell = Place(a_player);
 
-		bool sound = false;
-		if (auto* descriptor = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(kClothSound); descriptor && a_player->Get3D()) {
+		// The dull cloth sound (the user's idea). r11: PHYGenericClothL played but was not heard (a quiet
+		// physics impact, static attenuation 2.64); ITMClothingUpSD is the audible cloth rustle.
+		std::string sound = "no descriptor";
+		if (auto* descriptor = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(kClothSound)) {
 			RE::BSSoundHandle handle;
-			if (auto* audio = RE::BSAudioManager::GetSingleton(); audio && audio->GetSoundHandle(handle, descriptor)) {
-				handle.SetObjectToFollow(a_player->Get3D());
-				sound = handle.Play();
+			auto* audio = RE::BSAudioManager::GetSingleton();
+			if (audio && audio->GetSoundHandle(handle, descriptor)) {
+				handle.SetPosition(a_player->GetPosition());
+				if (auto* root = a_player->Get3D()) {
+					handle.SetObjectToFollow(root);
+				}
+				handle.SetVolume(1.0f);
+				const bool played = handle.Play();
+				sound = std::format("{:08X} valid {} played {} id {}", kClothSound, handle.IsValid(), played, handle.soundID);
+			} else {
+				sound = "no handle";
 			}
 		}
-		Log("start: {} at {:.0f} ahead, {:+.0f} to the side, {}; {}; NPC z {:.0f}, player z {:.0f}; cloth sound {}", p.name, a_ahead, a_side,
+		Log("start: {} at {:.0f} ahead, {:+.0f} to the side, {}; {}; NPC z {:.0f}, player z {:.0f}; sound {}", p.name, a_ahead, a_side,
 			a_npc->IsMoving() ? "walking" : "standing", change, p.npcStart.z, p.playerStart.z, sound);
 		pass = std::move(p);
 		if (!set) {
 			End(a_player, "the change did not stick");
 			return;
 		}
+		StartNudge(a_player, a_npc, a_side);
 		PlayGesture(a_player, a_side);
+	}
+
+	void Squeeze::StartNudge(RE::PlayerCharacter* a_player, RE::Actor* a_npc, float a_side)
+	{
+		const auto how = static_cast<Nudge>(nudge.load());
+		if (how == Nudge::kNone || !pass) {
+			return;
+		}
+		// Sideways from the player's heading, away from the player: the NPC on the right goes right.
+		const auto right = Right(a_player->GetAngleZ());
+		const float sign = a_side >= 0.0f ? 1.0f : -1.0f;
+		pass->nudgeDir = { right.x * sign, right.y * sign, 0.0f };
+		pass->nudgeLeft = how == Nudge::kSlide8 ? 8.0f : how == Nudge::kSlide15 ? 15.0f : 0.0f;
+		pass->nudgeFrom = a_npc->GetPosition();
+		pass->nudging = true;
+		pass->nudgeAt = Clock::now();
+		if (how == Nudge::kBump) {
+			// The vanilla bump idle for the side the player comes from; the NPC keeps its collision in (A).
+			const auto to = a_player->GetPosition() - a_npc->GetPosition();
+			const auto forward = Forward(a_npc->GetAngleZ());
+			const auto npcRight = Right(a_npc->GetAngleZ());
+			const float f = to.x * forward.x + to.y * forward.y;
+			const float r = to.x * npcRight.x + to.y * npcRight.y;
+			const char* event = std::abs(f) >= std::abs(r) ? (f >= 0.0f ? "NPC_BumpFromFront" : "NPC_BumpedFromBack") :
+			                                                  (r >= 0.0f ? "NPC_BumpedFromRight" : "NPC_BumpedFromLeft");
+			Log("nudge: bump idle {} accepted {}", event, a_npc->NotifyAnimationGraph(event));
+		} else {
+			Log("nudge: slide {:.0f} units to the {}", pass->nudgeLeft, sign > 0.0f ? "right" : "left");
+		}
+	}
+
+	void Squeeze::NudgeTick(RE::Actor* a_npc)
+	{
+		if (!pass || !pass->nudging) {
+			return;
+		}
+		// Up to 4 units a tick, with the controller moved along, so the NPC eases aside instead of jumping.
+		if (pass->nudgeLeft > 0.0f) {
+			const float step = std::min(4.0f, pass->nudgeLeft);
+			auto pos = a_npc->GetPosition();
+			pos.x += pass->nudgeDir.x * step;
+			pos.y += pass->nudgeDir.y * step;
+			a_npc->SetPosition(pos, true);
+			pass->nudgeLeft -= step;
+		}
+		// The verdict one second in: how far aside it went and whether it kept the floor.
+		if (Clock::now() - pass->nudgeAt >= 1s) {
+			pass->nudging = false;
+			const auto now = a_npc->GetPosition();
+			const float aside = (now.x - pass->nudgeFrom.x) * pass->nudgeDir.x + (now.y - pass->nudgeFrom.y) * pass->nudgeDir.y;
+			Log("nudge RESULT on {}: {:.0f} aside, {:.0f} moved in all, z {:+.0f}{}", pass->name, aside, Flat(now, pass->nudgeFrom),
+				now.z - pass->nudgeFrom.z, std::abs(now.z - pass->nudgeFrom.z) > kFallGuard ? " (z MOVED)" : "");
+		}
 	}
 
 	void Squeeze::End(RE::PlayerCharacter* a_player, std::string_view a_why)
@@ -677,46 +677,17 @@ namespace CIGAR
 		if (!pass) {
 			return;
 		}
+		// Only the group bits go back, each filter word from its own saved value.
 		std::string restore;
 		bool restored = true;
-		if (pass->step) {
-			stepTarget = nullptr;
-			restore = std::format("(E) applied in {} movement steps, each put back within its step", stepApplied.exchange(0));
-		} else if (!pass->group) {
-			restored = false;
-			restore = "no body";
-			if (auto* body = pass->body.get()) {
-				auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
-				const auto before = filter.filter;
-				// Only the bit Begin set: the engine may have changed the rest of the word meanwhile (a ragdoll,
-				// a layer change), and writing the old word back would undo that (review 2026-09-30).
-				const bool hadBit = (pass->oldFilter & RE::CFilter::Flags::kNoCollision) != 0;
-				filter.SetNoCollision(hadBit);
-				restored = filter.QNoCollision() == hadBit;
-				restore = std::format("NPC body filter {:08X} -> {:08X} (no collision back to {}{})", before, filter.filter, hadBit,
-					(filter.filter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ==
-							(pass->oldFilter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ?
-						""s :
-						std::format("; other bits changed since the start, from {:08X}", pass->oldFilter));
-			}
-		} else {
-			// Only the group bits go back, for the same reason.
-			auto put = [&](RE::hkpCollidable* a_collidable, std::uint32_t a_old, const char* a_what) {
-				auto& f = a_collidable->broadPhaseHandle.collisionFilterInfo;
-				const auto before = f.filter;
-				RE::CFilter old;
-				old.filter = a_old;
-				f.SetSystemGroup(old.GetSystemGroup());
-				const bool ok = f.GetSystemGroup() == old.GetSystemGroup();
-				restored = restored && ok;
-				restore += std::format("{}{} {:08X} -> {:08X}{}", restore.empty() ? "" : "; ", a_what, before, f.filter, ok ? "" : " NOT BACK");
-			};
-			if (auto* phantom = pass->phantom.get()) {
-				put(phantom->GetCollidableRW(), pass->phantomOld, "player phantom");
-			}
-			if (auto* body = pass->playerBody.get()) {
-				put(body->GetCollidableRW(), pass->playerBodyOld, "player body");
-			}
+		for (const auto& s : pass->switched) {
+			const auto before = s.filter->filter;
+			RE::CFilter old;
+			old.filter = s.old;
+			s.filter->SetSystemGroup(old.GetSystemGroup());
+			const bool ok = s.filter->GetSystemGroup() == old.GetSystemGroup();
+			restored = restored && ok;
+			restore += std::format("{}player {} {:08X} -> {:08X}{}", restore.empty() ? "" : "; ", s.what, before, s.filter->filter, ok ? "" : " NOT BACK");
 		}
 		const auto npc = pass->npc.get();
 		std::string where = "the NPC is gone";
@@ -728,19 +699,18 @@ namespace CIGAR
 			const float past = (pos.x - npcPos.x) * forward.x + (pos.y - npcPos.y) * forward.y;
 			const float apart = Flat(pos, npcPos);
 			passed = past >= kClearPast && apart >= kClearDistance;
-			// Close and not past at the undo: the physics pushes the two apart (the probe's POPPED).
 			where = std::format("{:.0f} from the NPC, {:+.0f} past it; the NPC moved {:.0f} (z {:+.0f}); player z {:+.0f}; "
 								"stuck {:.1f} s while moving; self-bumps {}{}",
 				apart, past, Flat(npcPos, pass->npcStart), npcPos.z - pass->npcStart.z, pos.z - pass->playerStart.z, pass->stuck,
 				pass->selfBumps, apart < 40.0f ? "; STILL OVERLAPPING" : "");
 		}
-		Log("RESULT squeeze {} on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->step ? "(E)" : pass->group ? "(A)" : "(D)", pass->name, a_why,
-			passed ? "PASSED" : "DID NOT PASS", pass->moved, std::chrono::duration<float>(Clock::now() - pass->start).count(), where, restore);
+		Log("RESULT squeeze on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->name, a_why, passed ? "PASSED" : "DID NOT PASS", pass->moved,
+			std::chrono::duration<float>(Clock::now() - pass->start).count(), where, restore.empty() ? "nothing to restore"s : restore);
 		if (!restored) {
-			Log("WARN a collision filter did not go back");
+			Log("WARN the player's collision group did not go back");
 			if (!restoreWarned) {
 				restoreWarned = true;
-				Util::Notify(Text::L("CIGAR: 비켜 지나가기 복원 실패. 로그 확인", "CIGAR: Squeeze Past could not restore an NPC. See the log"));
+				Util::Notify(Text::L("CIGAR: 비켜 지나가기 복원 실패. 로그 확인", "CIGAR: Squeeze Past could not restore the player's collision. See the log"));
 			}
 		}
 		pass.reset();
@@ -802,32 +772,11 @@ namespace CIGAR
 		Log("gesture stop ({}): OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", a_why, sent, kClipVariable, clip, kArmVariable, arm);
 	}
 
-	void Squeeze::SetWay(Way a_way)
+	void Squeeze::SetNudge(Nudge a_nudge)
 	{
-		way = static_cast<int>(a_way);
-		logs::info("[Squeeze] way: {}", a_way == Way::kA ? "(A) the player's controller shares the NPC's collision group; walkers too" :
-		                                a_way == Way::kE ? "(E) per movement step, the bumped NPC body only; walkers too" :
-		                                                   "(D) the NPC's collision off; standing NPCs only");
-	}
-
-	void Squeeze::InstallMovementHook()
-	{
-		if (REL::Module::IsVR()) {
-			logs::info("[Squeeze] movement hook: not on VR (no known call site); way (E) is unavailable");
-			return;
-		}
-		// The call to ApplyMovementDelta in the actor movement update: the site I'm Walkin' Here NG hooks
-		// (installed in this modlist, 1.7.0, working on this runtime). A 5-byte call is expected there; anything
-		// else means another layout, and (E) stays off.
-		const REL::Relocation<std::uintptr_t> target{ REL::RelocationID(36359, 37350) };
-		const auto site = target.address() + (REL::Module::IsAE() ? 0xFB : 0xF0);
-		if (*reinterpret_cast<const std::uint8_t*>(site) != 0xE8) {
-			logs::error("[Squeeze] movement hook: no call at the site ({:02X}); way (E) is unavailable", *reinterpret_cast<const std::uint8_t*>(site));
-			return;
-		}
-		originalMove = SKSE::GetTrampoline().write_call<5>(site, MoveHook);
-		hookInstalled = true;
-		logs::info("[Squeeze] movement hook installed (chained: {})", originalMove.address() != 0);
+		nudge = static_cast<int>(a_nudge);
+		logs::info("[Squeeze] nudge probe: {}", a_nudge == Nudge::kSlide8 ? "slide 8 units" : a_nudge == Nudge::kSlide15 ? "slide 15 units" :
+		                                         a_nudge == Nudge::kBump ? "bump idle" : "none");
 	}
 
 	void Squeeze::OnHold(std::uint16_t a_eventID, bool a_down)
@@ -836,15 +785,16 @@ namespace CIGAR
 			return;
 		}
 		if (a_down) {
-			if (!pressing) {
+			// At once, no ring (the user, r11: waiting at the NPC for a ring to fill is not good).
+			if (!active) {
 				pressing = true;
+				active = true;
 				pressedAt = Clock::now();
+				Log("pressed: squeezing past while held");
 			}
 			return;
 		}
-		if (pressing && !active) {
-			Log("released before the ring filled: nothing changed");
-		} else if (active) {
+		if (active) {
 			// The NPC being passed is let go by its own rule (past it, no progress, the cap), not here:
 			// restoring while the two overlap would push them apart.
 			Log("released: no further NPC is squeezed past{}", pass ? std::format("; {} is let go once passed", pass->name) : "");

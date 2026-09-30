@@ -470,3 +470,29 @@ known limitation. The cloth sound is already in and stays either way (alternativ
   steps` counts it. The chain with I'm Walkin' Here: it loads after CIGAR and wraps CIGAR's hook.
 - The cloth sound `PHYGenericClothL` (0624AB) was checked with houseCARL: a Skyrim.esm SNDR, winner
   Skyrim.esm.
+
+### r11 (the user's run of 2026-09-30 19:38-20:10): the user picked (A)
+
+- **(D) failed** ("no sound, the farmer still sinks"): 6 of 7 passes ended with the NPC dropping 13-21
+  even while standing (the fall guard put each back). (D) is removed.
+- **(A) passed** in the user's eyes (A1-A3). The log also shows a bug: on the player's proxy controller
+  `GetRigidBody()` shares the phantom's filter word, so switching "phantom" then "body" and restoring
+  both in turn left the player on the NPC's group after each pass (`004A001E` never came back in a chain
+  of passes). Fixed: each filter word is switched once, keyed by its address, and restored from its own
+  saved value. Many (A) results read `DID NOT PASS (the next NPC)`: in the crowded inn the next NPC took
+  over before the first was cleared; the user judged it by eye.
+- **(E) failed** (E1-E3): the hook ran (up to 26 movement steps per pass got the bit) but the player
+  stayed blocked (`STILL OVERLAPPING`, stuck up to 0.7 s). Removed, with the movement hook.
+- **Sound:** `cloth sound true` every time, yet nothing heard: `PHYGenericClothL` is a quiet physics
+  impact (static attenuation 2.64). Now `ITMClothingUpSD` (03E879, the audible cloth rustle), placed
+  at the player, volume 1, and the log gives the handle's validity and sound ID.
+- **The user's decisions (r11):** (A) is the way; the prompt acts on the press and lasts while held
+  (no ring; the one named non-combat exception in `check_prompt_rules.py`, `INSTANT_HOLD`); prepare a
+  test of moving the NPC aside a little.
+- **Nudge probe (author panel, "비켜 지나가기 뒤 NPC 밀어내기"):** none / slide 8 / slide 15 / the bump idle.
+  A slide moves the NPC sideways from the player's heading, away from the player, 4 units a tick with
+  its controller; one second in, `nudge RESULT on <npc>: N aside, N moved in all, z ±N` (and `z MOVED`
+  above 8). The NPC keeps its collision in (A), so the bump idle, which dropped NPCs under (D), is back
+  as an option to measure.
+- No fall guards in (A): nobody's floor collision changes, and a walker going down stairs would read as
+  a drop; the RESULT line still logs both z changes.

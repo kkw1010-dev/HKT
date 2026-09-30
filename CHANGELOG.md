@@ -6,9 +6,9 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 
 New
 - **Squeeze Past** (with EVG Animated Traversal and Offset Movement Animation installed). When a
-  person blocks your way while you walk with the weapon sheathed, hold the prompt to slip past them
-  with EVG's squeeze motion; they give way with the game's own bump, and everything goes back once
-  you are past. Not for people talking, using furniture, or enemies. CIGAR ships no animation: at
+  person blocks your way while you walk with the weapon sheathed, press and hold the prompt to slip
+  past them with EVG's squeeze motion and a rustle of cloth; everything goes back once you are past.
+  Standing or walking people alike; not someone talking to you, or enemies. CIGAR ships no animation: at
   startup it prepares its gesture from your own copy of EVG (a small OAR folder, "CIGAR Squeeze").
 - **Gamepad D-pad and mouse buttons.** The Keys page can put prompts on the D-pad, and the mouse's
   middle and side buttons can be prompt keys. Checked with an Xbox controller.

@@ -476,3 +476,24 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - `RESULT squeeze (A)|(D) on ...: PASSED`, 그리고 `NPC ... (z ±N); player z ±N; stuck N s while moving; self-bumps N`, `player phantom ... -> ...`(그룹 복원).
 - `after the undo: ... (no pop|POPPED)`.
 - (A)의 판정 기준: 통과, NPC와 플레이어의 z가 둘 다 ±10 안, self-bumps 0, POPPED 없음, `WARN` 없음.
+
+## r11 판정 (2026-09-30, Claude)
+
+- (D) 실패: 서 있어도 NPC가 13~21 가라앉음. 제거. (E) 실패: 훅은 걸음마다 작동(최대 26번)했지만 플레이어가 막힘. 제거.
+- (A) 채택. 로그에서 버그 발견: 플레이어 충돌 그룹이 지나간 뒤 원래대로 안 돌아옴(같은 필터를 두 번 저장·복원). 고쳤습니다.
+- 소리: 재생은 됐지만 너무 작은 물리 충돌음이었습니다. 옷 부스럭 소리(ITMClothingUpSD)로 바꿨습니다.
+- 책 읽기 "R … 읽기"는 CIGAR가 아니라 Read It Now(넥서스 168337)의 SkyPrompt 프롬프트입니다(그 모드의 키와 위치).
+
+## r12: 비켜 지나가기 (A) 정식, 누르는 즉시, NPC 밀어내기 탐침 (2026-09-30)
+
+준비: 무기를 넣고 3인칭. `coc WhiterunBanneredMare`, `player.placeatme 001034E4`(농부). 손으로 적을 것은 없습니다. CTD가 나면 거기서 멈추고 알려 주세요.
+
+- **S1. 누르는 즉시:** 농부에게 막혀 프롬프트가 뜨면 누르는 순간 지나가기 시작하는지(링 없음), 옷 부스럭 소리가 들리는지.
+- **S2. 걷는 사람:** 걸어 다니는 여관 사람을 지나갑니다.
+- **N1~N3. 밀어내기:** 제어판 5. 세부 설정 탐침 칸 "비켜 지나가기 뒤 NPC 밀어내기"를 옆으로 8 → 옆으로 15 → 부딪힘 동작으로 바꿔 가며 농부를 한 번씩 지나갑니다. 어느 쪽이 자연스러운지 고르면 됩니다(없으면 "없음").
+
+로그에서 보는 것(Claude가 판정):
+- `pressed: squeezing past while held`(누르는 즉시), `start: ... sound 0003E879 valid true played true id N`.
+- `RESULT squeeze on ...: ... player phantom XXXXXXXX -> YYYYYYYY`에서 YYYYYYYY가 매번 같은 원래 값(r11의 004A001E 같은)으로 돌아오는지. `body shares the phantom's filter`가 찍히면 정상입니다.
+- `nudge RESULT on ...: N aside ... z ±N`, `z MOVED`가 없어야 합니다.
+- 비켜 지나가기와 별도로: `PlayerCharacter::Update has not reached CIGAR`가 다시 나오면 그 줄의 `the vtable slot is ...`가 원인 DLL을 말합니다.

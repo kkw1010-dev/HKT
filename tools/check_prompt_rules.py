@@ -37,6 +37,12 @@ COMBAT_ONLY_PRESS = {
     ("Potion", "drink"),
 }
 
+# Non-combat prompts that act on the press and last while held, by the user's decision: Squeeze Past (r11,
+# 2026-09-30: "waiting at the NPC for a ring to fill is not good"). They must be hold-mode prompts.
+INSTANT_HOLD = {
+    ("Squeeze", "prompt"),
+}
+
 failures = []
 
 
@@ -85,6 +91,10 @@ def rings():
         cpp = header[:-2] + ".cpp"
         text = read(header) + (read(cpp) if os.path.exists(cpp) else "")
         for slot in slots:
+            if (module, slot) in INSTANT_HOLD:
+                held = re.search(r"\b" + slot + r"\.SetHoldMode\(true\)", text)
+                check(bool(held), f"{module}.{slot} acts on the press and lasts while held (hold mode; the user's exception)")
+                continue
             if (module, slot) in COMBAT_ONLY_PRESS:
                 both = all(re.search(r"\b" + slot + r"\.SetPromptType\([^;]*SkyPromptAPI::" + t, text)
                            for t in ("kSinglePress", "kHold"))
