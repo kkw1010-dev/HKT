@@ -23,10 +23,21 @@ namespace CIGAR
 		// optional integration, and without it Squeeze is off). CIGAR ships no clip.
 		static void PrepareClip();
 
-		// The author-build probe of the user's D20 (2026-09-30): (A) the player's controller takes the NPC's
-		// collision system group for the pass, instead of (D) switching the NPC's collision off. Any thread.
-		static void SetModeA(bool a_on);
-		static bool ModeA() { return modeA.load(); }
+		// How the player gets through (author-build probe, the user's D20, 2026-09-30):
+		// (D) the NPC's controller body stops colliding for the pass (standing NPCs only);
+		// (A) the player's controller takes the NPC's collision system group for the pass;
+		// (E) only inside the player's own movement step, the body it bumps into is made non-colliding and
+		//     put back before the step returns (CX-12: the way I'm Walkin' Here lets allies through).
+		enum class Way : int
+		{
+			kD = 0,
+			kA = 1,
+			kE = 2
+		};
+		static void SetWay(Way a_way);
+		static Way GetWay() { return static_cast<Way>(way.load()); }
+		// (E): the call hook on the player's movement step; at plugin load.
+		static void InstallMovementHook();
 
 		const char* Name() const override { return "Squeeze"; }
 		void OnGameLoaded() override;
@@ -89,6 +100,7 @@ namespace CIGAR
 			std::uint32_t oldFilter{ 0 };
 			// (A): the player's collidables whose system group was switched, and their words before.
 			bool group{ false };
+			bool step{ false };  // (E)
 			RE::hkRefPtr<RE::hkpShapePhantom> phantom;
 			std::uint32_t phantomOld{ 0 };
 			RE::hkRefPtr<RE::hkpRigidBody> playerBody;
@@ -115,7 +127,7 @@ namespace CIGAR
 		bool restoreWarned{ false };
 		Clock::time_point popWatchUntil{};
 		RE::NiPoint3 popStart{};
-		static inline std::atomic_bool modeA{ false };
+		static inline std::atomic<int> way{ 0 };
 
 		// PrepareClip's result, read on load.
 		static inline bool clipReady{ false };

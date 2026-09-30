@@ -184,7 +184,6 @@ namespace CIGAR
 				*reinterpret_cast<const std::uint8_t*>(site));
 			return;
 		}
-		SKSE::AllocTrampoline(14);
 		PresentHook::func = SKSE::GetTrampoline().write_call<5>(site, PresentHook::thunk);
 		hookInstalled = true;
 		logs::info("prompt queue: Present hooked (chained: {})", PresentHook::func.address() != 0);

@@ -450,3 +450,23 @@ known limitation. The cloth sound is already in and stays either way (alternativ
   the cloth sound plays in both.
 - Not verified before the run: that Skyrim's collision filter lets two same-group controllers pass, and
   that the player's controller then leaves the player's own bodies alone. r11 decides.
+
+### (E), from Codex CX-12, added to the probe (2026-09-30)
+
+- **Source read:** I'm Walkin' Here NG Expanded (`github.com/golovatris/SkyrimSE-ImWalkinHereWithPets`,
+  `src/CollisionHandler.h`, GPL-3.0 like CIGAR). It hooks the call to the actor's movement-delta apply
+  (`RELOCATION_ID(36359, 37350)`, +0xF0 SE / +0xFB AE). Inside the player's step only, the body in
+  `bumpedCharCollisionObject` gets the no-collision bit, and the bit is cleared after the original call.
+  I'm Walkin' Here NG 1.7.0 is in this modlist and loads on 1.6.1170 (its log), with allies and dialogue
+  partners let through, so the site is in use on this runtime. CIGAR takes the approach, not the code.
+- **Why it should beat (D) and (A):** the NPC's own physics step never sees the change (so no fall, and
+  walkers are fine), and nothing about the player's collision changes (so no self-collision question).
+  What stays unverified: that it lets the player through on its own, in game.
+- **CIGAR's version:** `Squeeze::InstallMovementHook` at plugin load (a 5-byte call must be at the
+  site, else `(E) is unavailable`; not on VR), one trampoline shared with the Present hook. The hook acts
+  only for the player, only while a pass has set its target NPC, only when the bumped body belongs to
+  that NPC and does not already have the bit (then I'm Walkin' Here or (D) owns it); it saves the whole
+  filter word and writes it back before the step returns. `RESULT squeeze (E) ... applied in N movement
+  steps` counts it. The chain with I'm Walkin' Here: it loads after CIGAR and wraps CIGAR's hook.
+- The cloth sound `PHYGenericClothL` (0624AB) was checked with houseCARL: a Skyrim.esm SNDR, winner
+  Skyrim.esm.

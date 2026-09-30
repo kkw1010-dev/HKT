@@ -54,6 +54,34 @@ namespace CIGAR
 		float clipSeconds = kGestureFallbackSeconds;
 		constexpr float kGestureStraight = 30.0f;  // within this of the line ahead the NPC is straight ahead
 
+		// (E): written by the game thread, read by the hook wherever the movement step runs (compared only).
+		std::atomic<RE::Actor*> stepTarget{ nullptr };
+		std::atomic<int> stepApplied{ 0 };
+		std::atomic_bool hookInstalled{ false };
+		REL::Relocation<void(RE::Actor*, float)> originalMove;
+
+		void MoveHook(RE::Actor* a_actor, float a_delta)
+		{
+			auto* target = stepTarget.load();
+			auto* controller = target && a_actor && a_actor->IsPlayerRef() ? a_actor->GetCharController() : nullptr;
+			auto* body = controller ? controller->bumpedCharCollisionObject.get() : nullptr;
+			if (!body) {
+				originalMove(a_actor, a_delta);
+				return;
+			}
+			auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo.filter;
+			// Already non-colliding (I'm Walkin' Here for an ally, or D): leave it to whoever did it.
+			if ((filter & RE::CFilter::Flags::kNoCollision) != 0 || RE::TESHavokUtilities::FindCollidableRef(*body->GetCollidable()) != target) {
+				originalMove(a_actor, a_delta);
+				return;
+			}
+			const auto saved = filter;
+			filter |= RE::CFilter::Flags::kNoCollision;
+			originalMove(a_actor, a_delta);
+			filter = saved;  // the whole word, before this step returns (CX-12)
+			++stepApplied;
+		}
+
 		// PrepareClip's files, Data-relative (through MO2's VFS; new files land in its overwrite).
 		constexpr auto kEvgClip =
 			"Data/meshes/actors/character/animations/OpenAnimationReplacer/EVG Animated Traversal/Squeeze/mt_leverfloorpull.hkx";
@@ -269,7 +297,7 @@ namespace CIGAR
 			if (Util::InScene(a_npc)) {
 				return "in a scene framework";
 			}
-			if (!Squeeze::ModeA() && a_npc->IsMoving()) {
+			if (Squeeze::GetWay() == Squeeze::Way::kD && a_npc->IsMoving()) {
 				return "walking";  // (D) only: it would drop through the floor without collision (r10)
 			}
 			return {};
@@ -570,7 +598,9 @@ namespace CIGAR
 		}
 		auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
 		Pass p;
-		p.group = modeA.load();
+		const auto chosen = GetWay();
+		p.group = chosen == Way::kA;
+		p.step = chosen == Way::kE;
 		p.npc = a_npc->GetHandle();
 		p.name = std::format("{} {:08X}", Util::NameOf(a_npc), a_npc->GetFormID());
 		p.body = RE::hkRefPtr<RE::hkpRigidBody>(body);
@@ -581,7 +611,14 @@ namespace CIGAR
 		p.lastProgress = p.start;
 		std::string change;
 		bool set = false;
-		if (!p.group) {
+		if (p.step) {
+			// (E): nothing is changed here; the movement hook does it step by step while this NPC is the target.
+			set = hookInstalled.load();
+			stepTarget = a_npc;
+			stepApplied = 0;
+			change = std::format("(E) per-step no-collision on the bumped body while the player moves (hook {})",
+				set ? "installed" : "NOT installed");
+		} else if (!p.group) {
 			// (D): that NPC's controller body stops colliding with anything (the floor too, so no walker).
 			filter.SetNoCollision(true);
 			set = filter.QNoCollision();
@@ -642,7 +679,10 @@ namespace CIGAR
 		}
 		std::string restore;
 		bool restored = true;
-		if (!pass->group) {
+		if (pass->step) {
+			stepTarget = nullptr;
+			restore = std::format("(E) applied in {} movement steps, each put back within its step", stepApplied.exchange(0));
+		} else if (!pass->group) {
 			restored = false;
 			restore = "no body";
 			if (auto* body = pass->body.get()) {
@@ -694,7 +734,7 @@ namespace CIGAR
 				apart, past, Flat(npcPos, pass->npcStart), npcPos.z - pass->npcStart.z, pos.z - pass->playerStart.z, pass->stuck,
 				pass->selfBumps, apart < 40.0f ? "; STILL OVERLAPPING" : "");
 		}
-		Log("RESULT squeeze {} on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->group ? "(A)" : "(D)", pass->name, a_why,
+		Log("RESULT squeeze {} on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->step ? "(E)" : pass->group ? "(A)" : "(D)", pass->name, a_why,
 			passed ? "PASSED" : "DID NOT PASS", pass->moved, std::chrono::duration<float>(Clock::now() - pass->start).count(), where, restore);
 		if (!restored) {
 			Log("WARN a collision filter did not go back");
@@ -762,11 +802,32 @@ namespace CIGAR
 		Log("gesture stop ({}): OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", a_why, sent, kClipVariable, clip, kArmVariable, arm);
 	}
 
-	void Squeeze::SetModeA(bool a_on)
+	void Squeeze::SetWay(Way a_way)
 	{
-		modeA = a_on;
-		logs::info("[Squeeze] way: {}", a_on ? "(A) the player's controller shares the NPC's collision group; walkers too" :
-		                                       "(D) the NPC's collision off; standing NPCs only");
+		way = static_cast<int>(a_way);
+		logs::info("[Squeeze] way: {}", a_way == Way::kA ? "(A) the player's controller shares the NPC's collision group; walkers too" :
+		                                a_way == Way::kE ? "(E) per movement step, the bumped NPC body only; walkers too" :
+		                                                   "(D) the NPC's collision off; standing NPCs only");
+	}
+
+	void Squeeze::InstallMovementHook()
+	{
+		if (REL::Module::IsVR()) {
+			logs::info("[Squeeze] movement hook: not on VR (no known call site); way (E) is unavailable");
+			return;
+		}
+		// The call to ApplyMovementDelta in the actor movement update: the site I'm Walkin' Here NG hooks
+		// (installed in this modlist, 1.7.0, working on this runtime). A 5-byte call is expected there; anything
+		// else means another layout, and (E) stays off.
+		const REL::Relocation<std::uintptr_t> target{ REL::RelocationID(36359, 37350) };
+		const auto site = target.address() + (REL::Module::IsAE() ? 0xFB : 0xF0);
+		if (*reinterpret_cast<const std::uint8_t*>(site) != 0xE8) {
+			logs::error("[Squeeze] movement hook: no call at the site ({:02X}); way (E) is unavailable", *reinterpret_cast<const std::uint8_t*>(site));
+			return;
+		}
+		originalMove = SKSE::GetTrampoline().write_call<5>(site, MoveHook);
+		hookInstalled = true;
+		logs::info("[Squeeze] movement hook installed (chained: {})", originalMove.address() != 0);
 	}
 
 	void Squeeze::OnHold(std::uint16_t a_eventID, bool a_down)

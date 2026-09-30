@@ -15,8 +15,8 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-30)
 
-- **Deployed (2026-09-30, the Squeeze (A) probe of D20):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `a4419aba3d9877c20f9088165b5f8ca12f3e5f52ae386e04646bc364b345826d`; `verify_deploy` passed in full.
+- **Deployed (2026-09-30, the Squeeze probe with (D), (A) and (E)):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `dfede71f2396645b40719e4bb9a9948542299d00dd8270c3ce55d801d81f5746`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
@@ -38,7 +38,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   a system-group probe is proposed, not built. Also seen in r10: PromptAnchor's update hook stopped
   reaching CIGAR at 18:03:12 while ticks ran (prompts on the player for the session); not caused by CIGAR
   changes, cause not found yet.
-- **Waiting on in-game results (r11: (D) against (A), `TEST-next-ingame.md` "r11"; the r10 list otherwise passed):** `TEST-next-ingame.md` "r10" (S1-S6 Squeeze Past, r10-P potion,
+- **Waiting on in-game results (r11: (D), (A) and (E) compared, `TEST-next-ingame.md` "r11"; the r10 list otherwise passed):** `TEST-next-ingame.md` "r10" (S1-S6 Squeeze Past, r10-P potion,
   and the passive review checks). Read `CIGAR.log` after the game closes; for Squeeze also run
   `python tools/replay_squeeze_gate.py`.
 - **D17, D18 decided (the user, 21:50) and built:** Squeeze needs EVG Animated Traversal (and Offset

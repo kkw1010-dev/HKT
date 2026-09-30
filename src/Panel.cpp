@@ -643,9 +643,15 @@ namespace CIGAR::Panel
 				}
 				ImGui::TextColored(kDim, "%s", PushProbe::Status().c_str());
 				// D20 (2026-09-30): the 비켜 지나가기 module's way, switched here to compare both in one run.
-				bool groupMode = Squeeze::ModeA();
-				if (ImGui::Checkbox("비켜 지나가기: (A) 플레이어가 NPC 충돌 그룹 공유 (끄면 (D) NPC 충돌 끄기)##sq-mode-a", &groupMode)) {
-					Squeeze::SetModeA(groupMode);
+				int way = static_cast<int>(Squeeze::GetWay());
+				ImGui::TextColored(kDim, "%s", "비켜 지나가기 방식:");
+				bool changed = ImGui::RadioButton("(D) NPC 충돌 끄기##sq-way-d", &way, 0);
+				ImGui::SameLine();
+				changed |= ImGui::RadioButton("(A) 충돌 그룹 공유##sq-way-a", &way, 1);
+				ImGui::SameLine();
+				changed |= ImGui::RadioButton("(E) 걸음마다 부딪힌 몸만##sq-way-e", &way, 2);
+				if (changed) {
+					Squeeze::SetWay(static_cast<Squeeze::Way>(way));
 				}
 			}
 
