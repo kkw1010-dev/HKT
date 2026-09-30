@@ -496,3 +496,5 @@ known limitation. The cloth sound is already in and stays either way (alternativ
   as an option to measure.
 - No fall guards in (A): nobody's floor collision changes, and a walker going down stairs would read as
   a drop; the RESULT line still logs both z changes.
+
+- **r12:** the user picked "slide 8" for the nudge; it is the default now (`Squeeze.h`, committed as source, built at the next build).

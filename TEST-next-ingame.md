@@ -497,3 +497,7 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - `RESULT squeeze on ...: ... player phantom XXXXXXXX -> YYYYYYYY`에서 YYYYYYYY가 매번 같은 원래 값(r11의 004A001E 같은)으로 돌아오는지. `body shares the phantom's filter`가 찍히면 정상입니다.
 - `nudge RESULT on ...: N aside ... z ±N`, `z MOVED`가 없어야 합니다.
 - 비켜 지나가기와 별도로: `PlayerCharacter::Update has not reached CIGAR`가 다시 나오면 그 줄의 `the vtable slot is ...`가 원인 DLL을 말합니다.
+
+## r12 (2026-09-30)
+
+- The user picked the nudge "옆으로 8" (slide 8 units): it is now the default (source only, not built yet).

@@ -132,7 +132,7 @@ namespace CIGAR
 		bool restoreWarned{ false };
 		Clock::time_point popWatchUntil{};
 		RE::NiPoint3 popStart{};
-		static inline std::atomic<int> nudge{ 0 };
+		static inline std::atomic<int> nudge{ 1 };  // slide 8: the user's pick in r12
 
 		// PrepareClip's result, read on load.
 		static inline bool clipReady{ false };
