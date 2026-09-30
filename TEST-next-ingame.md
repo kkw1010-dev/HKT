@@ -449,3 +449,26 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - 비켜 지나가기 4회 모두 PASSED. 그러나 세이디아(z -479)와 미카엘(z -488)이 바닥으로 꺼졌습니다. 원인: 충돌을 끈 NPC가 움직이면(부딪힘 동작, 걷기) 바닥도 통과합니다.
   고침: 부딪힘 동작 없음, 걷는 NPC는 제외, 8 이상 떨어지면 즉시 원위치와 충돌 복원(`WARN ... dropped`), 시작할 때 옷 스치는 소리(`cloth sound true`).
 - 다음 확인(r11): 여관에서 서 있는 사람을 지나갈 때 NPC가 꺼지지 않는지, 소리가 나는지. 걷는 사람에게는 프롬프트가 뜨지 않는 것이 정상입니다(trace의 `refuse=walking`).
+
+## r11: 비켜 지나가기 (D)와 (A) 비교 (D20, 작성자 빌드, 2026-09-30)
+
+한 번의 실행에서 두 방식을 비교합니다. 전환은 제어판 5. 세부 설정의 탐침 칸 맨 아래 체크박스
+"비켜 지나가기: (A) 플레이어가 NPC 충돌 그룹 공유"입니다(끄면 (D)). 손으로 적을 것은 없습니다. CTD가 나면 거기서 멈추고 알려 주세요.
+
+- **준비:** 무기를 넣고 3인칭으로 합니다.
+  ```
+  coc WhiterunBanneredMare
+  player.placeatme 001034E4
+  ```
+  (WEFarmerMale, 농부. 부르면 내 자리에 나타납니다.)
+- **D1 (체크 끔):** 서 있는 농부를 비켜 지나가기로 한 번 지나갑니다. 걸어 다니는 여관 사람에게는 프롬프트가 뜨지 않는 것이 정상입니다.
+- **A1 (체크 켬):** 농부를 다시 불러 서 있는 농부를 지나갑니다.
+- **A2 (체크 켬):** 걸어 다니는 여관 사람(세이디아, 훌다 등)을 지나갑니다.
+- **A3 (체크 켬):** 벽과 사람 사이, 옆구리를 스치듯 지나갑니다.
+
+로그에서 보는 것(Claude가 판정):
+- `[Squeeze] way: (A) ...`와 `way: (D) ...`로 전환이 찍힙니다.
+- `start: ... standing|walking; (A) NPC group N ...; player controller proxy; phantom XXXXXXXX -> YYYYYYYY ...; cloth sound true`
+- `RESULT squeeze (A)|(D) on ...: PASSED`, 그리고 `NPC ... (z ±N); player z ±N; stuck N s while moving; self-bumps N`, `player phantom ... -> ...`(그룹 복원).
+- `after the undo: ... (no pop|POPPED)`.
+- (A)의 판정 기준: 통과, NPC와 플레이어의 z가 둘 다 ±10 안, self-bumps 0, POPPED 없음, `WARN` 없음.

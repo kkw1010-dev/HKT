@@ -434,3 +434,19 @@ format: pass, pop, both z values, the filter word read back). If A holds, switch
 walking NPCs can be passed too; if not, D stays and "walking people cannot be squeezed past" is a
 known limitation. The cloth sound is already in and stays either way (alternative: `ITMClothingUpSD`
 03E879, overridden by Immersive Sounds - Compendium in this order).
+
+### The (A) probe, built (the user's D20, 2026-09-30)
+
+- The module's way is switched in the author panel (probe section, "(A) 플레이어가 NPC 충돌 그룹 공유";
+  off is (D)); `[Squeeze] way: ...` logs the switch. The release build stays on (D).
+- **(A):** at the start, the NPC's controller body's system group is read, and the player's controller
+  collidables take it: the proxy's shape phantom (it does the sweeps) and the controller's rigid body if
+  it has one. At the end only the group bits go back, read back (`NOT BACK` and a WARN if not). The
+  NPC is not touched, so walking NPCs are allowed in (A).
+- **Logged for the verdict (r8b format):** `RESULT squeeze (A)|(D) ...: PASSED | DID NOT PASS`, the NPC's
+  and the player's z change, seconds stuck while moving, `self-bumps` (the player's controller reporting
+  the player itself as the bumped character), then `after the undo: ... no pop | POPPED`.
+- **Guards:** (A) ends at once if the player drops more than 8; the NPC fall guard stays in both ways;
+  the cloth sound plays in both.
+- Not verified before the run: that Skyrim's collision filter lets two same-group controllers pass, and
+  that the player's controller then leaves the player's own bodies alone. r11 decides.

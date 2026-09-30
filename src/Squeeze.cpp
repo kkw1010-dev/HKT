@@ -269,8 +269,8 @@ namespace CIGAR
 			if (Util::InScene(a_npc)) {
 				return "in a scene framework";
 			}
-			if (a_npc->IsMoving()) {
-				return "walking";  // it would drop through the floor without collision (r10)
+			if (!Squeeze::ModeA() && a_npc->IsMoving()) {
+				return "walking";  // (D) only: it would drop through the floor without collision (r10)
 			}
 			return {};
 		}
@@ -340,6 +340,7 @@ namespace CIGAR
 		pressing = false;
 		active = false;
 		trail.clear();
+		popWatchUntil = {};
 		contactID = 0;
 		shownUntil = {};
 		lastTrace.clear();
@@ -457,7 +458,21 @@ namespace CIGAR
 				End(player, "combat");
 			} else {
 				const auto npcPos = npc->GetPosition();
-				if (npcPos.z < pass->npcStart.z - kFallGuard) {
+				if (moving && speed >= 0.0f && speed < 20.0f) {
+					pass->stuck += 0.1f;
+				}
+				// (A): does the player's controller now run into the player's own bodies?
+				if (auto* controller = player->GetCharController(); controller && controller->bumpedCharCollisionObject.get()) {
+					if (auto* ref = RE::TESHavokUtilities::FindCollidableRef(*controller->bumpedCharCollisionObject->GetCollidable());
+						ref == player) {
+						++pass->selfBumps;
+					}
+				}
+				if (pass->group && pos.z < pass->playerStart.z - kFallGuard) {
+					const auto dropped = pass->playerStart.z - pos.z;
+					End(player, "the player dropped");
+					Log("WARN the player dropped {:.0f} while squeezing past (A): the group was put back", dropped);
+				} else if (npcPos.z < pass->npcStart.z - kFallGuard) {
 					// Collision first, then the position: back where it stood, with its controller updated.
 					const auto dropped = pass->npcStart.z - npcPos.z;
 					const auto start = pass->npcStart;
@@ -484,6 +499,14 @@ namespace CIGAR
 					End(player, "10 s cap");
 				}
 			}
+		}
+
+		if (popWatchUntil != Clock::time_point{} && now >= popWatchUntil) {
+			const float moved = Flat(pos, popStart);
+			const float expected = speed >= 0.0f ? speed * 0.6f : 0.0f;
+			Log("after the undo: the player moved {:.0f} in 0.6 s against {:.0f} expected ({})", moved, expected,
+				moved > expected + 40.0f ? "POPPED" : "no pop");
+			popWatchUntil = {};
 		}
 
 		Near ahead;
@@ -547,6 +570,7 @@ namespace CIGAR
 		}
 		auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
 		Pass p;
+		p.group = modeA.load();
 		p.npc = a_npc->GetHandle();
 		p.name = std::format("{} {:08X}", Util::NameOf(a_npc), a_npc->GetFormID());
 		p.body = RE::hkRefPtr<RE::hkpRigidBody>(body);
@@ -555,8 +579,42 @@ namespace CIGAR
 		p.npcStart = a_npc->GetPosition();
 		p.start = Clock::now();
 		p.lastProgress = p.start;
-		filter.SetNoCollision(true);
-		const bool set = filter.QNoCollision();
+		std::string change;
+		bool set = false;
+		if (!p.group) {
+			// (D): that NPC's controller body stops colliding with anything (the floor too, so no walker).
+			filter.SetNoCollision(true);
+			set = filter.QNoCollision();
+			change = std::format("(D) NPC body filter {:08X} -> {:08X} (no collision {})", p.oldFilter, filter.filter, set);
+		} else {
+			// (A) probe, the user's D20: the player's controller takes the NPC's collision system group, so the
+			// two stop colliding with each other while both keep the world. The player's controller is a proxy
+			// (its phantom does the sweeps) and may also have a rigid body; both are switched and read back.
+			const auto npcGroup = filter.GetSystemGroup();
+			auto* playerController = a_player->GetCharController();
+			auto* proxyController = playerController ? skyrim_cast<RE::bhkCharProxyController*>(playerController) : nullptr;
+			auto* proxy = proxyController ? proxyController->GetCharacterProxy() : nullptr;
+			auto* phantom = proxy ? proxy->shapePhantom : nullptr;
+			auto* playerBody = playerController ? playerController->GetRigidBody() : nullptr;
+			change = std::format("(A) NPC group {} (filter {:08X}, layer {}); player controller {}", npcGroup, p.oldFilter,
+				static_cast<int>(filter.GetCollisionLayer()), proxyController ? "proxy" : playerController ? "rigid body" : "none");
+			if (phantom) {
+				auto& pf = phantom->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+				p.phantom = RE::hkRefPtr<RE::hkpShapePhantom>(phantom);
+				p.phantomOld = pf.filter;
+				pf.SetSystemGroup(npcGroup);
+				set = pf.GetSystemGroup() == npcGroup;
+				change += std::format("; phantom {:08X} -> {:08X} (layer {})", p.phantomOld, pf.filter, static_cast<int>(pf.GetCollisionLayer()));
+			}
+			if (playerBody) {
+				auto& bf = playerBody->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+				p.playerBody = RE::hkRefPtr<RE::hkpRigidBody>(playerBody);
+				p.playerBodyOld = bf.filter;
+				bf.SetSystemGroup(npcGroup);
+				set = set || bf.GetSystemGroup() == npcGroup;
+				change += std::format("; body {:08X} -> {:08X} (layer {})", p.playerBodyOld, bf.filter, static_cast<int>(bf.GetCollisionLayer()));
+			}
+		}
 		passCell = Place(a_player);
 
 		bool sound = false;
@@ -567,11 +625,11 @@ namespace CIGAR
 				sound = handle.Play();
 			}
 		}
-		Log("start: {} at {:.0f} ahead, {:+.0f} to the side; NPC body filter {:08X} -> {:08X} (no collision {}), NPC z {:.0f}; cloth sound {}",
-			p.name, a_ahead, a_side, p.oldFilter, filter.filter, set, p.npcStart.z, sound);
+		Log("start: {} at {:.0f} ahead, {:+.0f} to the side, {}; {}; NPC z {:.0f}, player z {:.0f}; cloth sound {}", p.name, a_ahead, a_side,
+			a_npc->IsMoving() ? "walking" : "standing", change, p.npcStart.z, p.playerStart.z, sound);
 		pass = std::move(p);
 		if (!set) {
-			End(a_player, "the no-collision flag did not stick");
+			End(a_player, "the change did not stick");
 			return;
 		}
 		PlayGesture(a_player, a_side);
@@ -582,21 +640,43 @@ namespace CIGAR
 		if (!pass) {
 			return;
 		}
-		std::string restore = "no body";
-		bool restored = false;
-		if (auto* body = pass->body.get()) {
-			auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
-			const auto before = filter.filter;
-			// Only the bit Begin set: the engine may have changed the rest of the word meanwhile (a ragdoll,
-			// a layer change), and writing the old word back would undo that (review 2026-09-30).
-			const bool hadBit = (pass->oldFilter & RE::CFilter::Flags::kNoCollision) != 0;
-			filter.SetNoCollision(hadBit);
-			restored = filter.QNoCollision() == hadBit;
-			restore = std::format("NPC body filter {:08X} -> {:08X} (no collision back to {}{})", before, filter.filter, hadBit,
-				(filter.filter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ==
-						(pass->oldFilter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ?
-					""s :
-					std::format("; other bits changed since the start, from {:08X}", pass->oldFilter));
+		std::string restore;
+		bool restored = true;
+		if (!pass->group) {
+			restored = false;
+			restore = "no body";
+			if (auto* body = pass->body.get()) {
+				auto& filter = body->GetCollidableRW()->broadPhaseHandle.collisionFilterInfo;
+				const auto before = filter.filter;
+				// Only the bit Begin set: the engine may have changed the rest of the word meanwhile (a ragdoll,
+				// a layer change), and writing the old word back would undo that (review 2026-09-30).
+				const bool hadBit = (pass->oldFilter & RE::CFilter::Flags::kNoCollision) != 0;
+				filter.SetNoCollision(hadBit);
+				restored = filter.QNoCollision() == hadBit;
+				restore = std::format("NPC body filter {:08X} -> {:08X} (no collision back to {}{})", before, filter.filter, hadBit,
+					(filter.filter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ==
+							(pass->oldFilter & ~static_cast<std::uint32_t>(RE::CFilter::Flags::kNoCollision)) ?
+						""s :
+						std::format("; other bits changed since the start, from {:08X}", pass->oldFilter));
+			}
+		} else {
+			// Only the group bits go back, for the same reason.
+			auto put = [&](RE::hkpCollidable* a_collidable, std::uint32_t a_old, const char* a_what) {
+				auto& f = a_collidable->broadPhaseHandle.collisionFilterInfo;
+				const auto before = f.filter;
+				RE::CFilter old;
+				old.filter = a_old;
+				f.SetSystemGroup(old.GetSystemGroup());
+				const bool ok = f.GetSystemGroup() == old.GetSystemGroup();
+				restored = restored && ok;
+				restore += std::format("{}{} {:08X} -> {:08X}{}", restore.empty() ? "" : "; ", a_what, before, f.filter, ok ? "" : " NOT BACK");
+			};
+			if (auto* phantom = pass->phantom.get()) {
+				put(phantom->GetCollidableRW(), pass->phantomOld, "player phantom");
+			}
+			if (auto* body = pass->playerBody.get()) {
+				put(body->GetCollidableRW(), pass->playerBodyOld, "player body");
+			}
 		}
 		const auto npc = pass->npc.get();
 		std::string where = "the NPC is gone";
@@ -609,19 +689,24 @@ namespace CIGAR
 			const float apart = Flat(pos, npcPos);
 			passed = past >= kClearPast && apart >= kClearDistance;
 			// Close and not past at the undo: the physics pushes the two apart (the probe's POPPED).
-			where = std::format("{:.0f} from the NPC, {:+.0f} past it; the NPC moved {:.0f} (z {:+.0f}){}", apart, past,
-				Flat(npcPos, pass->npcStart), npcPos.z - pass->npcStart.z, apart < 40.0f ? "; STILL OVERLAPPING" : "");
+			where = std::format("{:.0f} from the NPC, {:+.0f} past it; the NPC moved {:.0f} (z {:+.0f}); player z {:+.0f}; "
+								"stuck {:.1f} s while moving; self-bumps {}{}",
+				apart, past, Flat(npcPos, pass->npcStart), npcPos.z - pass->npcStart.z, pos.z - pass->playerStart.z, pass->stuck,
+				pass->selfBumps, apart < 40.0f ? "; STILL OVERLAPPING" : "");
 		}
-		Log("RESULT squeeze on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->name, a_why, passed ? "PASSED" : "DID NOT PASS", pass->moved,
-			std::chrono::duration<float>(Clock::now() - pass->start).count(), where, restore);
-		if (!restored && pass->body.get()) {
-			Log("WARN the NPC's collision filter did not go back");
+		Log("RESULT squeeze {} on {} ({}): {}, moved {:.0f} in {:.1f} s; {}; {}", pass->group ? "(A)" : "(D)", pass->name, a_why,
+			passed ? "PASSED" : "DID NOT PASS", pass->moved, std::chrono::duration<float>(Clock::now() - pass->start).count(), where, restore);
+		if (!restored) {
+			Log("WARN a collision filter did not go back");
 			if (!restoreWarned) {
 				restoreWarned = true;
 				Util::Notify(Text::L("CIGAR: 비켜 지나가기 복원 실패. 로그 확인", "CIGAR: Squeeze Past could not restore an NPC. See the log"));
 			}
 		}
 		pass.reset();
+		// Watch the next moments for a pop: the player pushed out once the change is undone.
+		popWatchUntil = Clock::now() + 600ms;
+		popStart = a_player ? a_player->GetPosition() : RE::NiPoint3{};
 	}
 
 	void Squeeze::PlayGesture(RE::PlayerCharacter* a_player, float a_side)
@@ -675,6 +760,13 @@ namespace CIGAR
 		const bool clip = a_player->SetGraphVariableInt(kClipVariable, 0);
 		const bool arm = a_player->SetGraphVariableInt(kArmVariable, 0);
 		Log("gesture stop ({}): OffsetGPMAStop accepted {}, {}=0 set {}, {}=0 set {}", a_why, sent, kClipVariable, clip, kArmVariable, arm);
+	}
+
+	void Squeeze::SetModeA(bool a_on)
+	{
+		modeA = a_on;
+		logs::info("[Squeeze] way: {}", a_on ? "(A) the player's controller shares the NPC's collision group; walkers too" :
+		                                       "(D) the NPC's collision off; standing NPCs only");
 	}
 
 	void Squeeze::OnHold(std::uint16_t a_eventID, bool a_down)

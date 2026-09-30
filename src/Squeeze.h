@@ -23,6 +23,11 @@ namespace CIGAR
 		// optional integration, and without it Squeeze is off). CIGAR ships no clip.
 		static void PrepareClip();
 
+		// The author-build probe of the user's D20 (2026-09-30): (A) the player's controller takes the NPC's
+		// collision system group for the pass, instead of (D) switching the NPC's collision off. Any thread.
+		static void SetModeA(bool a_on);
+		static bool ModeA() { return modeA.load(); }
+
 		const char* Name() const override { return "Squeeze"; }
 		void OnGameLoaded() override;
 		void Tick() override {}
@@ -82,6 +87,14 @@ namespace CIGAR
 			std::string name;
 			RE::hkRefPtr<RE::hkpRigidBody> body;
 			std::uint32_t oldFilter{ 0 };
+			// (A): the player's collidables whose system group was switched, and their words before.
+			bool group{ false };
+			RE::hkRefPtr<RE::hkpShapePhantom> phantom;
+			std::uint32_t phantomOld{ 0 };
+			RE::hkRefPtr<RE::hkpRigidBody> playerBody;
+			std::uint32_t playerBodyOld{ 0 };
+			float stuck{ 0.0f };
+			int selfBumps{ 0 };
 			RE::NiPoint3 playerStart{};
 			RE::NiPoint3 npcStart{};
 			Clock::time_point start{};
@@ -100,6 +113,9 @@ namespace CIGAR
 		float gestureSeconds{ 0.0f };
 
 		bool restoreWarned{ false };
+		Clock::time_point popWatchUntil{};
+		RE::NiPoint3 popStart{};
+		static inline std::atomic_bool modeA{ false };
 
 		// PrepareClip's result, read on load.
 		static inline bool clipReady{ false };
