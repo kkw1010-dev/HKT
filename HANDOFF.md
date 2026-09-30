@@ -53,13 +53,11 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   declined, fewer HUD messages. Not in it yet: the r8 script-link guard (add a CHANGELOG line when the
   release is cut). Package with `tools\Build.ps1 -Package` (`tools/make_release.py`), and run
   CIGAR-Personal `tools/check_public.py` first.
-- **GitHub (HKT):** `origin/master` = `8254180`. Local was 41 commits ahead before this handoff commit, none pushed.
-- **D07 filter plan (before the next push).** `TCL_LIGHT_HOOK_ANALYSIS.md` moved to CIGAR-Personal
-  `docs/archive` (CIGAR `03ffed1` deletes it). It was never pushed, but the unpushed commit `ec84d68`
-  adds it. Before pushing, rewrite only `origin/master..HEAD` so that no commit carries the file, for
-  example `git filter-repo --path TCL_LIGHT_HOOK_ANALYSIS.md --invert-paths --refs origin/master..HEAD`
-  on a fresh clone. Then check that the final tree is unchanged, run CIGAR-Personal `tools/check_public.py --pre-push`, and
-  push only on the user's word.
+- **GitHub (HKT):** pushed 2026-09-30 on the user's word: `master` = `v3` = `8a8f750` (fast-forward from
+  `8254180`). Before it, the D07 filter took `TCL_LIGHT_HOOK_ANALYSIS.md` out of the 58 unpushed commits
+  (`filter-branch --index-filter ... --prune-empty`, 2 emptied commits dropped, final tree unchanged);
+  `check_public.py` passed on the tree and the commit messages. Local branch `backup/pre-d07-filter`
+  keeps the pre-filter history; never push it.
 - **Procedures:**
   - Build: `tools\Build.ps1`. It runs `check_menu_framework.py` and `check_input_map.py`. `-Deploy`
     also copies; the usual deploy is to copy `buildelease\CIGAR.dll` and `.pdb` into
