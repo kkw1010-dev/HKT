@@ -2,7 +2,7 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
-## Unreleased
+## 3.1.0 (2026-09-30)
 
 New
 - **Squeeze Past** (with EVG Animated Traversal and Offset Movement Animation installed). When a
