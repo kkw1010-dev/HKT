@@ -15,8 +15,8 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-30)
 
-- **Deployed (2026-09-30, after the code review, `docs/043`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `038a6cf1d484662208b08758f6ffbdece627184517635d74d93c3e1a36b0de8a`; `verify_deploy` passed in full.
+- **Deployed (2026-09-30, after r10: the Squeeze fall guard):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `b938f9f636c82371d679f9666a63feae960756a4e0c50f309f052a3060d26676`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
@@ -33,7 +33,12 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   block tick by tick, most inn NPCs refused as scene or furniture); fixed and deployed, r10 again.
   Everything else in r9 passed and the log confirms it (Potion's decline was not exercised).
 - **r8b is read** (`docs/038` "Stage 0d results", `TEST-next-ingame.md` "r8b 판정"). BaboKey linked.
-- **Waiting on in-game results (r10):** `TEST-next-ingame.md` "r10" (S1-S6 Squeeze Past, r10-P potion,
+- **r10 is read** (`docs/038` "r10"): Squeeze passed but two NPCs fell through the floor; fixed (no bump,
+  standing NPCs only, fall guard, cloth sound). The user's "player-side only" idea is reviewed there:
+  a system-group probe is proposed, not built. Also seen in r10: PromptAnchor's update hook stopped
+  reaching CIGAR at 18:03:12 while ticks ran (prompts on the player for the session); not caused by CIGAR
+  changes, cause not found yet.
+- **Waiting on in-game results (r11; the r10 list otherwise passed):** `TEST-next-ingame.md` "r10" (S1-S6 Squeeze Past, r10-P potion,
   and the passive review checks). Read `CIGAR.log` after the game closes; for Squeeze also run
   `python tools/replay_squeeze_gate.py`.
 - **D17, D18 decided (the user, 21:50) and built:** Squeeze needs EVG Animated Traversal (and Offset

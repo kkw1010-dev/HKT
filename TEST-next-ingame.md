@@ -443,3 +443,9 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - Rest gate에 `beast=false`가 찍힙니다(짐승 형태면 true, 앉기·눕기 없음).
 - 유술이 중간에 끊긴 경우에만: `pair cut short while the victim is still in its kill move`, 이어서 `the cut-short pair ended: ... the victim stays alive`.
 - `WARN`, `notice (log only`, `.bad`가 새로 생기지 않았는지.
+
+## r10 판정 (2026-09-30, Claude)
+
+- 비켜 지나가기 4회 모두 PASSED. 그러나 세이디아(z -479)와 미카엘(z -488)이 바닥으로 꺼졌습니다. 원인: 충돌을 끈 NPC가 움직이면(부딪힘 동작, 걷기) 바닥도 통과합니다.
+  고침: 부딪힘 동작 없음, 걷는 NPC는 제외, 8 이상 떨어지면 즉시 원위치와 충돌 복원(`WARN ... dropped`), 시작할 때 옷 스치는 소리(`cloth sound true`).
+- 다음 확인(r11): 여관에서 서 있는 사람을 지나갈 때 NPC가 꺼지지 않는지, 소리가 나는지. 걷는 사람에게는 프롬프트가 뜨지 않는 것이 정상입니다(trace의 `refuse=walking`).

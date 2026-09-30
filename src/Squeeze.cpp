@@ -35,14 +35,13 @@ namespace CIGAR
 		constexpr auto kNoProgress = 3s;
 		constexpr float kProgressStep = 5.0f;
 		constexpr auto kPassCap = 10s;
-		constexpr auto kBumpCooldown = 1500ms;  // the user's value (2026-09-28)
-
-		// The four IDLE children of BumpedIntoRoot (Skyrim.esm 03DE4E); r5: accepted ones displace the
-		// NPC 50-84 units with no line, no hostility and no crime.
-		constexpr const char* kBumpFront = "NPC_BumpFromFront";
-		constexpr const char* kBumpBack = "NPC_BumpedFromBack";
-		constexpr const char* kBumpLeft = "NPC_BumpedFromLeft";
-		constexpr const char* kBumpRight = "NPC_BumpedFromRight";
+		// r10: the no-collision flag also takes the NPC's controller off the floor, so an NPC that moves
+		// while it is set drops through it (세이디아 z -479, 미카엘 z -488; the r8b NPCs stood still, z ±2).
+		// The bump moved them, so it is gone; walking NPCs are not squeezed; and an NPC that drops more than
+		// kFallGuard below where it stood is put back and its collision restored at once.
+		constexpr float kFallGuard = 8.0f;
+		// A dull cloth brush when the pass starts (the user's idea, 2026-09-30): vanilla PHYGenericClothL.
+		constexpr RE::FormID kClothSound = 0x0624AB;  // Skyrim.esm
 
 		// The gesture: EVG Animated Traversal's Squeeze, played on Offset Movement Animation's layer through
 		// CIGAR's own OAR submod while iGPMAAnimationType holds kGestureValue (Helmet uses 2 and 6, the old
@@ -249,21 +248,6 @@ namespace CIGAR
 			return state && (state->IsWalking() || state->IsRunning() || state->IsSprinting());
 		}
 
-		// The bump idle for the side of the NPC the player comes from.
-		const char* BumpEvent(RE::Actor* a_npc, const RE::NiPoint3& a_player)
-		{
-			const auto to = a_player - a_npc->GetPosition();
-			const float heading = a_npc->GetAngleZ();
-			const auto forward = Forward(heading);
-			const auto right = Right(heading);
-			const float f = to.x * forward.x + to.y * forward.y;
-			const float r = to.x * right.x + to.y * right.y;
-			if (std::abs(f) >= std::abs(r)) {
-				return f >= 0.0f ? kBumpFront : kBumpBack;
-			}
-			return r >= 0.0f ? kBumpRight : kBumpLeft;
-		}
-
 		// Why this NPC is not squeezed past, or empty.
 		std::string Refusal(RE::Actor* a_npc, RE::PlayerCharacter* a_player)
 		{
@@ -285,22 +269,10 @@ namespace CIGAR
 			if (Util::InScene(a_npc)) {
 				return "in a scene framework";
 			}
+			if (a_npc->IsMoving()) {
+				return "walking";  // it would drop through the floor without collision (r10)
+			}
 			return {};
-		}
-
-		// Why this NPC gets no bump, or null. r9: most townspeople in the inn were in an ambient scene or a
-		// furniture (wall leans, counters), and refusing them left almost nobody to squeeze past. They are
-		// squeezed past now, only without the bump, which their graph refuses there anyway (r5).
-		const char* NoBump(RE::Actor* a_npc)
-		{
-			if (a_npc->GetCurrentScene()) {
-				return "in a scene";
-			}
-			const auto* state = a_npc->AsActorState();
-			if (a_npc->GetOccupiedFurniture().get().get() || (state && state->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal)) {
-				return "in furniture";
-			}
-			return nullptr;
 		}
 	}
 
@@ -372,8 +344,6 @@ namespace CIGAR
 		shownUntil = {};
 		lastTrace.clear();
 		gesturePlaying = false;
-		lastBumped = 0;
-		lastBumpAt = {};
 		restoreWarned = false;
 		gpmaChecked = false;
 		gpmaInstalled = false;
@@ -487,6 +457,18 @@ namespace CIGAR
 				End(player, "combat");
 			} else {
 				const auto npcPos = npc->GetPosition();
+				if (npcPos.z < pass->npcStart.z - kFallGuard) {
+					// Collision first, then the position: back where it stood, with its controller updated.
+					const auto dropped = pass->npcStart.z - npcPos.z;
+					const auto start = pass->npcStart;
+					End(player, "the NPC dropped");
+					npc->SetPosition(start, true);
+					Log("WARN {} dropped {:.0f} while squeezed past: collision restored and put back at z {:.0f} (now {:.0f})",
+						Util::NameOf(npc.get()), dropped, start.z, npc->GetPosition().z);
+				}
+			}
+			if (pass && npc) {
+				const auto npcPos = npc->GetPosition();
 				// Along the player's heading, not the start line: a side pass walks diagonally to it (r8b Q5).
 				const float past = (pos.x - npcPos.x) * forward.x + (pos.y - npcPos.y) * forward.y;
 				pass->moved = Flat(pos, pass->playerStart);
@@ -577,19 +559,16 @@ namespace CIGAR
 		const bool set = filter.QNoCollision();
 		passCell = Place(a_player);
 
-		std::string bump = "cooldown";
-		const auto id = a_npc->GetFormID();
-		if (const auto* quiet = NoBump(a_npc)) {
-			bump = std::format("skipped ({})", quiet);
-		} else if (id != lastBumped || p.start - lastBumpAt >= kBumpCooldown) {
-			const auto* event = BumpEvent(a_npc, p.playerStart);
-			const bool accepted = a_npc->NotifyAnimationGraph(event);
-			bump = std::format("{} accepted {}", event, accepted);
-			lastBumped = id;
-			lastBumpAt = p.start;
+		bool sound = false;
+		if (auto* descriptor = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(kClothSound); descriptor && a_player->Get3D()) {
+			RE::BSSoundHandle handle;
+			if (auto* audio = RE::BSAudioManager::GetSingleton(); audio && audio->GetSoundHandle(handle, descriptor)) {
+				handle.SetObjectToFollow(a_player->Get3D());
+				sound = handle.Play();
+			}
 		}
-		Log("start: {} at {:.0f} ahead, {:+.0f} to the side; NPC body filter {:08X} -> {:08X} (no collision {}), NPC z {:.0f}; bump {}",
-			p.name, a_ahead, a_side, p.oldFilter, filter.filter, set, p.npcStart.z, bump);
+		Log("start: {} at {:.0f} ahead, {:+.0f} to the side; NPC body filter {:08X} -> {:08X} (no collision {}), NPC z {:.0f}; cloth sound {}",
+			p.name, a_ahead, a_side, p.oldFilter, filter.filter, set, p.npcStart.z, sound);
 		pass = std::move(p);
 		if (!set) {
 			End(a_player, "the no-collision flag did not stick");

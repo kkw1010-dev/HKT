@@ -10,8 +10,8 @@ namespace CIGAR
 	// 비켜 지나가기: when a non-hostile humanoid blocks the way, a hold prompt lets the player squeeze
 	// past. While it is held, the NPC being pressed against stops colliding with the player's
 	// controller (its controller body's no-collision flag, the probe's (나), the user's pick after r8b),
-	// plays the vanilla bump toward the side the player comes from, and the player plays EVG Animated
-	// Traversal's Squeeze gesture. Everything is put back once the player is past. Needs EVG and Offset
+	// a dull cloth sound plays and the player plays EVG Animated Traversal's Squeeze gesture. Standing
+	// NPCs only, no bump, and a fall guard (r10: a moving NPC without collision drops through the floor). Everything is put back once the player is past. Needs EVG and Offset
 	// Movement Animation; without either it is off (the user's D17). docs/038 "Stage 1".
 	class Squeeze final : public Module
 	{
@@ -98,10 +98,6 @@ namespace CIGAR
 		bool gesturePlaying{ false };
 		Clock::time_point gestureStart{};
 		float gestureSeconds{ 0.0f };
-
-		// One bump per NPC, then a cooldown (the user's rule, 2026-09-28).
-		RE::FormID lastBumped{ 0 };
-		Clock::time_point lastBumpAt{};
 
 		bool restoreWarned{ false };
 

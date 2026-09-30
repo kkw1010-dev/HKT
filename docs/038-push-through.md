@@ -405,3 +405,32 @@ fixed 2.87 s and cut this clip 0.26 s short; it is now read from the clip's hkaA
 - Passed in the same run, confirmed in the log: W3 (`10 fillable forms`, `FILLED`), R1 (`event=1
   declined` / `no longer declined`), R2 (`event=20 ...` three times), Potion (ring accepted out of
   combat, press accepted in combat). Potion's decline was not exercised (no `event=17 declined`).
+
+### r10 (the user's run of 2026-09-30 18:03-18:22): S1-S5 passed; NPCs fell through the floor
+
+- Four passes, all `PASSED` (훌다, 세이디아, 미카엘, 모겐스), gesture 3810 on every one, no WARN, filter
+  restored every time. But the NPC's z after the pass: 훌다 -6, **세이디아 -479, 미카엘 -488**, 모겐스 +1.
+  The user saw it ("the NPC sinks into the ground").
+- **Cause:** the no-collision flag takes the NPC's character controller off everything, the floor
+  included. An NPC that stays put keeps its z (r8b: every NPC stood still, z within ±2); one that moves
+  while the flag is set drops. The bump moved 세이디아 and 훌다 (64 and 59 units), and 미카엘 walked in his
+  scene (13 units). 모겐스 had no bump and did not move.
+- **Fixed now (built 2026-09-30):** no bump at all; walking NPCs are refused (`walking` in the trace);
+  a fall guard puts the NPC back where it stood and restores its collision the moment it drops more than
+  8 units (`WARN <npc> dropped ...`); a dull cloth sound (vanilla `PHYGenericClothL`, Skyrim.esm
+  0624AB) plays as the pass starts (`cloth sound true`), the user's idea.
+
+### The user's proposal: leave the NPC alone, make only the player pass (reviewed 2026-09-30)
+
+| Way | What it writes | Verdict |
+|---|---|---|
+| A. Share the NPC's collision system group | The player's controller body's filter word, system group bits (16-31), set to the NPC's for the pass, then restored | Havok's group filter does not collide two bodies of the same system group, and each keeps colliding with the world, so neither falls. Whether Skyrim's `bhkCollisionFilter` applies that rule to two character controllers, and what the player's controller then does against its own biped bodies, is **not verified**. Worth one probe |
+| B. Shrink the player's shape | The controller's shape | r8b: it is a list shape (type 9), not a capsule; rebuilding it is engine internals. Rejected |
+| C. No-collision bit on the player | The player's filter word | The player would drop through the floor exactly as the NPCs did. Rejected |
+| D. The current way, with the r10 guard | The NPC's no-collision bit | Works for standing NPCs; walking ones are refused |
+
+Recommendation: keep D (deployed) and try A as a probe in the author build (one panel button, the r8b
+format: pass, pop, both z values, the filter word read back). If A holds, switch the module to A and
+walking NPCs can be passed too; if not, D stays and "walking people cannot be squeezed past" is a
+known limitation. The cloth sound is already in and stays either way (alternative: `ITMClothingUpSD`
+03E879, overridden by Immersive Sounds - Compendium in this order).
