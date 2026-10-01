@@ -15,9 +15,14 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-30)
 
-- **Deployed (2026-09-30, after r11: Squeeze (A) only, instant hold, nudge probe):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `10640e79a7b8ef61a128efa479f342c04c184bea43b62894c5013c57b78df59f`; `verify_deploy` passed in full.
+- **Deployed (2026-10-01, 3.1.1 author build, `8039d3b`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `e303eb5b32ba1ae6c96ebb742d436391998d7a35f47eda78800bcad3d9f5fcf1`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
+- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `8039d3b` (not pushed; 3.1.0 was
+  uploaded to Nexus by the user on 09-30). In it: scripted unread notes get the read prompt (D23), the
+  Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Held for the user's answer:
+  "widen the prompt angle" (two readings, see the orchestrator thread). Cleave: `docs/045` research, the
+  prototype goes on a branch `cleave-proto` after CX-20/21, never on master.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
