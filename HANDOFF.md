@@ -30,7 +30,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   **2026-10-01 (CX-21 done):** `docs/045` sections 6 and 12 are final. In this load order MCO fences the
   vanilla sideways power-attack idles into first person and sneaking, so the prototype (07da707, test DLL
   d25f8a81...) starts the swing three ways in turn per accepted prompt (action, event, idle) and logs what each
-  produced; r14 reads that from `CIGAR.log`. `buildelease` holds the prototype's DLL until the next `v3` build.
+  produced; r14 reads that from `CIGAR.log`. `build\release` holds the prototype's DLL until the next `v3` build.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
