@@ -15,12 +15,12 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-30)
 
-- **Deployed (2026-10-01, 3.1.1 author build, `07b6568`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `1aa3814b98498d9c6024ef81c899777c5f4990519c9c46a5212aeecd683c4c8f`; `verify_deploy` passed in full.
+- **Deployed (2026-10-01, 3.1.1 author build, `a732b1c`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `1ab02aeeb067076c78342bf77e83fbe383318fdbf88c56d19336e0b3dd93d8c4`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
-- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `07b6568` (not pushed; 3.1.0 was
+- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `a732b1c` (not pushed; 3.1.0 was
   uploaded to Nexus by the user on 09-30). In it: scripted unread notes get the read prompt (D23), the
-  Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Also in it: the prompt mark is pulled back on screen (`docs/007`). Was held, now decided (reading 1):
+  Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Also in it: the prompt side offset from -200 to 200 (`docs/007`; the pull-in was reverted). Earlier note:
   "widen the prompt angle" (two readings, see the orchestrator thread). Cleave: `docs/045` research, the
   prototype goes on a branch `cleave-proto` after CX-20/21, never on master.
 - **In this build (new):**
