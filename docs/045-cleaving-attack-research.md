@@ -277,12 +277,11 @@ stomp's motion and effect are being researched by another session
 |---|---|---|
 | 1 Cleave | Two or more hostiles **in front, together, inside weapon reach**: one arc covers them (section 4) | An attack opportunity |
 | 2 War stomp | Hostiles inside reach that **no single arc covers**: in front and behind, or three or more around (the spread of their angles is over about 180°) | Room, at melee range |
-| 3 Fus Ro Dah | A crowd **ahead but beyond reach** (inside the shout's cone and range), or a crowd of any shape when it is too dangerous (many of them, or low health); only if the shout is known and off cooldown | The crowd broken up |
+| 3 Fus Ro Dah | A crowd **ahead but beyond reach** (inside the shout's cone and range); only if the shout is known and off cooldown. Placement only, no health or danger condition (the user, D30) | The crowd broken up |
 
-- **Borders.** The three are told apart by geometry first: inside reach and one arc → 1; inside reach, not
-  one arc → 2; beyond reach, in the shout's cone → 3. Danger moves the choice toward 3 (the brief's section
-  5: "crowd too dangerous → disperse"). Each needs the 0.3 s hold the Cleave gate already has, or the
-  prompt would flip as enemies shuffle.
+- **Borders.** The three are told apart by geometry alone (D30): inside reach and one arc → 1; inside reach,
+  not one arc → 2; beyond reach, in the shout's cone → 3. Each needs the 0.3 s hold the Cleave gate already
+  has, or the prompt would flip as enemies shuffle.
 - **One slot for all three.** With four key slots and Execute, Throw, lock-on, grapple, weapon swap, potion
   and the rest already competing, the three crowd answers should share **one** slot: the gate shows the one
   that fits now. It also keeps the feature from reading as a combat system with three buttons (brief 0,
@@ -301,7 +300,7 @@ a shout (the Greybeards' trial), which is the equip half.
   the animation and the cooldown, which the brief's "legitimate result" rules out.
 - Needs: the shout known (how many words), the cooldown at zero (`GetVoiceRecoveryTime`), not silenced.
 
-### Tier 2: war stomp (settled from the research, 2026-10-01; motion not chosen)
+### Tier 2: war stomp (settled from the research, 2026-10-01; motion chosen by the user, D31)
 
 Source: `C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md` (worker A, read-only; nothing checked in game).
 
@@ -315,11 +314,27 @@ Source: `C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md` (worker A, read-o
 - **Brief 8 and 23.** A stagger ring with no damage is not the forbidden damage sphere, and it is not always on:
   it shows only when surrounded and plays as a body action (motion, dust, sound). With that limit tier 2 stands;
   the earlier "drop or postpone" opinion is withdrawn for the effect.
-- **Motion: not chosen.** No foot-stomp clip exists for the human skeleton in vanilla or in the installed mods
-  (the giant's is on another skeleton). The user picks from the candidates in
-  `C:\TAKEALOOK\_staging\warstomp-preview\index.html` (shout poses, shield bash, kicks, a cold-idle stomp that
-  would need cutting). A public build cannot ship another author's clip, so the public motion has to be a
-  vanilla slot; anything else is the author's build only.
+- **Motion: Bow Rapid Combo V3's kick (the user, D31).** Nexus 89308 by lSmoothl (Smooth), installed here. Its
+  permission is "free to set my mod as a requirement", so CIGAR ships none of its files: an optional link,
+  off with one log line when the mod is absent. How the clip is reached with a melee weapon:
+  - *(a) An OAR submod of CIGAR's pointing at the kick's folder with `overrideAnimationsFolder`.* Not used.
+    The documented use is another submod of the same mod; whether OAR resolves a path into another mod's
+    folder is not documented in the references here and was not tried (estimate: it joins the name to the
+    parent folder, so `..` might work, unproven).
+  - *(b) Raising the slot's event from the DLL.* Confirmed from Hot Key Skill's behaviour patch: the kick's
+    slot `HKS_CustomAnimC` is the state `HKSCustomC` (id 150) of `1HM_Behavior`, reached by the wildcard
+    transition on the event `CustomStartC`. The event alone is not enough: every Bow Rapid Combo submod
+    requires a bow in the right hand, so with a sword the slot would play Hot Key Skill's empty base clip.
+  - *(d) Used: (b) plus a submod CIGAR writes at load from the player's own file,* the way Squeeze borrows
+    EVG's clip: `CIGAR Stomp\Kick\...\HKS_CustomAnimC.hkx`, a copy of the installed kick with its
+    annotations cleared, conditions "weapon drawn, right hand not a bow". Nothing of Smooth's is in the
+    download; the copy exists only on a machine that has the mod. No other installed mod fills that slot.
+  - *(c) A copy kept in CIGAR-Personal* is not needed.
+  - The annotations are cleared because the clip's own hit is a single-target kick (Precision collision on
+    the leg, a touch stagger and dust through Payload Interpreter); the stomp's effect is CIGAR's, at the
+    clip's hit frame (0.33 s).
+  - To see with the eyes: the clip was made for a bow in the left hand, so the arms hold that pose with a
+    sword, a shield or a two-handed weapon; and it reads as a kick forward, not a stomp.
 - **Re-arm, no meter.** Repeated staggers would lock enemies down. The prompt is spent on use and comes back
   when the situation changes (the `spent` / situation rule `PromptSlot` has), with a vanilla stamina cost if a
   cost is wanted (brief 12). No timer meter.
@@ -333,5 +348,5 @@ Source: `C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md` (worker A, read-o
 
 - Three prompts for crowds risk the "general combat overhaul" the brief forbids; the single shared slot is
   this session's answer.
-- Tier 3 by danger overlaps the Potion prompt's moment (low health): two urgent prompts at once.
+- Settled (D30): tier 3 has no health or danger condition, so it does not meet the Potion prompt's moment.
 - Tier 2's effect against brief 8 and 23, as above.
