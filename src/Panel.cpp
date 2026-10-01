@@ -593,7 +593,7 @@ namespace CIGAR::Panel
 				}
 				// No %d in the format: ImGui shows the text as the value.
 				const std::string shown = std::format("{:.0f}", steps[step]);
-				if (ImGui::SliderInt(L("오른쪽 간격 (3인칭)##prompt-right", "Right offset (third person)##prompt-right"), &step, 0,
+				if (ImGui::SliderInt(L("좌우 간격 (3인칭, 음수는 왼쪽)##prompt-right", "Side offset (third person, negative is left)##prompt-right"), &step, 0,
 						static_cast<int>(steps.size()) - 1, shown.c_str())) {
 					Settings::SetPromptRight(steps[step]);
 				}

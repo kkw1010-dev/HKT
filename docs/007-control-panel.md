@@ -388,3 +388,10 @@ The log line at registration lists every page's modules
 `kCombatModules` that matches no module gives a WARN.
 
 상태 and 언어 moved from the old `1. 모듈` page to the top of `5. 세부 설정`.
+
+## A wider side offset for the prompt position (3.1.1, 2026-10-01)
+
+A Nexus comment asked to hide the prompts while observing; the user chose a wider choice of positions
+instead (reply 176410392) and said the range may be generous: a position that leaves the screen is the
+player's choice, and CIGAR does not pull it back (a pull-in was built and reverted the same day). The side
+offset steps are now -200 to 200 (negative is left), default 15 as before.

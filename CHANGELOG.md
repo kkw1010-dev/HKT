@@ -8,6 +8,9 @@ Changed
 - **Pass Time and Lean have their own switches.** The control panel now lists Pass Time and Lean next to
   Sit, Lie & Lean, so you can keep sitting and lying down while turning off the pass-time prompt or the
   lean prompts (wall, table, railing), or the other way round. Both are on by default.
+- **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now
+  goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts
+  out of the way, for example while observing. A far position can leave the screen; that is yours to pick.
 - **Squeeze Past** eases the person aside a little as you pass.
 - **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets
   the read prompt when you pick it up from a body, a bag or a chest, not only quest letters delivered

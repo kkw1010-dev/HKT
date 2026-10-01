@@ -126,7 +126,11 @@ namespace CIGAR::Settings
 	// Third person: how far to the camera's right of the point ahead of the head the prompts sit
 	// (PromptAnchor). The user kept the N7 candidates 0 / 10 / 15 / 20 / 30 as the player's choice,
 	// default 15 (2026-09-27).
-	inline constexpr std::array kPromptRightSteps{ 0.0f, 10.0f, 15.0f, 20.0f, 30.0f };
+	// 3.1.1: a wide range on purpose, negative for the left (the user, 2026-10-01: a Nexus comment asked to
+	// hide prompts during Observe; the answer is a wider choice of positions instead, and a position that
+	// leaves the screen is the player's choice; nothing pulls it back). The first steps were 0-30.
+	inline constexpr std::array kPromptRightSteps{ -200.0f, -150.0f, -100.0f, -60.0f, -30.0f, -15.0f, 0.0f, 10.0f, 15.0f,
+		20.0f, 30.0f, 45.0f, 60.0f, 80.0f, 100.0f, 150.0f, 200.0f };
 	inline constexpr float kPromptRightDefault = 15.0f;
 	float PromptRight();
 	// Snaps to the nearest step and moves the marker from the next frame.
