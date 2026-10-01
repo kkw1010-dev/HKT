@@ -125,24 +125,24 @@ namespace CIGAR::Panel
 				"무기를 꺼냈을 때 The Wizard Warrior가 꺼져 있으면 마검사 모드를 켜는 프롬프트가, 전투 밖에서 무기를 넣을 때 켜져 있으면 끄는 프롬프트가 뜹니다. 단축키·MCM 설정은 The Wizard Warrior 쪽에서 합니다. 두 번 눌러 닫으면 켜기는 무기를 넣을 때까지, 끄기는 다시 꺼냈다 넣을 때까지 뜨지 않습니다.",
 				"Drawing a weapon while The Wizard Warrior is off brings up a prompt that turns it on; sheathing out of combat while it is on brings up one that turns it off. Its hotkeys and MCM stay with The Wizard Warrior. Dismissed with a double tap, the on prompt stays away until the weapon is sheathed, the off prompt until it is drawn and sheathed again." },
 			Label{ "Sit", "앉기", "Sit", "",
-				"바닥을 내려다볼 때 뜨는 앉기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
-				"Switches only the sit prompt (looking at the floor) on or off. The Sit, Lie & Lean module must be on." },
+				"바닥을 내려다볼 때 뜨는 앉기 프롬프트만 따로 켜고 끕니다.",
+				"Switches only the sit prompt (looking at the floor) on or off." },
 			Label{ "Lie", "눕기", "Lie Down", "",
-				"바닥을 내려다볼 때 뜨는 눕기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
-				"Switches only the lie-down prompt (looking at the floor) on or off. The Sit, Lie & Lean module must be on." },
+				"바닥을 내려다볼 때 뜨는 눕기 프롬프트만 따로 켜고 끕니다.",
+				"Switches only the lie-down prompt (looking at the floor) on or off." },
 			Label{ "Lean", "기대기", "Lean", "",
-				"벽·탁자·난간 앞에서 뜨는 기대기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
-				"Switches only the lean prompts (wall, table, railing) on or off. The Sit, Lie & Lean module must be on." },
+				"벽·탁자·난간 앞에서 뜨는 기대기 프롬프트만 따로 켜고 끕니다.",
+				"Switches only the lean prompts (wall, table, railing) on or off." },
 			Label{ "PassTime", "시간 보내기", "Pass Time", "",
-				"쉬는 동안이나 의자에 앉아 있는 동안 뜨는 시간 보내기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
-				"Switches only the pass-time prompt (while resting or seated) on or off. The Sit, Lie & Lean module must be on." },
+				"쉬는 동안이나 의자에 앉아 있는 동안 뜨는 시간 보내기 프롬프트만 따로 켜고 끕니다.",
+				"Switches only the pass-time prompt (while resting or seated) on or off." },
 			Label{ "QuestAction", "퀘스트 행동", "Quest Actions", "",
 				"그레이비어드가 샤우트를 보여 달라고 하면 그 샤우트를 장착하는 프롬프트가 뜹니다.",
 				"When the Greybeards ask to see a shout, a prompt equips that shout." },
 			Label{ "Squeeze", "비켜 지나가기", "Squeeze Past", "EVG Animated Traversal, Offset Movement Animation",
 				"무기를 넣고 걷다가 사람에게 길이 막히면 비켜 지나가기가 뜹니다. 누르는 즉시, 누르고 있는 동안 부딪힌 사람 사이로 빠져나가며, 지나가면 원래대로 돌아옵니다. 플레이어와 대화 중인 사람과 적에게는 뜨지 않습니다.",
 				"Walking with the weapon sheathed, a person blocking the way brings up a squeeze-past prompt. From the press and while held you slip past whoever you bump into, and everything goes back once you are past. Not for someone talking to you, or enemies." },
-			Label{ "Rest", "앉기·눕기·기대기", "Sit, Lie & Lean", "",
+			Label{ "Rest", "휴식 전체 켜기/끄기 (앉기·눕기·기대기)", "Rest: master switch (Sit, Lie & Lean)", "",
 				"무기를 넣고 가만히 서서 바닥을 내려다보면 앉기·눕기가, 앞에 벽·탁자·난간이 있으면 기대기가, 앞에 불이 있으면 손 녹이기가 뜹니다. 쉬는 동안이나 의자에 앉아 있는 동안 시간 보내기 키를 누르고 있으면 시간이 빨리 흐릅니다. 움직이면 천천히 일어납니다.",
 				"Standing still with the weapon sheathed: looking at the floor offers sit and lie down, a wall, table or railing ahead offers lean, a fire ahead offers warm hands. While resting or seated, holding pass time makes time fly. Moving gets up slowly." },
 		};
@@ -446,6 +446,15 @@ namespace CIGAR::Panel
 			}
 		}
 
+		// Rest's own switch turns all of it off; these four switch one part each. The panel draws them under
+		// Rest, indented and greyed while Rest is off (the user, r14: look like a submenu, not be one).
+		constexpr std::array kRestParts{ "Sit"sv, "Lie"sv, "Lean"sv, "PassTime"sv };
+
+		bool IsRestPart(std::string_view a_name)
+		{
+			return std::ranges::find(kRestParts, a_name) != kRestParts.end();
+		}
+
 		void RenderModule(const Module* a_module)
 		{
 			const std::string_view name = a_module->Name();
@@ -471,6 +480,17 @@ namespace CIGAR::Panel
 			// No gate or last-log lines here, in the author build either (the user, r13): the in-game checklist
 			// already shows them, and CIGAR.log keeps both.
 			ImGui::PopTextWrapPos();
+			if (name == "Rest"sv) {
+				// Still inside Rest's indent: the parts sit one step in, under their master switch.
+				ImGui::Spacing();
+				ImGui::BeginDisabled(!on);
+				for (const auto* module : Modules()) {
+					if (IsRestPart(module->Name())) {
+						RenderModule(module);
+					}
+				}
+				ImGui::EndDisabled();
+			}
 			ImGui::Unindent();
 			ImGui::Spacing();
 		}
@@ -522,7 +542,7 @@ namespace CIGAR::Panel
 			const char* id = a_page == ModulePage::Combat ? "##cigar-combat" : a_page == ModulePage::NonCombat ? "##cigar-noncombat" : "##cigar-integrations";
 			const bool table = ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX);
 			for (const auto* module : Modules()) {
-				if (PageOf(module) == a_page) {
+				if (PageOf(module) == a_page && !IsRestPart(module->Name())) {
 					if (table) {
 						ImGui::TableNextColumn();
 					}

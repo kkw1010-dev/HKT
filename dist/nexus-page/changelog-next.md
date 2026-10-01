@@ -1,19 +1,21 @@
-<!-- DRAFT, not for upload as is (2026-10-01). The next Nexus upload is 3.1.2 and carries 3.1.1 with it:
-     3.1.1 went to GitHub only, the Nexus page is still at 3.1.0.
-     Not yet seen in game (r14): the Sit and Lie Down switches, the two-column panel, and the fix for
-     prompts stuck on the player. After r14: keep or drop those lines, and remove the matching
-     known issue only if the log shows the re-install working. Delete this block before uploading. -->
+<!-- DRAFT, not for upload as is. The next Nexus upload is 3.1.2 and carries 3.1.1 with it (3.1.1 went to
+     GitHub only; the Nexus page is still at 3.1.0).
+     Seen in game (r14, 2026-10-02): the Sit and Lie Down switches, the two-column panel.
+     NOT seen in game: the fix for prompts stuck on the player (r14 did not reproduce the problem, so the
+     re-install never ran). It is worded below as an attempt, and the known issue stays.
+     Not seen yet either (r15): the Rest switches drawn under the master switch.
+     Delete this block before uploading. -->
 
 # CIGAR 3.1.2
 
 ## Changed
 
 - **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. All on by default.
-- **The control panel lists the modules in two columns.**
+- **The control panel lists the modules in two columns**, with the Sit, Lie Down, Lean and Pass Time switches under the Rest switch, which turns all of them on or off.
 
 ## Fixed
 
-- **Prompts stuck on the player in third person.** Some minutes into play the prompts could stop following their place beside the character, when another mod took over the game function CIGAR uses to move them. CIGAR now takes its place back and keeps the other mod's part running.
+- **Prompts stuck on the player in third person (attempt).** The prompts could stop following their place beside the character when another mod took over the game function CIGAR uses to move them. CIGAR now takes its place back when that happens and keeps the other mod's part running. This case has not come up in testing since the change, so it stays under Known issues for now.
 
 ---
 

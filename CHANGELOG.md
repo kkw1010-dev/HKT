@@ -7,10 +7,11 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 Changed
 - **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists
   Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
-- **The control panel lists the modules in two columns.**
+- **The control panel lists the modules in two columns**, with the Sit, Lie Down, Lean and Pass Time switches
+  under the Rest switch, which turns all of them on or off.
 
 Fixed
-- **Prompts stuck on the player in third person.** Some minutes into play the prompts could stop following
+- **Prompts stuck on the player in third person (attempt; not yet seen working in play).** Some minutes into play the prompts could stop following
   their place beside the character, when another mod took over the game function CIGAR uses to move them.
   CIGAR now takes its place back and keeps the other mod's part running.
 
