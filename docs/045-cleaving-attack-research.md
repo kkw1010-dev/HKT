@@ -57,7 +57,8 @@ still wait for CX-21 (animation). "Confirmed" means read in source or data; "inf
   flag; `Actor::GetReach()` and `TESObjectWEAP::GetReach()` exist; `HitData::Populate(aggressor, target,
   weapon)` exists.
 - **H1, state: plausible, not proven, and not needed with Precision.** Codex CX-20
-  (`C:\TAKEALOOK\_codexesults\CX-20.md`) and this session's check of the sources:
+  (`C:\TAKEALOOK\_codex
+esults\CX-20.md`) and this session's check of the sources:
   - The perk covers sideways power attacks with two-handed weapons. `BGSAttackData` has no sweep flag
     (confirmed, header). An older LE mod claims the same entry point works for one-handed plus shield
     (author's page, not source).
@@ -204,8 +205,7 @@ swing; prototype in the author build with log-only verdicts.
 The user's idea: three prompts for three crowd situations: (1) Cleave, (2) a war stomp, (3) a Fus Ro Dah
 prompt. Decided so far: Execute and Throw come before Cleave when they compete for a key slot (D27). The war
 stomp's motion and effect are being researched by another session
-(`C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md`, not there yet); what is said about it here is
-provisional.
+(`C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md`); the tier 2 part below was settled from it.
 
 ### Which situation raises which
 
@@ -237,16 +237,33 @@ a shout (the Greybeards' trial), which is the equip half.
   the animation and the cooldown, which the brief's "legitimate result" rules out.
 - Needs: the shout known (how many words), the cooldown at zero (`GetVoiceRecoveryTime`), not silenced.
 
-### Tier 2: the weakest fit with the brief (pending the war-stomp research)
+### Tier 2: war stomp (settled from the research, 2026-10-01; motion not chosen)
 
-- The player has no war stomp in the base game. It needs an animation (no vanilla human one is known to
-  this session) and an effect. A radial stagger or damage around the player is, in effect, the "damage
-  sphere" and "always-on area attack" the brief forbids (8, 23), unless it is limited to a stagger with no
-  damage and tied to a visible stomp.
-- CIGAR is ESP-less: an effect has to be a vanilla form or code, and CIGAR ships no other mod's animation.
-- It is also the one tier that is a new move rather than an existing action surfaced by context (brief 0).
-  If the research finds a vanilla-derived motion and a vanilla effect (a stagger), it can stand; otherwise
-  tier 2 is the one to drop or postpone.
+Source: `C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md` (worker A, read-only; nothing checked in game).
+
+- **Role.** Only when **surrounded**: hostiles on more than one side within about 200 units. 360 degrees, no
+  damage, buys about one second. It must not come up for a cluster in front (that is Cleave's), or it becomes
+  "Cleave without damage" and fights for the same prompt.
+- **Effect: possible without an ESP.** `DLC1VampireChangeStagger` (Dawnguard 02012D18): cast on self, no damage,
+  a stagger of 0.5 through an explosion of radius 200 with no force. Dust and sound come from vanilla forms played
+  directly (`NPCGiantAttackStompSD` 0006CB40, impact set `FXDragonTailstompImpactSet` 0003F819), not from
+  `crGiantStompExplosion`, which deals 2 damage. All are looked up by FormID and plugin at runtime.
+- **Brief 8 and 23.** A stagger ring with no damage is not the forbidden damage sphere, and it is not always on:
+  it shows only when surrounded and plays as a body action (motion, dust, sound). With that limit tier 2 stands;
+  the earlier "drop or postpone" opinion is withdrawn for the effect.
+- **Motion: not chosen.** No foot-stomp clip exists for the human skeleton in vanilla or in the installed mods
+  (the giant's is on another skeleton). The user picks from the candidates in
+  `C:\TAKEALOOK\_staging\warstomp-preview\index.html` (shout poses, shield bash, kicks, a cold-idle stomp that
+  would need cutting). A public build cannot ship another author's clip, so the public motion has to be a
+  vanilla slot; anything else is the author's build only.
+- **Re-arm, no meter.** Repeated staggers would lock enemies down. The prompt is spent on use and comes back
+  when the situation changes (the `spent` / situation rule `PromptSlot` has), with a vanilla stamina cost if a
+  cost is wanted (brief 12). No timer meter.
+- **Unverified, one in-game check each:** whether the spell cast by the player staggers followers and neutral
+  NPCs in the ring (its effect is not flagged hostile, so it should not start a fight, but it may still stagger
+  them: then the gate must refuse when a friendly is inside 200, as Cleave's does); whether a 0.5 stagger
+  interrupts an attack in progress; enemies immune to stagger (large creatures, some bosses) make the prompt do
+  nothing visible, so the gate should count only actors that can be staggered.
 
 ### Conflicts to settle with the user
 
