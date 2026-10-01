@@ -538,20 +538,39 @@ namespace CIGAR::Panel
 
 		void RenderModulePage(ModulePage a_page)
 		{
-			// Two columns (the user, r13). Each cell wraps its text at the column's edge.
-			const char* id = a_page == ModulePage::Combat ? "##cigar-combat" : a_page == ModulePage::NonCombat ? "##cigar-noncombat" : "##cigar-integrations";
-			const bool table = ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX);
+			// Two columns (the user, r13), each stacked from the top on its own (r15: a long entry such as Rest
+			// must not leave a gap beside it). The list is cut where the left column holds about half of the
+			// height, so it reads down the left column, then down the right. Text wraps at the column's edge.
+			std::vector<const Module*> shown;
+			float total = 0.0f;
+			// Rough heights in entries: Rest draws its four parts under itself.
+			const auto weight = [](const Module* a_module) { return a_module->Name() == "Rest"sv ? 3.5f : 1.0f; };
 			for (const auto* module : Modules()) {
 				if (PageOf(module) == a_page && !IsRestPart(module->Name())) {
-					if (table) {
-						ImGui::TableNextColumn();
-					}
-					RenderModule(module);
+					shown.push_back(module);
+					total += weight(module);
 				}
 			}
-			if (table) {
-				ImGui::EndTable();
+			std::size_t cut = 0;
+			for (float left = 0.0f; cut < shown.size() && left + weight(shown[cut]) / 2.0f <= total / 2.0f; ++cut) {
+				left += weight(shown[cut]);
 			}
+			const char* id = a_page == ModulePage::Combat ? "##cigar-combat" : a_page == ModulePage::NonCombat ? "##cigar-noncombat" : "##cigar-integrations";
+			if (!ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX)) {
+				for (const auto* module : shown) {
+					RenderModule(module);
+				}
+				return;
+			}
+			ImGui::TableNextColumn();
+			for (std::size_t i = 0; i < cut; ++i) {
+				RenderModule(shown[i]);
+			}
+			ImGui::TableNextColumn();
+			for (std::size_t i = cut; i < shown.size(); ++i) {
+				RenderModule(shown[i]);
+			}
+			ImGui::EndTable();
 		}
 
 		void __stdcall RenderCombat()
