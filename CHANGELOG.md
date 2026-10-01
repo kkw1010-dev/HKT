@@ -9,6 +9,11 @@ Changed
   Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
 - **The control panel lists the modules in two columns.**
 
+Fixed
+- **Prompts stuck on the player in third person.** Some minutes into play the prompts could stop following
+  their place beside the character, when another mod took over the game function CIGAR uses to move them.
+  CIGAR now takes its place back and keeps the other mod's part running.
+
 ## 3.1.1 (2026-10-01)
 
 Changed

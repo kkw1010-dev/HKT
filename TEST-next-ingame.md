@@ -527,3 +527,13 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - R14-LIE. "앉기"를 켜고 "눕기"를 끈 뒤 같은 조작. 기대: "앉기 (길게)"만 뜸.
 - R14-BOTH. 둘 다 끄고 벽 앞에 선다. 기대: 바닥을 봐도 아무것도 안 뜨고, 벽 앞에서는 "벽에 기대기 (길게)"가 뜸.
 
+### r14 로그 판정: 앵커 갱신 재훅 (사용자 조작 없음, Claude가 `CIGAR.log`로 판정)
+
+평소 플레이만 하면 됨. 볼 줄:
+- `[PromptAnchor] PlayerCharacter::Update hooked (chained: true, to <모듈>)`: 처음 훅할 때 칸에 있던 함수의 주인.
+- `update hook re-installed (#n of 3): the slot held <주소> in <모듈>; CIGAR now chains to ...`: 칸을 빼앗겨 다시 건 기록.
+- 바로 뒤의 `update hook is being called again after re-install #n`: 다시 걸린 뒤 실제로 호출됨(합격).
+- `WARN update hook: the slot was taken again ... giving up` 또는 `WARN PlayerCharacter::Update has not reached CIGAR`:
+  상한(3회)을 넘었거나 칸이 CIGAR 것인데도 호출이 끊김(불합격, 원인 다름).
+- 재훅 줄이 한 번도 없고 WARN도 없으면: 이번 실행에서는 문제가 재현되지 않음(판정 보류).
+

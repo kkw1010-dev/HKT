@@ -56,7 +56,17 @@ namespace CIGAR::PromptAnchor
 		}
 
 		using UpdateFn = void (*)(RE::PlayerCharacter*, float);
-		UpdateFn originalUpdate = nullptr;
+		// What CIGAR's hook calls on to: the slot's holder when CIGAR last hooked it. Written from Tick on a
+		// re-hook, read by the hook on the main thread.
+		std::atomic<UpdateFn> originalUpdate{ nullptr };
+		// The function that held the slot at the first install: where a re-entered hook goes on, see UpdateHook.
+		UpdateFn baseUpdate = nullptr;
+		// Another DLL can write the slot again later with a chain that leaves CIGAR out (r13: valhallaCombat.dll,
+		// minutes into play). CIGAR then hooks once more on top of it, at most this many times a session, so two
+		// DLLs can never trade the slot back and forth for long.
+		constexpr int kMaxRehooks = 3;
+		int rehooks = 0;
+		bool rehookUnconfirmed = false;
 
 		std::string Point(const RE::NiPoint3& a_p)
 		{
@@ -174,8 +184,18 @@ namespace CIGAR::PromptAnchor
 
 		void UpdateHook(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			// After a re-hook the function CIGAR chains to may itself chain back to this hook (it does when it
+			// had saved CIGAR's hook as its own "original"). The second entry goes straight on to the function
+			// from before CIGAR, so the loop closes after one round and the work below runs once a frame.
+			thread_local bool inside = false;
+			if (inside) {
+				baseUpdate(a_player, a_delta);
+				return;
+			}
+			inside = true;
 			// The previous function first, whoever it belongs to (Acheron and Grapple hook this slot too).
-			originalUpdate(a_player, a_delta);
+			originalUpdate.load()(a_player, a_delta);
+			inside = false;
 			++frames;
 			if (a_player) {
 				Move(a_player);
@@ -273,11 +293,46 @@ namespace CIGAR::PromptAnchor
 		}
 	}
 
+	namespace
+	{
+		// The hook went silent and the slot holds someone else's function: put CIGAR's hook back on top and
+		// chain to that function. Only this one vtable slot is written, as at Install. False when the slot is
+		// still CIGAR's (the silence has another cause) or the limit is reached.
+		bool Rehook()
+		{
+			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
+			const auto index = REL::Relocate(0xAD, 0xAD, 0xAF);
+			const auto mine = reinterpret_cast<std::uintptr_t>(&UpdateHook);
+			const auto holder = *reinterpret_cast<const std::uintptr_t*>(vtbl.address() + sizeof(void*) * index);
+			if (holder == mine || holder == 0) {
+				return false;
+			}
+			if (rehooks >= kMaxRehooks) {
+				Log("WARN update hook: the slot was taken again ({:X} in {}) after {} re-installs; giving up for this session", holder,
+					ModuleOf(holder), rehooks);
+				return false;
+			}
+			// The chain target first, so the hook never runs with a stale one.
+			originalUpdate = reinterpret_cast<UpdateFn>(holder);
+			const auto replaced = vtbl.write_vfunc(index, &UpdateHook);
+			if (replaced != holder && replaced != mine && replaced != 0) {
+				originalUpdate = reinterpret_cast<UpdateFn>(replaced);  // the slot changed between the read and the write
+			}
+			++rehooks;
+			rehookUnconfirmed = true;
+			Log("update hook re-installed (#{} of {}): the slot held {:X} in {}; CIGAR now chains to {:X} in {}", rehooks, kMaxRehooks, holder,
+				ModuleOf(holder), reinterpret_cast<std::uintptr_t>(originalUpdate.load()),
+				ModuleOf(reinterpret_cast<std::uintptr_t>(originalUpdate.load())));
+			return true;
+		}
+	}
+
 	void Install()
 	{
 		REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
-		originalUpdate = reinterpret_cast<UpdateFn>(vtbl.write_vfunc(REL::Relocate(0xAD, 0xAD, 0xAF), &UpdateHook));
-		Log("PlayerCharacter::Update hooked (chained: {})", originalUpdate != nullptr);
+		baseUpdate = reinterpret_cast<UpdateFn>(vtbl.write_vfunc(REL::Relocate(0xAD, 0xAD, 0xAF), &UpdateHook));
+		originalUpdate = baseUpdate;
+		Log("PlayerCharacter::Update hooked (chained: {}, to {})", baseUpdate != nullptr, ModuleOf(reinterpret_cast<std::uintptr_t>(baseUpdate)));
 	}
 
 	void OnGameLoaded()
@@ -311,6 +366,13 @@ namespace CIGAR::PromptAnchor
 		// The update hook must keep being called while the game runs; Tick only runs then.
 		if (const auto f = frames.load(); f != lastFrames) {
 			lastFrames = f;
+			lastFrameSeen = now;
+			if (rehookUnconfirmed) {
+				rehookUnconfirmed = false;
+				Log("update hook is being called again after re-install #{}", rehooks);
+			}
+		} else if (!hookDead && now - lastFrameSeen >= kHookSilence && Rehook()) {
+			// One comparison of the slot, here where the silence is noticed anyway; the next silence is timed afresh.
 			lastFrameSeen = now;
 		} else if (!hookDead && now - lastFrameSeen >= kHookSilence) {
 			hookDead = true;

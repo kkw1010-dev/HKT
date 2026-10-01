@@ -40,7 +40,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   New: `Sit` and `Lie` switches (RestParts), the panel's module pages in two columns, no gate/last-log lines in
   the panel in any build. r14 items are in `TEST-next-ingame.md`. The anchor's quiet hook has an owner at last:
   `valhallaCombat.dll` rewrites the PlayerCharacter::Update vtable slot some minutes after CIGAR hooks it (early
-  r13 run). Proposed, not built: re-hook when the slot is no longer CIGAR's (chain to whoever holds it).
+  r13 run). Built (deployed, not seen in game): when the hook is silent for 5 s and the slot is not
+  CIGAR's, `PromptAnchor` hooks again on top and chains to the holder, at most 3 times a session; a re-entry
+  guard sends a second entry to the pre-CIGAR function, so a holder that chains back to CIGAR cannot loop.
+  Judged from the log alone (`re-installed (#n of 3)` then `being called again`).
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
