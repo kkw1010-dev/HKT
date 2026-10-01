@@ -128,7 +128,8 @@ namespace CIGAR::Settings
 	// default 15 (2026-09-27).
 	// 3.1.1: a wide range on purpose, negative for the left (the user, 2026-10-01: a Nexus comment asked to
 	// hide prompts during Observe; the answer is a wider choice of positions instead, and a position that
-	// leaves the screen is the player's choice; nothing pulls it back). The first steps were 0-30.
+	// leaves the screen is the player's choice; nothing pulls it back, except at the default offset, where
+	// PromptAnchor keeps the mark on screen). The first steps were 0-30.
 	inline constexpr std::array kPromptRightSteps{ -200.0f, -150.0f, -100.0f, -60.0f, -30.0f, -15.0f, 0.0f, 10.0f, 15.0f,
 		20.0f, 30.0f, 45.0f, 60.0f, 80.0f, 100.0f, 150.0f, 200.0f };
 	inline constexpr float kPromptRightDefault = 15.0f;

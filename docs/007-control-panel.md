@@ -395,3 +395,10 @@ A Nexus comment asked to hide the prompts while observing; the user chose a wide
 instead (reply 176410392) and said the range may be generous: a position that leaves the screen is the
 player's choice, and CIGAR does not pull it back (a pull-in was built and reverted the same day). The side
 offset steps are now -200 to 200 (negative is left), default 15 as before.
+
+**Final rule (the user, 2026-10-01, later the same day):** at the default side offset (15) the mark is kept
+on screen: `PromptAnchor::Move` projects its place with the world camera (6% edge margin, 12% to go back)
+and, when it is off screen, uses the first of these that is visible: without the side offset, the head, a
+point 200 units straight ahead of the camera (`marker off screen: pulled ...`, `marker back at its own
+place`). At any other offset nothing is moved; the log says once `marker off screen at a custom position:
+left as set`. No warning is shown. Not tested in game yet.

@@ -11,6 +11,7 @@ Changed
 - **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now
   goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts
   out of the way, for example while observing. A far position can leave the screen; that is yours to pick.
+  When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
 - **Squeeze Past** eases the person aside a little as you pass.
 - **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets
   the read prompt when you pick it up from a body, a bag or a chest, not only quest letters delivered

@@ -63,6 +63,24 @@ namespace CIGAR::PromptAnchor
 			return std::format("({:.0f}, {:.0f}, {:.0f})", a_p.x, a_p.y, a_p.z);
 		}
 
+		// 3.1.1 (promised on Nexus, the user's wording: a wider angle at which the prompt mark shows): SkyPrompt
+		// draws a prompt where its reference projects on screen, so a marker outside the view takes the
+		// prompts with it (a large right offset, a camera turned or zoomed in Observe). The marker is pulled
+		// to the nearest place that is on screen: its own place, then without the right offset, then the head,
+		// then a point straight ahead of the camera. 0 = its own place. Only at the default side offset; a
+		// position the player chose in Options is never moved (5 = off screen, left as set).
+		int pulled{ 0 };
+		constexpr float kScreenEdge = 0.06f;
+		constexpr float kAheadOfCamera = 200.0f;
+
+		bool OnScreen(RE::NiCamera* a_camera, const RE::NiPoint3& a_point, float a_edge = kScreenEdge)
+		{
+			float x = 0.0f;
+			float y = 0.0f;
+			float z = 0.0f;
+			return a_camera->WorldPtToScreenPt3(a_point, x, y, z, 1.0e-5f) && z > 0.0f && x > a_edge && x < 1.0f - a_edge && y > a_edge && y < 1.0f - a_edge;
+		}
+
 		void Attach(bool a_marker, std::string_view a_why)
 		{
 			if (a_marker == attachedToMarker) {
@@ -108,6 +126,45 @@ namespace CIGAR::PromptAnchor
 				target += toHead.UnitCross(RE::NiPoint3{ 0.0f, 0.0f, 1.0f }) * r;
 			}
 			target.z -= lift;
+			int now = 0;
+			if (auto* view = RE::Main::WorldRootCamera()) {
+				// Once pulled in, the marker goes back only when its own place is well inside the screen, so it
+				// does not hop at the edge.
+				if (!OnScreen(view, target, pulled ? kScreenEdge * 2.0f : kScreenEdge)) {
+					// Only at the default side offset (the user, 2026-10-01): a position the player picked is
+					// left where it is, on screen or not.
+					if (std::abs(right.load() - Settings::kPromptRightDefault) > 0.01f) {
+						now = 5;
+					} else {
+						RE::NiPoint3 plain = headPos + forward * kForward;
+						plain.z -= lift;
+						// A Gamebryo camera looks along its local x axis.
+						const auto& m = view->world.rotate;
+						const RE::NiPoint3 ahead = view->world.translate + RE::NiPoint3{ m.entry[0][0], m.entry[1][0], m.entry[2][0] } * kAheadOfCamera;
+						if (OnScreen(view, plain)) {
+							target = plain;
+							now = 1;
+						} else if (OnScreen(view, headPos)) {
+							target = headPos;
+							now = 2;
+						} else if (OnScreen(view, ahead)) {
+							target = ahead;
+							now = 3;
+						} else {
+							now = 4;
+						}
+					}
+				}
+			}
+			if (now != pulled) {
+				pulled = now;
+				Log("{}", now == 0 ? "marker back at its own place (on screen)" :
+				          now == 1 ? "marker off screen: pulled in, without the right offset" :
+				          now == 2 ? "marker off screen: pulled onto the head" :
+				          now == 3 ? "marker and head off screen: put straight ahead of the camera" :
+				          now == 5 ? "marker off screen at a custom position: left as set" :
+				                     "prompts cannot show: no place for the marker is on screen (camera data unusable)");
+			}
 			if (setPosition) {
 				ref->SetPosition(target);
 			} else {
