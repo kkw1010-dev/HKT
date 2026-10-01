@@ -2,6 +2,13 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
+## Unreleased
+
+Changed
+- **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets
+  the read prompt when you pick it up from a body, a bag or a chest, not only quest letters delivered
+  to you.
+
 ## 3.1.0 (2026-09-30)
 
 New

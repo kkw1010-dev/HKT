@@ -175,7 +175,14 @@ namespace CIGAR
 				quest = data.second && data.second->IsQuestObject();
 			}
 		}
-		if (!(spell && !player->HasSpell(spell)) && !quest) {
+		// A note picked up from a corpse or a chest is no quest item; what marks the ones that start a quest
+		// when read is a script on the book (the user's D23, 2026-10-01: scripted, unread notes only).
+		const bool scripted = !spell && !quest && !book->IsRead() && book->HasVMAD();
+		if (!(spell && !player->HasSpell(spell)) && !quest && !scripted) {
+			// Say why, so a missing prompt is explained (a Nexus report, 2026-09-30).
+			Log("acquired {} ({:08X}): not offered ({})", Util::NameOf(book), a_itemID,
+				spell ? "its spell is already known" : book->IsRead() ? "no quest item, already read" :
+				                                       "no quest item, no script on the book");
 			return;
 		}
 		if (offeredBook != a_itemID) {
@@ -187,6 +194,6 @@ namespace CIGAR
 		offeredBook = a_itemID;
 		expiresAt = Clock::now() + kOfferWindow;
 		Log("acquired {} ({:08X}), a {}: offering to read for {}s", Util::NameOf(book), a_itemID,
-			spell ? "spell tome" : "quest book", std::chrono::duration_cast<std::chrono::seconds>(kOfferWindow).count());
+			spell ? "spell tome" : quest ? "quest book" : "scripted note, unread", std::chrono::duration_cast<std::chrono::seconds>(kOfferWindow).count());
 	}
 }
