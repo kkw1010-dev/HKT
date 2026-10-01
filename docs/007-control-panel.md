@@ -388,14 +388,3 @@ The log line at registration lists every page's modules
 `kCombatModules` that matches no module gives a WARN.
 
 상태 and 언어 moved from the old `1. 모듈` page to the top of `5. 세부 설정`.
-
-## The prompt mark stays on screen (3.1.1, 2026-10-01)
-
-Promised on Nexus (reply 176410392) and worded by the user as "a wider angle at which the prompt mark
-shows". SkyPrompt draws a prompt where its reference projects on screen, so the third-person marker outside
-the view took every prompt with it. `PromptAnchor::Move` now projects the marker's place with the world
-camera (`NiCamera::WorldPtToScreenPt3`, a 6% edge margin, 12% to go back) and, when it is off screen, uses
-the first of these that is on screen: the place without the right offset, the head, a point 200 units
-straight ahead of the camera. The log says each change once (`marker off screen: pulled ...`, `marker back at
-its own place`), and `prompts cannot show: no place for the marker is on screen` if none works. Not tested in
-game yet; the camera's forward axis (local x) is checked by the projection itself.
