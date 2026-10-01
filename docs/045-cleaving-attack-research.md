@@ -198,3 +198,59 @@ the log.
 Pending CX-20/21. Provisional: detection by primary plus secondaries inside an arc band (section 4),
 hits left to Precision when present and no prompt otherwise, a vanilla sideways power attack as the
 swing; prototype in the author build with log-only verdicts.
+
+## Review: the user's three answers to many-against-one (2026-10-01, no code)
+
+The user's idea: three prompts for three crowd situations: (1) Cleave, (2) a war stomp, (3) a Fus Ro Dah
+prompt. Decided so far: Execute and Throw come before Cleave when they compete for a key slot (D27). The war
+stomp's motion and effect are being researched by another session
+(`C:\TAKEALOOK\_codex\work\cleave\warstomp-research.md`, not there yet); what is said about it here is
+provisional.
+
+### Which situation raises which
+
+| Tier | Situation (what the gate reads) | What the player gets |
+|---|---|---|
+| 1 Cleave | Two or more hostiles **in front, together, inside weapon reach**: one arc covers them (section 4) | An attack opportunity |
+| 2 War stomp | Hostiles inside reach that **no single arc covers**: in front and behind, or three or more around (the spread of their angles is over about 180°) | Room, at melee range |
+| 3 Fus Ro Dah | A crowd **ahead but beyond reach** (inside the shout's cone and range), or a crowd of any shape when it is too dangerous (many of them, or low health); only if the shout is known and off cooldown | The crowd broken up |
+
+- **Borders.** The three are told apart by geometry first: inside reach and one arc → 1; inside reach, not
+  one arc → 2; beyond reach, in the shout's cone → 3. Danger moves the choice toward 3 (the brief's section
+  5: "crowd too dangerous → disperse"). Each needs the 0.3 s hold the Cleave gate already has, or the
+  prompt would flip as enemies shuffle.
+- **One slot for all three.** With four key slots and Execute, Throw, lock-on, grapple, weapon swap, potion
+  and the rest already competing, the three crowd answers should share **one** slot: the gate shows the one
+  that fits now. It also keeps the feature from reading as a combat system with three buttons (brief 0,
+  12, 23). Order inside a fight: Execute, Throw (D27), then the crowd slot.
+
+### Tier 3: equip, or equip and shout?
+
+CIGAR's rule is that a prompt performs the whole action, not a preparation step (the user declined the
+tool swap and questioned a mode toggle for the same reason). So the press should **shout**, not only equip:
+equip Unrelenting Force if another power is in the voice slot, perform the shout through the game's own
+path, then put the earlier power back (as WeaponSwap gives the weapons back). `QuestAction` already equips
+a shout (the Greybeards' trial), which is the equip half.
+- Unverified: how to perform the shout legitimately. The game decides the number of words by how long the
+  shout key is held, so the honest way is a synthetic key hold (CIGAR's `Util::PressKey` presses and
+  releases at once; a held press is not built). Casting the shout's spell directly would skip the voice,
+  the animation and the cooldown, which the brief's "legitimate result" rules out.
+- Needs: the shout known (how many words), the cooldown at zero (`GetVoiceRecoveryTime`), not silenced.
+
+### Tier 2: the weakest fit with the brief (pending the war-stomp research)
+
+- The player has no war stomp in the base game. It needs an animation (no vanilla human one is known to
+  this session) and an effect. A radial stagger or damage around the player is, in effect, the "damage
+  sphere" and "always-on area attack" the brief forbids (8, 23), unless it is limited to a stagger with no
+  damage and tied to a visible stomp.
+- CIGAR is ESP-less: an effect has to be a vanilla form or code, and CIGAR ships no other mod's animation.
+- It is also the one tier that is a new move rather than an existing action surfaced by context (brief 0).
+  If the research finds a vanilla-derived motion and a vanilla effect (a stagger), it can stand; otherwise
+  tier 2 is the one to drop or postpone.
+
+### Conflicts to settle with the user
+
+- Three prompts for crowds risk the "general combat overhaul" the brief forbids; the single shared slot is
+  this session's answer.
+- Tier 3 by danger overlaps the Potion prompt's moment (low health): two urgent prompts at once.
+- Tier 2's effect against brief 8 and 23, as above.
