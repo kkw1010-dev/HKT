@@ -5,27 +5,26 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 ## 3.1.2 (not released yet; goes to Nexus together with 3.1.1, which reached GitHub only)
 
 Changed
-- **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists
-  Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
-- **The control panel lists the modules in two columns**, with the Sit, Lie Down, Lean and Pass Time switches
-  under the Rest switch, which turns all of them on or off.
+- **Sit and Lie Down now have separate switches**, so you can keep the lean prompts and turn off sitting,
+  lying down or both. On by default.
+- **The CIGAR settings panel now uses two columns.** Rest is the master switch for Sit, Lie Down, Lean and
+  Pass Time, which appear together beneath it.
 
 Fixed
-- **Prompts stuck on the player in third person (attempt; not yet seen working in play).** Some minutes into play the prompts could stop following
-  their place beside the character, when another mod took over the game function CIGAR uses to move them.
-  CIGAR now takes its place back and keeps the other mod's part running.
+- **Attempted fix for third-person prompts sticking to the player (not yet confirmed in game).** The prompts
+  could stop following their place near the character when another mod took over the update hook CIGAR uses
+  to move them. CIGAR now attempts to restore its hook while preserving the other mod's hook.
 
 ## 3.1.1 (2026-10-01)
 
 Changed
-- **Pass Time and Lean have their own switches.** The control panel now lists Pass Time and Lean next to
-  Sit, Lie & Lean, so you can keep sitting and lying down while turning off the pass-time prompt or the
-  lean prompts (wall, table, railing), or the other way round. Both are on by default.
+- **Pass Time and Lean have their own switches.** The settings panel added separate Pass Time and Lean
+  switches, so either can be turned off without disabling sitting or lying down. Both are on by default.
 - **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now
   goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts
-  out of the way, for example while observing. A far position can leave the screen; that is yours to pick.
+  out of the way, for example while observing. Large offsets can put the prompts off screen, so pick a value that keeps them visible.
   When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
-- **Squeeze Past** eases the person aside a little as you pass.
+- **Squeeze Past** now gently nudges the blocking person aside as you pass.
 - **Jujutsu is now called Throw** in the English prompts and panel (유술 in Korean is unchanged). Nothing else
   about it changed, and your settings carry over.
 - **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets

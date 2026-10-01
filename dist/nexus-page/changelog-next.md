@@ -1,21 +1,22 @@
 <!-- DRAFT, not for upload as is. The next Nexus upload is 3.1.2 and carries 3.1.1 with it (3.1.1 went to
      GitHub only; the Nexus page is still at 3.1.0).
-     Seen in game (r14, 2026-10-02): the Sit and Lie Down switches, the two-column panel.
-     NOT seen in game: the fix for prompts stuck on the player (r14 did not reproduce the problem, so the
-     re-install never ran). It is worded below as an attempt, and the known issue stays.
-     Not seen yet either (r15): the Rest switches drawn under the master switch.
+     Seen in game: the Sit and Lie Down switches and the two-column panel (r14), the switches grouped under
+     Rest (r15).
+     NOT seen in game yet: the columns stacking without a gap (r16; the text below claims nothing about it),
+     and the fix for prompts stuck on the player (never reproduced since, so the re-install never ran): it
+     is worded as an attempt and the known issue stays.
      Delete this block before uploading. -->
 
 # CIGAR 3.1.2
 
 ## Changed
 
-- **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. All on by default.
-- **The control panel lists the modules in two columns**, with the Sit, Lie Down, Lean and Pass Time switches under the Rest switch, which turns all of them on or off.
+- **Sit and Lie Down now have separate switches**, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
+- **The CIGAR settings panel now uses two columns.** Rest is the master switch for Sit, Lie Down, Lean and Pass Time, which appear together beneath it.
 
 ## Fixed
 
-- **Prompts stuck on the player in third person (attempt).** The prompts could stop following their place beside the character when another mod took over the game function CIGAR uses to move them. CIGAR now takes its place back when that happens and keeps the other mod's part running. This case has not come up in testing since the change, so it stays under Known issues for now.
+- **Attempted fix for third-person prompts sticking to the player (not yet confirmed in game).** The prompts could stop following their place near the character when another mod took over the update hook CIGAR uses to move them. CIGAR now attempts to restore its hook while preserving the other mod's hook. The problem has not come up in testing since the change, so it stays under Known issues for now.
 
 ---
 
@@ -23,11 +24,11 @@
 
 ## Changed
 
-- **Pass Time and Lean have their own switches.** The control panel lists them next to Sit, Lie & Lean, so you can keep sitting and lying down while turning off the pass-time prompt or the lean prompts, or the other way round. Both are on by default.
-- **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts out of the way, for example while observing. A far position can leave the screen; that is yours to pick. When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
+- **Pass Time and Lean have their own switches.** The settings panel added separate Pass Time and Lean switches, so you can turn off either prompt without disabling sitting or lying down. Both are on by default.
+- **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts out of the way, for example while observing. Large offsets can put the prompts off screen, so pick a value that keeps them visible. When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
 - **Jujutsu is now called Throw** in the English prompts and panel. Nothing else about it changed, and your settings carry over.
-- **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets the read prompt when you pick it up from a body, a bag or a chest, not only letters delivered to you.
-- **Squeeze Past** eases the person aside a little as you pass.
+- **Reading:** unread scripted notes, including notes that start quests, now get the Read prompt when you take them from a body, bag or chest; previously only delivered letters did.
+- **Squeeze Past** now gently nudges the blocking person aside as you pass.
 
 ---
 
@@ -48,7 +49,7 @@
 
 - Prevented a crash when a prompt changed while SkyPrompt was drawing it, and a load-time crash when another mod's script was not linked.
 - Prevented an old prompt from returning on a key already used by another prompt, and fixed Pass Time staying fast after saving while it was held.
-- Fixed a cut-short Throw killing its target, and hid the throw prompt when an enemy stopped guarding.
+- Fixed a cut-short throw killing its target, and hid its prompt when an enemy stopped guarding.
 - Fixed mannequin swaps interrupted by equipment changes or by switching the module off. Also fixed several smaller gear, helmet, surrender, Observe and soul-gem cases.
 
 ## Known issues
