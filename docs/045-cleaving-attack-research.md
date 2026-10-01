@@ -3,9 +3,9 @@
 Status (2026-10-01): research in progress. The brief is the user's
 (`C:\TAKEALOOK\_codex\work\cleave\BRIEF.md`, with the amendment that avoiding Precision has low weight).
 Sections 1, 4 and 8 (and parts of 2, 7, 9, 10) are this session's work, checked against CIGAR's source,
-CommonLibSSE-NG's headers and the load order. Sections 2, 3, 5 and 6 wait for Codex's CX-20 (melee
-internals, Precision, vanilla Sweep) and CX-21 (animation); what is written there now is only what this
-session confirmed itself. "Confirmed" means read in source or data; "inferred" is marked.
+CommonLibSSE-NG's headers and the load order. Sections 2, 3 and 5 use Codex's CX-20 (melee internals, Precision, vanilla Sweep),
+re-checked against Precision's source and this modlist's settings; section 6 and the final recommendation
+still wait for CX-21 (animation). "Confirmed" means read in source or data; "inferred" is marked.
 
 ## 1. CIGAR architecture relevant to Cleave (confirmed, `src/`)
 
@@ -56,15 +56,37 @@ session confirmed itself. "Confirmed" means read in source or data; "inferred" i
 - **Confirmed (headers):** `BGSAttackData` carries `attackAngle` and `strikeAngle` and a `kPowerAttack`
   flag; `Actor::GetReach()` and `TESObjectWEAP::GetReach()` exist; `HitData::Populate(aggressor, target,
   weapon)` exists.
-- **H1, state:** partly confirmed. The entry point exists and is a plain "set to 1". What the engine does
-  with it for a one-handed weapon, and whether CIGAR can make it true for one swing without shipping a
-  perk record (CIGAR is ESP-less), is CX-20's question. Pending.
+- **H1, state: plausible, not proven, and not needed with Precision.** Codex CX-20
+  (`C:\TAKEALOOK\_codexesults\CX-20.md`) and this session's check of the sources:
+  - The perk covers sideways power attacks with two-handed weapons. `BGSAttackData` has no sweep flag
+    (confirmed, header). An older LE mod claims the same entry point works for one-handed plus shield
+    (author's page, not source).
+  - Calling `HandleEntryPoint` from CIGAR does not make the engine's later hit query true; it would take
+    a perk record (CIGAR ships none) or a hook on the entry-point result, whose call site is not known.
+  - Precision cancels it anyway: `AttackHooks::ApplyPerkEntryPoint` sets the `kSetSweepAttack` result to 0
+    while the actor has an active collision (confirmed, `src/Hooks.cpp` lines 174-181).
+- **Idle forms for the swing (confirmed, houseCARL, Skyrim.esm):** `PowerAttackLeft` 00019B22
+  (`attackPowerStartLeft`), `PowerAttackRight` 00019B24 (`attackPowerStartRight`), `PowerAttackStanding`
+  00019B26, `PowerAttackForward` 00019B25, under `PowerAttackRoot` 00013384.
 
 ## 3. Proven external implementations
 
-Pending CX-20. Confirmed here: **Precision is installed in this modlist** (`mods\Precision - Accurate
-Melee Collisions`, enabled, with creature patches), so in the user's game melee hits already come from
-weapon-trajectory collision, whatever the vanilla sweep flag says.
+- **Precision (GPL-3.0, open source; installed here as 2.0.4).** Confirmed in its `main` source:
+  - Weapon collisions start on the attack animation's events; each contacted actor is queued for the
+    game's own damage routine, and an actor already hit by that collision is rejected (CX-20's reading
+    of `PrecisionHandler.cpp`, `ContactListener.cpp`, `PendingHit.cpp`; this session re-read the target
+    cap, `ContactListener.cpp` lines 419-427, and `Utils::IsSweepAttackActive`).
+  - **Target cap.** `uSweepAttackMode`: 0 unlimited (the source default), 1 max targets, with
+    `uMaxTargetsNoSweepAttack` and `uMaxTargetsSweepAttack`. **This modlist's effective values**
+    (`mods\TAKEALOOK - MCM and INI\MCM\Settings\Precision.ini`): mode 1, **3 targets without the Sweep
+    perk, 5 with it**. So here one swing already hits up to three actors, perk or not.
+  - **API** (`PrecisionAPI.h`, "copy this file into your own project", interface V4): pre-hit callback
+    (can veto a hit), post-hit callback (`PrecisionHitData`, `RE::HitData`), and
+    `GetAttackCollisionCapsuleLength(actor)` for the real reach of the blade. Nothing in it starts a swing
+    or names the targets in advance.
+  - Friendly fire: teammates and summons are skipped in combat by default; neutrals are not guaranteed.
+- Dynamic Sweep Attack, Savage Cleave, Elder Souls Sweep Attacks: author pages only, no source read
+  (CX-20). The last one is hidden as obsolete in favour of Precision.
 
 ## 4. Proposed detection model (this session's comparison, section 21-E)
 
@@ -98,13 +120,19 @@ offline.
 
 ## 5. Proposed hit model
 
-Pending CX-20. The two candidates from the brief's hypotheses:
-- **H2 (Precision present):** if Precision hits every actor the blade passes through, once each, the hit
-  model is "start a broad swing and let Precision resolve it"; CIGAR adds nothing to damage. To be
-  confirmed from Precision's source or API.
-- **Without Precision:** the vanilla sweep flag (H1) if it can be set for one swing, else no cleave
-  (prompt off), given the amendment's low weight on Precision independence.
-Not proposed: a damage sphere, calling damage functions per actor, or any multiplier (brief 8, 23).
+- **With Precision (H2, confirmed for this modlist's settings):** CIGAR adds no hit code. The accepted
+  prompt starts one broad swing; Precision's collision hits what the blade passes through, once per actor
+  per collision, up to its target cap (3 here). CIGAR registers a pre-hit callback only to veto
+  non-hostile targets during its own swing (brief 17.2-5, 20.8), and a post-hit callback to log each hit
+  (target, once-per-actor check) so the acceptance criteria can be read from the log.
+- **Without Precision:** no proven way to make one swing hit two actors without a perk record or an
+  unidentified engine hook (section 2). Given the amendment (Precision avoidance has low weight) and the
+  user's rule on unverified engine internals, the module is **off without Precision**, with one log line.
+  The vanilla-sweep route stays a later, separate experiment.
+- Unknown until tested: whether the user's OAR animation for the chosen power attack opens one collision
+  window or several (several could mean more than one hit per actor), and whether its arc really crosses
+  two enemies standing side by side.
+- Not proposed: a damage sphere, damage calls per actor, any multiplier (brief 8, 23).
 
 ## 6. Proposed animation strategy
 
