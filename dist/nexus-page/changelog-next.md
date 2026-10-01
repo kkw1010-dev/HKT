@@ -3,6 +3,7 @@
 ## Changed
 
 - **Pass Time and Lean have their own switches.** The control panel lists them next to Sit, Lie & Lean, so you can keep sitting and lying down while turning off the pass-time prompt or the lean prompts, or the other way round. Both are on by default.
+- **Prompts stay on screen in third person.** When the prompt mark would fall outside the view (a large right offset, a turned camera, zooming with Observe), it moves to the nearest spot still on screen instead of disappearing.
 - **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets the read prompt when you pick it up from a body, a bag or a chest, not only letters delivered to you.
 - **Squeeze Past** eases the person aside a little as you pass.
 
