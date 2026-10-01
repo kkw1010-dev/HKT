@@ -18,8 +18,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 - **Deployed (2026-10-01, 3.1.1 author build, `c948d7d`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
   `e37d69f6ac31e674232de62c96d56cc3a17739f64c17ee25c8fb6caa9323c70a`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
-- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `c948d7d` (not pushed; 3.1.0 was
-  uploaded to Nexus by the user on 09-30). In it: scripted unread notes get the read prompt (D23), the
+- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `c948d7d` (pushed to GitHub; **never
+  uploaded to Nexus**, whose page is still 3.1.0, uploaded by the user on 09-30). The next Nexus upload is
+  **3.1.2** = 3.1.1 + Sit/Lie switches + two-column panel + the anchor re-hook, packaged only after r14 and on
+  the user's word; `dist/nexus-page/*-next.*` are drafts for it (see the note at the top of `changelog-next.md`). In it: scripted unread notes get the read prompt (D23), the
   Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Also in it: the prompt side offset from -200 to 200 (`docs/007`; the mark is kept on screen only at the default offset). Earlier note:
   "widen the prompt angle" (two readings, see the orchestrator thread). Cleave: `docs/045` research, the
   prototype goes on a branch `cleave-proto` after CX-20/21, never on master.

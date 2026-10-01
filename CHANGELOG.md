@@ -2,7 +2,7 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
-## Unreleased
+## 3.1.2 (not released yet; goes to Nexus together with 3.1.1, which reached GitHub only)
 
 Changed
 - **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists
