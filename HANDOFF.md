@@ -36,6 +36,11 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   `overwrite\meshes\OpenAnimationReplacer\CIGAR Stomp` (a second runtime folder, like `CIGAR Squeeze`), played by
   Hot Key Skill's `CustomStartC`, with Dawnguard's area stagger at 0.33 s. `docs/045` "Crowd slot and war stomp"
   on the branch has the log lines and the console setup.
+- **After r13 (2026-10-01, deployed author build):** r13 passed (nudge, notes, pass time, lean, prompt position).
+  New: `Sit` and `Lie` switches (RestParts), the panel's module pages in two columns, no gate/last-log lines in
+  the panel in any build. r14 items are in `TEST-next-ingame.md`. The anchor's quiet hook has an owner at last:
+  `valhallaCombat.dll` rewrites the PlayerCharacter::Update vtable slot some minutes after CIGAR hooks it (early
+  r13 run). Proposed, not built: re-hook when the slot is no longer CIGAR's (chain to whoever holds it).
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before

@@ -464,15 +464,15 @@ namespace CIGAR
 			passDismissed = false;
 			Log("pass time offered again from the next sit or rest");
 		}
-		// Pass time and leaning have their own switches (3.1.1).
+		// Pass time, leaning, sitting and lying have their own switches.
 		const bool passOn = Settings::Enabled(RestPart::PassTime()->Name());
 		const bool leanOn = Settings::Enabled(RestPart::Lean()->Name());
 		passTime.Update(chair && !passDismissed && passOn, [] { return PassTimeText(); });
 		if (chair) {
 			PassTimeTick();
 		}
-		sit.Update(available, [] { return std::string(Text::L("앉기 (길게)", "Sit (hold)")); });
-		lie.Update(available, [] { return std::string(Text::L("눕기 (길게)", "Lie Down (hold)")); });
+		sit.Update(available && Settings::Enabled(RestPart::Sit()->Name()), [] { return std::string(Text::L("앉기 (길게)", "Sit (hold)")); });
+		lie.Update(available && Settings::Enabled(RestPart::Lie()->Name()), [] { return std::string(Text::L("눕기 (길게)", "Lie Down (hold)")); });
 		if (leanShown != leanFound) {
 			// The text names the surface, so a different surface is a new prompt (Reset too, or the
 			// keep-alive re-sends the old text on a key slot already given back; review 2026-09-30).

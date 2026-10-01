@@ -2,6 +2,13 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
+## Unreleased
+
+Changed
+- **Sit and Lie Down have their own switches too.** With Pass Time and Lean, the control panel now lists
+  Sit and Lie Down, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
+- **The control panel lists the modules in two columns.**
+
 ## 3.1.1 (2026-10-01)
 
 Changed

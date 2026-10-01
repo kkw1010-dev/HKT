@@ -124,7 +124,13 @@ namespace CIGAR::Panel
 			Label{ "WizardWarrior", "마검사 모드", "Wizard Warrior Mode", "The Wizard Warrior",
 				"무기를 꺼냈을 때 The Wizard Warrior가 꺼져 있으면 마검사 모드를 켜는 프롬프트가, 전투 밖에서 무기를 넣을 때 켜져 있으면 끄는 프롬프트가 뜹니다. 단축키·MCM 설정은 The Wizard Warrior 쪽에서 합니다. 두 번 눌러 닫으면 켜기는 무기를 넣을 때까지, 끄기는 다시 꺼냈다 넣을 때까지 뜨지 않습니다.",
 				"Drawing a weapon while The Wizard Warrior is off brings up a prompt that turns it on; sheathing out of combat while it is on brings up one that turns it off. Its hotkeys and MCM stay with The Wizard Warrior. Dismissed with a double tap, the on prompt stays away until the weapon is sheathed, the off prompt until it is drawn and sheathed again." },
-			Label{ "Lean", "기대기 (앉기·눕기와 따로)", "Lean (separate from Sit & Lie)", "",
+			Label{ "Sit", "앉기", "Sit", "",
+				"바닥을 내려다볼 때 뜨는 앉기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
+				"Switches only the sit prompt (looking at the floor) on or off. The Sit, Lie & Lean module must be on." },
+			Label{ "Lie", "눕기", "Lie Down", "",
+				"바닥을 내려다볼 때 뜨는 눕기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
+				"Switches only the lie-down prompt (looking at the floor) on or off. The Sit, Lie & Lean module must be on." },
+			Label{ "Lean", "기대기", "Lean", "",
 				"벽·탁자·난간 앞에서 뜨는 기대기 프롬프트만 따로 켜고 끕니다. 앉기·눕기·기대기 모듈이 켜져 있어야 합니다.",
 				"Switches only the lean prompts (wall, table, railing) on or off. The Sit, Lie & Lean module must be on." },
 			Label{ "PassTime", "시간 보내기", "Pass Time", "",
@@ -461,14 +467,9 @@ namespace CIGAR::Panel
 			}
 			if (!on) {
 				ImGui::TextColored(kDim, "%s", L("꺼짐. 프롬프트 표시 안 함", "Off. No prompts"));
-			} else if constexpr (!kRelease) {
-				// Author-side: the live gate inputs and the last log line, so a missing prompt is
-				// explained without opening the log.
-				const auto gate = a_module->ShownGate();
-				const auto line = a_module->ShownLine();
-				ImGui::TextColored(kDim, "조건: %s", gate.empty() ? "기록 없음" : gate.c_str());
-				ImGui::TextColored(kDim, "최근: %s", line.empty() ? "기록 없음" : line.c_str());
 			}
+			// No gate or last-log lines here, in the author build either (the user, r13): the in-game checklist
+			// already shows them, and CIGAR.log keeps both.
 			ImGui::PopTextWrapPos();
 			ImGui::Unindent();
 			ImGui::Spacing();
@@ -517,10 +518,19 @@ namespace CIGAR::Panel
 
 		void RenderModulePage(ModulePage a_page)
 		{
+			// Two columns (the user, r13). Each cell wraps its text at the column's edge.
+			const char* id = a_page == ModulePage::Combat ? "##cigar-combat" : a_page == ModulePage::NonCombat ? "##cigar-noncombat" : "##cigar-integrations";
+			const bool table = ImGui::BeginTable(id, 2, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_PadOuterX);
 			for (const auto* module : Modules()) {
 				if (PageOf(module) == a_page) {
+					if (table) {
+						ImGui::TableNextColumn();
+					}
 					RenderModule(module);
 				}
+			}
+			if (table) {
+				ImGui::EndTable();
 			}
 		}
 

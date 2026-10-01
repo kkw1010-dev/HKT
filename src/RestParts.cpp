@@ -16,6 +16,18 @@ namespace CIGAR
 		return &part;
 	}
 
+	RestPart* RestPart::Sit()
+	{
+		static RestPart part("Sit");
+		return &part;
+	}
+
+	RestPart* RestPart::Lie()
+	{
+		static RestPart part("Lie");
+		return &part;
+	}
+
 	void RestPart::OnDisabled()
 	{
 		if (this == PassTime()) {
