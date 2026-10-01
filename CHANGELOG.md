@@ -2,7 +2,9 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
-## 3.1.2 (not released yet; goes to Nexus together with 3.1.1, which reached GitHub only)
+## 3.1.2 (2026-10-02)
+
+On Nexus this is the first release after 3.1.0; it carries 3.1.1 (GitHub only) with it.
 
 Changed
 - **Sit and Lie Down now have separate switches**, so you can keep the lean prompts and turn off sitting,

@@ -1,34 +1,25 @@
-<!-- DRAFT, not for upload as is. The next Nexus upload is 3.1.2 and carries 3.1.1 with it (3.1.1 went to
-     GitHub only; the Nexus page is still at 3.1.0).
-     Seen in game: the Sit and Lie Down switches and the two-column panel (r14), the switches grouped under
-     Rest (r15).
-     NOT seen in game yet: the columns stacking without a gap (r16; the text below claims nothing about it),
-     and the fix for prompts stuck on the player (never reproduced since, so the re-install never ran): it
-     is worded as an attempt and the known issue stays.
-     Delete this block before uploading. -->
+# CIGAR 3.1.2 (changes since 3.1.0)
 
-# CIGAR 3.1.2
+3.1.1 was published on GitHub only; its changes are included here.
 
 ## Changed
 
-- **Sit and Lie Down now have separate switches**, so you can keep the lean prompts and turn off sitting, lying down or both. On by default.
-- **The CIGAR settings panel now uses two columns.** Rest is the master switch for Sit, Lie Down, Lean and Pass Time, which appear together beneath it.
+- **Rest has a master switch and four switches of its own.** In the settings panel, Rest turns sitting, lying down, leaning and passing time on or off together. Beneath it, Sit, Lie Down, Lean and Pass Time each have a switch, so you can, for example, keep the lean prompts and turn off sitting and lying down. All are on by default.
+- **The settings panel uses two columns**, so more modules fit on a page.
+- **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts out of the way. Large offsets can put the prompts off screen, so pick a value that keeps them visible. At the default position the prompts are also kept on screen: if their spot would fall outside the view, they move to the nearest spot still visible.
+- **Reading:** unread scripted notes, including notes that start quests, now get the Read prompt when you take them from a body, bag or chest; previously only delivered letters did.
+- **Squeeze Past** now gently nudges the blocking person aside as you pass.
+- **Jujutsu is now called Throw** in the English prompts and panel. Nothing else about it changed, and your settings carry over.
 
 ## Fixed
 
-- **Attempted fix for third-person prompts sticking to the player (not yet confirmed in game).** The prompts could stop following their place near the character when another mod took over the update hook CIGAR uses to move them. CIGAR now attempts to restore its hook while preserving the other mod's hook. The problem has not come up in testing since the change, so it stays under Known issues for now.
+- **Attempted fix for third-person prompts sticking to the player (not yet confirmed in game).** The prompts could stop following their place near the character when another mod took over the update hook CIGAR uses to move them. CIGAR now attempts to restore its hook while preserving the other mod's hook. The problem has not come up in testing since the change, so it stays under Known issues.
 
----
+## Known issues
 
-# CIGAR 3.1.1
-
-## Changed
-
-- **Pass Time and Lean have their own switches.** The settings panel added separate Pass Time and Lean switches, so you can turn off either prompt without disabling sitting or lying down. Both are on by default.
-- **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts out of the way, for example while observing. Large offsets can put the prompts off screen, so pick a value that keeps them visible. When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
-- **Jujutsu is now called Throw** in the English prompts and panel. Nothing else about it changed, and your settings carry over.
-- **Reading:** unread scripted notes, including notes that start quests, now get the Read prompt when you take them from a body, bag or chest; previously only delivered letters did.
-- **Squeeze Past** now gently nudges the blocking person aside as you pass.
+- Third-person prompts may still stick to the player's position for the rest of a session (see the attempted fix above). CIGAR logs a stalled update hook in `CIGAR.log`.
+- Throw may refuse to start until the first death after loading a game. Execute can miss its first press; pressing again works.
+- The Wizard Warrior's weapon enchantment remains after End Wizard Warrior until it expires, as that mod is designed to do.
 
 ---
 

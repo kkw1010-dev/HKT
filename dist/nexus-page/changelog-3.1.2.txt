@@ -1,0 +1,9 @@
+Changed: Rest now has a master switch plus separate switches for Sit, Lie Down, Lean and Pass Time beneath it in the settings panel. For example, you can keep the lean prompts and turn off sitting and lying down. All on by default.
+Changed: The settings panel lists the modules in two columns.
+Changed: The third-person prompt side offset (CIGAR > Options) now ranges from 200 left to 200 right (was 0 to 30 right). Large offsets can put the prompts off screen. At the default position the prompts are kept on screen.
+Changed: Unread scripted notes, including notes that start quests, now get the Read prompt when taken from a body, bag or chest; previously only delivered letters did.
+Changed: Squeeze Past now gently nudges the blocking person aside as you pass.
+Changed: Jujutsu is now called Throw in the English prompts and panel. Nothing else about it changed; settings carry over.
+Fixed: Attempted fix for third-person prompts sticking to the player (not yet confirmed in game). CIGAR now attempts to restore its update hook when another mod takes it over, while preserving that mod's hook.
+Known issue: Third-person prompts may still stick to the player's position for the rest of a session; CIGAR logs a stalled update hook in CIGAR.log.
+Note: Includes the changes of 3.1.1, which was published on GitHub only. No new game needed.
