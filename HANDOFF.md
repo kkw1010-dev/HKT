@@ -31,6 +31,11 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   vanilla sideways power-attack idles into first person and sneaking, so the prototype (07da707, test DLL
   d25f8a81...) starts the swing three ways in turn per accepted prompt (action, event, idle) and logs what each
   produced; r14 reads that from `CIGAR.log`. `build\release` holds the prototype's DLL until the next `v3` build.
+  **Later the same day (D30, D31):** the branch also holds the one crowd slot (stomp when surrounded, else
+  Cleave; Fus Ro Dah logged only) and the war stomp: Bow Rapid Combo V3's kick copied at load into
+  `overwrite\meshes\OpenAnimationReplacer\CIGAR Stomp` (a second runtime folder, like `CIGAR Squeeze`), played by
+  Hot Key Skill's `CustomStartC`, with Dawnguard's area stagger at 0.33 s. `docs/045` "Crowd slot and war stomp"
+  on the branch has the log lines and the console setup.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
