@@ -44,7 +44,7 @@ The optional integrations are separate downloads. Squeeze Past prepares its gest
 ## Known issues and logs
 
 - In third person, prompts can remain at the player position if the update hook stops reaching CIGAR. CIGAR logs the condition, but the underlying cause is not yet fixed.
-- Jujutsu may refuse until the first death after loading a game. Execute may miss its first press.
+- Throw may refuse until the first death after loading a game. Execute may miss its first press.
 - A weapon enchantment can remain after End Wizard Warrior until it expires. This follows that mod's behavior.
 
 `Documents/My Games/Skyrim Special Edition/SKSE/CIGAR.log` is recreated on each launch. It records which optional integrations were found and why a prompt or action was unavailable. Include it with a bug report.

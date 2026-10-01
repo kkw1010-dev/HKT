@@ -794,3 +794,8 @@ a disclosed known issue unless K1/K2 show a single, clearly benign cause.
   `PlayerControls`), and the player was not in combat when the Journal Menu was open (18:32-18:34).
   The likely cause is the save-less start itself (a new game begun without character creation); not
   verified.
+
+## English name: Throw (3.1.1, the user's D25, 2026-10-01)
+
+The English label is **Throw** (prompt `Throw: <name>`, panel, release texts). 유술 in Korean, the module name
+`Jujutsu`, the log tag and the settings keys are unchanged, so existing settings carry over.

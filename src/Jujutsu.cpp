@@ -360,7 +360,7 @@ namespace CIGAR
 			jujutsu.Reset();
 		}
 		offeredTarget = target;
-		jujutsu.Update(target != nullptr, [target] { return Text::F("유술: {}", "Jujutsu: {}", Util::NameOf(target)); });
+		jujutsu.Update(target != nullptr, [target] { return Text::F("유술: {}", "Throw: {}", Util::NameOf(target)); });
 	}
 
 	void Jujutsu::OnAccepted(std::uint16_t a_eventID)
@@ -644,7 +644,7 @@ namespace CIGAR
 					Log("known issue: no actor has died since the load; 유술 is refused until the first death (docs/012, tests 24-29)");
 				} else if (!warnedNoStart) {
 					warnedNoStart = true;
-					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The Jujutsu move did not play. See the log"));
+					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The throw did not play. See the log"));
 				}
 				Finish("refused");
 			}
@@ -691,7 +691,7 @@ namespace CIGAR
 				Log("WARN idle {:08X} was accepted but no pair started within 1 s; victim: {}", playing->GetFormID(), DescribeVictim(v));
 				if (!warnedNoStart) {
 					warnedNoStart = true;
-					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The Jujutsu move did not play. See the log"));
+					Util::Notify(Text::L("CIGAR: 유술 모션 미발동. 로그 확인", "CIGAR: The throw did not play. See the log"));
 				}
 				Finish("no start");
 			}
@@ -725,7 +725,7 @@ namespace CIGAR
 				} else if (v && v->IsDead() && !warnedDied) {
 					warnedDied = true;
 					Log("WARN the victim died although KillActor and KillMoveEnd were swallowed");
-					Util::Notify(Text::L("CIGAR: 유술 대상 사망. 로그 확인", "CIGAR: The Jujutsu target died. See the log"));
+					Util::Notify(Text::L("CIGAR: 유술 대상 사망. 로그 확인", "CIGAR: The throw's target died. See the log"));
 				}
 				Finish("done");
 			}

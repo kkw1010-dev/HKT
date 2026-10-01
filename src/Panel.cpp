@@ -85,9 +85,9 @@ namespace CIGAR::Panel
 			Label{ "WeaponSwap", "무기 전환", "Weapon Swap", "",
 				"적이 멀거나 도망치면 원거리 무기로, 가까우면 근접 무기로 바꾸는 프롬프트가 뜹니다. 쓰기 전 무기로 되돌아옵니다.",
 				"A prompt switches to a ranged weapon when the enemy is far or fleeing, and to a melee weapon when it is close. The previous weapons come back afterwards." },
-			Label{ "Jujutsu", "유술", "Jujutsu", "",
+			Label{ "Jujutsu", "유술", "Throw", "",
 				"가드 중인 인간형 적에게 유술 프롬프트가 뜹니다. 네 가지 기술은 적을 넘어뜨려 가드를 무너뜨리고, 목 꺾기는 적을 쓰러뜨려 죽입니다.",
-				"A jujutsu prompt shows on a blocking humanoid enemy. Four throws knock it down and break its guard; the neck break kills." },
+				"A throw prompt shows on a blocking humanoid enemy. Four throws knock it down and break its guard; the neck break kills." },
 			Label{ "Potion", "물약", "Potions", "",
 				"체력·기력·마나가 부족하거나 중독·질병 상태이거나 물속에 잠겼을 때, 알맞은 물약을 마시는 프롬프트가 뜹니다. 아까운 물약을 먼저 쓰지 않습니다.",
 				"Low health, stamina or magicka, poison, disease or being under water brings up a prompt to drink a fitting potion. Valuable potions are not spent first." },
@@ -742,7 +742,7 @@ namespace CIGAR::Panel
 			Help(L("기본 800. 적이 이 거리 밖이거나 도주 중이면 원거리, 안이면 근접 무기 프롬프트",
 				"Default 800. Beyond it, or with the enemy fleeing, the ranged weapon prompt shows; inside it, the melee one"));
 
-			ImGui::SeparatorText(L("유술", "Jujutsu"));
+			ImGui::SeparatorText(L("유술", "Throw"));
 			float reach = Settings::JujutsuReach();
 			if (ImGui::SliderFloat(L("유술 거리##jj-reach", "Reach##jj-reach"), &reach, Jujutsu::kReachLow, Jujutsu::kReachHigh, "%.0f")) {
 				Settings::SetJujutsuReach(reach);

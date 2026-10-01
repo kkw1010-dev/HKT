@@ -4,6 +4,7 @@
 
 - **Pass Time and Lean have their own switches.** The control panel lists them next to Sit, Lie & Lean, so you can keep sitting and lying down while turning off the pass-time prompt or the lean prompts, or the other way round. Both are on by default.
 - **A much wider range for the third-person prompt position.** The side offset under CIGAR > Options now goes from 200 to the left to 200 to the right (it was 0 to 30 to the right), so you can move the prompts out of the way, for example while observing. A far position can leave the screen; that is yours to pick. When the position is left at its default, the prompt mark is also kept on screen: if it would fall outside the view it moves to the nearest spot still visible.
+- **Jujutsu is now called Throw** in the English prompts and panel. Nothing else about it changed, and your settings carry over.
 - **Reading:** an unread note that carries a script (the kind that starts a quest when read) now gets the read prompt when you pick it up from a body, a bag or a chest, not only letters delivered to you.
 - **Squeeze Past** eases the person aside a little as you pass.
 
@@ -26,11 +27,11 @@
 
 - Prevented a crash when a prompt changed while SkyPrompt was drawing it, and a load-time crash when another mod's script was not linked.
 - Prevented an old prompt from returning on a key already used by another prompt, and fixed Pass Time staying fast after saving while it was held.
-- Fixed a cut-short Jujutsu throw killing its target, and hid the throw prompt when an enemy stopped guarding.
+- Fixed a cut-short Throw killing its target, and hid the throw prompt when an enemy stopped guarding.
 - Fixed mannequin swaps interrupted by equipment changes or by switching the module off. Also fixed several smaller gear, helmet, surrender, Observe and soul-gem cases.
 
 ## Known issues
 
 - Third-person prompts can remain at the player's position for the rest of a session if the update hook stops reaching CIGAR. CIGAR logs the stalled hook; the underlying cause is still unresolved.
-- Jujutsu may refuse to start until the first death after loading a game. Execute can miss its first press; pressing again works.
+- Throw may refuse to start until the first death after loading a game. Execute can miss its first press; pressing again works.
 - The Wizard Warrior's weapon enchantment remains after End Wizard Warrior until it expires, as that mod is designed to do.
