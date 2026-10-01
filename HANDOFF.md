@@ -15,10 +15,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 
 ## Now (2026-09-30)
 
-- **Deployed (2026-10-01, 3.1.1 author build, `9b7a01b`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
-  `a5818e2d381d02538e93f6151d0a11a619fe7e9e5f7d6bc0d2a71a67d247d9e7`; `verify_deploy` passed in full.
+- **Deployed (2026-10-01, 3.1.1 author build, `c948d7d`):** CIGAR plus CIGAR-Personal, author build, DLL SHA-256
+  `e37d69f6ac31e674232de62c96d56cc3a17739f64c17ee25c8fb6caa9323c70a`; `verify_deploy` passed in full.
   The release preset (`build\dist`) also compiles, with no personal marker and no private word.
-- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `9b7a01b` (not pushed; 3.1.0 was
+- **3.1.1 (2026-10-01):** package `Downloads\CIGAR 3.1.1.7z` built from `c948d7d` (not pushed; 3.1.0 was
   uploaded to Nexus by the user on 09-30). In it: scripted unread notes get the read prompt (D23), the
   Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Also in it: the prompt side offset from -200 to 200 (`docs/007`; the mark is kept on screen only at the default offset). Earlier note:
   "widen the prompt angle" (two readings, see the orchestrator thread). Cleave: `docs/045` research, the
