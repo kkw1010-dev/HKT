@@ -1,5 +1,7 @@
 # 044 · MannequinSwap for Mannequins Improved (design, not built)
 
+**Cancelled (2026-10-01): the user removed Mannequins Improved and the marble mannequins from the modlist.**
+
 Status (2026-09-30): design only. The user adopted Mannequins Improved (Nexus 55474, female, white
 marble) for the home mannequins; it is installed after r11. Codex CX-15
 (`C:\TAKEALOOK\_codex\results\CX-15.md`) surveyed the mod; the three `.psc` sources in

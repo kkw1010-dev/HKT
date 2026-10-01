@@ -44,6 +44,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   CIGAR's, `PromptAnchor` hooks again on top and chains to the holder, at most 3 times a session; a re-entry
   guard sends a second entry to the pre-CIGAR function, so a holder that chains back to CIGAR cannot loop.
   Judged from the log alone (`re-installed (#n of 3)` then `being called again`).
+- **Mannequins Improved support (`docs/044`, D28): cancelled (2026-10-01); the user removed the mod from the modlist.**
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
