@@ -27,6 +27,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   `master` is an old one (behind): never build from it. `cleave-proto` (from `v3`) holds the Cleave
   prototype (`docs/045` "Prototype" on that branch); its test build is
   `C:\TAKEALOOK\_test-runs\cigar-cleave-proto\CIGAR.dll`, not deployed. Merge only on the user's word.
+  **2026-10-01 (CX-21 done):** `docs/045` sections 6 and 12 are final. In this load order MCO fences the
+  vanilla sideways power-attack idles into first person and sneaking, so the prototype (07da707, test DLL
+  d25f8a81...) starts the swing three ways in turn per accepted prompt (action, event, idle) and logs what each
+  produced; r14 reads that from `CIGAR.log`. `buildelease` holds the prototype's DLL until the next `v3` build.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
@@ -69,7 +73,8 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   keeps the pre-filter history; never push it.
 - **Procedures:**
   - Build: `tools\Build.ps1`. It runs `check_menu_framework.py` and `check_input_map.py`. `-Deploy`
-    also copies; the usual deploy is to copy `buildelease\CIGAR.dll` and `.pdb` into
+    also copies; the usual deploy is to copy `build
+elease\CIGAR.dll` and `.pdb` into
     `mods\CIGAR\SKSE\Plugins` by hand while Skyrim is closed.
   - Verify: `python toolserify_deploy.py`.
   - Package: `tools\Build.ps1 -Package`.
