@@ -16,8 +16,8 @@ Source: Nexus "Mods using this mod" for SkyPrompt (148703), read from the page's
 `/api/games/1704/mods/148703/required-by?show_adult_content=1` (36 mods, adult content included).
 The public v2 GraphQL `modsRequiringThisMod` returns 29 of them. Every non-translation description
 was scanned for modifier, Shift, Ctrl, Alt, combo, chord and gamepad wording. Mods that use
-SkyPrompt without listing it as a requirement (Grapple, for one), and Streamlined Interactions
-(Discord only), are not in this list.
+SkyPrompt without listing it as a requirement (Grapple, for one), and mods shared only on
+Discord, are not in this list.
 
 | Mod | What it does with keys |
 |---|---|
