@@ -1,5 +1,7 @@
 #include "Rest.h"
 
+#include "RestParts.h"
+
 #include "Settings.h"
 #include "Util.h"
 
@@ -462,7 +464,10 @@ namespace CIGAR
 			passDismissed = false;
 			Log("pass time offered again from the next sit or rest");
 		}
-		passTime.Update(chair && !passDismissed, [] { return PassTimeText(); });
+		// Pass time and leaning have their own switches (3.1.1).
+		const bool passOn = Settings::Enabled(RestPart::PassTime()->Name());
+		const bool leanOn = Settings::Enabled(RestPart::Lean()->Name());
+		passTime.Update(chair && !passDismissed && passOn, [] { return PassTimeText(); });
 		if (chair) {
 			PassTimeTick();
 		}
@@ -476,7 +481,7 @@ namespace CIGAR
 			leanShown = leanFound;
 		}
 		warm.Update(warmFound != Pose::kStanding, [] { return std::string(Text::L("손 녹이기 (길게)", "Warm Hands (hold)")); });
-		lean.Update(leanFound != Pose::kStanding, [this] {
+		lean.Update(leanFound != Pose::kStanding && leanOn, [this] {
 			switch (leanShown) {
 			case Pose::kLeanTable:
 				return std::string(Text::L("탁자에 기대기 (길게)", "Lean on Table (hold)"));
@@ -664,7 +669,7 @@ namespace CIGAR
 
 		// Offered as soon as the pose is entered (the user's call, 2026-09-22); a double press hides it
 		// for the rest of this pose (passDismissed).
-		passTime.Update(!exitQueued && !passDismissed, [] { return PassTimeText(); });
+		passTime.Update(!exitQueued && !passDismissed && Settings::Enabled(RestPart::PassTime()->Name()), [] { return PassTimeText(); });
 		PassTimeTick();
 	}
 
@@ -831,6 +836,9 @@ namespace CIGAR
 	void Rest::OnHold(std::uint16_t a_eventID, bool a_down)
 	{
 		if (a_eventID != kPassTime) {
+			return;
+		}
+		if (a_down && !Settings::Enabled(RestPart::PassTime()->Name())) {
 			return;
 		}
 		if (!a_down) {

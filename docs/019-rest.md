@@ -189,3 +189,11 @@ began with the keyboard key down (`pass time held (keyboard)` in the log); a hol
 ends on SkyPrompt's key-up event (`pass time held (another device; ends on key up)`). The user has a
 gamepad and can test it. **Passed in game (2026-09-26, 13:21 log):** two gamepad holds ran 1.9 s and
 2.1 s and stopped on `key released`; a keyboard hold ran 2.7 s.
+
+## Separate switches for Pass Time and Lean (3.1.1, 2026-10-01)
+
+Asked for on Nexus (the user's list for 3.1.1). `RestPart` (`src/RestParts.*`) adds two promptless modules,
+`PassTime` and `Lean`, so the control panel shows a switch for each on the non-combat page; Rest asks
+`Settings::Enabled` for them before offering 시간 보내기 or a lean prompt. Sit, lie and warm hands stay with
+Rest. Switching PassTime off while the key is held ends it (`pass time switched off`). Rest itself must be on
+for either. Both default on, like every module. This is a module switch, not a setting framework.

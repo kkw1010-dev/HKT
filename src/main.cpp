@@ -31,6 +31,7 @@
 #include "PushProbe.h"
 #include "QuestTrack.h"
 #include "Rest.h"
+#include "RestParts.h"
 #include "Settings.h"
 #include "Util.h"
 #include "WeaponSwap.h"
@@ -49,7 +50,7 @@ namespace CIGAR
 				Eat::GetSingleton(), WeaponSwap::GetSingleton(), Execute::GetSingleton(), Jujutsu::GetSingleton(),
 				Needs::GetSingleton(), Potion::GetSingleton(), QuestTrack::GetSingleton(), ItemEquip::GetSingleton(),
 				BookRead::GetSingleton(),
-				Rest::GetSingleton(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
+				Rest::GetSingleton(), RestPart::Lean(), RestPart::PassTime(), Recharge::GetSingleton(), ChairDrink::GetSingleton(),
 				QuestAction::GetSingleton(), Helmet::GetSingleton(), Poison::GetSingleton(), Observe::GetSingleton(),
 				PartyOutfit::GetSingleton(), MannequinSwap::GetSingleton(), WizardWarrior::GetSingleton(), Squeeze::GetSingleton()
 			};

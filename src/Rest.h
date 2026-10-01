@@ -25,6 +25,8 @@ namespace CIGAR
 		void OnDisabled() override;
 		void OnHold(std::uint16_t a_eventID, bool a_down) override;
 		void OnDeclined(std::uint16_t a_eventID) override;
+		// The PassTime switch (RestParts.h) went off: end a held pass time.
+		void PassTimeSwitchedOff() { StopPassTime("pass time switched off"); }
 
 		// Sitting in a chair or bench the player activated: the game's sitting state in furniture
 		// that is not a work station. The chopping block, the sawmill, the grain mill and the like
