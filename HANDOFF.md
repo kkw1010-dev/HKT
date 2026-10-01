@@ -23,6 +23,10 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   Squeeze nudge (slide 8), separate switches `Lean` and `PassTime` (`docs/019`). Also in it: the prompt side offset from -200 to 200 (`docs/007`; the mark is kept on screen only at the default offset). Earlier note:
   "widen the prompt angle" (two readings, see the orchestrator thread). Cleave: `docs/045` research, the
   prototype goes on a branch `cleave-proto` after CX-20/21, never on master.
+- **Branches:** the working branch is `v3` (pushed to GitHub as both `master` and `v3`). The local branch
+  `master` is an old one (behind): never build from it. `cleave-proto` (from `v3`) holds the Cleave
+  prototype (`docs/045` "Prototype" on that branch); its test build is
+  `C:\TAKEALOOK\_test-runs\cigar-cleave-proto\CIGAR.dll`, not deployed. Merge only on the user's word.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
