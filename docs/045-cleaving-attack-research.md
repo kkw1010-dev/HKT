@@ -137,10 +137,57 @@ offline.
 
 ## 6. Proposed animation strategy
 
-Pending CX-21. Confirmed here: the user's player combat animations are replaced through OAR (For Honor
-sets in combat, `player-oar-roles`), so a vanilla sideways power attack triggered by CIGAR will play
-whatever clip the user's OAR setup maps to it (H3 stands). CIGAR's two proven ways to start a player
-action are a graph event and `SetupSpecialIdle` with an IDLE form.
+Sources: `C:\TAKEALOOK\_codex\results\CX-21.md` (file names and public references only), checked here against
+the load order's winning records (houseCARL, 2026-10-01) and the vendored CommonLibSSE-NG. Nothing here was
+seen in game.
+
+**What the load order says (confirmed from records).**
+
+- The vanilla sideways power attacks are fenced off. `PowerAttackLeft` 00019B22 and `PowerAttackRight`
+  00019B24 are won by `Attack_MCO_DXP.esp`: they still send `attackPowerStartLeft` / `attackPowerStartRight`
+  and still require `GetMovementDirection` 4 / 2, but their parent is now `DirectionalPowerAttacks`
+  (FEAB3800), which passes only in **first person or while sneaking**. In third person the engine never
+  reaches them.
+- Third person goes through MCO's own branch (`MCO_PowerAttack` FEAB3801 and `MCO_DirectionalPowerAttacks`
+  FEAB3804, both won by `mco_keytrace_tdm_patch.esp` and switched by two globals). `MCO_PowerAttackLeft` /
+  `Right` send the same `attackPowerStartLeft` / `Right` events but are gated by a Keytrace magic effect (a
+  held direction key), not by movement; forward and standing send `attackPowerStartInPlace`.
+- The right-hand power attack root `PowerAttack` 000E8456 is won by `For Honor Power Attack.esp`.
+- CX-21, from file names: the For Honor OAR sets hold `MCO_PowerAttackN.hkx` only, no `1hm_` / `2hm_` /
+  `2hw_attackpowerleft/right.hkx`. So in this game a third-person power attack is an MCO clip chosen by
+  stance, weapon and combo stage; the vanilla sideways clips are not what the player sees.
+
+**Consequences.**
+
+- H3 has to be read more narrowly: "a vanilla sideways power attack that OAR remaps" does not exist in this
+  load order in third person. The swing is **whatever the game's own power attack is** for the weapon and
+  stance; whether that clip is broad enough to cross two targets is a per-set question only a run answers.
+- The first prototype's start was wrong for this game: it played the vanilla idle form 019B22 / 019B24
+  through `SetupSpecialIdle`, whose own condition (moving sideways) fails for a standing player and whose
+  branch is closed in third person. CX-21 also objects to that route (it is the paired-idle route, not an
+  attack).
+- A mod that removes MCO gives the vanilla tree back, so the public design cannot assume either tree. The
+  swing must be started by asking the engine for a power attack, not by naming a clip or an idle.
+
+**Strategy.**
+
+1. Start: the engine's action route, `TESActionData` with `ActionRightPowerAttack` and the player as source
+   (`Process()`; the route CIGAR already uses for `ActionBumpedInto`). The idle tree then picks the attack
+   exactly as a key press would, in either tree, with the engine's stamina, attack data and power-attack
+   flag. Expected in this game while standing: `attackPowerStartInPlace`, the stance's `MCO_PowerAttack1`.
+2. Direction: not chosen by CIGAR. The vanilla tree picks it from movement, MCO from Keytrace's held key;
+   forcing either would mean faking movement or a magic effect. The log records which event the graph got.
+3. No new HKX and no behaviour patch. A separate Cleave clip would need both, and a public build cannot
+   ship another author's clip; brief 9 prefers existing resources.
+4. Weapon classes are enabled one at a time, each only after its clip is seen to cross two close targets in
+   the hit window (CX-21's recommendation): greatsword and sword first, then battleaxe; warhammer, war axe
+   and mace are separate tests; dual wield and shield setups stay out.
+5. The prototype measures instead of assuming: route used, the `attackPowerStart*` event received, stamina
+   before and after, `IsPowerAttacking()`, the attack data's event name, swing and hit-frame events, and
+   Precision's hits per target.
+
+Not verified: whether `Process()` starts a power attack on a standing player in this load order; that the
+engine charges stamina once on that route; clip length and hit window per weapon class; first person.
 
 ## 7. Compatibility risks (so far)
 
@@ -189,16 +236,33 @@ the log.
 
 - H1: can the vanilla sweep be had for one swing without a perk record, and for one-handed weapons?
 - H2: does Precision hit several actors in one swing by itself, once each, for any attack?
-- How to start a sideways power attack on demand while standing or moving forward (the vanilla direction
-  comes from movement input), and what the user's OAR setup plays for it.
+- Answered in section 6: a sideways clip cannot be asked for in this load order; the engine's power-attack
+  action is the start. Open: what it plays per weapon and stance, and whether that crosses two targets.
 - Whether the engine can turn the swing into a kill move.
 - Prompt priority among combat prompts with four key slots.
 
 ## 12. Recommendation
 
-Pending CX-20/21. Provisional: detection by primary plus secondaries inside an arc band (section 4),
-hits left to Precision when present and no prompt otherwise, a vanilla sideways power attack as the
-swing; prototype in the author build with log-only verdicts.
+**Go on with Cleave as a prompt that asks the engine for one ordinary power attack when one arc can cover
+two or more hostiles; do not build a Cleave attack of CIGAR's own.**
+
+- Detection: a primary target plus secondaries inside an arc band, held 0.3 s, no prompt when a non-hostile
+  stands in the arc (section 4).
+- Hits: Precision resolves them (sweep mode is on in this modlist: 3 targets, 5 with the perk). Without
+  Precision there is no prompt; CIGAR never deals damage itself (section 5).
+- Swing: the engine's power-attack action, no clip named, no new animation (section 6).
+- Scope: author build first; greatsword and sword, then battleaxe. Public only after the run below, and
+  only for classes whose clip is seen to cross two targets.
+- Key slots (the user's decision): Execute, then Throw, then the crowd slot, which Cleave shares with the
+  war stomp and Fus Ro Dah (review below).
+- The honest limit: in this game the prompt adds no new capability; a power attack with Precision's sweep
+  already hits the group. What Cleave adds is the cue and one press without the hold. If the run shows the
+  stance clips do not read as a sweep, the prompt should be dropped rather than given a clip of its own.
+
+**What the next run (r14, test build) has to answer**, from `CIGAR.log` alone: does the action route start
+a power attack while standing and while moving, and which event does the graph get; is stamina charged
+once and the hit flagged as a power attack; how many of the group Precision hits, once each; does a
+friendly in the arc keep the prompt away; does the clip for greatsword and for sword cross both targets.
 
 ## Review: the user's three answers to many-against-one (2026-10-01, no code)
 
