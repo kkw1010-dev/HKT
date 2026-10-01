@@ -567,3 +567,37 @@ CTD가 나면 거기서 멈추고 알려 주세요. 남은 항목은 모두 끝�
 - R16-PANEL. CIGAR > 2. 비전투. 기대: 왼쪽 열의 휴식 칸 옆 오른쪽 열에 빈 공간이 없고 항목이 위에서부터 이어짐.
   읽는 순서는 왼쪽 열을 다 내려간 뒤 오른쪽 열. 오른쪽 끝에서 글자가 잘리지 않음(창 가장자리에서 줄이 바뀜).
   1. 전투, 3. 모드 연동 페이지도 같은 배치.
+
+## r16 판정 (2026-10-02, Claude)
+
+- 사용자 판정: R16-PANEL 통과(오른쪽 열 공백 없음, 글자 안 잘림). 로그(01:47-01:53): 경고·오류 없음, 재훅 줄 없음.
+
+## r17: 다대일 칸 프로토타입 (휩쓸어 베기, 워 스톰프; 브랜치 `cleave-proto`, 작성자 빌드 전용)
+
+빌드: `C:\TAKEALOOK\_test-runs\cigar-cleave-proto\CIGAR.dll` (3.1.2 전부 포함 + 프로토타입). 사용자가 "한다"고 한 뒤에
+`mods\CIGAR\SKSE\Plugins\CIGAR.dll`에 덮어씀(게임 꺼진 상태). 필요: Precision(휩쓸기), Bow Rapid Combo V3와 Hot Key
+Skill(스톰프). 전부 게임에서 처음 실행되는 것이라 "안 뜬다/안 나간다"도 결과임. 판정은 대부분 `CIGAR.log`로 함.
+
+콘솔 배치(시작할 때 한 번; 순간이동 없음, 야외 평지에서):
+```
+player.additem 0001359D 1
+player.additem 00012EB7 1
+player.modav health 5000
+```
+(`tgm`은 쓰지 않음: 무한 스태미나라 강공격의 스태미나 차감을 로그로 볼 수 없게 됨.) 적 소환은 항목마다:
+`player.placeatme 0003DE8A 2` (도적, 현재 로드오더에서 확인) / 중립 NPC `player.placeatme 00013BBF 1` (나짐).
+
+- R17-CLEAVE-2H. 철 대검을 들고 도적 2명 소환, 둘이 앞에 붙어 오게 둔다. "휩쓸어 베기"가 뜨면 누른다. 다시 뜨면
+  또 눌러 **세 번** 누른다(누를 때마다 시작 방식이 다름). 기대: 누를 때 강공격 한 번이 나가고 두 명이 함께 맞음.
+  로그: `crowd: CLEAVE ...`, `swing #n by action|event|idle ...: started true|false`, `swing state after 0.3 s: ... power
+  attacking ...; attack data ...; stamina ... (spent ...)`, `RESULT cleave (...): CLEAVED | ONE HIT ONLY | NO HIT; hits ...`.
+- R17-CLEAVE-1H. 철 검으로 같은 것(세 번).
+- R17-NO-PROMPT. 도적 1명만 남았을 때, 그리고 나짐을 소환해 도적들과 함께 앞에 있을 때. 기대: 휩쓸어 베기가 안 뜸.
+  로그: `trace no group: one hostile only` / `a non-hostile actor in the arc (...)`.
+- R17-STOMP. 근접 무기를 든 채 도적 3명 소환(플레이어 위치에 생겨 둘러쌈). 기대: "워 스톰프"가 뜨고, 누르면 발차기
+  동작 + 쿵 소리 + 먼지, 주변 도적이 피해 없이 비틀거림. 한 번 쓴 뒤에는 둘러싼 적 구성이 바뀔 때까지 다시 안 뜸.
+  눈으로 볼 것: 팔 모양이 어색한지(활용 동작임), 동작 뒤 전투 자세로 돌아오는지.
+  로그: `[Cleave] war stomp clip ready|off: ...`(게임 시작 시), `crowd: STOMP ...`, `stomp: CustomStartC sent, accepted
+  true|false`, `RESULT stomp: ALL|SOME|NOBODY STAGGERED; n of m ...` 또는 `RESULT stomp: NOT PLAYED (...)`.
+- 조작 없는 로그 판정: 푸스로다는 프롬프트 없이 `crowd: FUS RO DAH (log only, no prompt)` 줄만 남김(적이 멀리 앞에 둘
+  이상 있을 때). 앵커 재훅 줄도 계속 봄.
