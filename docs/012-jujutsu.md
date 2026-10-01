@@ -704,7 +704,7 @@ its maximum health, the old fixed values); see `docs/035-nexus-edition.md`, "유
 
 ## A Nexus report of "working 100%" (2026-09-28, analysis only)
 
-IAMTOKKO reported 유술 "working 100%" on SSE 1.5.97 (`dist/nexus-page/feedback-2026-09-28.md`), while
+IAMTOKKO reported 유술 "working 100%" on SSE 1.5.97 (`CIGAR-Personal/nexus-notes/feedback-2026-09-28.md`), while
 the known issue says it is refused until the session's first death. Hypotheses, most likely first:
 
 1. **Play pattern.** The gate is "no actor but the player has died since the load" (the

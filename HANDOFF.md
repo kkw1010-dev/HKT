@@ -47,6 +47,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
   guard sends a second entry to the pre-CIGAR function, so a holder that chains back to CIGAR cannot loop.
   Judged from the log alone (`re-installed (#n of 3)` then `being called again`).
 - **Mannequins Improved support (`docs/044`, D28): cancelled (2026-10-01); the user removed the mod from the modlist.**
+- **Nexus feedback notes, reply drafts and research live in `..\CIGAR-Personal\nexus-notes\` (moved 2026-10-02), never in this repo;** `dist/nexus-page` keeps only posted texts and their next drafts (description, changelog, summary).
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
@@ -267,9 +268,9 @@ history of each module are in `docs/`, one file per module, and each file starts
 5. Read It Now duplicates part of 책 읽기. Whether to disable it is the user's call; CIGAR needs no
    change.
 6. **주시하기 during a bath, third person (open, no action).** The user will check it in game
-   (Nexus IAMTOKKO; `dist/nexus-page/feedback-2026-09-28.md` §3). Wait for the result.
+   (Nexus IAMTOKKO; `CIGAR-Personal/nexus-notes/feedback-2026-09-28.md` §3). Wait for the result.
 7. Optional: propose a per-prompt offset API to SkyPrompt (QTR-Modding, MIT).
-8. Nexus: the reply drafts in `dist/nexus-page/replies-2026-09-27.md` are for the user. There is
+8. Nexus: the reply drafts in `CIGAR-Personal/nexus-notes/replies-2026-09-27.md` are for the user. There is
    also an FAQ candidate about WW's lingering enchantment in `docs/037`.
 9. Crash Triage S001 (the Journal Menu CTD): a discriminating test waits for the user's choice. It
    is tracked in `../Crash Triage`.
@@ -280,8 +281,6 @@ history of each module are in `docs/`, one file per module, and each file starts
 - `dist/nexus-page/`:
   - `description-live.bbcode`
   - `sticky-faq.txt`
-  - `feedback-2026-09-27.md`
-  - `replies-2026-09-27.md`
 - `TEST-next-ingame.md`: N1-N7
 
 **Pitfalls met this session.**
@@ -440,8 +439,8 @@ In order. Every item is committed; the versions are also in `CMakeLists.txt` his
 4. Minor, open: a GitHub release for 2.1.x (ask first); the `v2.0.1-nexus` release notes still say
    SkyPrompt 2.3.15. Modifier and arrow keys were **rejected** by the user on 2026-09-27; the
    reason is in `docs/007-control-panel.md`, and the correcting Nexus reply is drafted.
-5. **Nexus feedback of 2026-09-27** (`dist/nexus-page/feedback-2026-09-27.md`; decisions and replies
-   in `dist/nexus-page/replies-2026-09-27.md`). The user posts the replies, never Claude.
+5. **Nexus feedback of 2026-09-27** (`CIGAR-Personal/nexus-notes/feedback-2026-09-27.md`; decisions and replies
+   in `CIGAR-Personal/nexus-notes/replies-2026-09-27.md`). The user posts the replies, never Claude.
    - **Posted on Nexus (2026-09-27, by the orchestrator session after the user approved):**
      - `sticky-faq.txt` went up as a Posts comment and is pinned (comment id 176294172, sticky
        confirmed on the page).
