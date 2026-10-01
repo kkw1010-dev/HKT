@@ -15,7 +15,7 @@ The same DLL targets SE, AE and VR. The player release has been tested on Skyrim
 
 Install the release archive with MO2 or Vortex, then launch Skyrim through SKSE. A new game is not needed. The in-game **CIGAR** panel lets you switch modules on or off, change the four prompt keys and adjust prompt behavior. Settings are saved in `Data/SKSE/Plugins/CIGAR.json`.
 
-Most non-combat prompts fill a ring while you hold a key. A quick tap does nothing. Double-tap a prompt key to dismiss that prompt until its situation changes; combat prompts use a single press. Squeeze Past begins immediately while held. Prompts hide when a menu is open. The Keys page can use SkyPrompt's gamepad buttons or D-pad keys, and the mouse's middle and side buttons. Gamepad behavior was checked with one Xbox controller.
+Most non-combat prompts fill a ring while you hold a key. A quick tap does nothing. Double-tap a prompt key to dismiss that prompt until its situation changes; combat prompts use a single press. Squeeze Past starts on the press and lasts while you hold its prompt. Prompts hide when a menu is open. The Keys page can use SkyPrompt's gamepad buttons or D-pad keys, and the mouse's middle and side buttons. Gamepad behavior was checked with one Xbox controller.
 
 CIGAR includes prompts for resting, eating, gear and quest actions, potions, combat actions and outfit changes with mannequins. Squeeze Past lets you move past a standing or walking person blocking your way while your weapon is sheathed. It temporarily changes the player's collision group during the pass, leaving the NPC's collision in place. It excludes enemies and anyone talking to you. It uses an EVG gesture when the required animation mods are installed; otherwise the feature stays off.
 
@@ -43,7 +43,7 @@ The optional integrations are separate downloads. Squeeze Past prepares its gest
 
 ## Known issues and logs
 
-- In third person, prompts can remain at the player position if the update hook stops reaching CIGAR. CIGAR logs the condition, but the underlying cause is not yet fixed.
+- In third person, prompts may still stick to the player position. Version 3.1.2 includes an attempted fix that has not yet been confirmed in game; CIGAR logs a stalled update hook.
 - Throw may refuse until the first death after loading a game. Execute may miss its first press.
 - A weapon enchantment can remain after End Wizard Warrior until it expires. This follows that mod's behavior.
 
