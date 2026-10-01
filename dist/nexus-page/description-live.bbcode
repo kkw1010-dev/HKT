@@ -1,208 +1,80 @@
 [center]
 [size=6][b][color=#D6A24A]CIGAR[/color][/b][/size]
 [size=4][b]Contextual Interactions for Skyrim[/b][/size]
-
-[size=3][b][color=#E6B85C]ONE BUTTON. THE RIGHT ACTION. NO HOTKEY CLUTTER.[/color][/b][/size]
 [/center]
 
 [size=4][b][color=#D6A24A]Description[/color][/b][/size]
 
 [color=#D4D4D8]
-A heavily modded Skyrim ends up with dozens of hotkeys for actions that matter only in specific situations. CIGAR replaces them with on-screen prompts: when an action makes sense, a prompt appears, and [b][color=#E6B85C]one button performs the whole action[/color][/b]. When it does not, the prompt stays out of the way.
+CIGAR is an ESP-less SKSE plugin. When an action makes sense, CIGAR shows a SkyPrompt prompt; pressing or holding its key performs the whole action. Each module has its own switch. Other mods' integrations are detected at runtime and stay inactive when those mods are absent. CIGAR includes none of their files.
 [/color]
-
-
-[size=4][b][color=#D6A24A]Design Philosophy[/color][/b][/size]
-
-[color=#D4D4D8]
-Modern games such as [b]Red Dead Redemption 2, Monster Hunter, Hitman[/b] and [b]Assassin's Creed[/b] have more actions than buttons, so what a button does depends on context: what you look at, what you are doing, your equipment and whether you are in combat. CIGAR applies that design pattern to Skyrim, rebuilt around Skyrim's own mechanics rather than copied from any one game.
-[/color]
-
-
-[size=4][b][color=#D6A24A]Main Features[/color][/b][/size]
-
-[color=#D4D4D8]
-CIGAR is an [b]ESP-less SKSE plugin[/b]: nothing is added to your load order.
-
-[center]
-[b][color=#E6B85C]CONTEXT → PROMPT → ONE INPUT → COMPLETE ACTION[/color][/b]
-[/center]
-
-It is not a radial menu or a hotkey launcher. Each prompt is built for one situation, and anything that already works well with one button is left alone.
-[/color]
-
 
 [size=4][b][color=#D6A24A]What CIGAR Does[/color][/b][/size]
 
 [color=#D4D4D8]
-Most prompts work with Skyrim alone. Others appear only when the mod they drive is installed, and quietly stay away when it is not. CIGAR includes none of those mods' files. Prompts stay away while a SexLab or OStim scene plays the player.
+[b]Daily life:[/b] rest, pass time, eat, drink, bathe, change clothes and observe your surroundings.
+[b]Gear and quests:[/b] equip useful finds, read books, remove or put on a helmet, recharge weapons, apply poison, track quests and swap outfits with a mannequin.
+[b]Combat:[/b] choose ranged or melee weapons, use Throw, and show prompts for Lock On, Grapple, Execute and Surrender when their mods are installed.
+[b]Squeeze Past:[/b] hold the prompt to slip past a standing or walking person blocking your way. While you hold it your character can pass the person; the NPC's own collision is not changed. It does not target enemies or someone talking to you. This needs your own EVG Animated Traversal and Offset Movement Animation installations. CIGAR prepares its gesture from your EVG clip; it ships no animation from those mods. Without EVG, Squeeze Past is off.
 
-[b]Daily life[/b]
-- Undress / Get Dressed (bed, wardrobe, water)
-- Sit, Lie Down, Lean on a wall, table or railing, Warm Hands at a fire
-- Pass Time while resting or seated (hold)
-- Drink at an inn or home while seated
-- Observe a person or a distant view (hold to zoom)
-- Bathe / Shower [i](Bathing in Skyrim - Renewed)[/i]
-- Eat the cheapest suitable food when hungry [i](Survival Mode + Survival Mode Improved)[/i]
-- Urinate / Defecate, never while bathing [i](Private Needs - Orgasm)[/i]
-- Deflate [i](Fill Her Up Baka Edition)[/i]
+Most non-combat prompts fill a hold ring, so a tap does nothing. Double-tap to dismiss a prompt until the situation changes. Combat actions use a single press. Potions use a ring outside combat and a single press in combat. Squeeze Past starts on the press and lasts while you hold its prompt. In the CIGAR settings panel, Sit, Lie Down, Lean and Pass Time each have a switch under Rest, which turns all four on or off together.
 
-[b]Gear and items[/b]
-- Equip newly acquired gear (armor only when it beats what you wear, never over an enchanted piece)
-- Read unknown spell tomes and quest notes
-- Helmet off by default so your face shows; put it back on in combat
-- Recharge an enchanted weapon with the best-fitting soul gem
-- Apply the most valuable poison to a drawn weapon
-- Drink the right potion for low health, stamina or magicka, poison, disease or water breathing
-- Swap outfits with a mannequin in one hold; enchanted and tempered pieces move as they are
+Prompts are in English or Korean. In third person, prompts appear near your character's head; in first person, they remain at your character's position. The settings panel lets you change their third-person offset.
 
-[b]Quests[/b]
-- Track a quest when it gets a new objective
-- Equip the shout the Greybeards ask for
-- Party clothes for the Thalmor embassy party, and back again
-- Choose an action in the kidnap room [i](BaboDialogue)[/i]
-
-[b]Combat[/b]
-- Ranged / Melee weapon swap by enemy distance
-- Jujutsu: throw a blocking humanoid enemy; stamina and health damage are adjustable
-- Lock On [i](True Directional Movement)[/i]
-- Execute a stunned enemy [i](Valhalla Combat)[/i]
-- Surrender at low health [i](Acheron; respects Yamete Kudasai's 3-minute rule)[/i]
-- Wizard Warrior Mode on when you draw, off when you sheathe out of combat [i](The Wizard Warrior)[/i]
-
-[b]Where prompts appear[/b]
-
-In third person, prompts sit just ahead of your character's head, a little to the right; how far to the right is a setting. In first person they stay on your character. CIGAR keeps one invisible marker in each save for this; it is harmless if CIGAR is removed.
-
-[b]Hotkeys CIGAR takes over[/b]
-
-So that one key does not do two things, CIGAR can take a mod's own hotkey over. This is the [b]prompt only[/b] switch in the settings panel, [b]on by default[/b]; switching it off gives the key back.
-
-- Acheron: the surrender key moves to F14
-- Valhalla Combat: the execution key moves to F15
-- Fill Her Up Baka Edition: the deflate hotkey is cleared
-- Private Needs - Orgasm: its six hotkeys are cleared
-
-The full prompt list, settings and details are in [b]README.md[/b] in the download.
+The full prompt list and settings are in [b]README.md[/b] in the download.
 [/color]
 
-[size=4][b][color=#D6A24A]Built for Heavily Modded Skyrim[/color][/b][/size]
+[size=4][b][color=#D6A24A]Installation[/color][/b][/size]
 
 [color=#D4D4D8]
-Too many useful mods need too many dedicated controls, and a gamepad runs out of buttons first. CIGAR treats [b]context as extra input space[/b], so you remember fewer controls and a modded game plays more like one designed game.
+1. Install SKSE64, Address Library for SKSE Plugins and SkyPrompt with its own requirements.
+2. Install CIGAR with MO2 or Vortex.
+3. Launch Skyrim through SKSE. No new game is needed.
 
-[center]
-[b][color=#E6B85C]The system absorbs complexity.
-The player plays the game.[/color][/b]
-[/center]
-[/color]
-
-
-[size=4][b][color=#D6A24A]Installation Instructions[/color][/b][/size]
-
-[color=#D4D4D8]
-1. Install [b]SKSE64[/b].
-2. Install [b]Address Library for SKSE Plugins[/b].
-3. Install [b]SkyPrompt[/b] and its own requirements (SKSE Menu Framework, ImGui Icons).
-4. Install CIGAR normally through your preferred mod manager.
-5. Launch Skyrim through SKSE.
-
-CIGAR is [b]ESP-less[/b] and does not require a new game. Updating from 2.x needs nothing special.
+The four prompt keys default to 1–4. The Keys page also supports the D-pad and middle or side mouse buttons. Gamepad behavior was checked with one Xbox controller.
 [/color]
 
 [size=4][b][color=#D6A24A]Requirements[/color][/b][/size]
 
 [color=#D4D4D8]
 [b]Required[/b]
-
-- Skyrim Special Edition / Anniversary Edition (tested on 1.6.1170)
+- Skyrim Special Edition / Anniversary Edition / VR. The same DLL targets SE, AE and VR; the player release was tested on Skyrim 1.6.1170.
 - [url=https://skse.silverlock.org/]SKSE64[/url]
 - [url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/148703]SkyPrompt[/url] (tested with 2.4.0; 2.3.15 works too)
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/120352]SKSE Menu Framework[/url] (SkyPrompt requires it; it also hosts CIGAR's settings panel)
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/148703]SkyPrompt[/url] (tested with 2.4.0 and 2.3.15)
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/120352]SKSE Menu Framework[/url] and ImGui Icons, required by SkyPrompt. Menu Framework also hosts CIGAR's settings panel.
 
-[b]Optional[/b] (each one enables its own prompts; none is needed to install CIGAR)
-
+[b]Optional integrations[/b] — detected at runtime; install only the prompts you want:
 - [url=https://www.nexusmods.com/skyrimspecialedition/mods/135288]Bathing in Skyrim - Renewed[/url]
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/51614]True Directional Movement[/url]
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/64741]Valhalla Combat[/url]
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/108159]Acheron[/url], and [url=https://www.loverslab.com/files/file/23123-yamete-kudasai/]Yamete Kudasai[/url] (LoversLab)
-- Survival Mode (Creation Club, included with the current game) and [url=https://www.nexusmods.com/skyrimspecialedition/mods/78244]Survival Mode Improved - SKSE[/url]
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/96876]Gourmet[/url]
-- [url=https://subscribestar.adult/posts/118628]Fill Her Up Baka Edition[/url] (BakaFactory)
-- [url=https://www.loverslab.com/files/file/39023-private-needs-orgasm/]Private Needs - Orgasm[/url] (LoversLab)
-- [url=https://www.loverslab.com/files/file/17496-babodialogue/]BaboDialogue[/url] (BakaFactory, LoversLab)
-- [url=https://www.nexusmods.com/skyrimspecialedition/mods/14890]The Wizard Warrior - Spellsword Magic Combat Evolved[/url]
+- Survival Mode and [url=https://www.nexusmods.com/skyrimspecialedition/mods/78244]Survival Mode Improved - SKSE[/url]; [url=https://www.nexusmods.com/skyrimspecialedition/mods/96876]Gourmet[/url] for food classification
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/51614]True Directional Movement[/url]; Grapple by Smooth (Patreon); [url=https://www.nexusmods.com/skyrimspecialedition/mods/64741]Valhalla Combat[/url]
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/108159]Acheron[/url] and [url=https://www.loverslab.com/files/file/23123-yamete-kudasai/]Yamete Kudasai[/url] (LoversLab)
+- [url=https://www.loverslab.com/files/file/39023-private-needs-orgasm/]Private Needs - Orgasm[/url] (LoversLab); Fill Her Up Baka Edition (LoversLab / SubscribeStar); [url=https://www.loverslab.com/files/file/17496-babodialogue/]BaboDialogue[/url] (LoversLab)
+- [url=https://www.nexusmods.com/skyrimspecialedition/mods/14890]The Wizard Warrior[/url]
+- Squeeze Past: [url=https://www.nexusmods.com/skyrimspecialedition/mods/63232]EVG Animated Traversal[/url], [url=https://www.nexusmods.com/skyrimspecialedition/mods/110408]Offset Movement Animation[/url] and Open Animation Replacer for its gesture
+- SexLab or OStim for scene-aware prompt suppression
 
-[b]Input[/b]
-
-Keyboard and mouse, or a gamepad through SkyPrompt's own gamepad buttons. CIGAR's key settings change the keyboard keys only.
-
-Third-party mods, assets and trademarks remain the property of their respective authors. CIGAR only interacts with them at runtime and includes none of their files.
+These are separate downloads. CIGAR does not ship their files. It works without the optional integrations.
 [/color]
 
-[size=4][b][color=#D6A24A]Language[/color][/b][/size]
+[size=4][b][color=#D6A24A]Known Issues and Support[/color][/b][/size]
 
 [color=#D4D4D8]
-Prompts, notifications and the settings panel are in [b]English or Korean[/b]. CIGAR follows your game's language automatically; you can switch it in the settings panel. Item, quest and character names come from your game, so a translated game shows its own names inside English prompts.
+- Third-person prompts may still stick to the player position. Version 3.1.2 includes an attempted fix that has not yet been confirmed in game; CIGAR logs a stalled update hook.
+- Throw may refuse until the first death after loading a game. Execute may miss its first press.
+- The Wizard Warrior's enchantment remains after End Wizard Warrior until it expires, as that mod is designed to do.
 
-[b]Prompts show ??? (question marks)?[/b] That is SkyPrompt's font, not a CIGAR setting: give SkyPrompt a font for your language.
-
-[b]More answers (the ??? fix step by step, Observe, OStim, drinking, SSE 1.5.97) are in the pinned FAQ post in the Posts tab.[/b]
+For a problem report, include your Skyrim and SKSE versions, steps to reproduce it and [b]Documents/My Games/Skyrim Special Edition/SKSE/CIGAR.log[/b]. Routine blocked-prompt diagnostics go to that log; a broken integration or failed action still gives a HUD notice when needed.
 [/color]
 
-
-[size=4][b][color=#D6A24A]Known Issues[/color][/b][/size]
+[size=4][b][color=#D6A24A]Open Source[/color][/b][/size]
 
 [color=#D4D4D8]
-- [b]Jujutsu does nothing until someone has died since the game was loaded.[/b] After the first death it works normally.
-- [b]Execute can miss the first press.[/b] Press again.
-- [b]The helmet comes off at once, without an animation.[/b]
-- [b]A weapon enchantment stays after End Wizard Warrior[/b] until it runs out. That is The Wizard Warrior's own design.
-- [b]Mannequins:[/b] tested with the Unofficial Patch and Another Mannequin Script Fix.
+CIGAR is licensed under GPL-3.0-or-later. The download includes the license and third-party notices. [b]Source:[/b] [url=https://github.com/kkw1010-dev/HKT]github.com/kkw1010-dev/HKT[/url]. Other mods keep their own licenses.
 [/color]
 
-[size=4][b][color=#D6A24A]Design Inspiration & Shout Outs[/color][/b][/size]
+[size=4][b][color=#D6A24A]AI-Assisted Development[/color][/b][/size]
 
 [color=#D4D4D8]
-Thanks to the developers of [b]SKSE, CommonLibSSE-NG[/b] and [b]SkyPrompt[/b], to the authors of the mods CIGAR works with, and to the Skyrim modding community.
-
-Design references: [b]Red Dead Redemption 2, Monster Hunter, Hitman, Assassin's Creed, Tekken[/b] and [b]Guilty Gear[/b]. CIGAR takes the design principle behind a solution and rebuilds it for Skyrim; it does not reproduce any one game.
+CIGAR contains AI-generated code written under human design, review and in-game testing. There is no separate human-written edition.
 [/color]
-
-
-[size=4][b][color=#D6A24A]Open Source & Independent Development[/color][/b][/size]
-
-[color=#D4D4D8]
-CIGAR is open source under the [b]GNU General Public License v3.0 or later[/b], as required by CommonLibSSE-NG. The license is [b]LICENSE.txt[/b] in the download, with third-party notices in [b]THIRD-PARTY-NOTICES.txt[/b]. [b]Source code:[/b] [url=https://github.com/kkw1010-dev/HKT]github.com/kkw1010-dev/HKT[/url]
-
-Forks and modified builds must follow the GPL and must not be presented as official CIGAR releases; official releases are the ones on this page and the repository's GitHub releases. Contextual interaction is a general game-design pattern, so a mod that solves the same problem with its own code is independent work, not a fork.
-[/color]
-
-
-[size=4][b][color=#D6A24A]Disclaimer — AI-Assisted Development[/color][/b][/size]
-
-[color=#D4D4D8]
-[b][color=#FFFFFF]Yes. This project contains AI-generated code.[/color][/b] Most of CIGAR was written with [b]Claude Opus 5.5[/b] under human design, direction, review, in-game testing and final QA. I do not consider AI-written code inferior when the goal, architecture and acceptance criteria are clear and the result is tested in the game.
-
-[b][color=#E6B85C]If AI-assisted development is, by itself, unacceptable to you, this mod is probably not for you.[/color][/b] There is no human-written edition.
-[/color]
-
-
-[size=4][b][color=#D6A24A]Compatibility, Stability & Support[/color][/b][/size]
-
-[color=#D4D4D8]
-CIGAR works at runtime through SKSE. No two heavily modded games are alike, so compatibility with every combination cannot be guaranteed; back up important saves before installing or updating SKSE plugins. Support covers the official, unmodified release.
-
-When reporting an issue, please include the CIGAR, Skyrim and SKSE versions, [b]Documents/My Games/Skyrim Special Edition/SKSE/CIGAR.log[/b], and how to reproduce the problem.
-[/color]
-
-
-[center]
-[size=5][b][color=#D6A24A]CIGAR[/color][/b][/size]
-
-[b]Context decides the action.[/b]
-
-[b][color=#E6B85C]One button. Whole action. Keep playing.[/color][/b]
-[/center]

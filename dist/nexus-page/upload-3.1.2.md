@@ -1,4 +1,12 @@
-# Nexus upload: CIGAR 3.1.2 (prepared 2026-10-02)
+# Nexus upload: CIGAR 3.1.2 (uploaded 2026-10-02)
+
+Uploaded as Nexus file **813181** (`CIGAR`, 3.1.2, Main, primary, 983,169 bytes); the 3.1.0 file 812707 is
+Old versions. Mod version 3.1.2, the nine log lines kept one per line, the description posted as
+`description-next.bbcode` (now also `description-live.bbcode`; identical through the public GraphQL once
+Nexus's `<br />` are removed). File page:
+https://www.nexusmods.com/skyrimspecialedition/mods/193080?tab=files&file_id=813181
+
+What was prepared:
 
 Nexus mod 193080 (https://www.nexusmods.com/skyrimspecialedition/mods/193080). The page was at 3.1.0;
 3.1.1 went to GitHub only, so this upload carries both.
