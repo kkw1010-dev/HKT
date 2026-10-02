@@ -27,6 +27,8 @@ namespace CIGAR::PromptAnchor
 		std::atomic<RE::FormID> markerID{ 0 };      // 0: no usable marker
 		std::atomic_bool setPosition{ false };      // enabled-marker fallback when a disabled one has no bounds
 		std::atomic_bool markerLost{ false };       // the hook saw the handle fail; Tick places a new marker
+		// The update hook was not installed on this runtime (see Install): no marker, prompts stay on the player.
+		bool hookRefused = false;
 		std::atomic_bool hookDead{ false };         // the hook stopped being called; prompts stay on the player
 		std::atomic<std::uint64_t> frames{ 0 };     // counted by the hook
 		std::atomic<float> right{ Settings::kPromptRightDefault };  // Settings passes the player's choice
@@ -327,12 +329,62 @@ namespace CIGAR::PromptAnchor
 		}
 	}
 
+	namespace
+	{
+		// Whether the update slot may be hooked on this runtime, and why not. A wrong slot would put CIGAR's
+		// hook on some other virtual function of the player, so an unknown runtime gets no hook at all (the
+		// way the Present hook steps back): prompts then stay on the player, which is how first person works.
+		//  - SE, VR and AE up to 1.6.1179: slot 0xAD (VR 0xAF), seen in game. Hooked as before, no checks.
+		//  - AE 1.7.99 up to the newest runtime the bundled CommonLibSSE-NG models: the library keeps
+		//    Actor::Update at 0xAD there (1.7.99 added a base class to PlayerCharacter, which moves members,
+		//    not the primary vtable's slots). CIGAR has not been run on 1.7, so the slot is also checked.
+		//  - Anything newer: not hooked.
+		bool SlotTrusted(std::string& a_why)
+		{
+			const auto version = REL::Module::get().version();
+			if (!REL::Module::IsAE() || version <= SKSE::RUNTIME_SSE_1_6_1179) {
+				return true;
+			}
+			if (version > SKSE::RUNTIME_SSE_LATEST_AE) {
+				a_why = std::format("runtime {} is newer than this build knows ({})", version.string(), SKSE::RUNTIME_SSE_LATEST_AE.string());
+				return false;
+			}
+			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
+			const auto index = REL::Relocate(0xAD, 0xAD, 0xAF);
+			const auto slot = *reinterpret_cast<const std::uintptr_t*>(vtbl.address() + sizeof(void*) * index);
+			// The address library must have led to the player's real vtable, and the slot to code in a module.
+			const auto* player = RE::PlayerCharacter::GetSingleton();
+			const auto actual = player ? *reinterpret_cast<const std::uintptr_t*>(player) : 0;
+			if (actual != vtbl.address()) {
+				a_why = std::format("the player's vtable is {:X}, the address library gives {:X}", actual, vtbl.address());
+				return false;
+			}
+			if (slot == 0 || ModuleOf(slot) == "unknown module") {
+				a_why = std::format("slot {:X} holds {:X}, which is in no loaded module", index, slot);
+				return false;
+			}
+			return true;
+		}
+	}
+
 	void Install()
 	{
+		const auto version = REL::Module::get().version();
+		const auto index = REL::Relocate(0xAD, 0xAD, 0xAF);
+		std::string why;
+		if (!SlotTrusted(why)) {
+			hookRefused = true;
+			hookDead = true;
+			Log("WARN PlayerCharacter::Update NOT hooked on runtime {} (slot {:X}): {}. Third-person prompts stay on the player; everything else works",
+				version.string(), index, why);
+			SetStatus("update hook not installed on this runtime: prompts on the player");
+			return;
+		}
 		REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
-		baseUpdate = reinterpret_cast<UpdateFn>(vtbl.write_vfunc(REL::Relocate(0xAD, 0xAD, 0xAF), &UpdateHook));
+		baseUpdate = reinterpret_cast<UpdateFn>(vtbl.write_vfunc(index, &UpdateHook));
 		originalUpdate = baseUpdate;
-		Log("PlayerCharacter::Update hooked (chained: {}, to {})", baseUpdate != nullptr, ModuleOf(reinterpret_cast<std::uintptr_t>(baseUpdate)));
+		Log("PlayerCharacter::Update hooked on runtime {} (slot {:X}; chained: {}, to {} at {:X})", version.string(), index, baseUpdate != nullptr,
+			ModuleOf(reinterpret_cast<std::uintptr_t>(baseUpdate)), reinterpret_cast<std::uintptr_t>(baseUpdate));
 	}
 
 	void OnGameLoaded()
@@ -344,6 +396,10 @@ namespace CIGAR::PromptAnchor
 		marker = {};
 		placeFailures = 0;
 		gaveUpNotified = false;
+		if (hookRefused) {
+			// No hook, so nothing would move a marker: none is placed.
+			return;
+		}
 		lastFrames = frames.load();
 		lastFrameSeen = Clock::now();
 		if (hookDead.exchange(false)) {
@@ -358,6 +414,9 @@ namespace CIGAR::PromptAnchor
 
 	void Tick()
 	{
+		if (hookRefused) {
+			return;
+		}
 		const auto now = Clock::now();
 		if (now - lastTickAt > 500ms) {
 			lastFrameSeen = now;
