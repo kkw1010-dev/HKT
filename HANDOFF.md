@@ -49,6 +49,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 - **Mannequins Improved support (`docs/044`, D28): cancelled (2026-10-01); the user removed the mod from the modlist.**
 - **Nexus feedback notes, reply drafts and research live in `..\CIGAR-Personal\nexus-notes\` (moved 2026-10-02), never in this repo;** `dist/nexus-page` keeps only posted texts and their next drafts (description, changelog, summary).
 - **3.1.2 released (2026-10-02):** package `Downloads\CIGAR 3.1.2.7z` (DLL bf802224...), texts and hashes in `dist/nexus-page/upload-3.1.2.md`; pushed to HKT `master` and `v3`; uploaded to Nexus as file 813181 (page at 3.1.2; `description-live.bbcode` is the posted text). The upload-record commit after the push is local only. The anchor re-hook is still unconfirmed in game.
+- **Before any Nexus description change: read the real page first** (`dist/nexus-page/UPLOAD-PROCEDURE.md`; `tools/check_nexus_page.py`). The 3.1.2 upload lost three feature GIFs the author had put on the page by hand.
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before

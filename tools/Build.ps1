@@ -65,6 +65,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Control-panel checks failed.' }
 if ($LASTEXITCODE -ne 0) { throw 'Prompt input checks failed.' }
 
 if ($Package) {
+    # The next Nexus description must keep every image and link of the posted one.
+    & python (Join-Path $PSScriptRoot 'check_nexus_page.py')
+    if ($LASTEXITCODE -ne 0) { throw 'Nexus page checks failed.' }
     & python (Join-Path $PSScriptRoot 'make_release.py') $dll
     if ($LASTEXITCODE -ne 0) { throw 'Release packaging failed.' }
     exit 0
