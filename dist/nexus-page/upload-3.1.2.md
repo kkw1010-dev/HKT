@@ -24,3 +24,9 @@ Nexus mod 193080 (https://www.nexusmods.com/skyrimspecialedition/mods/193080). T
 What was and was not run in the game: every change was seen in the author build (r13 to r16), except the
 attempted fix for prompts sticking to the player, which never triggered. The release binary itself (the
 `dist` preset, built from the same source) has not been run in the game.
+
+## Description reposted (2026-10-02)
+
+The description was posted again with the author's three feature GIFs under their feature lines (they had
+been lost in the 3.1.2 upload; see `UPLOAD-PROCEDURE.md`). Read back through the public GraphQL: 3 `[img]`,
+17 `[url]`, the GIFs load on the public page. `description-live.bbcode` is that text.
