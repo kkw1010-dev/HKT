@@ -608,3 +608,23 @@ player.modav health 5000
   true|false`, `RESULT stomp: ALL|SOME|NOBODY STAGGERED; n of m ...` 또는 `RESULT stomp: NOT PLAYED (...)`.
 - 조작 없는 로그 판정: 푸스로다는 프롬프트 없이 `crowd: FUS RO DAH (log only, no prompt)` 줄만 남김(적이 멀리 앞에 둘
   이상 있을 때). 앵커 재훅 줄도 계속 봄.
+
+## r17b 판정 (2026-10-03, Claude; 원본 CIGAR.log 11:59-12:18)
+
+- 사용자: L1, CLEAVE-2H, CLEAVE-1H, NO-PROMPT 통과, STOMP 실패(발동은 됨, 먼지·소리 없음), STOMP-LOOK 자연스러움.
+- 로그: 스톰프 5회 모두 "spell cast, sound played, dust spawned"이고 4~5명 비틀거림 → 효과가 작거나 안 들린 것.
+  휩쓸기 action 경로 5회 = 강공격(CLEAVED 2, ONE HIT 3), event 경로 5회 = 강공격 아님·돌진·NO HIT 4, idle 0회 시작.
+- 조치: 스톰프 소리 따라가기+볼륨, 먼지 3배 + 꼬리 내려찍기 충격 효과; 휩쓸기는 action 경로만; 전투 중 독 바르기 한 번
+  누르기; NPC 그래플 끔(Grapple INI, IAM Case 040).
+
+## r17c (프로토타입 DLL 05E399EE..., `cleave-proto` 53bad15, 2026-10-03 배포)
+
+콘솔 배치와 소환은 r17과 같음.
+- R17C-STOMP. 도적 3명에게 둘러싸여 "워 스톰프". 기대: 발차기 때 쿵 소리와 먼지가 보이고 들림.
+  로그: `RESULT stomp: ...; stagger spell cast, sound played, dust spawned, impact set played|not played`.
+- R17C-CLEAVE. 휩쓸어 베기를 세 번. 기대: 세 번 모두 강공격(돌진하는 다른 기술이 나오지 않음).
+  로그: 매번 `swing #n by action`, `power attacking true`.
+- R17C-POISON. 독을 가진 채 전투 중 무기를 뽑음. 기대: "독 바르기: ..."(길게 없음)가 뜨고 한 번 누르면 바로 발라짐.
+  전투 밖에서는 "독 바르기 (길게)" 링 그대로.
+- R17C-GRAPPLE. 전투 내내 NPC가 플레이어에게 그래플을 걸지 않음(조작 없음).
+- 로그만: `PlayerCharacter::Update hooked on runtime 1-6-1170-0 (slot AD; ...)` 줄(1.7 안전장치가 1.6.1170을 그대로 통과).
