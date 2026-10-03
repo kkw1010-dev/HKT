@@ -859,6 +859,8 @@ powershell -ExecutionPolicy Bypass -File C:\TAKEALOOK\TKL-Agent\CIGAR\tools\Buil
 
 ## Backlog (the user's plan, in the order discussed)
 
+- Idea (2026-10-03): MannequinSwap as the "change for the night" step (home → mannequin swap → sleep), the user's note while turning off Sleep in Bed's sleepwear; see `docs/030`.
+
 
 1. **Animals** (petting cat/dog/horse; plan "A").
    `docs/003-immersive-interactions-analysis.md` recommends:

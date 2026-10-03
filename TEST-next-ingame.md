@@ -646,3 +646,10 @@ player.modav health 5000
 - 수정(빌드 대기): 시야를 조건에서 뺌(적대 + 전투 중 + 1,000 이내 둘 이상), 줄에 단계별 수(near/hostile/enemies)와 양방향 시야 수를
   남기고, 외침 대기 중에도 셈. 다음 실행은 r18 항목 그대로 다시(조작 같음).
 
+### r19 판정 (2026-10-03, Claude; 원본 CIGAR.log 14:37-14:54)
+
+- 사용자: SHOW·EQUIP·GONE 실패. 로그: 전투 내내 `near=0 hostile=0 enemies=0`, 같은 틱에 WeaponSwap은 `Util::NearbyHostiles`로
+  목표를 73 거리에서 찾음 → VoiceAnswer 자체 반복문이 아무도 세지 못함(정확한 원인은 코드 판독으로 특정 못 함).
+- 수정(빌드 대기): 적 수를 WeaponSwap과 같은 `Util::NearbyHostiles`로 셈. 줄에 목록 크기(listed)·적대·빈사·전투 중 수를 남김.
+  다음 실행은 r18 항목 그대로.
+

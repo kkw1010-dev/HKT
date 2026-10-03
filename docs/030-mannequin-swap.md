@@ -231,3 +231,9 @@ and the lantern the mannequin got in test 2.
 
 Open: why the helmet was left out before (the runtime slot mask is still not logged for pieces that
 move); the USSEP and vanilla script paths (test on a new game with Another Mannequin Script Fix off).
+
+## Idea (the user, 2026-10-03; not planned yet)
+
+While turning off Sleep in Bed's sleepwear feature, the user noted that MannequinSwap is the more lore-friendly
+way to change for the night: arrive home, swap outfits at the mannequin, then sleep.
+

@@ -46,30 +46,24 @@ namespace CIGAR
 	VoiceAnswer::Fight VoiceAnswer::Look(RE::PlayerCharacter* a_player) const
 	{
 		Fight fight;
-		auto* lists = RE::ProcessLists::GetSingleton();
-		if (!lists) {
-			return fight;
+		// r19: an own loop over the high-process list counted no one (near=0 for a whole fight) while
+		// WeaponSwap, through Util::NearbyHostiles, saw its target at 73 units in the same tick. The crowd is
+		// now counted through that same proven helper; the list's size and the actors it skipped are logged.
+		if (auto* lists = RE::ProcessLists::GetSingleton()) {
+			fight.listed = static_cast<int>(lists->highActorHandles.size());
 		}
-		const auto pos = a_player->GetPosition();
-		for (auto& handle : lists->highActorHandles) {
-			const auto actor = handle.get();
-			if (!actor || actor.get() == a_player || actor->IsDead() || !actor->Is3DLoaded() || actor->IsBleedingOut() ||
-				actor->GetPosition().GetDistance(pos) > kFightRange) {
-				continue;
-			}
-			++fight.nearby;
-			if (!actor->IsHostileToActor(a_player)) {
-				continue;
-			}
+		for (auto* actor : Util::NearbyHostiles(a_player, kFightRange)) {
 			++fight.hostile;
+			if (actor->AsActorState()->IsBleedingOut()) {
+				++fight.bleeding;
+				continue;
+			}
 			if (!actor->IsInCombat()) {
 				continue;
 			}
 			++fight.enemies;
-			// Line of sight is not part of the gate since r18 (it counted no one in a fight with two bandits);
-			// both directions are logged to see which one the engine keeps for the player.
 			bool unused = false;
-			fight.playerSees += a_player->HasLineOfSight(actor.get(), unused) ? 1 : 0;
+			fight.playerSees += a_player->HasLineOfSight(actor, unused) ? 1 : 0;
 			fight.seesPlayer += actor->HasLineOfSight(a_player, unused) ? 1 : 0;
 		}
 		return fight;
@@ -133,9 +127,9 @@ namespace CIGAR
 		const bool held = pick && pick == candidate;
 		candidate = pick;
 
-		LogGate(std::format("combat={} movable={} busy={} recovery={:.0f} near={} hostile={} enemies={} sight(player->them={}, them->player={}) "
-		                    "pick={} ({})",
-			combat, movable, busy, recovery, fight.nearby, fight.hostile, fight.enemies, fight.playerSees, fight.seesPlayer,
+		LogGate(std::format("combat={} movable={} busy={} recovery={:.0f} listed={} hostile={} bleeding={} enemies={} sight(player->them={}, "
+		                    "them->player={}) pick={} ({})",
+			combat, movable, busy, recovery, fight.listed, fight.hostile, fight.bleeding, fight.enemies, fight.playerSees, fight.seesPlayer,
 			pick && pick->shout ? Util::NameOf(pick->shout) : "-"s, pick ? "ready" : why));
 
 		// A different shout is a different prompt (its name is in the text).
