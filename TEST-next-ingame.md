@@ -628,3 +628,13 @@ player.modav health 5000
   전투 밖에서는 "독 바르기 (길게)" 링 그대로.
 - R17C-GRAPPLE. 전투 내내 NPC가 플레이어에게 그래플을 걸지 않음(조작 없음).
 - 로그만: `PlayerCharacter::Update hooked on runtime 1-6-1170-0 (slot AD; ...)` 줄(1.7 안전장치가 1.6.1170을 그대로 통과).
+
+## r18: 용언 장착 (VoiceAnswer, 2026-10-03 배포, DLL 949A8D46...)
+
+준비: 거침없는 힘을 한 단어 이상 앎, 외침 칸에 다른 외침이나 종족 능력을 둔 상태(콘솔로 만들 때:
+`player.teachword 00013E22` 후 `player.unlockword 00013E22` — Fus, Skyrim.esm). 적 소환: `player.placeatme 0003DE8A 2`.
+- R18-SHOUT. 도적 둘이 보이는 전투에서 목소리가 쉬고 있지 않을 때. 기대: "장착하기: 거침없는 힘"이 한 번 누르기로
+  뜨고, 누르면 외침 칸이 거침없는 힘으로 바뀜(외침 키로 바로 쓸 수 있음). 이미 장착돼 있거나 외침 직후 대기 중이면 안 뜸.
+  로그: `[VoiceAnswer] equipped 거침없는 힘 (two or more enemies in sight): voice slot was ..., now 거침없는 힘`.
+- 로그만: 전투가 끝나도 외침 칸을 되돌리지 않음(D40).
+

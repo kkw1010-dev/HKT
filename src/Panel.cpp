@@ -124,6 +124,9 @@ namespace CIGAR::Panel
 			Label{ "WizardWarrior", "마검사 모드", "Wizard Warrior Mode", "The Wizard Warrior",
 				"무기를 꺼냈을 때 The Wizard Warrior가 꺼져 있으면 마검사 모드를 켜는 프롬프트가, 전투 밖에서 무기를 넣을 때 켜져 있으면 끄는 프롬프트가 뜹니다. 단축키·MCM 설정은 The Wizard Warrior 쪽에서 합니다. 두 번 눌러 닫으면 켜기는 무기를 넣을 때까지, 끄기는 다시 꺼냈다 넣을 때까지 뜨지 않습니다.",
 				"Drawing a weapon while The Wizard Warrior is off brings up a prompt that turns it on; sheathing out of combat while it is on brings up one that turns it off. Its hotkeys and MCM stay with The Wizard Warrior. Dismissed with a double tap, the on prompt stays away until the weapon is sheathed, the off prompt until it is drawn and sheathed again." },
+			Label{ "VoiceAnswer", "용언 장착", "Shout Ready", "",
+				"전투 중 상황에 맞는 용언을 외침 칸에 장착하는 프롬프트가 뜹니다. 지금은 적 둘 이상이 보일 때 거침없는 힘. 장착만 하며, 외치는 것은 외침 키로 합니다.",
+				"In a fight, a prompt puts the shout that fits the situation into the voice slot. For now: Unrelenting Force when two or more enemies are in sight. It only equips; you shout with your shout key." },
 			Label{ "Sit", "앉기", "Sit", "",
 				"바닥을 내려다볼 때 뜨는 앉기 프롬프트만 따로 켜고 끕니다.",
 				"Switches only the sit prompt (looking at the floor) on or off." },
@@ -174,7 +177,7 @@ namespace CIGAR::Panel
 			NonCombat,
 			Integration
 		};
-		constexpr std::array kCombatModules{ "WeaponSwap"sv, "Jujutsu"sv, "Potion"sv, "Poison"sv };
+		constexpr std::array kCombatModules{ "WeaponSwap"sv, "Jujutsu"sv, "Potion"sv, "Poison"sv, "VoiceAnswer"sv };
 
 		ModulePage PageOf(const Module* a_module)
 		{

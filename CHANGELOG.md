@@ -2,6 +2,16 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
+## Unreleased
+
+New
+- **Shout Ready** (용언 장착). In a fight, when two or more enemies are in sight and your voice is ready, a
+  prompt puts Unrelenting Force into your shout slot (if you know it and it is not there already); you shout
+  with your own key. More shouts for other situations are planned.
+
+Changed
+- **Apply Poison is a single press in combat** (it stays a hold ring outside combat), like drinking potions.
+
 ## 3.1.2 (2026-10-02)
 
 On Nexus this is the first release after 3.1.0; it carries 3.1.1 (GitHub only) with it.

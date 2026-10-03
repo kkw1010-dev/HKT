@@ -1,6 +1,9 @@
 # 046 · Voice answer: equip Unrelenting Force against a crowd (design, not built)
 
-Status (2026-10-03): design for review. The user dropped Cleave (docs/045 "Decision") and chose to improve
+Status (2026-10-03): **built** as the module `VoiceAnswer` (panel: 용언 장착 / Shout Ready, combat page),
+deployed in the author build, not yet seen in game. Decisions: D40 (the user): nothing is put back after
+the fight, because the module is meant to offer other shouts as other situations come. The rest of this
+page is the design it was built from. The user dropped Cleave (docs/045 "Decision") and chose to improve
 many-against-one by offering vanilla answers, starting with: "when it is two or more against one, a prompt
 that equips Fus Ro Dah". Equip only; the player shouts with their own key (the user's decision, which is an
 exception to CIGAR's "a prompt performs the whole action" rule).
@@ -30,10 +33,7 @@ after; a slot that does not change gives a WARN.
 
 ## Putting the old shout back
 
-Proposed: when combat ends, put back what the slot held before (a shout or a power), but only if the slot
-still holds Unrelenting Force (the player did not change it in the meantime). Reason: the press was meant for
-this fight; a racial power or a favourite shout the player had chosen should not be lost silently. One log
-line either way. (Alternative: leave it equipped; simpler, but the player has to go to the menu.)
+Not done (the user, D40: "그대로 둬도 되지 않나?, 어차피 다양한 용언들이 뜨게 만드니깐"). The shout stays equipped.
 
 ## Decline
 
@@ -41,9 +41,19 @@ Double tap hides it for this fight (situation = the combat; it can come back in 
 
 ## Growing it
 
-One module, "Voice answers", with a small table of {shout form, gate}: Unrelenting Force first; later
-candidates such as Disarm (a single strong armed enemy) or Slow Time, each a vanilla shout with its own
-situation, one prompt at a time in the crowd slot. Curated entries, not a user-made rule list.
+`VoiceAnswer` holds a table of {shout, situation}; the first entry whose situation holds and which the player
+knows and has not equipped is offered, one prompt at a time. Candidates (not built; situations are my
+proposals, each to be decided by the user):
+
+| Shout (Skyrim.esm) | Situation | Why it answers it |
+|---|---|---|
+| Unrelenting Force 00013E07 | two or more enemies in sight within 1,000 | built: pushes a crowd back |
+| Disarm (진압) 00070981 | one enemy close, holding a weapon, at a higher level than the player | takes the weapon of the one dangerous foe |
+| Slow Time (시간 왜곡) 00048AC9 | three or more enemies in sight, or an enemy archer and a melee enemy at once | buys time to act against many |
+| Become Ethereal (에테르화) 00032920 | health low while two or more enemies are close | the vanilla "get out of this" answer |
+| Ice Form (얼음 형태) 00070980 | one enemy charging in from more than 500 away | stops a single runner |
+
+FormIDs checked against the load order on 2026-10-03 (Skyrim.esm shouts, all won by Stormcrown.esp in this game).
 
 ## Key slots
 

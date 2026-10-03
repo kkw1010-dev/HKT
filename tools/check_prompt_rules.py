@@ -26,6 +26,7 @@ COMBAT = {
     ("WeaponSwap", "melee"),
     ("Execute", "execute"),
     ("Jujutsu", "jujutsu"),
+    ("VoiceAnswer", "prompt"),
     ("LockOn", "lock"),
     ("Grapple", "grapple"),
     ("Helmet", "on"),  # offered only in combat
