@@ -108,6 +108,9 @@ namespace CIGAR
 				answer.shoutID);
 		}
 		dismay = RE::TESForm::LookupByID<RE::TESShout>(kDismay);
+		readyAt.clear();
+		individualCooldowns = GetModuleHandleW(L"TISC.dll") != nullptr;
+		Log("shout cooldowns: {}", individualCooldowns ? "per shout (TISC loaded): each shout's own timer is remembered" : "shared (vanilla)");
 		Log("ready: {}", list);
 	}
 
@@ -182,6 +185,29 @@ namespace CIGAR
 		return fight;
 	}
 
+	bool VoiceAnswer::Ready(RE::TESShout* a_shout, const RE::TESShout* a_equipped, float a_recovery, std::string& a_why) const
+	{
+		if (!individualCooldowns) {
+			if (a_recovery > 0.0f) {
+				a_why = std::format("voice recovering ({:.0f} s)", a_recovery);
+				return false;
+			}
+			return true;
+		}
+		if (a_shout == a_equipped) {
+			return a_recovery <= 0.0f;
+		}
+		const auto it = readyAt.find(a_shout);
+		if (it != readyAt.end()) {
+			const auto left = std::chrono::duration<float>(it->second - std::chrono::steady_clock::now()).count();
+			if (left > 0.0f) {
+				a_why = std::format("{} recovering ({:.0f} s, TISC)", Util::NameOf(a_shout), left);
+				return false;
+			}
+		}
+		return true;
+	}
+
 	const VoiceAnswer::Answer* VoiceAnswer::Pick(RE::PlayerCharacter* a_player, const Fight& a_fight, std::string& a_rules) const
 	{
 		const auto* equipped = a_player->GetActorRuntimeData().selectedPower;
@@ -195,6 +221,8 @@ namespace CIGAR
 				verdict = why;
 			} else if (!answer.shout || !a_player->HasShout(answer.shout)) {
 				verdict = std::format("holds, but {} is not known", answer.shout ? Util::NameOf(answer.shout) : "the shout"s);
+			} else if (std::string busy; equipped != answer.shout && !Ready(answer.shout, equipped, lastRecovery, busy)) {
+				verdict = std::format("holds, but {}", busy);
 			} else if (equipped == answer.shout) {
 				// The best answer is already in the slot: nothing lower down is offered (r24: after Kyne's Peace
 				// was equipped the next tick offered Dismay, after Slow Time it offered Unrelenting Force).
@@ -225,8 +253,22 @@ namespace CIGAR
 		const bool movable = controls && controls->IsMovementControlsEnabled();
 		const auto* state = player->AsActorState();
 		const bool busy = player->IsOnMount() || player->IsInKillMove() || (state && state->IsSwimming()) || Util::InScene(player);
-		// Voice recovery is shared by every shout: while it runs, equipping one gives nothing to do yet.
+		// Vanilla: one voice recovery for every shout; while it runs, equipping one gives nothing to do yet.
+		// TISC: it is the equipped shout's own timer; it is remembered for that shout and each answer is
+		// checked against its own (Ready).
 		const float recovery = player->GetVoiceRecoveryTime();
+		lastRecovery = recovery;
+		if (individualCooldowns) {
+			const auto* power = player->GetActorRuntimeData().selectedPower;
+			if (const auto* equippedShout = power ? power->As<RE::TESShout>() : nullptr) {
+				if (recovery > 0.0f) {
+					readyAt[equippedShout] = std::chrono::steady_clock::now() +
+					                         std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(recovery));
+				} else {
+					readyAt.erase(equippedShout);
+				}
+			}
+		}
 
 		Fight fight;
 		std::string why;
@@ -238,7 +280,7 @@ namespace CIGAR
 			why = "busy";
 		} else {
 			fight = Look(player);
-			if (recovery > 0.0f) {
+			if (!individualCooldowns && recovery > 0.0f) {
 				why = std::format("voice recovering ({:.0f} s)", recovery);
 			} else {
 				pick = Pick(player, fight, rules);

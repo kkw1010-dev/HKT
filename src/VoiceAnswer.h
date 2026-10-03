@@ -64,6 +64,10 @@ namespace CIGAR
 		// The first answer whose rule holds and which the player can use now, or null. a_rules gets every
 		// rule's verdict, in order, for the gate line.
 		const Answer* Pick(RE::PlayerCharacter* a_player, const Fight& a_fight, std::string& a_rules) const;
+		// Whether a_shout can be used now. Vanilla keeps one voice recovery for all shouts; with TISC (True
+		// Individual Shout Cooldown) the engine's value is the EQUIPPED shout's own timer, swapped on equip, so
+		// each shout's last seen timer is remembered here (2026-10-04).
+		bool Ready(RE::TESShout* a_shout, const RE::TESShout* a_equipped, float a_recovery, std::string& a_why) const;
 
 		PromptSlot prompt{ this, kEquip };
 		std::vector<Answer> answers;
@@ -73,5 +77,9 @@ namespace CIGAR
 		std::uint64_t fightNumber{ 0 };
 		// The pick must hold on two ticks in a row (about a second), so it does not flicker.
 		const Answer* candidate{ nullptr };
+		// TISC: per-shout cooldown ends, from the engine's value while each shout was equipped.
+		bool individualCooldowns{ false };
+		float lastRecovery{ 0.0f };  // the engine's voice recovery on this tick
+		std::unordered_map<const RE::TESShout*, std::chrono::steady_clock::time_point> readyAt;
 	};
 }
