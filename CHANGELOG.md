@@ -2,7 +2,7 @@
 
 Player-facing changes per release. The Nexus page (mod 193080) carries the same entries.
 
-## Unreleased
+## 3.2.0 (2026-10-04)
 
 New
 - **Shout Ready** (용언 장착). In a fight against two or more enemies nearby, when your voice is ready, a

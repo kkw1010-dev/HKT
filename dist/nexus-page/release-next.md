@@ -1,4 +1,4 @@
-# Next CIGAR release: candidate contents (2026-10-04, not packaged, not uploaded)
+# CIGAR 3.2.0 release contents (packaged 2026-10-04 at the user's word, D54b; the user writes the Nexus texts and uploads)
 
 Proposed version: **3.2.0** (a new module, so a minor bump; 3.1.2 is the current Nexus and GitHub version).
 Base: `v3` after 1792aa1 (the last push). The release texts are drafted in `CHANGELOG.md` "Unreleased".
@@ -17,3 +17,12 @@ Before packaging: release build (`Build.ps1 -Package`, which also runs the Nexus
 --tree`, read the live Nexus description first (`UPLOAD-PROCEDURE.md`), version 3.2.0 in `CMakeLists.txt`,
 the description's feature list gains one line for Shout Ready (under Combat), and the panel's new switch is
 mentioned. Upload only on the user's word.
+
+## Packaged (2026-10-04)
+
+- Archive: `%USERPROFILE%\Downloads\CIGAR 3.2.0.7z`, 993,339 bytes sha256 `19881cf5bffbe7c8ce159d598962f41d8c17291bd32d0e4eae7b8ebc7d48737c`.
+- `SKSE\Plugins\CIGAR.dll` 5,111,808 bytes, sha256 `8d17f196e4c762344e29c5cf13c6d9d17838f7207dd5ff8f7e218b0c42e5827f`;
+  `make_release.py` passed (five files, no personal module, no private word, no user path).
+- The release binary (`dist` preset) has not been run in the game; everything in it was seen in the author build
+  (r17c, r23, r24, r25), except the runtime guard on Skyrim 1.7.
+

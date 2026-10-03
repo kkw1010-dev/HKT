@@ -54,6 +54,7 @@ C:\TAKEALOOK\TKL-Agent\CIGAR\HANDOFF.md 맨 위 "Now (2026-09-29)" 절만 읽고
 - **Deployed author build 2026-10-03 (`v3`, after 3808b72): DLL 949A8D46...** = 3.1.2 + poison press in combat + anchor runtime guard + `VoiceAnswer` (docs/046; Unrelenting Force equip prompt, not yet seen in game). The user's baseline. Prototype DLL backups in `_test-runs\cigar-cleave-proto\backup-*`.
 - **Skyrim 1.7 (D42, 2026-10-03):** keep the runtime guard. The "Mages & Vikings" collection author told the user on Nexus that their build is 1.6.1170, so 1.7 is not urgent; updating CommonLibSSE-NG is deferred to the next public release.
 - **Cleave and the war stomp dropped (user, 2026-10-03)** — see `docs/045` "Decision"; `cleave-proto` is reference only. Next build = `v3` (Poison press in combat, anchor runtime guard) + the Unrelenting Force equip prompt (`docs/046`, awaiting approval). r17c: poison in combat and Grapple NPC off passed; the guard logged `hooked on runtime 1-6-1170-0 (slot AD; ...)`.
+- **3.2.0 packaged and pushed (2026-10-04, D54b):** `Downloads\CIGAR 3.2.0.7z` (sha256 19881cf5...), Shout Ready + its extension, poison press in combat, the runtime guard; record in `dist/nexus-page/release-next.md`. The user writes the Nexus texts and uploads. No tag (the user's standing rule: no tags or GitHub Releases).
 - **In this build (new):**
   - Every non-combat prompt fills a ring; every declined prompt stays hidden while its situation lasts
     (`docs/042`). `tools/check_prompt_rules.py` enforces the ring rule and typed form lookups before
