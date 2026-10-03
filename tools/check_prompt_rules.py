@@ -35,6 +35,7 @@ COMBAT = {
 # A press in combat, a ring out of it (the user's D18, 2026-09-29): the module must set both types.
 COMBAT_ONLY_PRESS = {
     ("Potion", "drink"),
+    ("Poison", "apply"),  # r17b, 2026-10-03
 }
 
 # Non-combat prompts that act on the press and last while held, by the user's decision: Squeeze Past (r11,

@@ -70,7 +70,23 @@ namespace CIGAR
 			pick.weapon ? Util::NameOf(pick.weapon) : "-"s, pick.poison ? Util::NameOf(pick.poison) : "-"s, pick.why,
 			movable, scene));
 		auto* poison = pick.poison;
-		apply.Update(poison && movable && !scene, [poison] { return Text::F("독 바르기 (길게): {}", "Apply Poison (hold): {}", Util::NameOf(poison)); });
+		// In combat a single press, out of combat a ring (combat prompts act at once; r17b, 2026-10-03: the
+		// ring in a fight was a bug). Entering or leaving combat offers the prompt again with its type, as
+		// the potion prompt does.
+		const bool combat = player->IsInCombat();
+		if (apply.Offered() && combat != offeredInCombat) {
+			apply.Withdraw();
+			apply.Reset();
+		}
+		apply.SetSituation(combat ? 1u : 0u);
+		if (!apply.Offered()) {
+			offeredInCombat = combat;
+			apply.SetPromptType(combat ? SkyPromptAPI::kSinglePress : SkyPromptAPI::kHold);
+		}
+		apply.Update(poison && movable && !scene, [poison, combat] {
+			return combat ? Text::F("독 바르기: {}", "Apply Poison: {}", Util::NameOf(poison))
+			              : Text::F("독 바르기 (길게): {}", "Apply Poison (hold): {}", Util::NameOf(poison));
+		});
 	}
 
 	void Poison::OnAccepted(std::uint16_t a_eventID)

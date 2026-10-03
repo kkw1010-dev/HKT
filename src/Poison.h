@@ -38,5 +38,7 @@ namespace CIGAR
 		Pick Evaluate(RE::PlayerCharacter* a_player) const;
 
 		PromptSlot apply{ this, kApply };
+		// Whether the prompt on screen was offered in combat (a single press) or out of it (a ring).
+		bool offeredInCombat{ false };
 	};
 }
