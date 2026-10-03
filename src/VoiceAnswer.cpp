@@ -185,7 +185,7 @@ namespace CIGAR
 		return fight;
 	}
 
-	bool VoiceAnswer::Ready(RE::TESShout* a_shout, const RE::TESShout* a_equipped, float a_recovery, std::string& a_why) const
+	bool VoiceAnswer::Ready(RE::TESShout* a_shout, const RE::TESForm* a_equipped, float a_recovery, std::string& a_why) const
 	{
 		if (!individualCooldowns) {
 			if (a_recovery > 0.0f) {

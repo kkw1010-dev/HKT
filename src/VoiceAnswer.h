@@ -69,7 +69,7 @@ namespace CIGAR
 		// Whether a_shout can be used now. Vanilla keeps one voice recovery for all shouts; with TISC (True
 		// Individual Shout Cooldown) the engine's value is the EQUIPPED shout's own timer, swapped on equip, so
 		// each shout's last seen timer is remembered here (2026-10-04).
-		bool Ready(RE::TESShout* a_shout, const RE::TESShout* a_equipped, float a_recovery, std::string& a_why) const;
+		bool Ready(RE::TESShout* a_shout, const RE::TESForm* a_equipped, float a_recovery, std::string& a_why) const;
 
 		PromptSlot prompt{ this, kEquip };
 		std::vector<Answer> answers;
