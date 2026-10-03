@@ -5,7 +5,7 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 ## Unreleased
 
 New
-- **Shout Ready** (용언 장착). In a fight, when two or more enemies are in sight and your voice is ready, a
+- **Shout Ready** (용언 장착). In a fight against two or more enemies nearby, when your voice is ready, a
   prompt puts Unrelenting Force into your shout slot (if you know it and it is not there already); you shout
   with your own key. More shouts for other situations are planned.
 

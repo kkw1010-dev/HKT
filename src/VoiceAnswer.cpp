@@ -10,7 +10,7 @@ namespace CIGAR
 		// Starting value (mine): about 14 m. Enemies further off are not part of this fight's crowd yet.
 		constexpr float kFightRange = 1000.0f;
 
-		bool TwoOrMore(const VoiceAnswer::Fight& a_fight) { return a_fight.enemiesInSight >= 2; }
+		bool TwoOrMore(const VoiceAnswer::Fight& a_fight) { return a_fight.enemies >= 2; }
 	}
 
 	VoiceAnswer::VoiceAnswer()
@@ -18,7 +18,7 @@ namespace CIGAR
 		// A combat prompt: a single press (check_prompt_rules.py lists it).
 		prompt.SetPromptType(SkyPromptAPI::kSinglePress);
 		// Skyrim.esm MAG_UnrelentingForceShout. Further answers go here (docs/046 lists candidates).
-		answers.push_back({ 0x013E07, "two or more enemies in sight", &TwoOrMore });
+		answers.push_back({ 0x013E07, "two or more enemies within range", &TwoOrMore });
 	}
 
 	VoiceAnswer* VoiceAnswer::GetSingleton()
@@ -54,13 +54,23 @@ namespace CIGAR
 		for (auto& handle : lists->highActorHandles) {
 			const auto actor = handle.get();
 			if (!actor || actor.get() == a_player || actor->IsDead() || !actor->Is3DLoaded() || actor->IsBleedingOut() ||
-				!actor->IsInCombat() || !actor->IsHostileToActor(a_player) || actor->GetPosition().GetDistance(pos) > kFightRange) {
+				actor->GetPosition().GetDistance(pos) > kFightRange) {
 				continue;
 			}
-			bool unused = false;
-			if (a_player->HasLineOfSight(actor.get(), unused)) {
-				++fight.enemiesInSight;
+			++fight.nearby;
+			if (!actor->IsHostileToActor(a_player)) {
+				continue;
 			}
+			++fight.hostile;
+			if (!actor->IsInCombat()) {
+				continue;
+			}
+			++fight.enemies;
+			// Line of sight is not part of the gate since r18 (it counted no one in a fight with two bandits);
+			// both directions are logged to see which one the engine keeps for the player.
+			bool unused = false;
+			fight.playerSees += a_player->HasLineOfSight(actor.get(), unused) ? 1 : 0;
+			fight.seesPlayer += actor->HasLineOfSight(a_player, unused) ? 1 : 0;
 		}
 		return fight;
 	}
@@ -112,17 +122,21 @@ namespace CIGAR
 			why = "not in combat";
 		} else if (!movable || busy) {
 			why = "busy";
-		} else if (recovery > 0.0f) {
-			why = std::format("voice recovering ({:.0f} s)", recovery);
 		} else {
 			fight = Look(player);
-			pick = Pick(player, fight, why);
+			if (recovery > 0.0f) {
+				why = std::format("voice recovering ({:.0f} s)", recovery);
+			} else {
+				pick = Pick(player, fight, why);
+			}
 		}
 		const bool held = pick && pick == candidate;
 		candidate = pick;
 
-		LogGate(std::format("combat={} movable={} busy={} recovery={:.0f} enemies={} pick={} ({})", combat, movable, busy, recovery,
-			fight.enemiesInSight, pick && pick->shout ? Util::NameOf(pick->shout) : "-"s, pick ? "ready" : why));
+		LogGate(std::format("combat={} movable={} busy={} recovery={:.0f} near={} hostile={} enemies={} sight(player->them={}, them->player={}) "
+		                    "pick={} ({})",
+			combat, movable, busy, recovery, fight.nearby, fight.hostile, fight.enemies, fight.playerSees, fight.seesPlayer,
+			pick && pick->shout ? Util::NameOf(pick->shout) : "-"s, pick ? "ready" : why));
 
 		// A different shout is a different prompt (its name is in the text).
 		if (prompt.Offered() && offered != pick && pick) {

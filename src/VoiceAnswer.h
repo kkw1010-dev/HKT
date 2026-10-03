@@ -23,7 +23,13 @@ namespace CIGAR
 		// What the fight looks like around the player, for the table's situations.
 		struct Fight
 		{
-			int enemiesInSight{ 0 };  // hostile, in combat, alive, within range and in line of sight
+			// Counted from the actors near the player, each step narrowing the last, so the gate line shows
+			// where a crowd stops counting (r18: the prompt never showed and the log could not say why).
+			int nearby{ 0 };          // alive, loaded, not bleeding out, within range
+			int hostile{ 0 };         // ... and hostile to the player
+			int enemies{ 0 };         // ... and in combat: what the situations use
+			int playerSees{ 0 };      // of those, in the player's line of sight (logged only)
+			int seesPlayer{ 0 };      // of those, with the player in their line of sight (logged only)
 		};
 
 	private:

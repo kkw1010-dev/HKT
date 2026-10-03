@@ -17,9 +17,10 @@ game's own name shows (Korean: 거침없는 힘). A mod that replaces the shout 
 ## Gate (every second, Tick)
 
 - Player in combat, controls free, not in a scene, mounted, swimming or a kill move.
-- **Two or more hostile actors** that are in combat, alive, not bleeding out, within **1,000 units**
-  (about 14 m; my starting value) and **in the player's line of sight** (`HasLineOfSight`). Held 1 s, so it
-  does not flicker as enemies move.
+- **Two or more hostile actors** that are in combat, alive, not bleeding out and within **1,000 units**
+  (about 14 m; my starting value), on two ticks in a row (about a second), so it does not flicker.
+  Line of sight was part of the gate at first; in r18 (2026-10-03) it counted no one in a fight with two
+  bandits, so it was taken out. Both directions (player to enemy, enemy to player) are still logged.
 - The player knows the shout (`HasShout`; the game adds it when its first word is unlocked).
 - The voice slot does not already hold it (`selectedPower`).
 - The voice is ready (`GetVoiceRecoveryTime() == 0`): recovery is shared by all shouts, so equipping it
@@ -47,7 +48,7 @@ proposals, each to be decided by the user):
 
 | Shout (Skyrim.esm) | Situation | Why it answers it |
 |---|---|---|
-| Unrelenting Force 00013E07 | two or more enemies in sight within 1,000 | built: pushes a crowd back |
+| Unrelenting Force 00013E07 | two or more enemies in combat within 1,000 | built: pushes a crowd back |
 | Disarm (진압) 00070981 | one enemy close, holding a weapon, at a higher level than the player | takes the weapon of the one dangerous foe |
 | Slow Time (시간 왜곡) 00048AC9 | three or more enemies in sight, or an enemy archer and a melee enemy at once | buys time to act against many |
 | Become Ethereal (에테르화) 00032920 | health low while two or more enemies are close | the vanilla "get out of this" answer |

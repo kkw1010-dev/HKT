@@ -635,6 +635,14 @@ player.modav health 5000
 `player.teachword 00013E22` 후 `player.unlockword 00013E22` — Fus, Skyrim.esm). 적 소환: `player.placeatme 0003DE8A 2`.
 - R18-SHOUT. 도적 둘이 보이는 전투에서 목소리가 쉬고 있지 않을 때. 기대: "장착하기: 거침없는 힘"이 한 번 누르기로
   뜨고, 누르면 외침 칸이 거침없는 힘으로 바뀜(외침 키로 바로 쓸 수 있음). 이미 장착돼 있거나 외침 직후 대기 중이면 안 뜸.
-  로그: `[VoiceAnswer] equipped 거침없는 힘 (two or more enemies in sight): voice slot was ..., now 거침없는 힘`.
+  로그: `[VoiceAnswer] equipped 거침없는 힘 (two or more enemies within range): voice slot was ..., now 거침없는 힘`.
 - 로그만: 전투가 끝나도 외침 칸을 되돌리지 않음(D40).
+
+### r18 판정 (2026-10-03, Claude; 원본 CIGAR.log 13:47-13:58)
+
+- 사용자: SHOW·EQUIP·GONE 실패(프롬프트가 안 뜸).
+- 로그: 전투 중 매 틱 `enemies=0 ... (not two or more enemies in sight)`. 적 수를 세는 단계에서 0이었고, 어느 조건(적대·전투·시야)에서
+  빠졌는지는 로그에 없었음. 시야 판정(`HasLineOfSight`)이 원인으로 유력. 외침 대기 중에는 적을 세지도 않았음.
+- 수정(빌드 대기): 시야를 조건에서 뺌(적대 + 전투 중 + 1,000 이내 둘 이상), 줄에 단계별 수(near/hostile/enemies)와 양방향 시야 수를
+  남기고, 외침 대기 중에도 셈. 다음 실행은 r18 항목 그대로 다시(조작 같음).
 
