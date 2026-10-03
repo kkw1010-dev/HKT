@@ -1,4 +1,4 @@
-# 047 · Voice answers beyond Unrelenting Force (proposal, not built)
+# 047 · Voice answers beyond Unrelenting Force (approved D57, built 2026-10-04, not yet seen in game)
 
 Asked by the user (D54, 2026-10-04): "푸스로다 말고 다른 용언은 또 뭐 없나?? 다대일에 써야함 + 푸스로다가 적합하지
 않을 때". Source: Codex CX-58 (`C:\TAKEALOOK\_codex\results\CX-58.md`, UESP figures), checked against this load

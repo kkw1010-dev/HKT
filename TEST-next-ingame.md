@@ -658,3 +658,16 @@ player.modav health 5000
 - 사용자: SHOW·EQUIP·GONE 통과. 로그: 전투 중 `listed=38 hostile=2 bleeding=0 enemies=2` → 프롬프트 표시 → 수락 →
   `voice slot was 시간 왜곡, now 거침없는 힘` → 이후 `already equipped`, 적 1명이 되자 `not two or more enemies`. 의도대로. 경고·오류 0.
 
+## r25: 용언 장착 확장 (D57; 빌드 대기 중, 커밋 6d30177)
+
+콘솔 배치 파일: `C:\TAKEALOOK\_test-runs
+ext25-console\` (스카이림 폴더에 복사해 `bat r25words` 식으로 실행).
+`r25words`: 거침없는 힘(Fus)·시간 왜곡(Tiid)·카인의 평화(Kaan)·공포(Faas Ru Maar) 단어 익힘 + 철 대검 + 체력 5000.
+외침 대기 중이면 안 뜸(시간 왜곡은 Stormcrown 기준 180초 이상) — 항목 사이에 외침을 쓰지 않으면 바로 이어 볼 수 있음.
+- R25-WOLVES. `bat r25wolves`(늑대 3). 기대: "장착하기: 카인의 평화". 로그 `rule animal-pack`.
+- R25-FRIEND. `bat r25friend`(도적 2 + 나짐 1), 나짐이 정면에 오게. 기대: "장착하기: 시간 왜곡". 로그 `rule friend-ahead`.
+- R25-CENTURION. `bat r25centurion`(드워프 백부장 1 + 도적 1). 기대: "장착하기: 시간 왜곡". 로그 `rule unshakeable`.
+- R25-BANDITS. `bat r25bandits`(도적 2). 기대: 도적 레벨이 24 이하면 "공포", 넘으면 "거침없는 힘". 로그 `rule low-level-crowd` 또는 `crowd`,
+  게이트 줄의 `maxLevel=`·`dismayCap=`이 어느 쪽인지 말해 줌.
+- 판정은 `[VoiceAnswer] gate ... rules: friend-ahead: ... | animal-pack: ... | ...` 줄로 함(규칙별 성립 여부와 이유).
+

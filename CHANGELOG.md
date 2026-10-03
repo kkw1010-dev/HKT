@@ -6,8 +6,10 @@ Player-facing changes per release. The Nexus page (mod 193080) carries the same 
 
 New
 - **Shout Ready** (용언 장착). In a fight against two or more enemies nearby, when your voice is ready, a
-  prompt puts Unrelenting Force into your shout slot (if you know it and it is not there already); you shout
-  with your own key. More shouts for other situations are planned.
+  prompt puts the shout that fits into your shout slot (if you know it and it is not there already); you shout
+  with your own key. Slow Time when a follower or bystander stands in front or a dragon or Dwarven centurion
+  is among the enemies, Kyne's Peace against a pack of animals, Dismay against a crowd its words can break,
+  Unrelenting Force otherwise.
 
 Changed
 - **Apply Poison is a single press in combat** (it stays a hold ring outside combat), like drinking potions.
