@@ -660,8 +660,7 @@ player.modav health 5000
 
 ## r25: 용언 장착 확장 (D57; DLL F3C44D0D... 배포 2026-10-04, 커밋 6d30177)
 
-콘솔 배치 파일: `C:\TAKEALOOK\_test-runs
-ext25-console\` (스카이림 폴더에 복사해 `bat r25words` 식으로 실행).
+콘솔 배치 파일: `C:\TAKEALOOK\overwrite\Root\r25*.txt` (게임 루트; `bat r25words` 식으로 실행; 원본 `_test-runs\next\r25-console\`).
 `r25words`: 거침없는 힘(Fus)·시간 왜곡(Tiid)·카인의 평화(Kaan)·공포(Faas Ru Maar) 단어 익힘 + 철 대검 + 체력 5000.
 외침 대기 중이면 안 뜸(시간 왜곡은 Stormcrown 기준 180초 이상) — 항목 사이에 외침을 쓰지 않으면 바로 이어 볼 수 있음.
 - R25-WOLVES. `bat r25wolves`(늑대 3). 기대: "장착하기: 카인의 평화". 로그 `rule animal-pack`.
