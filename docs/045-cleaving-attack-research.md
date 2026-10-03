@@ -241,6 +241,15 @@ the log.
 - Whether the engine can turn the swing into a kill move.
 - Prompt priority among combat prompts with four key slots.
 
+## Decision (2026-10-03): Cleave dropped by the user
+
+After r17b the user dropped the Cleaving Attack. Reason: the prompt only asks the engine for an ordinary
+power attack, so what plays and what it hits is decided by MCO and the OAR stance sets (r17b: two clean
+cleaves in five, three single hits), not by CIGAR. Many-against-one is to be improved by offering vanilla
+answers instead, starting with a prompt that equips Unrelenting Force when two or more enemies face the
+player. The war stomp is not part of this decision (judged after r17c). The prototype stays on the
+`cleave-proto` branch for reference; the Cleave prompt is switched off there.
+
 ## 12. Recommendation
 
 **Go on with Cleave as a prompt that asks the engine for one ordinary power attack when one arc can cover
