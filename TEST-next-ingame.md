@@ -670,3 +670,12 @@ player.modav health 5000
   게이트 줄의 `maxLevel=`·`dismayCap=`이 어느 쪽인지 말해 줌.
 - 판정은 `[VoiceAnswer] gate ... rules: friend-ahead: ... | animal-pack: ... | ...` 줄로 함(규칙별 성립 여부와 이유).
 
+### r24 판정 (2026-10-04, Claude; 원본 CIGAR.log 01:45-01:59)
+
+- 사용자: 확장 4항목 통과. 로그의 규칙 줄: 늑대 → `animal-pack: PICKED 카인의 평화`(animals=3/3), 나짐 정면 → `friend-ahead`(friendsAhead=1),
+  백부장+도적 → `unshakeable`(unshakeable=1), 도적만 → `low-level-crowd: PICKED 경악`. 각 규칙이 의도한 이유로 성립.
+- 고칠 것 1(수정, 빌드 대기): 가장 맞는 용언을 장착하면 다음 틱에 아래 규칙의 다른 용언이 바로 떴음(카인의 평화 뒤 경악, 시간 왜곡 뒤
+  거침없는 힘). → 성립한 규칙의 용언이 이미 장착돼 있으면 아래로 내려가지 않고 아무것도 띄우지 않음.
+- 확인할 것 2: 도적 무리의 `maxLevel=1`(늑대·도적 모두 1). 백부장 싸움에서는 24가 읽혀 레벨 읽기 자체는 동작하지만, 레벨이 PC 배율인
+  NPC가 1로 읽히는지 미확인 → 공포가 실제 상한을 넘는 적에게 제안될 수 있음.
+

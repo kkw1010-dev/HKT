@@ -186,16 +186,20 @@ namespace CIGAR
 	{
 		const auto* equipped = a_player->GetActorRuntimeData().selectedPower;
 		const Answer* pick = nullptr;
+		bool done = false;
 		for (const auto& answer : answers) {
 			std::string verdict;
-			if (pick) {
+			if (pick || done) {
 				verdict = "-";
 			} else if (auto why = answer.check(a_fight); !why.empty()) {
 				verdict = why;
 			} else if (!answer.shout || !a_player->HasShout(answer.shout)) {
 				verdict = std::format("holds, but {} is not known", answer.shout ? Util::NameOf(answer.shout) : "the shout"s);
 			} else if (equipped == answer.shout) {
-				verdict = std::format("holds, {} already equipped", Util::NameOf(answer.shout));
+				// The best answer is already in the slot: nothing lower down is offered (r24: after Kyne's Peace
+				// was equipped the next tick offered Dismay, after Slow Time it offered Unrelenting Force).
+				verdict = std::format("holds, {} already equipped: nothing else offered", Util::NameOf(answer.shout));
+				done = true;
 			} else {
 				verdict = std::format("PICKED {}", Util::NameOf(answer.shout));
 				pick = &answer;
