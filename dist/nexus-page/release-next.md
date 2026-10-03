@@ -6,6 +6,7 @@ Base: `v3` after 1792aa1 (the last push). The release texts are drafted in `CHAN
 | Item | Commits | Seen in game | Notes |
 |---|---|---|---|
 | Shout Ready (VoiceAnswer): equip Unrelenting Force against two or more enemies | 8e03ccd, e516934, 52da765 | **r23 passed** (SHOW / EQUIP / GONE); log 2026-10-03 23:17: hostile 2, enemies 2, offered, equipped (slot was Slow Time) | New combat-page switch 용언 장착 / Shout Ready, on by default. Nothing is put back after the fight (D40) |
+| Shout Ready extension (D57): Slow Time (friend in front, dragon / centurion), Kyne's Peace (animal pack), Dismay (low-level crowd), else Unrelenting Force | 6d30177, 308a1cb | **r24 passed** (all four rules fired for the intended reason in the log); the "stop when the best shout is equipped" fix (308a1cb) is not built yet | Level reads: this modlist's Amalgam / Bandit War set NPC levels to 1, so Dismay's cap check passes; the game's own Dismay reads the same level, so the prompt matches what the shout will do |
 | Apply Poison: single press in combat, ring outside | 6381d02 | r17c passed | Rule check covers it |
 | Anchor hook runtime guard (Skyrim 1.7 / unknown runtimes) | 6206275 | r17c on 1.6.1170: `hooked on runtime 1-6-1170-0 (slot AD; ...)`; **never run on 1.7** | Keeps the hook as before on SE / AE up to 1.6.1179 / VR (D42) |
 
