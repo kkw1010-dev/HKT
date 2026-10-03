@@ -1,5 +1,7 @@
 #include "VoiceAnswer.h"
 
+#include <numbers>
+
 #include "Text.h"
 #include "Util.h"
 
@@ -9,16 +11,81 @@ namespace CIGAR
 	{
 		// Starting value (mine): about 14 m. Enemies further off are not part of this fight's crowd yet.
 		constexpr float kFightRange = 1000.0f;
+		// A friend this far either side of the heading is "in front" (docs/047, approved as D57).
+		constexpr float kFrontCone = 45.0f;
+		// Kyne's Peace calms animals up to this level (UESP).
+		constexpr int kKynesPeaceLevel = 20;
+		// Dismay's level reach by the number of words unlocked (UESP): none, 1, 2, 3.
+		constexpr std::array<int, 4> kDismayLevel{ 0, 7, 15, 24 };
+		// Skyrim.esm shouts: Unrelenting Force, Slow Time, Kyne's Peace, Dismay; DwarvenCenturionRace.
+		constexpr RE::FormID kUnrelentingForce = 0x013E07;
+		constexpr RE::FormID kSlowTime = 0x048AC9;
+		constexpr RE::FormID kKynesPeace = 0x07097E;
+		constexpr RE::FormID kDismay = 0x02395A;
+		constexpr RE::FormID kCenturionRace = 0x0131F1;
 
-		bool TwoOrMore(const VoiceAnswer::Fight& a_fight) { return a_fight.enemies >= 2; }
+		std::string Crowd(const VoiceAnswer::Fight& a_fight)
+		{
+			return a_fight.enemies >= 2 ? ""s : std::format("{} enemy in combat", a_fight.enemies);
+		}
+
+		std::string FriendAhead(const VoiceAnswer::Fight& a_fight)
+		{
+			if (auto why = Crowd(a_fight); !why.empty()) {
+				return why;
+			}
+			return a_fight.friendsAhead > 0 ? ""s : "no friend or bystander in front"s;
+		}
+
+		std::string AnimalPack(const VoiceAnswer::Fight& a_fight)
+		{
+			if (auto why = Crowd(a_fight); !why.empty()) {
+				return why;
+			}
+			if (a_fight.animals < a_fight.enemies) {
+				return std::format("{} of {} are animals", a_fight.animals, a_fight.enemies);
+			}
+			return a_fight.maxLevel <= kKynesPeaceLevel ? ""s : std::format("an animal at level {} (> {})", a_fight.maxLevel, kKynesPeaceLevel);
+		}
+
+		std::string Unshakeable(const VoiceAnswer::Fight& a_fight)
+		{
+			if (auto why = Crowd(a_fight); !why.empty()) {
+				return why;
+			}
+			return a_fight.unshakeable > 0 ? ""s : "no dragon or centurion"s;
+		}
+
+		std::string LowLevelCrowd(const VoiceAnswer::Fight& a_fight)
+		{
+			if (auto why = Crowd(a_fight); !why.empty()) {
+				return why;
+			}
+			if (a_fight.dismayCap == 0) {
+				return "no Dismay word unlocked"s;
+			}
+			if (a_fight.dismayProof > 0) {
+				return std::format("{} undead, daedra, automaton or dragon", a_fight.dismayProof);
+			}
+			return a_fight.maxLevel <= a_fight.dismayCap ? ""s : std::format("an enemy at level {} (> {})", a_fight.maxLevel, a_fight.dismayCap);
+		}
+
+		float Degrees(float a_side, float a_ahead)
+		{
+			return std::atan2(a_side, a_ahead) * 180.0f / std::numbers::pi_v<float>;
+		}
 	}
 
 	VoiceAnswer::VoiceAnswer()
 	{
 		// A combat prompt: a single press (check_prompt_rules.py lists it).
 		prompt.SetPromptType(SkyPromptAPI::kSinglePress);
-		// Skyrim.esm MAG_UnrelentingForceShout. Further answers go here (docs/046 lists candidates).
-		answers.push_back({ 0x013E07, "two or more enemies within range", &TwoOrMore });
+		// From the top; the first rule that holds and whose shout can be used wins (D57).
+		answers.push_back({ "friend-ahead", kSlowTime, &FriendAhead });
+		answers.push_back({ "animal-pack", kKynesPeace, &AnimalPack });
+		answers.push_back({ "unshakeable", kSlowTime, &Unshakeable });
+		answers.push_back({ "low-level-crowd", kDismay, &LowLevelCrowd });
+		answers.push_back({ "crowd", kUnrelentingForce, &Crowd });
 	}
 
 	VoiceAnswer* VoiceAnswer::GetSingleton()
@@ -37,9 +104,10 @@ namespace CIGAR
 		std::string list;
 		for (auto& answer : answers) {
 			answer.shout = RE::TESForm::LookupByID<RE::TESShout>(answer.shoutID);
-			list += std::format("{}{} ({:08X}) for {}", list.empty() ? "" : ", ", answer.shout ? Util::NameOf(answer.shout) : "MISSING"s,
-				answer.shoutID, answer.situation);
+			list += std::format("{}{} -> {} ({:08X})", list.empty() ? "" : ", ", answer.rule, answer.shout ? Util::NameOf(answer.shout) : "MISSING"s,
+				answer.shoutID);
 		}
+		dismay = RE::TESForm::LookupByID<RE::TESShout>(kDismay);
 		Log("ready: {}", list);
 	}
 
@@ -65,29 +133,76 @@ namespace CIGAR
 			bool unused = false;
 			fight.playerSees += a_player->HasLineOfSight(actor, unused) ? 1 : 0;
 			fight.seesPlayer += actor->HasLineOfSight(a_player, unused) ? 1 : 0;
+			const bool dragon = actor->HasKeywordString("ActorTypeDragon");
+			const auto* race = actor->GetRace();
+			const bool centurion = race && race->GetFormID() == kCenturionRace;
+			fight.animals += actor->HasKeywordString("ActorTypeAnimal") ? 1 : 0;
+			fight.unshakeable += dragon || centurion ? 1 : 0;
+			fight.dismayProof += dragon || actor->HasKeywordString("ActorTypeUndead") || actor->HasKeywordString("ActorTypeDaedra") ||
+			                             actor->HasKeywordString("ActorTypeDwarven") ?
+			                         1 :
+			                         0;
+			fight.maxLevel = std::max<int>(fight.maxLevel, actor->GetLevel());
+		}
+		// Friends and bystanders in front: the same walk as Util::NearbyHostiles (bleeding read through
+		// AsActorState, see r19), keeping the non-hostile ones.
+		if (auto* lists = RE::ProcessLists::GetSingleton()) {
+			const auto origin = a_player->GetPosition();
+			const float heading = a_player->GetAngleZ();
+			for (auto& handle : lists->highActorHandles) {
+				const auto ptr = handle.get();
+				auto* other = ptr.get();
+				if (!other || other == a_player || other->IsDead() || !other->Is3DLoaded() || other->IsHostileToActor(a_player)) {
+					continue;
+				}
+				const auto to = other->GetPosition() - origin;
+				if (origin.GetDistance(other->GetPosition()) > kFightRange) {
+					continue;
+				}
+				const float ahead = to.x * std::sin(heading) + to.y * std::cos(heading);
+				const float side = to.x * std::cos(heading) - to.y * std::sin(heading);
+				if (std::abs(Degrees(side, ahead)) <= kFrontCone) {
+					++fight.friendsAhead;
+					if (fight.friendAhead.empty()) {
+						fight.friendAhead = Util::NameOf(other);
+					}
+				}
+			}
+		}
+		// Dismay's reach: the words of it the player has unlocked.
+		if (dismay && a_player->HasShout(dismay)) {
+			int words = 0;
+			for (const auto& variation : dismay->variations) {
+				if (variation.word && (variation.word->GetFormFlags() & RE::TESForm::RecordFlags::kUnlocked) != 0) {
+					++words;
+				}
+			}
+			fight.dismayCap = kDismayLevel[std::min(words, 3)];
 		}
 		return fight;
 	}
 
-	const VoiceAnswer::Answer* VoiceAnswer::Pick(RE::PlayerCharacter* a_player, const Fight& a_fight, std::string& a_why) const
+	const VoiceAnswer::Answer* VoiceAnswer::Pick(RE::PlayerCharacter* a_player, const Fight& a_fight, std::string& a_rules) const
 	{
 		const auto* equipped = a_player->GetActorRuntimeData().selectedPower;
+		const Answer* pick = nullptr;
 		for (const auto& answer : answers) {
-			if (!answer.fits(a_fight)) {
-				a_why = std::format("not {}", answer.situation);
-				continue;
+			std::string verdict;
+			if (pick) {
+				verdict = "-";
+			} else if (auto why = answer.check(a_fight); !why.empty()) {
+				verdict = why;
+			} else if (!answer.shout || !a_player->HasShout(answer.shout)) {
+				verdict = std::format("holds, but {} is not known", answer.shout ? Util::NameOf(answer.shout) : "the shout"s);
+			} else if (equipped == answer.shout) {
+				verdict = std::format("holds, {} already equipped", Util::NameOf(answer.shout));
+			} else {
+				verdict = std::format("PICKED {}", Util::NameOf(answer.shout));
+				pick = &answer;
 			}
-			if (!answer.shout || !a_player->HasShout(answer.shout)) {
-				a_why = std::format("{} not known", answer.shout ? Util::NameOf(answer.shout) : "shout"s);
-				continue;
-			}
-			if (equipped == answer.shout) {
-				a_why = std::format("{} already equipped", Util::NameOf(answer.shout));
-				continue;
-			}
-			return &answer;
+			a_rules += std::format("{}{}: {}", a_rules.empty() ? "" : " | ", answer.rule, verdict);
 		}
-		return nullptr;
+		return pick;
 	}
 
 	void VoiceAnswer::Tick()
@@ -111,6 +226,7 @@ namespace CIGAR
 
 		Fight fight;
 		std::string why;
+		std::string rules;
 		const Answer* pick = nullptr;
 		if (!combat) {
 			why = "not in combat";
@@ -121,16 +237,21 @@ namespace CIGAR
 			if (recovery > 0.0f) {
 				why = std::format("voice recovering ({:.0f} s)", recovery);
 			} else {
-				pick = Pick(player, fight, why);
+				pick = Pick(player, fight, rules);
+				if (!pick) {
+					why = "no rule picked a usable shout";
+				}
 			}
 		}
 		const bool held = pick && pick == candidate;
 		candidate = pick;
 
 		LogGate(std::format("combat={} movable={} busy={} recovery={:.0f} listed={} hostile={} bleeding={} enemies={} sight(player->them={}, "
-		                    "them->player={}) pick={} ({})",
+		                    "them->player={}) animals={} unshakeable={} dismayProof={} maxLevel={} friendsAhead={}{} dismayCap={} pick={} ({}){}",
 			combat, movable, busy, recovery, fight.listed, fight.hostile, fight.bleeding, fight.enemies, fight.playerSees, fight.seesPlayer,
-			pick && pick->shout ? Util::NameOf(pick->shout) : "-"s, pick ? "ready" : why));
+			fight.animals, fight.unshakeable, fight.dismayProof, fight.maxLevel, fight.friendsAhead,
+			fight.friendAhead.empty() ? "" : std::format(" ({})", fight.friendAhead), fight.dismayCap,
+			pick && pick->shout ? Util::NameOf(pick->shout) : "-"s, pick ? pick->rule : why, rules.empty() ? "" : " rules: " + rules));
 
 		// A different shout is a different prompt (its name is in the text).
 		if (prompt.Offered() && offered != pick && pick) {
@@ -159,7 +280,7 @@ namespace CIGAR
 		auto* before = player->GetActorRuntimeData().selectedPower;
 		RE::ActorEquipManager::GetSingleton()->EquipShout(player, answer->shout);
 		auto* after = player->GetActorRuntimeData().selectedPower;
-		Log("equipped {} ({}): voice slot was {}, now {}", Util::NameOf(answer->shout), answer->situation, before ? Util::NameOf(before) : "-"s,
+		Log("equipped {} (rule {}): voice slot was {}, now {}", Util::NameOf(answer->shout), answer->rule, before ? Util::NameOf(before) : "-"s,
 			after ? Util::NameOf(after) : "-"s);
 		if (after != answer->shout) {
 			Log("WARN the voice slot does not hold the shout right after equipping");
