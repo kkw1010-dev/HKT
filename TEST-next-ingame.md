@@ -658,7 +658,7 @@ player.modav health 5000
 - 사용자: SHOW·EQUIP·GONE 통과. 로그: 전투 중 `listed=38 hostile=2 bleeding=0 enemies=2` → 프롬프트 표시 → 수락 →
   `voice slot was 시간 왜곡, now 거침없는 힘` → 이후 `already equipped`, 적 1명이 되자 `not two or more enemies`. 의도대로. 경고·오류 0.
 
-## r25: 용언 장착 확장 (D57; 빌드 대기 중, 커밋 6d30177)
+## r25: 용언 장착 확장 (D57; DLL F3C44D0D... 배포 2026-10-04, 커밋 6d30177)
 
 콘솔 배치 파일: `C:\TAKEALOOK\_test-runs
 ext25-console\` (스카이림 폴더에 복사해 `bat r25words` 식으로 실행).
