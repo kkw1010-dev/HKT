@@ -653,3 +653,8 @@ player.modav health 5000
 - 수정(빌드 대기): 적 수를 WeaponSwap과 같은 `Util::NearbyHostiles`로 셈. 줄에 목록 크기(listed)·적대·빈사·전투 중 수를 남김.
   다음 실행은 r18 항목 그대로.
 
+### r23 판정 (2026-10-04, Claude; 원본 CIGAR.log 23:09 실행)
+
+- 사용자: SHOW·EQUIP·GONE 통과. 로그: 전투 중 `listed=38 hostile=2 bleeding=0 enemies=2` → 프롬프트 표시 → 수락 →
+  `voice slot was 시간 왜곡, now 거침없는 힘` → 이후 `already equipped`, 적 1명이 되자 `not two or more enemies`. 의도대로. 경고·오류 0.
+

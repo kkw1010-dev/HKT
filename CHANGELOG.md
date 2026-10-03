@@ -12,6 +12,12 @@ New
 Changed
 - **Apply Poison is a single press in combat** (it stays a hold ring outside combat), like drinking potions.
 
+Fixed
+- **Safer on game versions this build does not know.** The hook that keeps third-person prompts beside your
+  character is checked against the game version first; on a version newer than CIGAR was built for, it is not
+  installed and the prompts stay on your character instead (everything else works). Skyrim 1.5.97 and
+  1.6.1170 are unchanged.
+
 ## 3.1.2 (2026-10-02)
 
 On Nexus this is the first release after 3.1.0; it carries 3.1.1 (GitHub only) with it.
