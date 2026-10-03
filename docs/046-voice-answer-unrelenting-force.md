@@ -45,11 +45,10 @@ One module, "Voice answers", with a small table of {shout form, gate}: Unrelenti
 candidates such as Disarm (a single strong armed enemy) or Slow Time, each a vanilla shout with its own
 situation, one prompt at a time in the crowd slot. Curated entries, not a user-made rule list.
 
-## War stomp and the key slots
+## Key slots
 
-The war stomp (if kept after r17c) is an action for "surrounded, within 200"; this is a preparation for
-"two or more within 1,000 in sight". When both hold, the stomp shows (it acts now) and the equip prompt
-waits. Combat already has up to Execute, Throw, Lock On, Grapple, Potion, Poison competing for four keys.
+The war stomp and Cleave were dropped (2026-10-03), so this is the only crowd prompt. Combat already has up
+to Execute, Throw, Lock On, Grapple, Potion and Poison competing for four keys.
 
 ## Risks
 

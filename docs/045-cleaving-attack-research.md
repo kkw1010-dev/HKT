@@ -247,8 +247,10 @@ After r17b the user dropped the Cleaving Attack. Reason: the prompt only asks th
 power attack, so what plays and what it hits is decided by MCO and the OAR stance sets (r17b: two clean
 cleaves in five, three single hits), not by CIGAR. Many-against-one is to be improved by offering vanilla
 answers instead, starting with a prompt that equips Unrelenting Force when two or more enemies face the
-player. The war stomp is not part of this decision (judged after r17c). The prototype stays on the
-`cleave-proto` branch for reference; the Cleave prompt is switched off there.
+player. The same day the user dropped the war stomp too ("스톰프도 빼"). Neither ever reached `v3`; the
+prototype stays on the `cleave-proto` branch for reference only and is not built again. The runtime OAR
+folder the prototype wrote (`overwrite\meshes\OpenAnimationReplacer\CIGAR Stomp`) was moved out of the
+game on 2026-10-03, so Hot Key Skill's slot C is Bow Rapid Combo's again.
 
 ## 12. Recommendation
 
