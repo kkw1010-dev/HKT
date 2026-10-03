@@ -680,3 +680,10 @@ player.modav health 5000
   NPC가 1로 읽히는지 미확인 → 확인함: 이 모드리스트의 늑대(Amalgam)와 도적(Bandit War 템플릿)은 레코드 레벨이 1. 게임의 공포 효과도 같은 레벨을 읽으므로
   프롬프트 판단과 실제 효과가 일치함(문제 아님).
 
+
+## r26: 용언 장착 수정 확인 (DLL 96E4A072..., 2026-10-04)
+
+- R26-STAY. 늑대 3(`bat r25wolves`)에서 "장착하기: 카인의 평화"를 받은 뒤 외침을 쓰지 않고 기다림. 기대: 다른 용언(경악 등)이 이어서 뜨지 않음.
+  로그: `animal-pack: holds, 카인의 평화 already equipped: nothing else offered`.
+- 로그만(TISC): 시작 시 `shout cooldowns: per shout (TISC loaded)`. 거침없는 힘을 쓴 직후에도, 시간 왜곡이 맞는 상황이면 시간 왜곡이 뜸
+  (`recovering (N s, TISC)`는 그 외침 자신이 대기 중일 때만).
