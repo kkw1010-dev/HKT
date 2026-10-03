@@ -3,6 +3,8 @@
 #include "Module.h"
 #include "Prompt.h"
 
+#include <unordered_map>
+
 namespace CIGAR
 {
 	// Voice answers (docs/046, docs/047): in a fight, a single-press prompt that puts the shout which fits
